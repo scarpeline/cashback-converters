@@ -21,16 +21,18 @@ const ContadorDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const basePath = "/contador2026/dashboard";
+  
   const navigation = [
-    { name: "Dashboard", href: "/contador", icon: LayoutDashboard },
-    { name: "Empresas", href: "/contador/empresas", icon: Building2 },
-    { name: "Declarações", href: "/contador/declaracoes", icon: FileText },
-    { name: "Meus Ganhos", href: "/contador/ganhos", icon: DollarSign },
-    { name: "Meu Perfil", href: "/contador/perfil", icon: User },
+    { name: "Dashboard", href: basePath, icon: LayoutDashboard },
+    { name: "Empresas", href: `${basePath}/empresas`, icon: Building2 },
+    { name: "Declarações", href: `${basePath}/declaracoes`, icon: FileText },
+    { name: "Meus Ganhos", href: `${basePath}/ganhos`, icon: DollarSign },
+    { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
   ];
 
   const isActive = (href: string) => {
-    if (href === "/contador") return location.pathname === "/contador";
+    if (href === basePath) return location.pathname === basePath || location.pathname === `${basePath}/`;
     return location.pathname.startsWith(href);
   };
 
@@ -50,7 +52,7 @@ const ContadorDashboard = () => {
       `}>
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-border flex items-center justify-between">
-            <Link to="/contador" className="flex items-center gap-2">
+            <Link to={basePath} className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Calculator className="w-5 h-5 text-primary" />
               </div>

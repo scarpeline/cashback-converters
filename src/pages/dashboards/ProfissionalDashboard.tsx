@@ -21,15 +21,17 @@ const ProfissionalDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const basePath = "/app/profissional/dashboard";
+  
   const navigation = [
-    { name: "Dashboard", href: "/profissional", icon: LayoutDashboard },
-    { name: "Minha Agenda", href: "/profissional/agenda", icon: Calendar },
-    { name: "Meus Ganhos", href: "/profissional/ganhos", icon: DollarSign },
-    { name: "Meu Perfil", href: "/profissional/perfil", icon: User },
+    { name: "Dashboard", href: basePath, icon: LayoutDashboard },
+    { name: "Minha Agenda", href: `${basePath}/agenda`, icon: Calendar },
+    { name: "Meus Ganhos", href: `${basePath}/ganhos`, icon: DollarSign },
+    { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
   ];
 
   const isActive = (href: string) => {
-    if (href === "/profissional") return location.pathname === "/profissional";
+    if (href === basePath) return location.pathname === basePath || location.pathname === `${basePath}/`;
     return location.pathname.startsWith(href);
   };
 
@@ -49,7 +51,7 @@ const ProfissionalDashboard = () => {
       `}>
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-border flex items-center justify-between">
-            <Link to="/profissional" className="flex items-center gap-2">
+            <Link to={basePath} className="flex items-center gap-2">
               <img src={logo} alt="Logo" className="w-8 h-8" />
               <span className="font-display font-bold text-lg text-gradient-gold">
                 Profissional

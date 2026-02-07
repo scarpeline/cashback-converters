@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Rocket } from "lucide-react";
 
@@ -30,13 +31,17 @@ const CTA = () => {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button variant="hero" size="xl">
-              Começar 7 Dias Grátis
-              <ArrowRight className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="lg">
-              Quero Ser Afiliado
-            </Button>
+            <Link to="/public/login">
+              <Button variant="hero" size="xl">
+                Começar 7 Dias Grátis
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
+            <Link to="/afiliado-saas/login">
+              <Button variant="ghost" size="lg">
+                Quero Ser Afiliado
+              </Button>
+            </Link>
           </div>
 
           {/* Trust Badges */}

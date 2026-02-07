@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, TrendingUp, Users } from "lucide-react";
 import logo from "@/assets/logo.png";
@@ -67,13 +68,17 @@ const Hero = () => {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in"
             style={{ animationDelay: "0.4s" }}
           >
-            <Button variant="hero" size="xl" className="w-full sm:w-auto">
-              Começar Grátis
-              <ArrowRight className="w-5 h-5" />
-            </Button>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto">
-              Ver Como Funciona
-            </Button>
+            <Link to="/public/login">
+              <Button variant="hero" size="xl" className="w-full sm:w-auto">
+                Começar Grátis
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
+            <a href="#features">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                Ver Como Funciona
+              </Button>
+            </a>
           </div>
 
           {/* Stats */}

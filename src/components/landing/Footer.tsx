@@ -40,9 +40,9 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="/afiliado-saas" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/afiliado-saas/login" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Quero ser afiliado do app
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

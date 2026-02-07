@@ -23,18 +23,20 @@ const ClienteDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const basePath = "/app/cliente";
+  
   const navigation = [
-    { name: "Agendar", href: "/cliente", icon: Calendar },
-    { name: "Meus Agendamentos", href: "/cliente/agendamentos", icon: Clock },
-    { name: "Cashback", href: "/cliente/cashback", icon: Gift },
-    { name: "Histórico", href: "/cliente/historico", icon: History },
-    { name: "Indique Amigos", href: "/cliente/indicar", icon: Users },
-    { name: "Notificações", href: "/cliente/notificacoes", icon: Bell },
-    { name: "Meu Perfil", href: "/cliente/perfil", icon: User },
+    { name: "Agendar", href: basePath, icon: Calendar },
+    { name: "Meus Agendamentos", href: `${basePath}/agendamentos`, icon: Clock },
+    { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
+    { name: "Histórico", href: `${basePath}/historico`, icon: History },
+    { name: "Indique Amigos", href: `${basePath}/indicar`, icon: Users },
+    { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
+    { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
   ];
 
   const isActive = (href: string) => {
-    if (href === "/cliente") return location.pathname === "/cliente";
+    if (href === basePath) return location.pathname === basePath || location.pathname === `${basePath}/`;
     return location.pathname.startsWith(href);
   };
 
@@ -54,7 +56,7 @@ const ClienteDashboard = () => {
       `}>
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-border flex items-center justify-between">
-            <Link to="/cliente" className="flex items-center gap-2">
+            <Link to={basePath} className="flex items-center gap-2">
               <img src={logo} alt="Logo" className="w-8 h-8" />
               <span className="font-display font-bold text-lg text-gradient-gold">
                 SalãoCashBack
@@ -116,7 +118,7 @@ const ClienteDashboard = () => {
           </button>
           <div className="flex-1 lg:flex-none" />
           <div className="flex items-center gap-4">
-            <Link to="/cliente/notificacoes">
+            <Link to={`${basePath}/notificacoes`}>
               <Button variant="ghost" size="icon">
                 <Bell className="w-5 h-5" />
               </Button>
