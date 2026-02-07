@@ -5,31 +5,32 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   LayoutDashboard,
-  Calendar, 
+  Building2,
+  FileText,
   DollarSign,
   User,
-  Bell,
   LogOut,
   Menu,
   X,
-  Clock
+  Calculator
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
-const ProfissionalDashboard = () => {
+const ContadorDashboard = () => {
   const { profile, signOut } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigation = [
-    { name: "Dashboard", href: "/profissional", icon: LayoutDashboard },
-    { name: "Minha Agenda", href: "/profissional/agenda", icon: Calendar },
-    { name: "Meus Ganhos", href: "/profissional/ganhos", icon: DollarSign },
-    { name: "Meu Perfil", href: "/profissional/perfil", icon: User },
+    { name: "Dashboard", href: "/contador", icon: LayoutDashboard },
+    { name: "Empresas", href: "/contador/empresas", icon: Building2 },
+    { name: "Declarações", href: "/contador/declaracoes", icon: FileText },
+    { name: "Meus Ganhos", href: "/contador/ganhos", icon: DollarSign },
+    { name: "Meu Perfil", href: "/contador/perfil", icon: User },
   ];
 
   const isActive = (href: string) => {
-    if (href === "/profissional") return location.pathname === "/profissional";
+    if (href === "/contador") return location.pathname === "/contador";
     return location.pathname.startsWith(href);
   };
 
@@ -49,10 +50,12 @@ const ProfissionalDashboard = () => {
       `}>
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-border flex items-center justify-between">
-            <Link to="/profissional" className="flex items-center gap-2">
-              <img src={logo} alt="Logo" className="w-8 h-8" />
-              <span className="font-display font-bold text-lg text-gradient-gold">
-                Profissional
+            <Link to="/contador" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Calculator className="w-5 h-5 text-primary" />
+              </div>
+              <span className="font-display font-bold text-lg">
+                Contador
               </span>
             </Link>
             <button 
@@ -64,8 +67,8 @@ const ProfissionalDashboard = () => {
           </div>
 
           <div className="p-4 border-b border-border">
-            <p className="font-medium truncate">{profile?.name || "Profissional"}</p>
-            <p className="text-sm text-muted-foreground truncate">{profile?.whatsapp}</p>
+            <p className="font-medium truncate">{profile?.name || "Contador"}</p>
+            <p className="text-sm text-muted-foreground truncate">{profile?.email}</p>
           </div>
 
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -109,18 +112,14 @@ const ProfissionalDashboard = () => {
           >
             <Menu className="w-6 h-6" />
           </button>
-          <div className="flex-1 lg:flex-none" />
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon">
-              <Bell className="w-5 h-5" />
-            </Button>
-          </div>
+          <div className="flex-1" />
         </header>
 
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <Routes>
             <Route index element={<DashboardHome />} />
-            <Route path="agenda" element={<AgendaPage />} />
+            <Route path="empresas" element={<EmpresasPage />} />
+            <Route path="declaracoes" element={<DeclaracoesPage />} />
             <Route path="ganhos" element={<GanhosPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Routes>
@@ -133,50 +132,65 @@ const ProfissionalDashboard = () => {
 const DashboardHome = () => (
   <div className="space-y-6">
     <div>
-      <h1 className="font-display text-2xl font-bold">Olá! 👋</h1>
-      <p className="text-muted-foreground">Sua agenda de hoje</p>
+      <h1 className="font-display text-2xl font-bold">Portal do Contador</h1>
+      <p className="text-muted-foreground">Gerencie empresas e declarações</p>
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardDescription>Agendamentos Hoje</CardDescription>
+          <CardDescription>Empresas Vinculadas</CardDescription>
           <CardTitle className="text-2xl">0</CardTitle>
         </CardHeader>
       </Card>
       <Card>
         <CardHeader className="pb-2">
-          <CardDescription>Ganhos Hoje</CardDescription>
-          <CardTitle className="text-2xl text-gradient-gold">R$ 0,00</CardTitle>
+          <CardDescription>Declarações Pendentes</CardDescription>
+          <CardTitle className="text-2xl">0</CardTitle>
         </CardHeader>
       </Card>
-      <Card>
+      <Card className="bg-gradient-card border-primary/20">
         <CardHeader className="pb-2">
-          <CardDescription>Próximo Cliente</CardDescription>
-          <CardTitle className="text-lg">Nenhum</CardTitle>
+          <CardDescription>Ganhos do Mês</CardDescription>
+          <CardTitle className="text-2xl text-gradient-gold">R$ 0,00</CardTitle>
         </CardHeader>
       </Card>
     </div>
 
     <Card>
       <CardHeader>
-        <CardTitle>Próximos Atendimentos</CardTitle>
+        <CardTitle>Atividades Recentes</CardTitle>
       </CardHeader>
       <CardContent className="text-center py-8">
-        <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground">Nenhum atendimento agendado para hoje.</p>
+        <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-muted-foreground">Nenhuma atividade recente.</p>
       </CardContent>
     </Card>
   </div>
 );
 
-const AgendaPage = () => (
+const EmpresasPage = () => (
   <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Minha Agenda</h1>
+    <h1 className="font-display text-2xl font-bold">Empresas Vinculadas</h1>
     <Card>
       <CardContent className="py-12 text-center">
-        <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground">Nenhum agendamento.</p>
+        <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-muted-foreground">Nenhuma empresa vinculada.</p>
+        <p className="text-sm text-muted-foreground mt-2">
+          Empresas são vinculadas pelo Super Admin.
+        </p>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+const DeclaracoesPage = () => (
+  <div className="space-y-6">
+    <h1 className="font-display text-2xl font-bold">Declarações</h1>
+    <Card>
+      <CardContent className="py-12 text-center">
+        <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-muted-foreground">Nenhuma declaração pendente.</p>
       </CardContent>
     </Card>
   </div>
@@ -188,25 +202,20 @@ const GanhosPage = () => (
     
     <Card className="bg-gradient-card border-primary/20">
       <CardHeader>
-        <CardDescription>Ganhos do Mês</CardDescription>
+        <CardDescription>Total de Ganhos</CardDescription>
         <CardTitle className="text-3xl text-gradient-gold">R$ 0,00</CardTitle>
       </CardHeader>
     </Card>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <Card>
-        <CardHeader>
-          <CardDescription>A Receber</CardDescription>
-          <CardTitle className="text-xl">R$ 0,00</CardTitle>
-        </CardHeader>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardDescription>Atendimentos do Mês</CardDescription>
-          <CardTitle className="text-xl">0</CardTitle>
-        </CardHeader>
-      </Card>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Histórico de Pagamentos</CardTitle>
+      </CardHeader>
+      <CardContent className="text-center py-8">
+        <DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-muted-foreground">Nenhum pagamento registrado.</p>
+      </CardContent>
+    </Card>
   </div>
 );
 
@@ -223,16 +232,12 @@ const PerfilPage = () => {
             <p className="font-medium">{profile?.name || "-"}</p>
           </div>
           <div>
-            <label className="text-sm text-muted-foreground">WhatsApp</label>
-            <p className="font-medium">{profile?.whatsapp || "-"}</p>
-          </div>
-          <div>
             <label className="text-sm text-muted-foreground">E-mail</label>
             <p className="font-medium">{profile?.email || "-"}</p>
           </div>
           <div>
-            <label className="text-sm text-muted-foreground">Chave PIX</label>
-            <p className="font-medium">{profile?.pix_key || "Não configurada"}</p>
+            <label className="text-sm text-muted-foreground">WhatsApp</label>
+            <p className="font-medium">{profile?.whatsapp || "-"}</p>
           </div>
           <Button variant="outline" className="w-full">
             Editar Perfil
@@ -243,4 +248,4 @@ const PerfilPage = () => {
   );
 };
 
-export default ProfissionalDashboard;
+export default ContadorDashboard;
