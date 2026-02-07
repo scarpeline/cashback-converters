@@ -25,17 +25,19 @@ const AfiliadoDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const basePath = "/afiliado-saas/dashboard";
+  
   const navigation = [
-    { name: "Dashboard", href: "/afiliado", icon: LayoutDashboard },
-    { name: "Meus Indicados", href: "/afiliado/indicados", icon: Users },
-    { name: "Comissões", href: "/afiliado/comissoes", icon: DollarSign },
-    { name: "Histórico", href: "/afiliado/historico", icon: History },
-    { name: "Meu Link", href: "/afiliado/link", icon: LinkIcon },
-    { name: "Meu Perfil", href: "/afiliado/perfil", icon: User },
+    { name: "Dashboard", href: basePath, icon: LayoutDashboard },
+    { name: "Meus Indicados", href: `${basePath}/indicados`, icon: Users },
+    { name: "Comissões", href: `${basePath}/comissoes`, icon: DollarSign },
+    { name: "Histórico", href: `${basePath}/historico`, icon: History },
+    { name: "Meu Link", href: `${basePath}/link`, icon: LinkIcon },
+    { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
   ];
 
   const isActive = (href: string) => {
-    if (href === "/afiliado") return location.pathname === "/afiliado";
+    if (href === basePath) return location.pathname === basePath || location.pathname === `${basePath}/`;
     return location.pathname.startsWith(href);
   };
 
@@ -55,7 +57,7 @@ const AfiliadoDashboard = () => {
       `}>
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-border flex items-center justify-between">
-            <Link to="/afiliado" className="flex items-center gap-2">
+            <Link to={basePath} className="flex items-center gap-2">
               <img src={logo} alt="Logo" className="w-8 h-8" />
               <span className="font-display font-bold text-lg text-gradient-gold">
                 Afiliado SaaS

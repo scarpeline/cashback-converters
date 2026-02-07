@@ -27,21 +27,23 @@ const DonoDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const basePath = "/app/dashboard";
+  
   const navigation = [
-    { name: "Dashboard", href: "/dono", icon: LayoutDashboard },
-    { name: "Agendamentos", href: "/dono/agendamentos", icon: Calendar },
-    { name: "Profissionais", href: "/dono/profissionais", icon: Users },
-    { name: "Serviços", href: "/dono/servicos", icon: Scissors },
-    { name: "Financeiro", href: "/dono/financeiro", icon: DollarSign },
-    { name: "Estoque", href: "/dono/estoque", icon: Package },
-    { name: "Cashback", href: "/dono/cashback", icon: Gift },
-    { name: "Pixels & Marketing", href: "/dono/pixels", icon: Image },
-    { name: "Suporte", href: "/dono/suporte", icon: MessageCircle },
-    { name: "Configurações", href: "/dono/configuracoes", icon: Settings },
+    { name: "Dashboard", href: basePath, icon: LayoutDashboard },
+    { name: "Agendamentos", href: `${basePath}/agendamentos`, icon: Calendar },
+    { name: "Profissionais", href: `${basePath}/profissionais`, icon: Users },
+    { name: "Serviços", href: `${basePath}/servicos`, icon: Scissors },
+    { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
+    { name: "Estoque", href: `${basePath}/estoque`, icon: Package },
+    { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
+    { name: "Pixels & Marketing", href: `${basePath}/pixels`, icon: Image },
+    { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
+    { name: "Configurações", href: `${basePath}/configuracoes`, icon: Settings },
   ];
 
   const isActive = (href: string) => {
-    if (href === "/dono") return location.pathname === "/dono";
+    if (href === basePath) return location.pathname === basePath || location.pathname === `${basePath}/`;
     return location.pathname.startsWith(href);
   };
 
@@ -61,7 +63,7 @@ const DonoDashboard = () => {
       `}>
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-border flex items-center justify-between">
-            <Link to="/dono" className="flex items-center gap-2">
+            <Link to={basePath} className="flex items-center gap-2">
               <img src={logo} alt="Logo" className="w-8 h-8" />
               <span className="font-display font-bold text-lg text-gradient-gold">
                 Painel Dono

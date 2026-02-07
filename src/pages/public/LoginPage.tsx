@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Eye, EyeOff, Loader2, User, Scissors, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole, getRedirectPath } from "@/lib/auth";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import logo from "@/assets/logo.png";
 import { z } from "zod";
 
-type UserType = "cliente" | "profissional" | "dono";
+type UserType = "cliente" | "dono";
 type LoginType = "cliente" | "profissional" | "dono";
 
 const loginSchema = z.object({
@@ -26,14 +27,11 @@ const signupSchema = z.object({
   pix: z.string().optional(),
 });
 
-const AuthPage = () => {
-  const [searchParams] = useSearchParams();
+const PublicLoginPage = () => {
   const navigate = useNavigate();
   const { user, signUp, signIn, signInWithWhatsApp, getPrimaryRole, loading: authLoading } = useAuth();
   
-  const isSignup = searchParams.get("mode") === "signup";
-  
-  const [mode, setMode] = useState<"login" | "signup">(isSignup ? "signup" : "login");
+  const [mode, setMode] = useState<"login" | "signup">("login");
   const [userType, setUserType] = useState<UserType>("cliente");
   const [loginType, setLoginType] = useState<LoginType>("cliente");
   const [showPassword, setShowPassword] = useState(false);
@@ -53,7 +51,7 @@ const AuthPage = () => {
   useEffect(() => {
     if (user && !authLoading) {
       const role = getPrimaryRole();
-      navigate(getRedirectPath(role));
+      navigate(getRedirectPath(role), { replace: true });
     }
   }, [user, authLoading, navigate, getPrimaryRole]);
 
@@ -431,7 +429,7 @@ const AuthPage = () => {
           {/* Affiliate Link */}
           <div className="mt-8 pt-6 border-t border-border text-center">
             <Link 
-              to="/afiliado-saas" 
+              to="/afiliado-saas/login" 
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               Quer ser afiliado do SaaS? <span className="underline">Clique aqui</span>
@@ -465,4 +463,4 @@ const AuthPage = () => {
   );
 };
 
-export default AuthPage;
+export default PublicLoginPage;

@@ -24,6 +24,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, metadata: SignUpMetadata) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithWhatsApp: (whatsapp: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
   getPrimaryRole: () => AppRole | null;
@@ -181,11 +182,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithWhatsApp = async (whatsapp: string, password: string) => {
     try {
+      // Normalize whatsapp - remove non-digits
+      const normalizedWhatsApp = whatsapp.replace(/\D/g, '');
+      
       // Find user by whatsapp in profiles
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("email")
-        .eq("whatsapp", whatsapp)
+        .select("email, whatsapp")
+        .or(`whatsapp.eq.${normalizedWhatsApp},whatsapp.eq.${whatsapp}`)
         .maybeSingle();
 
       if (!profileData?.email) {
@@ -193,6 +197,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       return signIn(profileData.email, password);
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
+  const signInWithMagicLink = async (email: string) => {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: redirectUrl,
+        }
+      });
+
+      if (error) {
+        console.error("[AUTH_ERROR] Magic link failed:", error.message);
+        return { error };
+      }
+
+      console.log("[AUTH_OK] Magic link sent");
+      return { error: null };
     } catch (err) {
       return { error: err as Error };
     }
@@ -227,6 +254,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signIn,
       signInWithWhatsApp,
+      signInWithMagicLink,
       signOut,
       hasRole,
       getPrimaryRole
@@ -244,16 +272,26 @@ export function useAuth() {
   return context;
 }
 
-// Route protection helper
+// Route protection helper - Updated for new route structure
 export function getRedirectPath(role: AppRole | null): string {
   switch (role) {
-    case 'super_admin': return '/super-admin';
-    case 'contador': return '/contador';
-    case 'dono': return '/dono';
-    case 'profissional': return '/profissional';
-    case 'afiliado_saas': return '/afiliado';
-    case 'afiliado_barbearia': return '/cliente';
-    case 'cliente': return '/cliente';
-    default: return '/auth';
+    case 'super_admin': return '/admin/dashboard';
+    case 'contador': return '/contador2026/dashboard';
+    case 'dono': return '/app/dashboard';
+    case 'profissional': return '/app/profissional/dashboard';
+    case 'afiliado_saas': return '/afiliado-saas/dashboard';
+    case 'afiliado_barbearia': return '/app/dashboard';
+    case 'cliente': return '/app/dashboard';
+    default: return '/public/login';
+  }
+}
+
+// Get login path for a specific role
+export function getLoginPath(role: AppRole | null): string {
+  switch (role) {
+    case 'super_admin': return '/admin/login';
+    case 'contador': return '/contador2026/login';
+    case 'afiliado_saas': return '/afiliado-saas/login';
+    default: return '/public/login';
   }
 }

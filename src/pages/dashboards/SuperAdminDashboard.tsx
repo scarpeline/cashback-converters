@@ -29,21 +29,23 @@ const SuperAdminDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const basePath = "/admin/dashboard";
+  
   const navigation = [
-    { name: "Dashboard", href: "/super-admin", icon: LayoutDashboard },
-    { name: "Usuários", href: "/super-admin/usuarios", icon: Users },
-    { name: "Barbearias", href: "/super-admin/barbearias", icon: Building2 },
-    { name: "Afiliados", href: "/super-admin/afiliados", icon: Users },
-    { name: "Contadores", href: "/super-admin/contadores", icon: Calculator },
-    { name: "Financeiro", href: "/super-admin/financeiro", icon: DollarSign },
-    { name: "Pixels Globais", href: "/super-admin/pixels", icon: Image },
-    { name: "Suporte", href: "/super-admin/suporte", icon: MessageCircle },
-    { name: "Notificações", href: "/super-admin/notificacoes", icon: Bell },
-    { name: "Configurações", href: "/super-admin/configuracoes", icon: Settings },
+    { name: "Dashboard", href: basePath, icon: LayoutDashboard },
+    { name: "Usuários", href: `${basePath}/usuarios`, icon: Users },
+    { name: "Barbearias", href: `${basePath}/barbearias`, icon: Building2 },
+    { name: "Afiliados", href: `${basePath}/afiliados`, icon: Users },
+    { name: "Contadores", href: `${basePath}/contadores`, icon: Calculator },
+    { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
+    { name: "Pixels Globais", href: `${basePath}/pixels`, icon: Image },
+    { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
+    { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
+    { name: "Configurações", href: `${basePath}/configuracoes`, icon: Settings },
   ];
 
   const isActive = (href: string) => {
-    if (href === "/super-admin") return location.pathname === "/super-admin";
+    if (href === basePath) return location.pathname === basePath || location.pathname === `${basePath}/`;
     return location.pathname.startsWith(href);
   };
 
@@ -63,7 +65,7 @@ const SuperAdminDashboard = () => {
       `}>
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-border flex items-center justify-between">
-            <Link to="/super-admin" className="flex items-center gap-2">
+            <Link to={basePath} className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
                 <Shield className="w-5 h-5 text-destructive" />
               </div>
