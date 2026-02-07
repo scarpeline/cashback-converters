@@ -3,16 +3,17 @@ import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Loader2, User, Scissors, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole, getRedirectPath } from "@/lib/auth";
 import logo from "@/assets/logo.png";
 import { z } from "zod";
 
-type UserType = "cliente" | "dono";
+type UserType = "cliente" | "profissional" | "dono";
+type LoginType = "cliente" | "profissional" | "dono";
 
 const loginSchema = z.object({
-  whatsapp: z.string().min(10, "WhatsApp inválido"),
+  identifier: z.string().min(5, "Campo obrigatório"),
   password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
 });
 
@@ -34,6 +35,7 @@ const AuthPage = () => {
   
   const [mode, setMode] = useState<"login" | "signup">(isSignup ? "signup" : "login");
   const [userType, setUserType] = useState<UserType>("cliente");
+  const [loginType, setLoginType] = useState<LoginType>("cliente");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -63,11 +65,11 @@ const AuthPage = () => {
     try {
       if (mode === "login") {
         loginSchema.parse({
-          whatsapp: formData.whatsapp,
+          identifier: loginType === "cliente" ? formData.whatsapp : formData.email,
           password: formData.password,
         });
       } else {
-        const dataToValidate: any = {
+        const dataToValidate: Record<string, string> = {
           name: formData.name,
           whatsapp: formData.whatsapp,
           password: formData.password,
@@ -103,11 +105,18 @@ const AuthPage = () => {
 
     try {
       if (mode === "login") {
-        // Cliente logs in with WhatsApp, Dono with email
-        const { error } = await signInWithWhatsApp(formData.whatsapp, formData.password);
+        let result;
         
-        if (error) {
-          toast.error(error.message || "Erro ao fazer login");
+        if (loginType === "cliente") {
+          // Cliente logs in with WhatsApp
+          result = await signInWithWhatsApp(formData.whatsapp, formData.password);
+        } else {
+          // Profissional and Dono log in with email
+          result = await signIn(formData.email, formData.password);
+        }
+        
+        if (result.error) {
+          toast.error(result.error.message || "Erro ao fazer login");
           setLoading(false);
           return;
         }
@@ -146,9 +155,15 @@ const AuthPage = () => {
     }
   };
 
-  const userTypes: { value: UserType; label: string; description: string }[] = [
-    { value: "cliente", label: "Sou Cliente", description: "Agendar serviços e ganhar cashback" },
-    { value: "dono", label: "Sou Dono de Barbearia", description: "Gerenciar meu negócio" },
+  const userTypes: { value: UserType; label: string; description: string; icon: React.ElementType }[] = [
+    { value: "cliente", label: "Sou Cliente", description: "Agendar serviços e ganhar cashback", icon: User },
+    { value: "dono", label: "Sou Dono de Barbearia", description: "Gerenciar meu negócio", icon: Store },
+  ];
+
+  const loginTypes: { value: LoginType; label: string; icon: React.ElementType }[] = [
+    { value: "cliente", label: "Sou Cliente", icon: User },
+    { value: "profissional", label: "Sou Profissional", icon: Scissors },
+    { value: "dono", label: "Sou Dono de Barbearia", icon: Store },
   ];
 
   if (authLoading) {
@@ -192,7 +207,7 @@ const AuthPage = () => {
           </p>
 
           {/* Mode Toggle */}
-          <div className="flex gap-2 p-1 rounded-lg bg-muted mb-8">
+          <div className="flex gap-2 p-1 rounded-lg bg-muted mb-6">
             <button
               type="button"
               onClick={() => setMode("login")}
@@ -217,6 +232,32 @@ const AuthPage = () => {
             </button>
           </div>
 
+          {/* Login Type Selection (only for login) */}
+          {mode === "login" && (
+            <div className="mb-6">
+              <Label className="mb-3 block">Como você quer entrar?</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {loginTypes.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => setLoginType(type.value)}
+                    className={`p-3 rounded-lg border text-center transition-all ${
+                      loginType === type.value
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <type.icon className={`w-5 h-5 mx-auto mb-1 ${loginType === type.value ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className={`text-xs font-medium block ${loginType === type.value ? "text-primary" : "text-muted-foreground"}`}>
+                      {type.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* User Type Selection (only for signup) */}
           {mode === "signup" && (
             <div className="mb-6">
@@ -227,16 +268,21 @@ const AuthPage = () => {
                     key={type.value}
                     type="button"
                     onClick={() => setUserType(type.value)}
-                    className={`p-4 rounded-lg border text-left transition-all ${
+                    className={`p-4 rounded-lg border text-left transition-all flex items-center gap-3 ${
                       userType === type.value
                         ? "border-primary bg-primary/10"
                         : "border-border hover:border-primary/50"
                     }`}
                   >
-                    <span className={`font-medium block ${userType === type.value ? "text-primary" : ""}`}>
-                      {type.label}
-                    </span>
-                    <span className="text-sm text-muted-foreground">{type.description}</span>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${userType === type.value ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                      <type.icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className={`font-medium block ${userType === type.value ? "text-primary" : ""}`}>
+                        {type.label}
+                      </span>
+                      <span className="text-sm text-muted-foreground">{type.description}</span>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -264,22 +310,26 @@ const AuthPage = () => {
               </div>
             )}
 
-            {/* WhatsApp */}
-            <div>
-              <Label htmlFor="whatsapp">WhatsApp</Label>
-              <Input
-                id="whatsapp"
-                type="tel"
-                placeholder="(00) 00000-0000"
-                value={formData.whatsapp}
-                onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                className={`mt-1 ${errors.whatsapp ? "border-destructive" : ""}`}
-              />
-              {errors.whatsapp && <p className="text-xs text-destructive mt-1">{errors.whatsapp}</p>}
-            </div>
+            {/* WhatsApp - show for signup or login as cliente */}
+            {(mode === "signup" || loginType === "cliente") && (
+              <div>
+                <Label htmlFor="whatsapp">WhatsApp</Label>
+                <Input
+                  id="whatsapp"
+                  type="tel"
+                  placeholder="(00) 00000-0000"
+                  value={formData.whatsapp}
+                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                  className={`mt-1 ${errors.whatsapp || errors.identifier ? "border-destructive" : ""}`}
+                />
+                {(errors.whatsapp || errors.identifier) && (
+                  <p className="text-xs text-destructive mt-1">{errors.whatsapp || errors.identifier}</p>
+                )}
+              </div>
+            )}
 
-            {/* Email (business users only in signup) */}
-            {mode === "signup" && isBusinessUser && (
+            {/* Email - show for signup business users or login as profissional/dono */}
+            {((mode === "signup" && isBusinessUser) || (mode === "login" && loginType !== "cliente")) && (
               <div>
                 <Label htmlFor="email">E-mail</Label>
                 <Input
@@ -288,9 +338,11 @@ const AuthPage = () => {
                   placeholder="seu@email.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className={`mt-1 ${errors.email ? "border-destructive" : ""}`}
+                  className={`mt-1 ${errors.email || errors.identifier ? "border-destructive" : ""}`}
                 />
-                {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
+                {(errors.email || errors.identifier) && (
+                  <p className="text-xs text-destructive mt-1">{errors.email || errors.identifier}</p>
+                )}
               </div>
             )}
 
@@ -350,9 +402,9 @@ const AuthPage = () => {
             {/* Forgot Password (login only) */}
             {mode === "login" && (
               <div className="text-right">
-                <Link to="/auth/recuperar-senha" className="text-sm text-primary hover:underline">
+                <button type="button" className="text-sm text-primary hover:underline">
                   Esqueceu a senha?
-                </Link>
+                </button>
               </div>
             )}
 
