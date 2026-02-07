@@ -122,17 +122,17 @@ const App = () => (
               {/* APP ROUTES (Cliente, Dono, Profissional) */}
               {/* ============================================ */}
               
-              {/* App dashboard - Cliente and Dono */}
+              {/* App dashboard - Dono only */}
               <Route 
                 path="/app/dashboard/*" 
                 element={
-                  <ProtectedRoute allowedRoles={['cliente', 'dono', 'afiliado_barbearia']}>
+                  <ProtectedRoute allowedRoles={['dono']}>
                     <DonoDashboard />
                   </ProtectedRoute>
                 } 
               />
               
-              {/* Cliente specific routes */}
+              {/* Cliente and Afiliado Barbearia routes */}
               <Route 
                 path="/app/cliente/*" 
                 element={

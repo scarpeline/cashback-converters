@@ -226,11 +226,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    const currentPath = window.location.pathname;
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
     setProfile(null);
     setRoles([]);
+    
+    // Redirect to appropriate login page based on current path
+    if (currentPath.startsWith('/admin')) {
+      window.location.href = '/admin/login';
+    } else if (currentPath.startsWith('/contador2026')) {
+      window.location.href = '/contador2026/login';
+    } else if (currentPath.startsWith('/afiliado-saas')) {
+      window.location.href = '/afiliado-saas/login';
+    } else {
+      window.location.href = '/public/login';
+    }
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
@@ -280,8 +292,8 @@ export function getRedirectPath(role: AppRole | null): string {
     case 'dono': return '/app/dashboard';
     case 'profissional': return '/app/profissional/dashboard';
     case 'afiliado_saas': return '/afiliado-saas/dashboard';
-    case 'afiliado_barbearia': return '/app/dashboard';
-    case 'cliente': return '/app/dashboard';
+    case 'afiliado_barbearia': return '/app/cliente';
+    case 'cliente': return '/app/cliente';
     default: return '/public/login';
   }
 }
