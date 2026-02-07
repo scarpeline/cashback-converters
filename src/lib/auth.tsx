@@ -247,7 +247,7 @@ export function useAuth() {
 // Route protection helper
 export function getRedirectPath(role: AppRole | null): string {
   switch (role) {
-    case 'super_admin': return '/super-admin2026ok';
+    case 'super_admin': return '/super-admin';
     case 'contador': return '/contador';
     case 'dono': return '/dono';
     case 'profissional': return '/profissional';

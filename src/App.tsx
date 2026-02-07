@@ -92,6 +92,8 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            {/* Redirect old super-admin path */}
+            <Route path="/super-admin2026ok" element={<SuperAdminLoginPage />} />
             
             {/* Catch-all Route */}
             <Route path="*" element={<NotFound />} />
