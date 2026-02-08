@@ -1,6 +1,15 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  logAuthStart, 
+  logAuthValidate, 
+  logAuthRole, 
+  logAuthError,
+  logDebugSummary 
+} from "@/lib/debug/auth-logger";
+import { validateSession, clearLocalStorageToken } from "@/lib/debug/session-validator";
+import { getDashboardForRole, getLoginPathFromRoute as getLoginPath } from "@/lib/debug/route-config";
 
 export type AppRole = 'cliente' | 'dono' | 'profissional' | 'afiliado_barbearia' | 'afiliado_saas' | 'contador' | 'super_admin';
 
@@ -15,12 +24,21 @@ interface Profile {
   avatar_url: string | null;
 }
 
+interface SignUpMetadata {
+  name: string;
+  whatsapp: string;
+  role: AppRole;
+  cpf_cnpj?: string;
+  pix_key?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
   roles: AppRole[];
   loading: boolean;
+  initialLoadComplete: boolean;
   signUp: (email: string, password: string, metadata: SignUpMetadata) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithWhatsApp: (whatsapp: string, password: string) => Promise<{ error: Error | null }>;
@@ -28,14 +46,6 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
   getPrimaryRole: () => AppRole | null;
-}
-
-interface SignUpMetadata {
-  name: string;
-  whatsapp: string;
-  role: AppRole;
-  cpf_cnpj?: string;
-  pix_key?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,8 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const initRef = useRef(false);
 
-  const fetchUserData = async (userId: string) => {
+  const fetchUserData = async (userId: string): Promise<AppRole[]> => {
     try {
       // Fetch profile
       const { data: profileData } = await supabase
@@ -61,50 +73,111 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Fetch roles
-      const { data: rolesData } = await supabase
+      const { data: rolesData, error: rolesError } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId);
 
-      if (rolesData) {
-        setRoles(rolesData.map(r => r.role as AppRole));
+      if (rolesError) {
+        logAuthError("Failed to fetch roles", { error: rolesError.message });
+        return [];
       }
+
+      const fetchedRoles = rolesData?.map(r => r.role as AppRole) || [];
+      setRoles(fetchedRoles);
+      
+      logAuthRole({ role_detectado: fetchedRoles[0] || null });
+      
+      return fetchedRoles;
     } catch (error) {
-      console.error("[AUTH_ERROR] Failed to fetch user data:", error);
+      logAuthError("Failed to fetch user data", { error: String(error) });
+      return [];
     }
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Prevent double initialization in strict mode
+    if (initRef.current) return;
+    initRef.current = true;
+
+    let isMounted = true;
+
+    // Step 1: Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      (event, currentSession) => {
+        if (!isMounted) return;
+
+        logAuthStart({ token_existe: !!currentSession?.access_token });
+        
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+
+        // Validate session
+        const validation = validateSession(currentSession);
+        logAuthValidate({ token_valido: validation.isValid });
 
         // Defer Supabase calls with setTimeout to prevent deadlock
-        if (session?.user) {
+        if (currentSession?.user && validation.isValid) {
           setTimeout(() => {
-            fetchUserData(session.user.id);
+            if (isMounted) {
+              fetchUserData(currentSession.user.id);
+            }
           }, 0);
         } else {
           setProfile(null);
           setRoles([]);
         }
-        setLoading(false);
+
+        // Only set loading false on subsequent changes, not initial
+        if (initialLoadComplete) {
+          setLoading(false);
+        }
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserData(session.user.id);
-      }
-      setLoading(false);
-    });
+    // Step 2: THEN check for existing session (INITIAL LOAD)
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
 
-    return () => subscription.unsubscribe();
+        logAuthStart({ token_existe: !!existingSession?.access_token });
+
+        setSession(existingSession);
+        setUser(existingSession?.user ?? null);
+
+        // Validate session
+        const validation = validateSession(existingSession);
+        logAuthValidate({ token_valido: validation.isValid });
+
+        // Fetch roles BEFORE setting loading false
+        if (existingSession?.user && validation.isValid) {
+          const fetchedRoles = await fetchUserData(existingSession.user.id);
+          
+          logDebugSummary('Initial Auth Complete', {
+            user_id: existingSession.user.id,
+            email: existingSession.user.email,
+            roles: fetchedRoles,
+            session_valid: validation.isValid,
+          });
+        }
+      } catch (error) {
+        logAuthError("Initial auth failed", { error: String(error) });
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+          setInitialLoadComplete(true);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, metadata: SignUpMetadata) => {
@@ -124,11 +197,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
-        console.error("[AUTH_ERROR] Signup failed:", error.message);
+        logAuthError("Signup failed", { error: error.message });
         return { error };
       }
 
-      // After successful signup, assign role via edge function or direct insert
+      // After successful signup, assign role
       if (data.user) {
         const { error: roleError } = await supabase
           .from("user_roles")
@@ -138,7 +211,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
 
         if (roleError) {
-          console.error("[AUTH_ERROR] Role assignment failed:", roleError.message);
+          logAuthError("Role assignment failed", { error: roleError.message });
+        } else {
+          // Update local state with the new role
+          setRoles([metadata.role]);
+          logAuthRole({ role_detectado: metadata.role });
         }
 
         // Update profile with additional data
@@ -151,12 +228,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             })
             .eq("user_id", data.user.id);
         }
-
-        console.log("[AUTH_OK]", data.user.id, metadata.role);
       }
 
       return { error: null };
     } catch (err) {
+      logAuthError("Signup exception", { error: String(err) });
       return { error: err as Error };
     }
   };
@@ -169,13 +245,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
-        console.error("[AUTH_ERROR] Login failed:", error.message);
+        logAuthError("Login failed", { error: error.message });
         return { error };
       }
 
-      console.log("[AUTH_OK] Login successful");
       return { error: null };
     } catch (err) {
+      logAuthError("Login exception", { error: String(err) });
       return { error: err as Error };
     }
   };
@@ -198,6 +274,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return signIn(profileData.email, password);
     } catch (err) {
+      logAuthError("WhatsApp login failed", { error: String(err) });
       return { error: err as Error };
     }
   };
@@ -214,35 +291,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
-        console.error("[AUTH_ERROR] Magic link failed:", error.message);
+        logAuthError("Magic link failed", { error: error.message });
         return { error };
       }
 
-      console.log("[AUTH_OK] Magic link sent");
       return { error: null };
     } catch (err) {
+      logAuthError("Magic link exception", { error: String(err) });
       return { error: err as Error };
     }
   };
 
   const signOut = async () => {
     const currentPath = window.location.pathname;
+    
     await supabase.auth.signOut();
+    clearLocalStorageToken();
+    
     setUser(null);
     setSession(null);
     setProfile(null);
     setRoles([]);
     
-    // Redirect to appropriate login page based on current path
-    if (currentPath.startsWith('/admin')) {
-      window.location.href = '/admin/login';
-    } else if (currentPath.startsWith('/contador2026')) {
-      window.location.href = '/contador2026/login';
-    } else if (currentPath.startsWith('/afiliado-saas')) {
-      window.location.href = '/afiliado-saas/login';
-    } else {
-      window.location.href = '/public/login';
-    }
+    // Redirect to appropriate login page
+    const loginPath = getLoginPath(currentPath);
+    window.location.href = loginPath;
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
@@ -263,6 +336,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       roles,
       loading,
+      initialLoadComplete,
       signUp,
       signIn,
       signInWithWhatsApp,
@@ -284,26 +358,5 @@ export function useAuth() {
   return context;
 }
 
-// Route protection helper - Updated for new route structure
-export function getRedirectPath(role: AppRole | null): string {
-  switch (role) {
-    case 'super_admin': return '/admin/dashboard';
-    case 'contador': return '/contador2026/dashboard';
-    case 'dono': return '/app/dashboard';
-    case 'profissional': return '/app/profissional/dashboard';
-    case 'afiliado_saas': return '/afiliado-saas/dashboard';
-    case 'afiliado_barbearia': return '/app/cliente';
-    case 'cliente': return '/app/cliente';
-    default: return '/public/login';
-  }
-}
-
-// Get login path for a specific role
-export function getLoginPath(role: AppRole | null): string {
-  switch (role) {
-    case 'super_admin': return '/admin/login';
-    case 'contador': return '/contador2026/login';
-    case 'afiliado_saas': return '/afiliado-saas/login';
-    default: return '/public/login';
-  }
-}
+// Re-export helper functions from route-config
+export { getDashboardForRole as getRedirectPath, getLoginPathFromRoute as getLoginPathForRole } from "@/lib/debug/route-config";
