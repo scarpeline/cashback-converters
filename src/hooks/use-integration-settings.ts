@@ -116,17 +116,26 @@ export function useIntegrationSettings() {
       isActive: boolean;
     }
   ) => {
+    const sha256Hex = async (value: string) => {
+      const bytes = new TextEncoder().encode(value);
+      const digest = await crypto.subtle.digest("SHA-256", bytes);
+      return Array.from(new Uint8Array(digest))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    };
+
     try {
       // Verificar se já existe
       const existing = settings.find(
         (s) => s.service_name === service && s.environment === environment
       );
 
+      // IMPORTANTE: não persistimos chaves em texto puro no frontend.
       const payload = {
         service_name: service,
         environment,
-        api_key_hash: config.apiKey || null, // Em produção, usar hash
-        webhook_secret_hash: config.webhookSecret || null,
+        api_key_hash: config.apiKey ? await sha256Hex(config.apiKey) : null,
+        webhook_secret_hash: config.webhookSecret ? await sha256Hex(config.webhookSecret) : null,
         base_url: config.baseUrl || null,
         from_email: config.fromEmail || null,
         is_active: config.isActive,

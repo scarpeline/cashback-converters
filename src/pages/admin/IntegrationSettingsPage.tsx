@@ -274,12 +274,12 @@ export default function IntegrationSettingsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Label>URL do Webhook (configure no painel Asaas)</Label>
+                <Label>URL do Webhook (configure no painel de pagamentos)</Label>
                 <code className="block p-3 bg-muted rounded-md text-sm break-all">
-                  {window.location.origin}/api/webhooks/asaas
+                  {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/asaas-webhook`}
                 </code>
                 <p className="text-sm text-muted-foreground">
-                  Configure esta URL no painel do Asaas para receber notificações de pagamento.
+                  Use esta URL para receber atualizações automáticas de status (sandbox e produção).
                 </p>
               </div>
             </CardContent>
