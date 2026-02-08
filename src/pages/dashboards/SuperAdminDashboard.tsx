@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -20,9 +20,21 @@ import {
   Activity,
   AlertTriangle,
   CheckCircle,
-  TrendingUp
+  TrendingUp,
+  Plug,
+  Loader2
 } from "lucide-react";
 import logo from "@/assets/logo.png";
+
+// Lazy load das páginas de integração
+const IntegrationSettingsPage = lazy(() => import("@/pages/admin/IntegrationSettingsPage"));
+
+// Page loader para lazy components
+const PageFallback = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+  </div>
+);
 
 const SuperAdminDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -38,6 +50,7 @@ const SuperAdminDashboard = () => {
     { name: "Afiliados", href: `${basePath}/afiliados`, icon: Users },
     { name: "Contadores", href: `${basePath}/contadores`, icon: Calculator },
     { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
+    { name: "Integrações", href: `${basePath}/integracoes`, icon: Plug },
     { name: "Pixels Globais", href: `${basePath}/pixels`, icon: Image },
     { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
@@ -139,6 +152,11 @@ const SuperAdminDashboard = () => {
             <Route path="afiliados" element={<AfiliadosPage />} />
             <Route path="contadores" element={<ContadoresPage />} />
             <Route path="financeiro" element={<FinanceiroPage />} />
+            <Route path="integracoes" element={
+              <Suspense fallback={<PageFallback />}>
+                <IntegrationSettingsPage />
+              </Suspense>
+            } />
             <Route path="pixels" element={<PixelsPage />} />
             <Route path="suporte" element={<SuportePage />} />
             <Route path="notificacoes" element={<NotificacoesPage />} />
