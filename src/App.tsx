@@ -4,8 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/lib/auth";
+import { AuthProvider, useAuth } from "@/lib/auth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { AuthGuard } from "@/components/auth/AuthGuard";
+import { FirstLoadGuard } from "@/components/auth/FirstLoadGuard";
 import { Loader2 } from "lucide-react";
 
 // Lazy loading for pages - optimizes first load
@@ -38,6 +40,157 @@ const PageLoader = () => (
   </div>
 );
 
+// Inner app component that uses auth context
+function AppRoutes() {
+  const { loading, initialLoadComplete } = useAuth();
+
+  return (
+    <FirstLoadGuard isLoading={loading || !initialLoadComplete}>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* ============================================ */}
+          {/* PUBLIC ROUTES */}
+          {/* ============================================ */}
+          
+          {/* Landing page */}
+          <Route path="/" element={<Index />} />
+          
+          {/* Public login page (Cliente, Profissional, Dono) - wrapped with AuthGuard */}
+          <Route path="/public/login" element={
+            <AuthGuard>
+              <PublicLoginPage />
+            </AuthGuard>
+          } />
+          
+          {/* Legacy auth route - redirect to new structure */}
+          <Route path="/auth" element={<Navigate to="/public/login" replace />} />
+          
+          {/* ============================================ */}
+          {/* AFILIADO SAAS ROUTES */}
+          {/* ============================================ */}
+          
+          {/* Afiliado SaaS login - wrapped with AuthGuard */}
+          <Route path="/afiliado-saas" element={<Navigate to="/afiliado-saas/login" replace />} />
+          <Route path="/afiliado-saas/login" element={
+            <AuthGuard>
+              <AfiliadoSaasLoginPage />
+            </AuthGuard>
+          } />
+          
+          {/* Afiliado SaaS dashboard - protected */}
+          <Route 
+            path="/afiliado-saas/dashboard/*" 
+            element={
+              <ProtectedRoute allowedRoles={['afiliado_saas']}>
+                <AfiliadoDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* ============================================ */}
+          {/* CONTADOR ROUTES */}
+          {/* ============================================ */}
+          
+          {/* Contador login (magic link) - wrapped with AuthGuard */}
+          <Route path="/contador2026" element={<Navigate to="/contador2026/login" replace />} />
+          <Route path="/contador2026/login" element={
+            <AuthGuard>
+              <ContadorLoginPage />
+            </AuthGuard>
+          } />
+          
+          {/* Contador dashboard - protected */}
+          <Route 
+            path="/contador2026/dashboard/*" 
+            element={
+              <ProtectedRoute allowedRoles={['contador']}>
+                <ContadorDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* ============================================ */}
+          {/* SUPER ADMIN ROUTES */}
+          {/* ============================================ */}
+          
+          {/* Admin login (magic link, authorized emails only) - wrapped with AuthGuard */}
+          <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+          <Route path="/admin/login" element={
+            <AuthGuard>
+              <AdminLoginPage />
+            </AuthGuard>
+          } />
+          
+          {/* Super Admin dashboard - protected */}
+          <Route 
+            path="/admin/dashboard/*" 
+            element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Legacy super admin routes - redirect */}
+          <Route path="/super-admin2026ok" element={<Navigate to="/admin/login" replace />} />
+          <Route path="/super-admin/*" element={<Navigate to="/admin/dashboard" replace />} />
+          
+          {/* ============================================ */}
+          {/* APP ROUTES (Cliente, Dono, Profissional) */}
+          {/* ============================================ */}
+          
+          {/* App dashboard - Dono only */}
+          <Route 
+            path="/app/dashboard/*" 
+            element={
+              <ProtectedRoute allowedRoles={['dono']}>
+                <DonoDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Cliente and Afiliado Barbearia routes */}
+          <Route 
+            path="/app/cliente/*" 
+            element={
+              <ProtectedRoute allowedRoles={['cliente', 'afiliado_barbearia']}>
+                <ClienteDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Profissional dashboard */}
+          <Route 
+            path="/app/profissional/dashboard/*" 
+            element={
+              <ProtectedRoute allowedRoles={['profissional']}>
+                <ProfissionalDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* ============================================ */}
+          {/* LEGACY ROUTES - Redirects */}
+          {/* ============================================ */}
+          
+          <Route path="/cliente/*" element={<Navigate to="/app/cliente" replace />} />
+          <Route path="/dono/*" element={<Navigate to="/app/dashboard" replace />} />
+          <Route path="/profissional/*" element={<Navigate to="/app/profissional/dashboard" replace />} />
+          <Route path="/afiliado/*" element={<Navigate to="/afiliado-saas/dashboard" replace />} />
+          <Route path="/contador/*" element={<Navigate to="/contador2026/dashboard" replace />} />
+          
+          {/* ============================================ */}
+          {/* 404 - Catch all (PUBLIC, no session required) */}
+          {/* ============================================ */}
+          
+          <Route path="/public/404" element={<NotFoundPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+    </FirstLoadGuard>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -45,131 +198,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              {/* ============================================ */}
-              {/* PUBLIC ROUTES */}
-              {/* ============================================ */}
-              
-              {/* Landing page */}
-              <Route path="/" element={<Index />} />
-              
-              {/* Public login page (Cliente, Profissional, Dono) */}
-              <Route path="/public/login" element={<PublicLoginPage />} />
-              
-              {/* Legacy auth route - redirect to new structure */}
-              <Route path="/auth" element={<Navigate to="/public/login" replace />} />
-              
-              {/* ============================================ */}
-              {/* AFILIADO SAAS ROUTES */}
-              {/* ============================================ */}
-              
-              {/* Afiliado SaaS login */}
-              <Route path="/afiliado-saas" element={<Navigate to="/afiliado-saas/login" replace />} />
-              <Route path="/afiliado-saas/login" element={<AfiliadoSaasLoginPage />} />
-              
-              {/* Afiliado SaaS dashboard - protected */}
-              <Route 
-                path="/afiliado-saas/dashboard/*" 
-                element={
-                  <ProtectedRoute allowedRoles={['afiliado_saas']}>
-                    <AfiliadoDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* ============================================ */}
-              {/* CONTADOR ROUTES */}
-              {/* ============================================ */}
-              
-              {/* Contador login (magic link) */}
-              <Route path="/contador2026" element={<Navigate to="/contador2026/login" replace />} />
-              <Route path="/contador2026/login" element={<ContadorLoginPage />} />
-              
-              {/* Contador dashboard - protected */}
-              <Route 
-                path="/contador2026/dashboard/*" 
-                element={
-                  <ProtectedRoute allowedRoles={['contador']}>
-                    <ContadorDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* ============================================ */}
-              {/* SUPER ADMIN ROUTES */}
-              {/* ============================================ */}
-              
-              {/* Admin login (magic link, authorized emails only) */}
-              <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
-              <Route path="/admin/login" element={<AdminLoginPage />} />
-              
-              {/* Super Admin dashboard - protected */}
-              <Route 
-                path="/admin/dashboard/*" 
-                element={
-                  <ProtectedRoute allowedRoles={['super_admin']}>
-                    <SuperAdminDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Legacy super admin routes - redirect */}
-              <Route path="/super-admin2026ok" element={<Navigate to="/admin/login" replace />} />
-              <Route path="/super-admin/*" element={<Navigate to="/admin/dashboard" replace />} />
-              
-              {/* ============================================ */}
-              {/* APP ROUTES (Cliente, Dono, Profissional) */}
-              {/* ============================================ */}
-              
-              {/* App dashboard - Dono only */}
-              <Route 
-                path="/app/dashboard/*" 
-                element={
-                  <ProtectedRoute allowedRoles={['dono']}>
-                    <DonoDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Cliente and Afiliado Barbearia routes */}
-              <Route 
-                path="/app/cliente/*" 
-                element={
-                  <ProtectedRoute allowedRoles={['cliente', 'afiliado_barbearia']}>
-                    <ClienteDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Profissional dashboard */}
-              <Route 
-                path="/app/profissional/dashboard/*" 
-                element={
-                  <ProtectedRoute allowedRoles={['profissional']}>
-                    <ProfissionalDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* ============================================ */}
-              {/* LEGACY ROUTES - Redirects */}
-              {/* ============================================ */}
-              
-              <Route path="/cliente/*" element={<Navigate to="/app/cliente" replace />} />
-              <Route path="/dono/*" element={<Navigate to="/app/dashboard" replace />} />
-              <Route path="/profissional/*" element={<Navigate to="/app/profissional/dashboard" replace />} />
-              <Route path="/afiliado/*" element={<Navigate to="/afiliado-saas/dashboard" replace />} />
-              <Route path="/contador/*" element={<Navigate to="/contador2026/dashboard" replace />} />
-              
-              {/* ============================================ */}
-              {/* 404 - Catch all */}
-              {/* ============================================ */}
-              
-              <Route path="/public/404" element={<NotFoundPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </Suspense>
+          <AppRoutes />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
