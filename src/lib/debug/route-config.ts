@@ -1,6 +1,12 @@
 /**
  * Route Configuration
- * Mapa de rotas por perfil de usuário
+ * Mapa centralizado de rotas por perfil de usuário
+ * 
+ * Este arquivo é a fonte de verdade para:
+ * - Dashboards por perfil
+ * - Rotas de login por perfil
+ * - Validação de acesso a rotas
+ * - Redirecionamentos
  */
 
 import { AppRole } from "@/lib/auth";
@@ -12,7 +18,7 @@ interface RouteConfig {
   loginPath?: string;
 }
 
-// Rotas por perfil de usuário
+// Rotas permitidas por perfil de usuário
 export const ROLE_ROUTES: Record<AppRole, string[]> = {
   cliente: ['/app/cliente'],
   dono: ['/app/dashboard'],
@@ -23,7 +29,7 @@ export const ROLE_ROUTES: Record<AppRole, string[]> = {
   super_admin: ['/admin/dashboard'],
 };
 
-// Dashboard principal por role
+// Dashboard principal por role - FONTE DE VERDADE para redirecionamentos
 export const ROLE_DASHBOARD: Record<AppRole, string> = {
   cliente: '/app/cliente',
   dono: '/app/dashboard',
@@ -34,7 +40,7 @@ export const ROLE_DASHBOARD: Record<AppRole, string> = {
   super_admin: '/admin/dashboard',
 };
 
-// Login path por role
+// Login path por role - onde redirecionar para fazer login
 export const ROLE_LOGIN_PATH: Record<AppRole, string> = {
   cliente: '/public/login',
   dono: '/public/login',
@@ -56,18 +62,31 @@ export const PUBLIC_ROUTES = [
   '/auth',
 ];
 
+// Rotas de login - para evitar loops
+export const LOGIN_ROUTES = [
+  '/public/login',
+  '/afiliado-saas/login',
+  '/contador2026/login',
+  '/admin/login',
+  '/auth',
+];
+
 // Rotas protegidas e seus roles permitidos
 export const PROTECTED_ROUTES: RouteConfig[] = [
-  // App routes
+  // App routes - usuários comuns
   { path: '/app/dashboard', allowedRoles: ['dono'] },
   { path: '/app/cliente', allowedRoles: ['cliente', 'afiliado_barbearia'] },
   { path: '/app/profissional/dashboard', allowedRoles: ['profissional'] },
+  
   // Afiliado SaaS
   { path: '/afiliado-saas/dashboard', allowedRoles: ['afiliado_saas'] },
+  
   // Contador
   { path: '/contador2026/dashboard', allowedRoles: ['contador'] },
+  
   // Admin
   { path: '/admin/dashboard', allowedRoles: ['super_admin'] },
+  { path: '/admin/integracoes', allowedRoles: ['super_admin'] },
 ];
 
 /**
@@ -79,7 +98,7 @@ export function routeExists(pathname: string): boolean {
     return true;
   }
   
-  // Check protected routes
+  // Check protected routes (prefix match)
   if (PROTECTED_ROUTES.some(route => pathname.startsWith(route.path))) {
     return true;
   }
@@ -97,6 +116,7 @@ export function routeExists(pathname: string): boolean {
  * Verifica se um role tem permissão para acessar uma rota
  */
 export function roleCanAccessRoute(pathname: string, roles: AppRole[]): boolean {
+  // Find matching protected route
   const route = PROTECTED_ROUTES.find(r => pathname.startsWith(r.path));
   
   if (!route) {
@@ -104,11 +124,13 @@ export function roleCanAccessRoute(pathname: string, roles: AppRole[]): boolean 
     return PUBLIC_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'));
   }
   
+  // Check if any user role matches allowed roles
   return route.allowedRoles.some(allowedRole => roles.includes(allowedRole));
 }
 
 /**
  * Retorna o caminho de login apropriado baseado na rota atual
+ * Usado para redirecionar usuários não autenticados
  */
 export function getLoginPathFromRoute(pathname: string): string {
   if (pathname.startsWith('/admin')) return '/admin/login';
@@ -119,6 +141,7 @@ export function getLoginPathFromRoute(pathname: string): string {
 
 /**
  * Retorna o dashboard apropriado para um role
+ * Esta é a função principal para redirecionamentos pós-login
  */
 export function getDashboardForRole(role: AppRole | null): string {
   if (!role) return '/public/login';
@@ -138,8 +161,17 @@ export function isPublicRoute(pathname: string): boolean {
 
 /**
  * Verifica se uma rota é de login
+ * Usado para prevenir loops de redirecionamento
  */
 export function isLoginRoute(pathname: string): boolean {
-  const loginRoutes = ['/public/login', '/afiliado-saas/login', '/contador2026/login', '/admin/login', '/auth'];
-  return loginRoutes.includes(pathname);
+  return LOGIN_ROUTES.includes(pathname);
+}
+
+/**
+ * Retorna o login path apropriado para um role específico
+ * Usado para logout contextual
+ */
+export function getLoginPathForRole(role: AppRole | null): string {
+  if (!role) return '/public/login';
+  return ROLE_LOGIN_PATH[role] || '/public/login';
 }

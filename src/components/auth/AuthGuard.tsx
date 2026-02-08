@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { getDashboardForRole, isLoginRoute } from "@/lib/debug/route-config";
@@ -12,27 +12,46 @@ interface AuthGuardProps {
 /**
  * AuthGuard - Redireciona usuários autenticados para fora de páginas de login
  * 
- * Usado em páginas de login para prevenir que usuários já logados
+ * Usado SOMENTE em páginas de login para prevenir que usuários já logados
  * acessem a tela de login novamente.
  * 
- * REGRA ANTI-LOOP: Não redireciona se já estiver em página de login
+ * REGRAS ANTI-LOOP:
+ * - Só redireciona se estiver em página de login
+ * - Nunca redireciona para outra página de login
+ * - Usa useRef para evitar redirecionamentos duplicados
  */
 export function AuthGuard({ children }: AuthGuardProps) {
   const { user, loading, getPrimaryRole, roles, initialLoadComplete } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const hasRedirectedRef = useRef(false);
+
+  useEffect(() => {
+    // Reset redirect flag when location changes
+    hasRedirectedRef.current = false;
+  }, [location.pathname]);
 
   useEffect(() => {
     // Don't redirect while loading or before initial load is complete
     if (loading || !initialLoadComplete) return;
+
+    // Prevent duplicate redirects
+    if (hasRedirectedRef.current) return;
 
     // User is logged in and has roles - redirect to their dashboard
     if (user && roles.length > 0) {
       const role = getPrimaryRole();
       const redirectPath = getDashboardForRole(role);
       
-      // Anti-loop: Don't redirect if already on a login page
+      // ANTI-LOOP: Only redirect if we're on a login page
       if (isLoginRoute(location.pathname)) {
+        // ANTI-LOOP: Never redirect to another login page
+        if (isLoginRoute(redirectPath)) {
+          return;
+        }
+
+        hasRedirectedRef.current = true;
+        
         logRedirectCheck({
           from: location.pathname,
           to: redirectPath,
@@ -57,7 +76,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   }
 
   // User is logged in with roles - show loading while redirect happens
-  if (user && roles.length > 0) {
+  if (user && roles.length > 0 && isLoginRoute(location.pathname)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
