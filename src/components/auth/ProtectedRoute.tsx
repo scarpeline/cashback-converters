@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth, AppRole, getRedirectPath } from "@/lib/auth";
 import { Loader2 } from "lucide-react";
@@ -11,7 +12,20 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, allowedRoles, redirectTo }: ProtectedRouteProps) {
   const { user, loading, roles, getPrimaryRole } = useAuth();
   const location = useLocation();
+  const [roleLoadTimeout, setRoleLoadTimeout] = useState(false);
 
+  // Set a timeout to prevent infinite loading when roles never arrive
+  useEffect(() => {
+    if (user && roles.length === 0 && !loading) {
+      const timer = setTimeout(() => {
+        setRoleLoadTimeout(true);
+      }, 3000); // 3 seconds max wait for roles
+
+      return () => clearTimeout(timer);
+    }
+  }, [user, roles, loading]);
+
+  // Still loading auth state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -29,10 +43,16 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
-  // User authenticated but no roles assigned yet - wait a bit for roles to load
-  // or redirect to login if after a reasonable time no roles are found
+  // User authenticated but no roles assigned yet - wait briefly, then redirect
   if (roles.length === 0) {
-    // Give a small grace period for roles to be fetched
+    if (roleLoadTimeout) {
+      // Timeout expired - redirect to login with error
+      console.warn("[AUTH] No roles found for user after timeout, redirecting to login");
+      const loginPath = getLoginPathFromRoute(location.pathname);
+      return <Navigate to={loginPath} state={{ from: location, error: "no_roles" }} replace />;
+    }
+
+    // Still waiting for roles
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
