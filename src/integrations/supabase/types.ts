@@ -190,6 +190,27 @@ export type Database = {
           },
         ]
       }
+      app_environment: {
+        Row: {
+          current_env: string
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          current_env?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          current_env?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           barbershop_id: string
@@ -425,6 +446,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      integration_logs: {
+        Row: {
+          created_at: string
+          environment: string
+          error_message: string | null
+          event_type: string
+          id: string
+          request_data: Json | null
+          response_data: Json | null
+          service: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          environment: string
+          error_message?: string | null
+          event_type: string
+          id?: string
+          request_data?: Json | null
+          response_data?: Json | null
+          service: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          environment?: string
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          request_data?: Json | null
+          response_data?: Json | null
+          service?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
+      integration_settings: {
+        Row: {
+          api_key_hash: string | null
+          base_url: string | null
+          created_at: string
+          environment: string
+          from_email: string | null
+          id: string
+          is_active: boolean | null
+          service_name: string
+          updated_at: string
+          webhook_secret_hash: string | null
+        }
+        Insert: {
+          api_key_hash?: string | null
+          base_url?: string | null
+          created_at?: string
+          environment?: string
+          from_email?: string | null
+          id?: string
+          is_active?: boolean | null
+          service_name: string
+          updated_at?: string
+          webhook_secret_hash?: string | null
+        }
+        Update: {
+          api_key_hash?: string | null
+          base_url?: string | null
+          created_at?: string
+          environment?: string
+          from_email?: string | null
+          id?: string
+          is_active?: boolean | null
+          service_name?: string
+          updated_at?: string
+          webhook_secret_hash?: string | null
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
