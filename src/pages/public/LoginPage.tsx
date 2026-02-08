@@ -7,6 +7,7 @@ import { ArrowLeft, Eye, EyeOff, Loader2, User, Scissors, Store } from "lucide-r
 import { toast } from "sonner";
 import { useAuth, AppRole, getRedirectPath } from "@/lib/auth";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { formatCpfCnpjBR, formatWhatsAppBR } from "@/lib/input-masks";
 import logo from "@/assets/logo.png";
 import { z } from "zod";
 
@@ -317,7 +318,7 @@ const PublicLoginPage = () => {
                   type="tel"
                   placeholder="(00) 00000-0000"
                   value={formData.whatsapp}
-                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, whatsapp: formatWhatsAppBR(e.target.value) })}
                   className={`mt-1 ${errors.whatsapp || errors.identifier ? "border-destructive" : ""}`}
                 />
                 {(errors.whatsapp || errors.identifier) && (
@@ -353,7 +354,7 @@ const PublicLoginPage = () => {
                   type="text"
                   placeholder="000.000.000-00 ou 00.000.000/0000-00"
                   value={formData.cpfCnpj}
-                  onChange={(e) => setFormData({ ...formData, cpfCnpj: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, cpfCnpj: formatCpfCnpjBR(e.target.value) })}
                   className="mt-1"
                 />
               </div>

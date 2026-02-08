@@ -58,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const initRef = useRef(false);
+  const roleBootstrapAttemptedRef = useRef(false);
 
   const fetchUserData = async (userId: string): Promise<AppRole[]> => {
     try {
@@ -95,6 +96,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  /**
+   * Auto-correção: se o usuário autenticou mas não tem role ainda,
+   * tentamos “bootstrapar” pelo backend (seguro) e re-fetch.
+   */
+  const bootstrapRoles = async (sessionUser: User) => {
+    if (roleBootstrapAttemptedRef.current) return;
+    roleBootstrapAttemptedRef.current = true;
+
+    try {
+      const { data, error } = await supabase.functions.invoke("bootstrap-role", {
+        body: {
+          user_id: sessionUser.id,
+          email: sessionUser.email,
+        },
+      });
+
+      if (error) {
+        logAuthError("Role bootstrap failed", { error: error.message });
+        return;
+      }
+
+      if (data?.role_assigned) {
+        logAuthRole({ role_detectado: data.role_assigned as AppRole });
+      }
+    } catch (error) {
+      logAuthError("Role bootstrap exception", { error: String(error) });
+    }
+  };
+
   useEffect(() => {
     // Prevent double initialization in strict mode
     if (initRef.current) return;
@@ -119,13 +149,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Defer Supabase calls with setTimeout to prevent deadlock
         if (currentSession?.user && validation.isValid) {
           setTimeout(() => {
-            if (isMounted) {
-              fetchUserData(currentSession.user.id);
-            }
+            if (!isMounted) return;
+
+            (async () => {
+              const fetchedRoles = await fetchUserData(currentSession.user.id);
+
+              // Self-heal roles when missing (common cause of redirect-to-login)
+              if (fetchedRoles.length === 0) {
+                await bootstrapRoles(currentSession.user);
+                await fetchUserData(currentSession.user.id);
+              }
+            })();
           }, 0);
         } else {
           setProfile(null);
           setRoles([]);
+          roleBootstrapAttemptedRef.current = false;
         }
 
         // Only set loading false on subsequent changes, not initial
@@ -153,7 +192,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Fetch roles BEFORE setting loading false
         if (existingSession?.user && validation.isValid) {
-          const fetchedRoles = await fetchUserData(existingSession.user.id);
+          let fetchedRoles = await fetchUserData(existingSession.user.id);
+
+          // Self-heal roles (missing role row is the #1 cause of dashboard redirect)
+          if (fetchedRoles.length === 0) {
+            await bootstrapRoles(existingSession.user);
+            fetchedRoles = await fetchUserData(existingSession.user.id);
+          }
           
           logDebugSummary('Initial Auth Complete', {
             user_id: existingSession.user.id,

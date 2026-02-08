@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { FirstLoadGuard } from "@/components/auth/FirstLoadGuard";
+import { EntryRedirect } from "@/components/auth/EntryRedirect";
 import { Loader2 } from "lucide-react";
 
 // Lazy loading for pages - optimizes first load
@@ -70,7 +71,16 @@ function AppRoutes() {
           {/* ============================================ */}
           
           {/* Afiliado SaaS login - wrapped with AuthGuard */}
-          <Route path="/afiliado-saas" element={<Navigate to="/afiliado-saas/login" replace />} />
+          <Route
+            path="/afiliado-saas"
+            element={
+              <EntryRedirect
+                loggedOutTo="/afiliado-saas/login"
+                loggedInTo="/afiliado-saas/dashboard"
+                requiredRoles={['afiliado_saas']}
+              />
+            }
+          />
           <Route path="/afiliado-saas/login" element={
             <AuthGuard>
               <AfiliadoSaasLoginPage />
@@ -92,7 +102,16 @@ function AppRoutes() {
           {/* ============================================ */}
           
           {/* Contador login (magic link) - wrapped with AuthGuard */}
-          <Route path="/contador2026" element={<Navigate to="/contador2026/login" replace />} />
+          <Route
+            path="/contador2026"
+            element={
+              <EntryRedirect
+                loggedOutTo="/contador2026/login"
+                loggedInTo="/contador2026/dashboard"
+                requiredRoles={['contador']}
+              />
+            }
+          />
           <Route path="/contador2026/login" element={
             <AuthGuard>
               <ContadorLoginPage />
@@ -114,7 +133,16 @@ function AppRoutes() {
           {/* ============================================ */}
           
           {/* Admin login (magic link, authorized emails only) - wrapped with AuthGuard */}
-          <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+          <Route
+            path="/admin"
+            element={
+              <EntryRedirect
+                loggedOutTo="/admin/login"
+                loggedInTo="/admin/dashboard"
+                requiredRoles={['super_admin']}
+              />
+            }
+          />
           <Route path="/admin/login" element={
             <AuthGuard>
               <AdminLoginPage />
