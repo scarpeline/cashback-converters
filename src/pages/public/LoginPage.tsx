@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Eye, EyeOff, Loader2, User, Scissors, Store } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth, AppRole, getRedirectPath } from "@/lib/auth";
+import { useAuth, AppRole, getDashboardForRole } from "@/lib/auth";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { formatCpfCnpjBR, formatWhatsAppBR } from "@/lib/input-masks";
 import logo from "@/assets/logo.png";
@@ -52,7 +52,7 @@ const PublicLoginPage = () => {
   useEffect(() => {
     if (user && !authLoading) {
       const role = getPrimaryRole();
-      navigate(getRedirectPath(role), { replace: true });
+      navigate(getDashboardForRole(role), { replace: true });
     }
   }, [user, authLoading, navigate, getPrimaryRole]);
 

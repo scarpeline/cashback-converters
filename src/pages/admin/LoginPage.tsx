@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2, Shield, Mail, CheckCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth, getRedirectPath } from "@/lib/auth";
+import { useAuth, getDashboardForRole } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
@@ -27,7 +27,7 @@ const AdminLoginPage = () => {
   useEffect(() => {
     if (user && !authLoading) {
       const role = getPrimaryRole();
-      navigate(getRedirectPath(role), { replace: true });
+      navigate(getDashboardForRole(role), { replace: true });
     }
   }, [user, authLoading, navigate, getPrimaryRole]);
 

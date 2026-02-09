@@ -1,5 +1,5 @@
 /**
- * Route Configuration
+ * Route Configuration - SALÃO CASHBACK
  * Mapa centralizado de rotas por perfil de usuário
  * 
  * Este arquivo é a fonte de verdade para:
@@ -7,9 +7,13 @@
  * - Rotas de login por perfil
  * - Validação de acesso a rotas
  * - Redirecionamentos
+ * 
+ * REGRA ABSOLUTA:
+ * - Nunca remover sessão ativa
+ * - Nunca redirecionar sem validar role
  */
 
-import { AppRole } from "@/lib/auth";
+import type { AppRole } from "@/lib/auth";
 
 interface RouteConfig {
   path: string;
@@ -18,75 +22,96 @@ interface RouteConfig {
   loginPath?: string;
 }
 
-// Rotas permitidas por perfil de usuário
-export const ROLE_ROUTES: Record<AppRole, string[]> = {
-  cliente: ['/app/cliente'],
-  dono: ['/app/dashboard'],
-  profissional: ['/app/profissional/dashboard'],
-  afiliado_barbearia: ['/app/cliente'],
-  afiliado_saas: ['/afiliado-saas/dashboard'],
-  contador: ['/contador2026/dashboard'],
-  super_admin: ['/admin/dashboard'],
-};
-
-// Dashboard principal por role - FONTE DE VERDADE para redirecionamentos
+/**
+ * Dashboard principal por role - FONTE DE VERDADE para redirecionamentos
+ * ATUALIZADO conforme spec do usuário
+ */
 export const ROLE_DASHBOARD: Record<AppRole, string> = {
-  cliente: '/app/cliente',
-  dono: '/app/dashboard',
-  profissional: '/app/profissional/dashboard',
-  afiliado_barbearia: '/app/cliente',
-  afiliado_saas: '/afiliado-saas/dashboard',
-  contador: '/contador2026/dashboard',
-  super_admin: '/admin/dashboard',
+  cliente: '/app',
+  dono: '/painel-dono',
+  profissional: '/painel-profissional',
+  afiliado_barbearia: '/app',
+  afiliado_saas: '/afiliado-saas',
+  contador: '/contador2026',
+  super_admin: '/admin',
 };
 
-// Login path por role - onde redirecionar para fazer login
+/**
+ * Rotas permitidas por perfil de usuário (inclui sub-rotas)
+ */
+export const ROLE_ROUTES: Record<AppRole, string[]> = {
+  cliente: ['/app'],
+  dono: ['/painel-dono'],
+  profissional: ['/painel-profissional'],
+  afiliado_barbearia: ['/app'],
+  afiliado_saas: ['/afiliado-saas'],
+  contador: ['/contador2026'],
+  super_admin: ['/admin'],
+};
+
+/**
+ * Login path por role - onde redirecionar para fazer login
+ */
 export const ROLE_LOGIN_PATH: Record<AppRole, string> = {
-  cliente: '/public/login',
-  dono: '/public/login',
-  profissional: '/public/login',
-  afiliado_barbearia: '/public/login',
+  cliente: '/login',
+  dono: '/login',
+  profissional: '/login',
+  afiliado_barbearia: '/login',
   afiliado_saas: '/afiliado-saas/login',
   contador: '/contador2026/login',
   super_admin: '/admin/login',
 };
 
-// Rotas públicas que não requerem autenticação
+/**
+ * Rotas públicas que não requerem autenticação
+ */
 export const PUBLIC_ROUTES = [
   '/',
-  '/public/login',
-  '/public/404',
+  '/login',
+  '/cadastro',
   '/afiliado-saas/login',
+  '/afiliado-saas/cadastro',
   '/contador2026/login',
   '/admin/login',
-  '/auth',
+  '/404',
+  '/auth', // legacy
+  '/public/login', // legacy
+  '/public/404', // legacy
 ];
 
-// Rotas de login - para evitar loops
+/**
+ * Rotas de login - para evitar loops de redirecionamento
+ */
 export const LOGIN_ROUTES = [
-  '/public/login',
+  '/login',
   '/afiliado-saas/login',
   '/contador2026/login',
   '/admin/login',
-  '/auth',
+  '/auth', // legacy
+  '/public/login', // legacy
 ];
 
-// Rotas protegidas e seus roles permitidos
+/**
+ * Rotas protegidas e seus roles permitidos
+ */
 export const PROTECTED_ROUTES: RouteConfig[] = [
-  // App routes - usuários comuns
-  { path: '/app/dashboard', allowedRoles: ['dono'] },
-  { path: '/app/cliente', allowedRoles: ['cliente', 'afiliado_barbearia'] },
-  { path: '/app/profissional/dashboard', allowedRoles: ['profissional'] },
+  // Cliente
+  { path: '/app', allowedRoles: ['cliente', 'afiliado_barbearia'] },
+  
+  // Dono de Barbearia
+  { path: '/painel-dono', allowedRoles: ['dono'] },
+  
+  // Profissional
+  { path: '/painel-profissional', allowedRoles: ['profissional'] },
   
   // Afiliado SaaS
-  { path: '/afiliado-saas/dashboard', allowedRoles: ['afiliado_saas'] },
+  { path: '/afiliado-saas', allowedRoles: ['afiliado_saas'] },
   
   // Contador
-  { path: '/contador2026/dashboard', allowedRoles: ['contador'] },
+  { path: '/contador2026', allowedRoles: ['contador'] },
   
   // Admin
-  { path: '/admin/dashboard', allowedRoles: ['super_admin'] },
-  { path: '/admin/integracoes', allowedRoles: ['super_admin'] },
+  { path: '/admin', allowedRoles: ['super_admin'] },
 ];
 
 /**
@@ -99,12 +124,12 @@ export function routeExists(pathname: string): boolean {
   }
   
   // Check protected routes (prefix match)
-  if (PROTECTED_ROUTES.some(route => pathname.startsWith(route.path))) {
+  if (PROTECTED_ROUTES.some(route => pathname === route.path || pathname.startsWith(route.path + '/'))) {
     return true;
   }
   
   // Check legacy redirects
-  const legacyPaths = ['/cliente', '/dono', '/profissional', '/afiliado', '/contador'];
+  const legacyPaths = ['/cliente', '/dono', '/profissional', '/afiliado', '/public'];
   if (legacyPaths.some(path => pathname.startsWith(path))) {
     return true;
   }
@@ -117,7 +142,7 @@ export function routeExists(pathname: string): boolean {
  */
 export function roleCanAccessRoute(pathname: string, roles: AppRole[]): boolean {
   // Find matching protected route
-  const route = PROTECTED_ROUTES.find(r => pathname.startsWith(r.path));
+  const route = PROTECTED_ROUTES.find(r => pathname === r.path || pathname.startsWith(r.path + '/'));
   
   if (!route) {
     // Se não é uma rota protegida definida, verifica PUBLIC_ROUTES
@@ -136,7 +161,7 @@ export function getLoginPathFromRoute(pathname: string): string {
   if (pathname.startsWith('/admin')) return '/admin/login';
   if (pathname.startsWith('/contador2026')) return '/contador2026/login';
   if (pathname.startsWith('/afiliado-saas')) return '/afiliado-saas/login';
-  return '/public/login';
+  return '/login';
 }
 
 /**
@@ -144,8 +169,8 @@ export function getLoginPathFromRoute(pathname: string): string {
  * Esta é a função principal para redirecionamentos pós-login
  */
 export function getDashboardForRole(role: AppRole | null): string {
-  if (!role) return '/public/login';
-  return ROLE_DASHBOARD[role] || '/public/login';
+  if (!role) return '/login';
+  return ROLE_DASHBOARD[role] || '/login';
 }
 
 /**
@@ -154,8 +179,7 @@ export function getDashboardForRole(role: AppRole | null): string {
 export function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some(route => 
     pathname === route || 
-    (route !== '/' && pathname.startsWith(route + '/')) ||
-    pathname === route
+    (route !== '/' && pathname.startsWith(route + '/'))
   );
 }
 
@@ -164,7 +188,7 @@ export function isPublicRoute(pathname: string): boolean {
  * Usado para prevenir loops de redirecionamento
  */
 export function isLoginRoute(pathname: string): boolean {
-  return LOGIN_ROUTES.includes(pathname);
+  return LOGIN_ROUTES.some(route => pathname === route);
 }
 
 /**
@@ -172,6 +196,14 @@ export function isLoginRoute(pathname: string): boolean {
  * Usado para logout contextual
  */
 export function getLoginPathForRole(role: AppRole | null): string {
-  if (!role) return '/public/login';
-  return ROLE_LOGIN_PATH[role] || '/public/login';
+  if (!role) return '/login';
+  return ROLE_LOGIN_PATH[role] || '/login';
+}
+
+/**
+ * Obtém a rota de entrada para um role (sem /login ou /dashboard suffix)
+ */
+export function getEntryPathForRole(role: AppRole | null): string {
+  if (!role) return '/login';
+  return ROLE_DASHBOARD[role] || '/login';
 }

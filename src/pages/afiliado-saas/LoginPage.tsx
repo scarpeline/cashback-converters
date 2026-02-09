@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Eye, EyeOff, Loader2, TrendingUp, Users, DollarSign, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth, getRedirectPath } from "@/lib/auth";
+import { useAuth, getDashboardForRole } from "@/lib/auth";
 import logo from "@/assets/logo.png";
 import { z } from "zod";
 import { formatWhatsAppBR, formatCpfCnpjBR } from "@/lib/input-masks";
@@ -48,7 +48,7 @@ const AfiliadoSaasLoginPage = () => {
   useEffect(() => {
     if (user && !authLoading) {
       const role = getPrimaryRole();
-      navigate(getRedirectPath(role), { replace: true });
+      navigate(getDashboardForRole(role), { replace: true });
     }
   }, [user, authLoading, navigate, getPrimaryRole]);
 
@@ -404,7 +404,7 @@ const AfiliadoSaasLoginPage = () => {
           {/* Login Link */}
           <div className="mt-8 pt-6 border-t border-border text-center">
             <Link 
-              to="/public/login" 
+              to="/login" 
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               Não é afiliado? <span className="underline">Acesse a área geral</span>
