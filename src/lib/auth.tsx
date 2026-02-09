@@ -1,4 +1,16 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useRef } from "react";
+/**
+ * Auth Provider - SALÃO CASHBACK
+ * 
+ * Sistema de autenticação integrado com Supabase
+ * 
+ * REGRAS ABSOLUTAS:
+ * - Nunca remover sessão ativa
+ * - Nunca redirecionar sem validar role
+ * - Sessão persistente com refresh token automático
+ * - Logs obrigatórios para erros de auth, redirect e sessão
+ */
+
+import { createContext, useContext, useEffect, useState, ReactNode, useRef, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -6,10 +18,21 @@ import {
   logAuthValidate, 
   logAuthRole, 
   logAuthError,
-  logDebugSummary 
+  logAuthSuccess,
+  logSessionExpired,
+  logSessionRefresh,
+  logRoleAssignment,
+  logRoleBootstrap,
+  logDebugSummary,
+  logCriticalError,
+  logLoadComplete
 } from "@/lib/debug/auth-logger";
 import { validateSession, clearLocalStorageToken } from "@/lib/debug/session-validator";
-import { getDashboardForRole, getLoginPathFromRoute as getLoginPath } from "@/lib/debug/route-config";
+import { getDashboardForRole, getLoginPathFromRoute } from "@/lib/debug/route-config";
+
+// ============================================
+// TYPES
+// ============================================
 
 export type AppRole = 'cliente' | 'dono' | 'profissional' | 'afiliado_barbearia' | 'afiliado_saas' | 'contador' | 'super_admin';
 
@@ -26,7 +49,7 @@ interface Profile {
 
 interface SignUpMetadata {
   name: string;
-  whatsapp: string;
+  whatsapp?: string;
   role: AppRole;
   cpf_cnpj?: string;
   pix_key?: string;
@@ -39,16 +62,44 @@ interface AuthContextType {
   roles: AppRole[];
   loading: boolean;
   initialLoadComplete: boolean;
-  signUp: (email: string, password: string, metadata: SignUpMetadata) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, metadata: SignUpMetadata) => Promise<{ error: Error | null; needsConfirmation?: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithWhatsApp: (whatsapp: string, password: string) => Promise<{ error: Error | null }>;
   signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
   getPrimaryRole: () => AppRole | null;
+  refreshSession: () => Promise<void>;
 }
 
+// ============================================
+// CONSTANTS
+// ============================================
+
+const PENDING_ROLE_STORAGE_KEY = "scb_pending_role";
+const PENDING_ROLE_USER_KEY = "scb_pending_role_user_id";
+const SELF_ASSIGNABLE_ROLES: AppRole[] = ["cliente", "dono", "afiliado_saas"];
+
+// Priority order for dashboard routing
+const ROLE_PRIORITY: AppRole[] = [
+  'super_admin', 
+  'contador', 
+  'dono', 
+  'profissional', 
+  'afiliado_saas', 
+  'afiliado_barbearia', 
+  'cliente'
+];
+
+// ============================================
+// CONTEXT
+// ============================================
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// ============================================
+// PROVIDER
+// ============================================
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -57,24 +108,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  
   const initRef = useRef(false);
   const roleBootstrapAttemptedRef = useRef(false);
 
-  const PENDING_ROLE_STORAGE_KEY = "scb_pending_role";
-  const PENDING_ROLE_USER_KEY = "scb_pending_role_user_id";
-  const SELF_ASSIGNABLE_ROLES: AppRole[] = ["cliente", "dono", "afiliado_saas"];
+  // ============================================
+  // PENDING ROLE STORAGE (for post-confirmation assignment)
+  // ============================================
 
-  const rememberPendingRole = (userId: string, role: AppRole) => {
+  const rememberPendingRole = useCallback((userId: string, role: AppRole) => {
     if (!SELF_ASSIGNABLE_ROLES.includes(role)) return;
     try {
       localStorage.setItem(PENDING_ROLE_STORAGE_KEY, role);
       localStorage.setItem(PENDING_ROLE_USER_KEY, userId);
     } catch {
-      // ignore
+      // Storage not available
     }
-  };
+  }, []);
 
-  const consumePendingRole = (userId: string): AppRole | null => {
+  const consumePendingRole = useCallback((userId: string): AppRole | null => {
     try {
       const storedUserId = localStorage.getItem(PENDING_ROLE_USER_KEY);
       const storedRole = localStorage.getItem(PENDING_ROLE_STORAGE_KEY) as AppRole | null;
@@ -85,20 +137,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return storedRole;
       }
     } catch {
-      // ignore
+      // Storage not available
     }
-
     return null;
-  };
+  }, []);
 
-  const inferRoleFromEmail = (email: string | undefined | null): AppRole | null => {
+  // ============================================
+  // ROLE INFERENCE
+  // ============================================
+
+  const inferRoleFromEmail = useCallback((email: string | undefined | null): AppRole | null => {
     if (!email) return null;
     // Clientes usam e-mail sintético baseado no WhatsApp
     if (email.endsWith("@salao.app")) return "cliente";
     return null;
-  };
+  }, []);
 
-  const ensureInitialRole = async (sessionUser: User): Promise<AppRole | null> => {
+  // ============================================
+  // ROLE ASSIGNMENT
+  // ============================================
+
+  const ensureInitialRole = useCallback(async (sessionUser: User): Promise<AppRole | null> => {
     const pending = consumePendingRole(sessionUser.id);
     const inferred = inferRoleFromEmail(sessionUser.email);
     const roleToAssign = pending || inferred;
@@ -111,28 +170,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) {
-      // Se já existir (duplicado), seguimos o fluxo normal e re-fetch em seguida.
       const msg = (error.message || "").toLowerCase();
-      if (!msg.includes("duplicate") && !msg.includes("already")) {
+      // Ignore duplicate errors - role already exists
+      if (!msg.includes("duplicate") && !msg.includes("already") && !msg.includes("unique")) {
         logAuthError("Initial role assignment failed", { error: error.message, role: roleToAssign });
+        logRoleAssignment(sessionUser.id, roleToAssign, false);
         return null;
       }
     }
 
+    logRoleAssignment(sessionUser.id, roleToAssign, true);
     logAuthRole({ role_detectado: roleToAssign });
     return roleToAssign;
-  };
+  }, [consumePendingRole, inferRoleFromEmail]);
 
-  const fetchUserData = async (userId: string): Promise<AppRole[]> => {
+  // ============================================
+  // DATA FETCHING
+  // ============================================
+
+  const fetchUserData = useCallback(async (userId: string): Promise<AppRole[]> => {
     try {
       // Fetch profile
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("user_id", userId)
         .maybeSingle();
 
-      if (profileData) {
+      if (profileError) {
+        logAuthError("Failed to fetch profile", { error: profileError.message });
+      } else if (profileData) {
         setProfile(profileData as Profile);
       }
 
@@ -150,20 +217,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const fetchedRoles = rolesData?.map(r => r.role as AppRole) || [];
       setRoles(fetchedRoles);
       
-      logAuthRole({ role_detectado: fetchedRoles[0] || null });
+      if (fetchedRoles.length > 0) {
+        logAuthRole({ role_detectado: fetchedRoles[0] });
+      }
       
       return fetchedRoles;
     } catch (error) {
-      logAuthError("Failed to fetch user data", { error: String(error) });
+      logCriticalError("fetchUserData", error);
       return [];
     }
-  };
+  }, []);
 
-  /**
-   * Auto-correção: se o usuário autenticou mas não tem role ainda,
-   * tentamos “bootstrapar” pelo backend (seguro) e re-fetch.
-   */
-  const bootstrapRoles = async (sessionUser: User) => {
+  // ============================================
+  // ROLE BOOTSTRAP (via Edge Function)
+  // ============================================
+
+  const bootstrapRoles = useCallback(async (sessionUser: User) => {
     if (roleBootstrapAttemptedRef.current) return;
     roleBootstrapAttemptedRef.current = true;
 
@@ -177,16 +246,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         logAuthError("Role bootstrap failed", { error: error.message });
+        logRoleBootstrap(sessionUser.id, null);
         return;
       }
 
       if (data?.role_assigned) {
+        logRoleBootstrap(sessionUser.id, data.role_assigned);
         logAuthRole({ role_detectado: data.role_assigned as AppRole });
       }
     } catch (error) {
-      logAuthError("Role bootstrap exception", { error: String(error) });
+      logCriticalError("bootstrapRoles", error);
     }
-  };
+  }, []);
+
+  // ============================================
+  // SESSION MANAGEMENT
+  // ============================================
+
+  const refreshSession = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error) {
+        logSessionRefresh(false);
+        logAuthError("Session refresh failed", { error: error.message });
+        return;
+      }
+
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.user);
+        logSessionRefresh(true);
+      }
+    } catch (error) {
+      logCriticalError("refreshSession", error);
+    }
+  }, []);
+
+  // ============================================
+  // INITIALIZATION
+  // ============================================
 
   useEffect(() => {
     // Prevent double initialization in strict mode
@@ -194,14 +293,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initRef.current = true;
 
     let isMounted = true;
+    const startTime = Date.now();
 
     // Step 1: Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         if (!isMounted) return;
 
-        logAuthStart({ token_existe: !!currentSession?.access_token });
+        logAuthStart({ token_existe: !!currentSession?.access_token, event });
         
+        // Update state synchronously
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
@@ -209,47 +310,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const validation = validateSession(currentSession);
         logAuthValidate({ token_valido: validation.isValid });
 
+        // Handle session expiration
+        if (validation.isExpired) {
+          logSessionExpired({ 
+            expires_at: validation.expiresAt || 'unknown',
+            reason: validation.reason 
+          });
+        }
+
         // Defer Supabase calls with setTimeout to prevent deadlock
         if (currentSession?.user && validation.isValid) {
-          setTimeout(() => {
+          setTimeout(async () => {
             if (!isMounted) return;
 
-            (async () => {
-              let fetchedRoles = await fetchUserData(currentSession.user.id);
+            let fetchedRoles = await fetchUserData(currentSession.user.id);
 
-              // Self-heal roles when missing (common cause of redirect-to-login)
-              if (fetchedRoles.length === 0) {
-                await bootstrapRoles(currentSession.user);
-                fetchedRoles = await fetchUserData(currentSession.user.id);
-              }
+            // Self-heal: bootstrap roles if missing
+            if (fetchedRoles.length === 0) {
+              await bootstrapRoles(currentSession.user);
+              fetchedRoles = await fetchUserData(currentSession.user.id);
+            }
 
-              // Novo usuário (ex.: cadastro público) pode não ter role ainda.
-              if (fetchedRoles.length === 0) {
-                const assigned = await ensureInitialRole(currentSession.user);
-                if (assigned) {
-                  await fetchUserData(currentSession.user.id);
-                }
+            // Try initial role assignment if still no roles
+            if (fetchedRoles.length === 0) {
+              const assigned = await ensureInitialRole(currentSession.user);
+              if (assigned) {
+                await fetchUserData(currentSession.user.id);
               }
-            })();
+            }
+
+            logAuthSuccess({ 
+              user_id: currentSession.user.id,
+              roles: fetchedRoles 
+            });
           }, 0);
-        } else {
+        } else if (!currentSession) {
+          // User logged out
           setProfile(null);
           setRoles([]);
           roleBootstrapAttemptedRef.current = false;
         }
 
-        // Only set loading false on subsequent changes, not initial
+        // Only set loading false on subsequent changes
         if (initialLoadComplete) {
           setLoading(false);
         }
       }
     );
 
-    // Step 2: THEN check for existing session (INITIAL LOAD)
+    // Step 2: Check for existing session (INITIAL LOAD)
     const initializeAuth = async () => {
       try {
-        const { data: { session: existingSession } } = await supabase.auth.getSession();
+        const { data: { session: existingSession }, error } = await supabase.auth.getSession();
         
+        if (error) {
+          logAuthError("getSession failed", { error: error.message });
+        }
+
         if (!isMounted) return;
 
         logAuthStart({ token_existe: !!existingSession?.access_token });
@@ -261,35 +378,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const validation = validateSession(existingSession);
         logAuthValidate({ token_valido: validation.isValid });
 
-        // Fetch roles BEFORE setting loading false
-          if (existingSession?.user && validation.isValid) {
-            let fetchedRoles = await fetchUserData(existingSession.user.id);
+        if (validation.isExpired) {
+          logSessionExpired({ 
+            expires_at: validation.expiresAt || 'unknown',
+            reason: validation.reason 
+          });
+        }
 
-            // Self-heal roles (missing role row is the #1 cause of dashboard redirect)
-            if (fetchedRoles.length === 0) {
-              await bootstrapRoles(existingSession.user);
+        // Fetch roles BEFORE setting loading false
+        if (existingSession?.user && validation.isValid) {
+          let fetchedRoles = await fetchUserData(existingSession.user.id);
+
+          // Self-heal: bootstrap roles if missing
+          if (fetchedRoles.length === 0) {
+            await bootstrapRoles(existingSession.user);
+            fetchedRoles = await fetchUserData(existingSession.user.id);
+          }
+
+          // Try initial role assignment if still no roles
+          if (fetchedRoles.length === 0) {
+            const assigned = await ensureInitialRole(existingSession.user);
+            if (assigned) {
               fetchedRoles = await fetchUserData(existingSession.user.id);
             }
-
-            // Se ainda não tiver role, tenta atribuição inicial segura (cliente/dono/afiliado_saas)
-            if (fetchedRoles.length === 0) {
-              const assigned = await ensureInitialRole(existingSession.user);
-              if (assigned) {
-                fetchedRoles = await fetchUserData(existingSession.user.id);
-              }
-            }
-            
-            logDebugSummary('Initial Auth Complete', {
-              user_id: existingSession.user.id,
-              email: existingSession.user.email,
-              roles: fetchedRoles,
-              session_valid: validation.isValid,
-            });
           }
+          
+          logDebugSummary('Initial Auth Complete', {
+            user_id: existingSession.user.id,
+            email: existingSession.user.email,
+            roles: fetchedRoles,
+            session_valid: validation.isValid,
+          });
+        }
       } catch (error) {
-        logAuthError("Initial auth failed", { error: String(error) });
+        logCriticalError("initializeAuth", error);
       } finally {
         if (isMounted) {
+          const duration = Date.now() - startTime;
+          logLoadComplete({ duration_ms: duration, status: 'liberado' });
           setLoading(false);
           setInitialLoadComplete(true);
         }
@@ -302,7 +428,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchUserData, bootstrapRoles, ensureInitialRole]);
+
+  // ============================================
+  // AUTH METHODS
+  // ============================================
 
   const signUp = async (email: string, password: string, metadata: SignUpMetadata) => {
     try {
@@ -315,25 +445,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           emailRedirectTo: redirectUrl,
           data: {
             name: metadata.name,
-            whatsapp: metadata.whatsapp,
+            whatsapp: metadata.whatsapp || null,
           }
         }
       });
 
       if (error) {
         logAuthError("Signup failed", { error: error.message });
-        return { error };
+        return { error, needsConfirmation: false };
       }
 
-      // IMPORTANTE:
-      // Com confirmação de e-mail ligada, o usuário ainda NÃO tem sessão imediatamente,
-      // então qualquer INSERT em user_roles aqui roda como "anon" e falha por RLS.
-      // Solução: guardar a intenção e atribuir a role depois do primeiro login.
+      // Store pending role for post-confirmation assignment
       if (data.user) {
         rememberPendingRole(data.user.id, metadata.role);
 
-        // Update profile with additional data
-        if (metadata.cpf_cnpj || metadata.pix_key) {
+        // Update profile with additional data (if user is confirmed)
+        if (data.session && (metadata.cpf_cnpj || metadata.pix_key)) {
           await supabase
             .from("profiles")
             .update({
@@ -344,10 +471,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      return { error: null };
+      // Check if email confirmation is required
+      const needsConfirmation = !data.session;
+      
+      return { error: null, needsConfirmation };
     } catch (err) {
-      logAuthError("Signup exception", { error: String(err) });
-      return { error: err as Error };
+      logCriticalError("signUp", err);
+      return { error: err as Error, needsConfirmation: false };
     }
   };
 
@@ -365,7 +495,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { error: null };
     } catch (err) {
-      logAuthError("Login exception", { error: String(err) });
+      logCriticalError("signIn", err);
       return { error: err as Error };
     }
   };
@@ -383,12 +513,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (!profileData?.email) {
-        return { error: new Error("WhatsApp não encontrado. Verifique o número ou crie uma conta.") };
+        const error = new Error("WhatsApp não encontrado. Verifique o número ou crie uma conta.");
+        logAuthError("WhatsApp login - user not found", { whatsapp: normalizedWhatsApp });
+        return { error };
       }
 
       return signIn(profileData.email, password);
     } catch (err) {
-      logAuthError("WhatsApp login failed", { error: String(err) });
+      logCriticalError("signInWithWhatsApp", err);
       return { error: err as Error };
     }
   };
@@ -411,37 +543,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { error: null };
     } catch (err) {
-      logAuthError("Magic link exception", { error: String(err) });
+      logCriticalError("signInWithMagicLink", err);
       return { error: err as Error };
     }
   };
 
   const signOut = async () => {
-    const currentPath = window.location.pathname;
-    
-    await supabase.auth.signOut();
-    clearLocalStorageToken();
-    
-    setUser(null);
-    setSession(null);
-    setProfile(null);
-    setRoles([]);
-    
-    // Redirect to appropriate login page
-    const loginPath = getLoginPath(currentPath);
-    window.location.href = loginPath;
+    try {
+      const currentPath = window.location.pathname;
+      
+      await supabase.auth.signOut();
+      clearLocalStorageToken();
+      
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setRoles([]);
+      roleBootstrapAttemptedRef.current = false;
+      
+      // Redirect to appropriate login page
+      const loginPath = getLoginPathFromRoute(currentPath);
+      window.location.href = loginPath;
+    } catch (err) {
+      logCriticalError("signOut", err);
+    }
   };
 
-  const hasRole = (role: AppRole) => roles.includes(role);
+  // ============================================
+  // ROLE HELPERS
+  // ============================================
 
-  const getPrimaryRole = (): AppRole | null => {
-    // Priority order for dashboard routing
-    const priority: AppRole[] = ['super_admin', 'contador', 'dono', 'profissional', 'afiliado_saas', 'afiliado_barbearia', 'cliente'];
-    for (const role of priority) {
+  const hasRole = useCallback((role: AppRole) => roles.includes(role), [roles]);
+
+  const getPrimaryRole = useCallback((): AppRole | null => {
+    for (const role of ROLE_PRIORITY) {
       if (roles.includes(role)) return role;
     }
     return null;
-  };
+  }, [roles]);
+
+  // ============================================
+  // RENDER
+  // ============================================
 
   return (
     <AuthContext.Provider value={{
@@ -457,12 +600,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithMagicLink,
       signOut,
       hasRole,
-      getPrimaryRole
+      getPrimaryRole,
+      refreshSession,
     }}>
       {children}
     </AuthContext.Provider>
   );
 }
+
+// ============================================
+// HOOK
+// ============================================
 
 export function useAuth() {
   const context = useContext(AuthContext);
@@ -472,5 +620,8 @@ export function useAuth() {
   return context;
 }
 
-// Re-export helper functions from route-config
-export { getDashboardForRole as getRedirectPath, getLoginPathFromRoute as getLoginPathForRole } from "@/lib/debug/route-config";
+// ============================================
+// RE-EXPORTS
+// ============================================
+
+export { getDashboardForRole, getLoginPathFromRoute, getLoginPathForRole } from "@/lib/debug/route-config";

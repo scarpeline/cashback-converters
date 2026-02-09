@@ -1,6 +1,11 @@
 /**
- * Auth Debug Logger
+ * Auth Debug Logger - SALÃO CASHBACK
  * Sistema de logs para debug de autenticação, rotas e sessão
+ * 
+ * LOGS OBRIGATÓRIOS:
+ * - Erro de auth
+ * - Falha de redirect
+ * - Sessão expirada
  */
 
 const IS_DEV = import.meta.env.DEV;
@@ -29,6 +34,7 @@ interface SessionLogData {
   storage?: 'ok' | 'error';
   expires_at?: string;
   is_valid?: boolean;
+  reason?: string;
   [key: string]: unknown;
 }
 
@@ -67,7 +73,10 @@ function log(tag: string, data: Record<string, unknown>, level: LogLevel = 'info
   }
 }
 
-// Auth Logging
+// ============================================
+// AUTH LOGGING
+// ============================================
+
 export function logAuthStart(data: AuthLogData) {
   log('AUTH_START', data, 'info');
 }
@@ -84,27 +93,56 @@ export function logAuthError(message: string, data?: Record<string, unknown>) {
   log('ERROR_AUTH', { message, ...data }, 'error');
 }
 
-// Route Logging
+export function logAuthSuccess(data: AuthLogData) {
+  log('AUTH_SUCCESS', data, 'info');
+}
+
+// ============================================
+// ROUTE LOGGING
+// ============================================
+
 export function logRouteCheck(data: RouteLogData) {
   const level = data.existe === false || data.perfil_permitido === false ? 'warn' : 'info';
   log('ROUTE_CHECK', data, level);
 }
 
 export function logRedirectCheck(data: RouteLogData) {
-  log('REDIRECT_CHECK', data, 'info');
+  log('REDIRECT', data, 'info');
+}
+
+export function logRedirectError(message: string, data?: Record<string, unknown>) {
+  log('ERROR_REDIRECT', { message, ...data }, 'error');
 }
 
 export function logRouteError(message: string, data?: Record<string, unknown>) {
   log('ERROR_ROUTE', { message, ...data }, 'error');
 }
 
-// Session Logging
+// ============================================
+// SESSION LOGGING
+// ============================================
+
 export function logSessionCheck(data: SessionLogData) {
   const level = data.storage === 'error' || data.is_valid === false ? 'warn' : 'info';
   log('SESSION_CHECK', data, level);
 }
 
-// First Load Logging
+export function logSessionExpired(data: SessionLogData) {
+  log('SESSION_EXPIRED', { ...data, reason: 'token_expired' }, 'warn');
+}
+
+export function logSessionRefresh(success: boolean) {
+  log('SESSION_REFRESH', { success }, success ? 'info' : 'error');
+}
+
+export function logSessionDestroyed(reason: string) {
+  log('SESSION_DESTROYED', { reason }, 'warn');
+}
+
+// ============================================
+// FIRST LOAD LOGGING
+// ============================================
+
 export function logFirstLoad(data: LoadLogData) {
   log('FIRST_LOAD', data, 'info');
 }
@@ -113,7 +151,26 @@ export function logLoadError(message: string, data?: Record<string, unknown>) {
   log('ERROR_LOAD', { message, ...data }, 'error');
 }
 
-// Debug summary for troubleshooting
+export function logLoadComplete(data: LoadLogData) {
+  log('LOAD_COMPLETE', data, 'info');
+}
+
+// ============================================
+// ROLE LOGGING
+// ============================================
+
+export function logRoleAssignment(userId: string, role: string, success: boolean) {
+  log('ROLE_ASSIGNMENT', { user_id: userId, role, success }, success ? 'info' : 'error');
+}
+
+export function logRoleBootstrap(userId: string, role: string | null) {
+  log('ROLE_BOOTSTRAP', { user_id: userId, role_assigned: role }, role ? 'info' : 'warn');
+}
+
+// ============================================
+// DEBUG SUMMARY
+// ============================================
+
 export function logDebugSummary(context: string, data: Record<string, unknown>) {
   if (IS_DEV) {
     console.group(`[DEBUG_SUMMARY] ${context}`);
@@ -122,4 +179,19 @@ export function logDebugSummary(context: string, data: Record<string, unknown>) 
     });
     console.groupEnd();
   }
+}
+
+// ============================================
+// ERROR TRACKING
+// ============================================
+
+export function logCriticalError(context: string, error: unknown) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorStack = error instanceof Error ? error.stack : undefined;
+  
+  log('CRITICAL_ERROR', { 
+    context, 
+    message: errorMessage, 
+    stack: IS_DEV ? errorStack : undefined 
+  }, 'error');
 }

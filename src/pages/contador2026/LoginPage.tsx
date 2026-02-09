@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2, Calculator, Mail, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth, getRedirectPath } from "@/lib/auth";
+import { useAuth, getDashboardForRole } from "@/lib/auth";
 import logo from "@/assets/logo.png";
 import { z } from "zod";
 
@@ -26,7 +26,7 @@ const ContadorLoginPage = () => {
   useEffect(() => {
     if (user && !authLoading) {
       const role = getPrimaryRole();
-      navigate(getRedirectPath(role), { replace: true });
+      navigate(getDashboardForRole(role), { replace: true });
     }
   }, [user, authLoading, navigate, getPrimaryRole]);
 
