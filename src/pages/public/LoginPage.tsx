@@ -145,7 +145,11 @@ const PublicLoginPage = () => {
           return;
         }
 
-        toast.success("Conta criada! Verifique seu e-mail para confirmar.");
+        toast.success("Conta criada com sucesso!");
+        // Redireciona para o dashboard apropriado baseado no tipo de usuário
+        const dashboardPath = userType === 'dono' ? '/app/dashboard' : '/app/cliente';
+        navigate(dashboardPath, { replace: true });
+        return;
       }
     } catch (err) {
       toast.error("Ocorreu um erro. Tente novamente.");

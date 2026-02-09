@@ -121,7 +121,10 @@ const AfiliadoSaasLoginPage = () => {
           return;
         }
 
-        toast.success("Conta criada! Verifique seu e-mail para confirmar.");
+        toast.success("Conta criada com sucesso!");
+        // Redireciona imediatamente para o dashboard do afiliado
+        navigate('/afiliado-saas/dashboard', { replace: true });
+        return;
       }
     } catch (err) {
       toast.error("Ocorreu um erro. Tente novamente.");
