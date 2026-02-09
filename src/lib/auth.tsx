@@ -60,6 +60,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const initRef = useRef(false);
   const roleBootstrapAttemptedRef = useRef(false);
 
+  const PENDING_ROLE_STORAGE_KEY = "scb_pending_role";
+  const PENDING_ROLE_USER_KEY = "scb_pending_role_user_id";
+  const SELF_ASSIGNABLE_ROLES: AppRole[] = ["cliente", "dono", "afiliado_saas"];
+
+  const rememberPendingRole = (userId: string, role: AppRole) => {
+    if (!SELF_ASSIGNABLE_ROLES.includes(role)) return;
+    try {
+      localStorage.setItem(PENDING_ROLE_STORAGE_KEY, role);
+      localStorage.setItem(PENDING_ROLE_USER_KEY, userId);
+    } catch {
+      // ignore
+    }
+  };
+
+  const consumePendingRole = (userId: string): AppRole | null => {
+    try {
+      const storedUserId = localStorage.getItem(PENDING_ROLE_USER_KEY);
+      const storedRole = localStorage.getItem(PENDING_ROLE_STORAGE_KEY) as AppRole | null;
+
+      if (storedUserId === userId && storedRole && SELF_ASSIGNABLE_ROLES.includes(storedRole)) {
+        localStorage.removeItem(PENDING_ROLE_USER_KEY);
+        localStorage.removeItem(PENDING_ROLE_STORAGE_KEY);
+        return storedRole;
+      }
+    } catch {
+      // ignore
+    }
+
+    return null;
+  };
+
+  const inferRoleFromEmail = (email: string | undefined | null): AppRole | null => {
+    if (!email) return null;
+    // Clientes usam e-mail sintético baseado no WhatsApp
+    if (email.endsWith("@salao.app")) return "cliente";
+    return null;
+  };
+
+  const ensureInitialRole = async (sessionUser: User): Promise<AppRole | null> => {
+    const pending = consumePendingRole(sessionUser.id);
+    const inferred = inferRoleFromEmail(sessionUser.email);
+    const roleToAssign = pending || inferred;
+
+    if (!roleToAssign) return null;
+
+    const { error } = await supabase.from("user_roles").insert({
+      user_id: sessionUser.id,
+      role: roleToAssign,
+    });
+
+    if (error) {
+      // Se já existir (duplicado), seguimos o fluxo normal e re-fetch em seguida.
+      const msg = (error.message || "").toLowerCase();
+      if (!msg.includes("duplicate") && !msg.includes("already")) {
+        logAuthError("Initial role assignment failed", { error: error.message, role: roleToAssign });
+        return null;
+      }
+    }
+
+    logAuthRole({ role_detectado: roleToAssign });
+    return roleToAssign;
+  };
+
   const fetchUserData = async (userId: string): Promise<AppRole[]> => {
     try {
       // Fetch profile
@@ -152,12 +215,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!isMounted) return;
 
             (async () => {
-              const fetchedRoles = await fetchUserData(currentSession.user.id);
+              let fetchedRoles = await fetchUserData(currentSession.user.id);
 
               // Self-heal roles when missing (common cause of redirect-to-login)
               if (fetchedRoles.length === 0) {
                 await bootstrapRoles(currentSession.user);
-                await fetchUserData(currentSession.user.id);
+                fetchedRoles = await fetchUserData(currentSession.user.id);
+              }
+
+              // Novo usuário (ex.: cadastro público) pode não ter role ainda.
+              if (fetchedRoles.length === 0) {
+                const assigned = await ensureInitialRole(currentSession.user);
+                if (assigned) {
+                  await fetchUserData(currentSession.user.id);
+                }
               }
             })();
           }, 0);
@@ -191,22 +262,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logAuthValidate({ token_valido: validation.isValid });
 
         // Fetch roles BEFORE setting loading false
-        if (existingSession?.user && validation.isValid) {
-          let fetchedRoles = await fetchUserData(existingSession.user.id);
+          if (existingSession?.user && validation.isValid) {
+            let fetchedRoles = await fetchUserData(existingSession.user.id);
 
-          // Self-heal roles (missing role row is the #1 cause of dashboard redirect)
-          if (fetchedRoles.length === 0) {
-            await bootstrapRoles(existingSession.user);
-            fetchedRoles = await fetchUserData(existingSession.user.id);
+            // Self-heal roles (missing role row is the #1 cause of dashboard redirect)
+            if (fetchedRoles.length === 0) {
+              await bootstrapRoles(existingSession.user);
+              fetchedRoles = await fetchUserData(existingSession.user.id);
+            }
+
+            // Se ainda não tiver role, tenta atribuição inicial segura (cliente/dono/afiliado_saas)
+            if (fetchedRoles.length === 0) {
+              const assigned = await ensureInitialRole(existingSession.user);
+              if (assigned) {
+                fetchedRoles = await fetchUserData(existingSession.user.id);
+              }
+            }
+            
+            logDebugSummary('Initial Auth Complete', {
+              user_id: existingSession.user.id,
+              email: existingSession.user.email,
+              roles: fetchedRoles,
+              session_valid: validation.isValid,
+            });
           }
-          
-          logDebugSummary('Initial Auth Complete', {
-            user_id: existingSession.user.id,
-            email: existingSession.user.email,
-            roles: fetchedRoles,
-            session_valid: validation.isValid,
-          });
-        }
       } catch (error) {
         logAuthError("Initial auth failed", { error: String(error) });
       } finally {
@@ -246,22 +325,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error };
       }
 
-      // After successful signup, assign role
+      // IMPORTANTE:
+      // Com confirmação de e-mail ligada, o usuário ainda NÃO tem sessão imediatamente,
+      // então qualquer INSERT em user_roles aqui roda como "anon" e falha por RLS.
+      // Solução: guardar a intenção e atribuir a role depois do primeiro login.
       if (data.user) {
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert({
-            user_id: data.user.id,
-            role: metadata.role
-          });
-
-        if (roleError) {
-          logAuthError("Role assignment failed", { error: roleError.message });
-        } else {
-          // Update local state with the new role
-          setRoles([metadata.role]);
-          logAuthRole({ role_detectado: metadata.role });
-        }
+        rememberPendingRole(data.user.id, metadata.role);
 
         // Update profile with additional data
         if (metadata.cpf_cnpj || metadata.pix_key) {
@@ -269,7 +338,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .from("profiles")
             .update({
               cpf_cnpj: metadata.cpf_cnpj,
-              pix_key: metadata.pix_key
+              pix_key: metadata.pix_key,
             })
             .eq("user_id", data.user.id);
         }

@@ -96,7 +96,14 @@ const AfiliadoSaasLoginPage = () => {
         const { error } = await signIn(formData.email, formData.password);
         
         if (error) {
-          toast.error(error.message || "Erro ao fazer login");
+          const msg = error.message || "Erro ao fazer login";
+          if (msg.toLowerCase().includes("email not confirmed")) {
+            toast.error("Confirme seu e-mail antes de entrar.");
+          } else if (msg.toLowerCase().includes("invalid login credentials")) {
+            toast.error("Credenciais inválidas. Verifique e-mail e senha.");
+          } else {
+            toast.error(msg);
+          }
           setLoading(false);
           return;
         }
@@ -121,10 +128,8 @@ const AfiliadoSaasLoginPage = () => {
           return;
         }
 
-        toast.success("Conta criada com sucesso!");
-        // Redireciona imediatamente para o dashboard do afiliado
-        navigate('/afiliado-saas/dashboard', { replace: true });
-        return;
+        toast.success("Conta criada! Verifique seu e-mail para confirmar e depois faça login.");
+        setMode("login");
       }
     } catch (err) {
       toast.error("Ocorreu um erro. Tente novamente.");
