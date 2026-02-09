@@ -115,7 +115,14 @@ const PublicLoginPage = () => {
         }
         
         if (result.error) {
-          toast.error(result.error.message || "Erro ao fazer login");
+          const msg = result.error.message || "Erro ao fazer login";
+          if (msg.toLowerCase().includes("email not confirmed")) {
+            toast.error("Confirme seu e-mail antes de entrar.");
+          } else if (msg.toLowerCase().includes("invalid login credentials")) {
+            toast.error("Credenciais inválidas. Verifique seus dados.");
+          } else {
+            toast.error(msg);
+          }
           setLoading(false);
           return;
         }
@@ -145,10 +152,9 @@ const PublicLoginPage = () => {
           return;
         }
 
-        toast.success("Conta criada com sucesso!");
-        // Redireciona para o dashboard apropriado baseado no tipo de usuário
-        const dashboardPath = userType === 'dono' ? '/app/dashboard' : '/app/cliente';
-        navigate(dashboardPath, { replace: true });
+        toast.success("Conta criada! Verifique seu e-mail para confirmar e depois faça login.");
+        setMode("login");
+        setLoginType(userType === "dono" ? "dono" : "cliente");
         return;
       }
     } catch (err) {
