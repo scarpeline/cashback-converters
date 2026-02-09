@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useAuth, getRedirectPath } from "@/lib/auth";
 import logo from "@/assets/logo.png";
 import { z } from "zod";
+import { formatWhatsAppBR, formatCpfCnpjBR } from "@/lib/input-masks";
 
 const signupSchema = z.object({
   name: z.string().min(2, "Nome deve ter no mínimo 2 caracteres"),
@@ -289,8 +290,9 @@ const AfiliadoSaasLoginPage = () => {
                   type="tel"
                   placeholder="(00) 00000-0000"
                   value={formData.whatsapp}
-                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, whatsapp: formatWhatsAppBR(e.target.value) })}
                   className={`mt-1 ${errors.whatsapp ? "border-destructive" : ""}`}
+                  autoComplete="tel"
                 />
                 {errors.whatsapp && <p className="text-xs text-destructive mt-1">{errors.whatsapp}</p>}
               </div>
@@ -305,8 +307,9 @@ const AfiliadoSaasLoginPage = () => {
                   type="text"
                   placeholder="000.000.000-00"
                   value={formData.cpfCnpj}
-                  onChange={(e) => setFormData({ ...formData, cpfCnpj: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, cpfCnpj: formatCpfCnpjBR(e.target.value) })}
                   className={`mt-1 ${errors.cpfCnpj ? "border-destructive" : ""}`}
+                  autoComplete="off"
                 />
                 {errors.cpfCnpj && <p className="text-xs text-destructive mt-1">{errors.cpfCnpj}</p>}
               </div>
