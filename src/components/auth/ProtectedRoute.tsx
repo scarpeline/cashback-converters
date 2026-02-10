@@ -2,16 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth, AppRole } from "@/lib/auth";
 import { Loader2 } from "lucide-react";
-import { 
-  logRouteCheck, 
-  logRedirectCheck, 
-  logRouteError 
-} from "@/lib/debug/auth-logger";
-import { 
-  getLoginPathFromRoute, 
-  getDashboardForRole,
-  isLoginRoute
-} from "@/lib/debug/route-config";
+import { logRouteCheck, logRedirectCheck } from "@/lib/debug/auth-logger";
+import { getLoginPathFromRoute, getDashboardForRole, isLoginRoute } from "@/lib/debug/route-config";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -22,26 +14,17 @@ interface ProtectedRouteProps {
 /**
  * ProtectedRoute - Protege rotas que requerem autenticação
  * 
- * Fluxo de validação (ordem obrigatória):
- * 1. Aguarda carregamento inicial completo
- * 2. Verifica se usuário está autenticado
- * 3. Aguarda carregamento de roles (com timeout de segurança)
- * 4. Verifica se usuário tem permissão para a rota
- * 5. Redireciona se necessário
- * 
- * REGRAS ANTI-LOOP:
- * - Nunca redireciona para página de login se já estiver nela
- * - Usa replace para evitar histórico de redirecionamentos
+ * REGRA: Nenhum redirect até authResolved = true E profileLoading = false
  */
 export function ProtectedRoute({ children, allowedRoles, redirectTo }: ProtectedRouteProps) {
-  const { user, loading, roles, getPrimaryRole, initialLoadComplete } = useAuth();
+  const { user, roles, getPrimaryRole, authResolved, profileLoading } = useAuth();
   const location = useLocation();
   const [roleLoadTimeout, setRoleLoadTimeout] = useState(false);
   const hasLoggedRef = useRef(false);
 
   // Log route access once
   useEffect(() => {
-    if (!hasLoggedRef.current && initialLoadComplete) {
+    if (!hasLoggedRef.current && authResolved) {
       hasLoggedRef.current = true;
       logRouteCheck({
         rota: location.pathname,
@@ -49,32 +32,22 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
         perfil_permitido: allowedRoles ? allowedRoles.some(r => roles.includes(r)) : true,
       });
     }
-  }, [location.pathname, roles, allowedRoles, initialLoadComplete]);
+  }, [location.pathname, roles, allowedRoles, authResolved]);
 
-  // Set a timeout to prevent infinite loading when roles never arrive
+  // Timeout for roles that never arrive
   useEffect(() => {
-    if (user && roles.length === 0 && !loading && initialLoadComplete) {
-      const timer = setTimeout(() => {
-        setRoleLoadTimeout(true);
-        logRouteError("Role load timeout - user has no roles", { 
-          user_id: user.id,
-          pathname: location.pathname 
-        });
-      }, 3000); // 3 seconds max wait for roles
-
+    if (authResolved && user && roles.length === 0 && !profileLoading) {
+      const timer = setTimeout(() => setRoleLoadTimeout(true), 3000);
       return () => clearTimeout(timer);
     }
-  }, [user, roles, loading, initialLoadComplete, location.pathname]);
+  }, [user, roles, authResolved, profileLoading]);
 
-  // Reset timeout when roles arrive
   useEffect(() => {
-    if (roles.length > 0) {
-      setRoleLoadTimeout(false);
-    }
+    if (roles.length > 0) setRoleLoadTimeout(false);
   }, [roles]);
 
-  // STEP 1: Still loading auth state - show loader
-  if (loading || !initialLoadComplete) {
+  // STEP 1: Wait for auth to fully resolve
+  if (!authResolved || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
@@ -85,45 +58,25 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
     );
   }
 
-  // STEP 2: Not authenticated - redirect to login
+  // STEP 2: Not authenticated
   if (!user) {
     const loginPath = redirectTo || getLoginPathFromRoute(location.pathname);
-    
-    // ANTI-LOOP: Don't redirect if already on login page
-    if (isLoginRoute(location.pathname)) {
-      return <>{children}</>;
-    }
-    
-    logRedirectCheck({
-      from: location.pathname,
-      to: loginPath,
-      motivo: 'usuario_nao_autenticado',
-    });
-    
+    if (isLoginRoute(location.pathname)) return <>{children}</>;
+
+    logRedirectCheck({ from: location.pathname, to: loginPath, motivo: 'usuario_nao_autenticado' });
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
-  // STEP 3: User authenticated but no roles - wait or timeout
+  // STEP 3: Authenticated but no roles
   if (roles.length === 0) {
     if (roleLoadTimeout) {
-      // Timeout expired - redirect to login with error
       const loginPath = getLoginPathFromRoute(location.pathname);
-      
-      // ANTI-LOOP: Don't redirect if already on login page
-      if (isLoginRoute(location.pathname)) {
-        return <>{children}</>;
-      }
-      
-      logRedirectCheck({
-        from: location.pathname,
-        to: loginPath,
-        motivo: 'roles_nao_encontradas_timeout',
-      });
-      
+      if (isLoginRoute(location.pathname)) return <>{children}</>;
+
+      logRedirectCheck({ from: location.pathname, to: loginPath, motivo: 'roles_nao_encontradas_timeout' });
       return <Navigate to={loginPath} state={{ from: location, error: "no_roles" }} replace />;
     }
 
-    // Still waiting for roles - show loader
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
@@ -134,25 +87,17 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
     );
   }
 
-  // STEP 4: Check if user has permission for this route
+  // STEP 4: Check permissions
   if (allowedRoles && allowedRoles.length > 0) {
     const hasAllowedRole = allowedRoles.some(role => roles.includes(role));
-    
     if (!hasAllowedRole) {
-      // Redirect to user's correct dashboard
       const primaryRole = getPrimaryRole();
       const correctPath = getDashboardForRole(primaryRole);
-      
-      logRedirectCheck({
-        from: location.pathname,
-        to: correctPath,
-        motivo: 'perfil_sem_permissao',
-      });
-      
+      logRedirectCheck({ from: location.pathname, to: correctPath, motivo: 'perfil_sem_permissao' });
       return <Navigate to={correctPath} replace />;
     }
   }
 
-  // STEP 5: All checks passed - render children
+  // STEP 5: All checks passed
   return <>{children}</>;
 }
