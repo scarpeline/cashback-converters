@@ -1,19 +1,7 @@
 /**
  * App.tsx - SALÃO CASHBACK
  * 
- * Roteamento principal da aplicação
- * 
- * MAPEAMENTO DE ROTAS:
- * - cliente → /app
- * - dono → /painel-dono
- * - profissional → /painel-profissional
- * - afiliado_saas → /afiliado-saas
- * - contador → /contador2026
- * - super_admin → /admin
- * 
- * REGRA ABSOLUTA:
- * - Nunca remover sessão ativa
- * - Nunca redirecionar sem validar role
+ * REGRA: authResolved controla montagem de rotas protegidas
  */
 
 import { Suspense, lazy } from "react";
@@ -29,21 +17,13 @@ import { FirstLoadGuard } from "@/components/auth/FirstLoadGuard";
 import { EntryRedirect } from "@/components/auth/EntryRedirect";
 import { Loader2 } from "lucide-react";
 
-// ============================================
-// LAZY LOADED PAGES
-// ============================================
-
-// Public pages
+// Lazy pages
 const Index = lazy(() => import("./pages/Index"));
 const NotFoundPage = lazy(() => import("./pages/public/NotFoundPage"));
-
-// Login pages
 const PublicLoginPage = lazy(() => import("./pages/public/LoginPage"));
 const AfiliadoSaasLoginPage = lazy(() => import("./pages/afiliado-saas/LoginPage"));
 const ContadorLoginPage = lazy(() => import("./pages/contador2026/LoginPage"));
 const AdminLoginPage = lazy(() => import("./pages/admin/LoginPage"));
-
-// Dashboard pages
 const ClienteDashboard = lazy(() => import("./pages/dashboards/ClienteDashboard"));
 const DonoDashboard = lazy(() => import("./pages/dashboards/DonoDashboard"));
 const ProfissionalDashboard = lazy(() => import("./pages/dashboards/ProfissionalDashboard"));
@@ -51,15 +31,7 @@ const AfiliadoDashboard = lazy(() => import("./pages/dashboards/AfiliadoDashboar
 const ContadorDashboard = lazy(() => import("./pages/dashboards/ContadorDashboard"));
 const SuperAdminDashboard = lazy(() => import("./pages/dashboards/SuperAdminDashboard"));
 
-// ============================================
-// QUERY CLIENT
-// ============================================
-
 const queryClient = new QueryClient();
-
-// ============================================
-// PAGE LOADER
-// ============================================
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -70,190 +42,70 @@ const PageLoader = () => (
   </div>
 );
 
-// ============================================
-// APP ROUTES
-// ============================================
-
 function AppRoutes() {
-  const { loading, initialLoadComplete } = useAuth();
+  const { authResolved } = useAuth();
 
   return (
-    <FirstLoadGuard isLoading={loading || !initialLoadComplete}>
+    <FirstLoadGuard isLoading={!authResolved}>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* ============================================ */}
-          {/* ROTAS PÚBLICAS */}
-          {/* ============================================ */}
-          
-          {/* Landing page */}
+          {/* PUBLIC */}
           <Route path="/" element={<Index />} />
-          
-          {/* Login público (Cliente, Profissional, Dono) */}
-          <Route path="/login" element={
-            <AuthGuard>
-              <PublicLoginPage />
-            </AuthGuard>
-          } />
-          
-          {/* 404 */}
+          <Route path="/login" element={<AuthGuard><PublicLoginPage /></AuthGuard>} />
           <Route path="/404" element={<NotFoundPage />} />
-          
-          {/* ============================================ */}
+
           {/* AFILIADO SAAS */}
-          {/* ============================================ */}
-          
-          {/* Entry point - decide login vs dashboard */}
-          <Route
-            path="/afiliado-saas"
-            element={
-              <EntryRedirect
-                loggedOutTo="/afiliado-saas/login"
-                loggedInTo="/afiliado-saas"
-                requiredRoles={['afiliado_saas']}
-              />
-            }
-          />
-          
-          {/* Login page */}
-          <Route path="/afiliado-saas/login" element={
-            <AuthGuard>
-              <AfiliadoSaasLoginPage />
-            </AuthGuard>
+          <Route path="/afiliado-saas" element={
+            <EntryRedirect loggedOutTo="/afiliado-saas/login" loggedInTo="/afiliado-saas" requiredRoles={['afiliado_saas']} />
           } />
-          
-          {/* Dashboard - protected */}
-          <Route 
-            path="/afiliado-saas/*" 
-            element={
-              <ProtectedRoute allowedRoles={['afiliado_saas']}>
-                <AfiliadoDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* ============================================ */}
+          <Route path="/afiliado-saas/login" element={<AuthGuard><AfiliadoSaasLoginPage /></AuthGuard>} />
+          <Route path="/afiliado-saas/*" element={
+            <ProtectedRoute allowedRoles={['afiliado_saas']}><AfiliadoDashboard /></ProtectedRoute>
+          } />
+
           {/* CONTADOR */}
-          {/* ============================================ */}
-          
-          {/* Entry point */}
-          <Route
-            path="/contador2026"
-            element={
-              <EntryRedirect
-                loggedOutTo="/contador2026/login"
-                loggedInTo="/contador2026"
-                requiredRoles={['contador']}
-              />
-            }
-          />
-          
-          {/* Login page */}
-          <Route path="/contador2026/login" element={
-            <AuthGuard>
-              <ContadorLoginPage />
-            </AuthGuard>
+          <Route path="/contador2026" element={
+            <EntryRedirect loggedOutTo="/contador2026/login" loggedInTo="/contador2026" requiredRoles={['contador']} />
           } />
-          
-          {/* Dashboard - protected */}
-          <Route 
-            path="/contador2026/*" 
-            element={
-              <ProtectedRoute allowedRoles={['contador']}>
-                <ContadorDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* ============================================ */}
+          <Route path="/contador2026/login" element={<AuthGuard><ContadorLoginPage /></AuthGuard>} />
+          <Route path="/contador2026/*" element={
+            <ProtectedRoute allowedRoles={['contador']}><ContadorDashboard /></ProtectedRoute>
+          } />
+
           {/* SUPER ADMIN */}
-          {/* ============================================ */}
-          
-          {/* Entry point */}
-          <Route
-            path="/admin"
-            element={
-              <EntryRedirect
-                loggedOutTo="/admin/login"
-                loggedInTo="/admin"
-                requiredRoles={['super_admin']}
-              />
-            }
-          />
-          
-          {/* Login page */}
-          <Route path="/admin/login" element={
-            <AuthGuard>
-              <AdminLoginPage />
-            </AuthGuard>
+          <Route path="/admin" element={
+            <EntryRedirect loggedOutTo="/admin/login" loggedInTo="/admin" requiredRoles={['super_admin']} />
           } />
-          
-          {/* Dashboard - protected */}
-          <Route 
-            path="/admin/*" 
-            element={
-              <ProtectedRoute allowedRoles={['super_admin']}>
-                <SuperAdminDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* ============================================ */}
+          <Route path="/admin/login" element={<AuthGuard><AdminLoginPage /></AuthGuard>} />
+          <Route path="/admin/*" element={
+            <ProtectedRoute allowedRoles={['super_admin']}><SuperAdminDashboard /></ProtectedRoute>
+          } />
+
           {/* CLIENTE */}
-          {/* ============================================ */}
-          
-          <Route 
-            path="/app/*" 
-            element={
-              <ProtectedRoute allowedRoles={['cliente', 'afiliado_barbearia']}>
-                <ClienteDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* ============================================ */}
-          {/* DONO DE BARBEARIA */}
-          {/* ============================================ */}
-          
-          <Route 
-            path="/painel-dono/*" 
-            element={
-              <ProtectedRoute allowedRoles={['dono']}>
-                <DonoDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* ============================================ */}
+          <Route path="/app/*" element={
+            <ProtectedRoute allowedRoles={['cliente', 'afiliado_barbearia']}><ClienteDashboard /></ProtectedRoute>
+          } />
+
+          {/* DONO */}
+          <Route path="/painel-dono/*" element={
+            <ProtectedRoute allowedRoles={['dono']}><DonoDashboard /></ProtectedRoute>
+          } />
+
           {/* PROFISSIONAL */}
-          {/* ============================================ */}
-          
-          <Route 
-            path="/painel-profissional/*" 
-            element={
-              <ProtectedRoute allowedRoles={['profissional']}>
-                <ProfissionalDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* ============================================ */}
+          <Route path="/painel-profissional/*" element={
+            <ProtectedRoute allowedRoles={['profissional']}><ProfissionalDashboard /></ProtectedRoute>
+          } />
+
           {/* LEGACY REDIRECTS */}
-          {/* ============================================ */}
-          
-          {/* Old login routes */}
           <Route path="/auth" element={<Navigate to="/login" replace />} />
           <Route path="/public/login" element={<Navigate to="/login" replace />} />
           <Route path="/public/404" element={<Navigate to="/404" replace />} />
-          
-          {/* Old dashboard routes */}
           <Route path="/app/dashboard/*" element={<Navigate to="/painel-dono" replace />} />
           <Route path="/app/cliente/*" element={<Navigate to="/app" replace />} />
           <Route path="/app/profissional/*" element={<Navigate to="/painel-profissional" replace />} />
           <Route path="/afiliado-saas/dashboard/*" element={<Navigate to="/afiliado-saas" replace />} />
           <Route path="/contador2026/dashboard/*" element={<Navigate to="/contador2026" replace />} />
           <Route path="/admin/dashboard/*" element={<Navigate to="/admin" replace />} />
-          
-          {/* Very old routes */}
           <Route path="/cliente/*" element={<Navigate to="/app" replace />} />
           <Route path="/dono/*" element={<Navigate to="/painel-dono" replace />} />
           <Route path="/profissional/*" element={<Navigate to="/painel-profissional" replace />} />
@@ -261,21 +113,14 @@ function AppRoutes() {
           <Route path="/contador/*" element={<Navigate to="/contador2026" replace />} />
           <Route path="/super-admin/*" element={<Navigate to="/admin" replace />} />
           <Route path="/super-admin2026ok" element={<Navigate to="/admin/login" replace />} />
-          
-          {/* ============================================ */}
-          {/* CATCH ALL - 404 */}
-          {/* ============================================ */}
-          
+
+          {/* 404 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
     </FirstLoadGuard>
   );
 }
-
-// ============================================
-// APP COMPONENT
-// ============================================
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

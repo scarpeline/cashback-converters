@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth, type AppRole } from "@/lib/auth";
-import { getDashboardForRole, getLoginPathFromRoute } from "@/lib/debug/route-config";
+import { getDashboardForRole } from "@/lib/debug/route-config";
 import { logRedirectCheck } from "@/lib/debug/auth-logger";
 
 interface EntryRedirectProps {
@@ -12,67 +12,47 @@ interface EntryRedirectProps {
 }
 
 /**
- * EntryRedirect
- * Usado em rotas "raiz" (ex.: /admin) para decidir login vs dashboard.
- * 
- * REGRA ABSOLUTA:
- * - Nunca redirecionar sem validar role
- * - Se autenticado mas sem role correta, vai para seu dashboard
+ * EntryRedirect - Decide login vs dashboard
+ * REGRA: Não redireciona até authResolved = true
  */
 export function EntryRedirect({ loggedOutTo, loggedInTo, requiredRoles }: EntryRedirectProps) {
-  const { user, loading, initialLoadComplete, roles, getPrimaryRole } = useAuth();
+  const { user, authResolved, roles, getPrimaryRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (loading || !initialLoadComplete) return;
+    if (!authResolved) return;
 
-    // Not authenticated → login
     if (!user) {
       if (location.pathname !== loggedOutTo) {
-        logRedirectCheck({
-          from: location.pathname,
-          to: loggedOutTo,
-          motivo: 'usuario_nao_autenticado',
-        });
+        logRedirectCheck({ from: location.pathname, to: loggedOutTo, motivo: 'usuario_nao_autenticado' });
         navigate(loggedOutTo, { replace: true });
       }
       return;
     }
 
-    // Authenticated but roles not loaded yet
     if (roles.length === 0) return;
 
     const primaryRole = getPrimaryRole();
     const userDashboard = getDashboardForRole(primaryRole);
 
-    // If route requires specific roles but user doesn't have it
     if (requiredRoles?.length) {
       const hasAnyRequired = requiredRoles.some((r) => roles.includes(r));
       if (!hasAnyRequired) {
         if (location.pathname !== userDashboard) {
-          logRedirectCheck({
-            from: location.pathname,
-            to: userDashboard,
-            motivo: 'perfil_sem_permissao_para_rota',
-          });
+          logRedirectCheck({ from: location.pathname, to: userDashboard, motivo: 'perfil_sem_permissao_para_rota' });
           navigate(userDashboard, { replace: true });
         }
         return;
       }
     }
 
-    // Go to intended destination or user's dashboard
     const target = loggedInTo || userDashboard;
     if (location.pathname !== target) {
-      logRedirectCheck({
-        from: location.pathname,
-        to: target,
-        motivo: 'redirecionamento_pos_login',
-      });
+      logRedirectCheck({ from: location.pathname, to: target, motivo: 'redirecionamento_pos_login' });
       navigate(target, { replace: true });
     }
-  }, [loading, initialLoadComplete, user, roles, getPrimaryRole, loggedOutTo, loggedInTo, requiredRoles, navigate, location.pathname]);
+  }, [authResolved, user, roles, getPrimaryRole, loggedOutTo, loggedInTo, requiredRoles, navigate, location.pathname]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
