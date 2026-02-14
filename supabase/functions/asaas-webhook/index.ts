@@ -32,10 +32,10 @@ function verifyWebhookSignature(
   signature: string | null,
   secret: string | null
 ): boolean {
-  // Se não há secret configurado, aceita (modo desenvolvimento)
+  // Secret é OBRIGATÓRIO - rejeita se não configurado
   if (!secret) {
-    console.warn("[WEBHOOK] No webhook secret configured - accepting without verification");
-    return true;
+    console.error("[WEBHOOK] No webhook secret configured - rejecting request");
+    return false;
   }
 
   // Se há secret mas não há assinatura, rejeita
