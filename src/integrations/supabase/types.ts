@@ -190,6 +190,45 @@ export type Database = {
           },
         ]
       }
+      api_keys_custom: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          id: string
+          key_hash: string
+          label: string
+          last_used_at: string | null
+          owner_id: string
+          owner_type: string
+          permissions_json: Json | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          id?: string
+          key_hash: string
+          label: string
+          last_used_at?: string | null
+          owner_id: string
+          owner_type: string
+          permissions_json?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          id?: string
+          key_hash?: string
+          label?: string
+          last_used_at?: string | null
+          owner_id?: string
+          owner_type?: string
+          permissions_json?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_environment: {
         Row: {
           current_env: string
@@ -447,6 +486,56 @@ export type Database = {
           },
         ]
       }
+      integration_endpoints: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          endpoint_url: string
+          event_name: string
+          headers_json: Json | null
+          id: string
+          integration_id: string
+          method: string
+          retry_count: number | null
+          retry_enabled: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          endpoint_url: string
+          event_name: string
+          headers_json?: Json | null
+          id?: string
+          integration_id: string
+          method?: string
+          retry_count?: number | null
+          retry_enabled?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          endpoint_url?: string
+          event_name?: string
+          headers_json?: Json | null
+          id?: string
+          integration_id?: string
+          method?: string
+          retry_count?: number | null
+          retry_enabled?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_endpoints_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integration_logs: {
         Row: {
           created_at: string
@@ -519,6 +608,54 @@ export type Database = {
           service_name?: string
           updated_at?: string
           webhook_secret_hash?: string | null
+        }
+        Relationships: []
+      }
+      integrations: {
+        Row: {
+          api_key_encrypted: string | null
+          api_secret_encrypted: string | null
+          base_url: string | null
+          config_json: Json | null
+          created_at: string
+          created_by: string | null
+          environment: string
+          id: string
+          name: string
+          provider_name: string
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          api_key_encrypted?: string | null
+          api_secret_encrypted?: string | null
+          base_url?: string | null
+          config_json?: Json | null
+          created_at?: string
+          created_by?: string | null
+          environment?: string
+          id?: string
+          name: string
+          provider_name: string
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          api_key_encrypted?: string | null
+          api_secret_encrypted?: string | null
+          base_url?: string | null
+          config_json?: Json | null
+          created_at?: string
+          created_by?: string | null
+          environment?: string
+          id?: string
+          name?: string
+          provider_name?: string
+          status?: string
+          type?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -667,6 +804,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pixels: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          events_json: Json | null
+          id: string
+          owner_id: string | null
+          owner_type: string
+          pixel_id: string
+          pixel_type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          events_json?: Json | null
+          id?: string
+          owner_id?: string | null
+          owner_type: string
+          pixel_id: string
+          pixel_type: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          events_json?: Json | null
+          id?: string
+          owner_id?: string | null
+          owner_type?: string
+          pixel_id?: string
+          pixel_type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       professionals: {
         Row: {
@@ -893,12 +1066,57 @@ export type Database = {
         }
         Relationships: []
       }
+      webhooks_log: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          integration_id: string | null
+          payload_json: Json | null
+          response_body: string | null
+          response_code: number | null
+          success: boolean | null
+          target_url: string
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          integration_id?: string | null
+          payload_json?: Json | null
+          response_body?: string | null
+          response_code?: number | null
+          success?: boolean | null
+          target_url: string
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          integration_id?: string | null
+          payload_json?: Json | null
+          response_body?: string | null
+          response_code?: number | null
+          success?: boolean | null
+          target_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhooks_log_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       generate_referral_code: { Args: never; Returns: string }
+      get_email_by_whatsapp: { Args: { _whatsapp: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
