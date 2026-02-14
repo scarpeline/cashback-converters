@@ -14,7 +14,6 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { FirstLoadGuard } from "@/components/auth/FirstLoadGuard";
-import { EntryRedirect } from "@/components/auth/EntryRedirect";
 import { Loader2 } from "lucide-react";
 
 // Lazy pages
@@ -55,27 +54,18 @@ function AppRoutes() {
           <Route path="/404" element={<NotFoundPage />} />
 
           {/* AFILIADO SAAS */}
-          <Route path="/afiliado-saas" element={
-            <EntryRedirect loggedOutTo="/afiliado-saas/login" loggedInTo="/afiliado-saas" requiredRoles={['afiliado_saas']} />
-          } />
           <Route path="/afiliado-saas/login" element={<AuthGuard><AfiliadoSaasLoginPage /></AuthGuard>} />
           <Route path="/afiliado-saas/*" element={
             <ProtectedRoute allowedRoles={['afiliado_saas']}><AfiliadoDashboard /></ProtectedRoute>
           } />
 
           {/* CONTADOR */}
-          <Route path="/contador2026" element={
-            <EntryRedirect loggedOutTo="/contador2026/login" loggedInTo="/contador2026" requiredRoles={['contador']} />
-          } />
           <Route path="/contador2026/login" element={<AuthGuard><ContadorLoginPage /></AuthGuard>} />
           <Route path="/contador2026/*" element={
             <ProtectedRoute allowedRoles={['contador']}><ContadorDashboard /></ProtectedRoute>
           } />
 
           {/* SUPER ADMIN */}
-          <Route path="/admin" element={
-            <EntryRedirect loggedOutTo="/admin/login" loggedInTo="/admin" requiredRoles={['super_admin']} />
-          } />
           <Route path="/admin/login" element={<AuthGuard><AdminLoginPage /></AuthGuard>} />
           <Route path="/admin/*" element={
             <ProtectedRoute allowedRoles={['super_admin']}><SuperAdminDashboard /></ProtectedRoute>
