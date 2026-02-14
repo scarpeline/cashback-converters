@@ -434,19 +434,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithWhatsApp = async (whatsapp: string, password: string) => {
     try {
       const normalizedWhatsApp = whatsapp.replace(/\D/g, '');
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("email, whatsapp")
-        .or(`whatsapp.eq.${normalizedWhatsApp},whatsapp.eq.${whatsapp}`)
-        .maybeSingle();
+      
+      // Use SECURITY DEFINER function to bypass RLS on profiles
+      const { data: emailFromNormalized } = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: normalizedWhatsApp });
+      
+      let email = emailFromNormalized;
+      
+      // Try with formatted whatsapp if not found
+      if (!email && whatsapp !== normalizedWhatsApp) {
+        const { data: emailFromFormatted } = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: whatsapp });
+        email = emailFromFormatted;
+      }
 
-      if (!profileData?.email) {
+      if (!email) {
         const error = new Error("WhatsApp não encontrado. Verifique o número ou crie uma conta.");
         logAuthError("WhatsApp login - user not found", { whatsapp: normalizedWhatsApp });
         return { error };
       }
 
-      return signIn(profileData.email, password);
+      return signIn(email, password);
     } catch (err) {
       logCriticalError("signInWithWhatsApp", err);
       return { error: err as Error };
