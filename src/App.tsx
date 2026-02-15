@@ -1,7 +1,6 @@
 /**
  * App.tsx - SALÃO CASHBACK
- * 
- * REGRA: authResolved controla montagem de rotas protegidas
+ * Rotas centralizadas. Sem guards duplicados.
  */
 
 import { Suspense, lazy } from "react";
@@ -10,10 +9,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/lib/auth";
+import { AuthProvider } from "@/lib/auth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import { FirstLoadGuard } from "@/components/auth/FirstLoadGuard";
 import { Loader2 } from "lucide-react";
 
 // Lazy pages
@@ -34,81 +32,66 @@ const queryClient = new QueryClient();
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="text-center space-y-4">
-      <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-      <p className="text-muted-foreground text-sm">Carregando...</p>
-    </div>
+    <Loader2 className="w-8 h-8 animate-spin text-primary" />
   </div>
 );
 
 function AppRoutes() {
-  const { authResolved } = useAuth();
-
   return (
-    <FirstLoadGuard isLoading={!authResolved}>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          {/* PUBLIC */}
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<AuthGuard><PublicLoginPage /></AuthGuard>} />
-          <Route path="/404" element={<NotFoundPage />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* ========== PUBLIC ========== */}
+        <Route path="/" element={<Index />} />
+        <Route path="/404" element={<NotFoundPage />} />
 
-          {/* AFILIADO SAAS */}
-          <Route path="/afiliado-saas/login" element={<AuthGuard><AfiliadoSaasLoginPage /></AuthGuard>} />
-          <Route path="/afiliado-saas/*" element={
-            <ProtectedRoute allowedRoles={['afiliado_saas']}><AfiliadoDashboard /></ProtectedRoute>
-          } />
+        {/* ========== LOGIN (AuthGuard: se logado, vai pro dashboard) ========== */}
+        <Route path="/login" element={<AuthGuard><PublicLoginPage /></AuthGuard>} />
+        <Route path="/afiliado-saas/login" element={<AuthGuard><AfiliadoSaasLoginPage /></AuthGuard>} />
+        <Route path="/contador2026/login" element={<AuthGuard><ContadorLoginPage /></AuthGuard>} />
+        <Route path="/admin/login" element={<AuthGuard><AdminLoginPage /></AuthGuard>} />
 
-          {/* CONTADOR */}
-          <Route path="/contador2026/login" element={<AuthGuard><ContadorLoginPage /></AuthGuard>} />
-          <Route path="/contador2026/*" element={
-            <ProtectedRoute allowedRoles={['contador']}><ContadorDashboard /></ProtectedRoute>
-          } />
+        {/* ========== PROTECTED ========== */}
+        <Route path="/app/*" element={
+          <ProtectedRoute allowedRoles={['cliente', 'afiliado_barbearia']}><ClienteDashboard /></ProtectedRoute>
+        } />
+        <Route path="/painel-dono/*" element={
+          <ProtectedRoute allowedRoles={['dono']}><DonoDashboard /></ProtectedRoute>
+        } />
+        <Route path="/painel-profissional/*" element={
+          <ProtectedRoute allowedRoles={['profissional']}><ProfissionalDashboard /></ProtectedRoute>
+        } />
+        <Route path="/afiliado-saas/*" element={
+          <ProtectedRoute allowedRoles={['afiliado_saas']}><AfiliadoDashboard /></ProtectedRoute>
+        } />
+        <Route path="/contador2026/*" element={
+          <ProtectedRoute allowedRoles={['contador']}><ContadorDashboard /></ProtectedRoute>
+        } />
+        <Route path="/admin/*" element={
+          <ProtectedRoute allowedRoles={['super_admin']}><SuperAdminDashboard /></ProtectedRoute>
+        } />
 
-          {/* SUPER ADMIN */}
-          <Route path="/admin/login" element={<AuthGuard><AdminLoginPage /></AuthGuard>} />
-          <Route path="/admin/*" element={
-            <ProtectedRoute allowedRoles={['super_admin']}><SuperAdminDashboard /></ProtectedRoute>
-          } />
+        {/* ========== LEGACY REDIRECTS ========== */}
+        <Route path="/auth" element={<Navigate to="/login" replace />} />
+        <Route path="/public/login" element={<Navigate to="/login" replace />} />
+        <Route path="/public/404" element={<Navigate to="/404" replace />} />
+        <Route path="/app/dashboard/*" element={<Navigate to="/painel-dono" replace />} />
+        <Route path="/app/cliente/*" element={<Navigate to="/app" replace />} />
+        <Route path="/app/profissional/*" element={<Navigate to="/painel-profissional" replace />} />
+        <Route path="/afiliado-saas/dashboard/*" element={<Navigate to="/afiliado-saas" replace />} />
+        <Route path="/contador2026/dashboard/*" element={<Navigate to="/contador2026" replace />} />
+        <Route path="/admin/dashboard/*" element={<Navigate to="/admin" replace />} />
+        <Route path="/cliente/*" element={<Navigate to="/app" replace />} />
+        <Route path="/dono/*" element={<Navigate to="/painel-dono" replace />} />
+        <Route path="/profissional/*" element={<Navigate to="/painel-profissional" replace />} />
+        <Route path="/afiliado/*" element={<Navigate to="/afiliado-saas" replace />} />
+        <Route path="/contador/*" element={<Navigate to="/contador2026" replace />} />
+        <Route path="/super-admin/*" element={<Navigate to="/admin" replace />} />
+        <Route path="/super-admin2026ok" element={<Navigate to="/admin/login" replace />} />
 
-          {/* CLIENTE */}
-          <Route path="/app/*" element={
-            <ProtectedRoute allowedRoles={['cliente', 'afiliado_barbearia']}><ClienteDashboard /></ProtectedRoute>
-          } />
-
-          {/* DONO */}
-          <Route path="/painel-dono/*" element={
-            <ProtectedRoute allowedRoles={['dono']}><DonoDashboard /></ProtectedRoute>
-          } />
-
-          {/* PROFISSIONAL */}
-          <Route path="/painel-profissional/*" element={
-            <ProtectedRoute allowedRoles={['profissional']}><ProfissionalDashboard /></ProtectedRoute>
-          } />
-
-          {/* LEGACY REDIRECTS */}
-          <Route path="/auth" element={<Navigate to="/login" replace />} />
-          <Route path="/public/login" element={<Navigate to="/login" replace />} />
-          <Route path="/public/404" element={<Navigate to="/404" replace />} />
-          <Route path="/app/dashboard/*" element={<Navigate to="/painel-dono" replace />} />
-          <Route path="/app/cliente/*" element={<Navigate to="/app" replace />} />
-          <Route path="/app/profissional/*" element={<Navigate to="/painel-profissional" replace />} />
-          <Route path="/afiliado-saas/dashboard/*" element={<Navigate to="/afiliado-saas" replace />} />
-          <Route path="/contador2026/dashboard/*" element={<Navigate to="/contador2026" replace />} />
-          <Route path="/admin/dashboard/*" element={<Navigate to="/admin" replace />} />
-          <Route path="/cliente/*" element={<Navigate to="/app" replace />} />
-          <Route path="/dono/*" element={<Navigate to="/painel-dono" replace />} />
-          <Route path="/profissional/*" element={<Navigate to="/painel-profissional" replace />} />
-          <Route path="/afiliado/*" element={<Navigate to="/afiliado-saas" replace />} />
-          <Route path="/contador/*" element={<Navigate to="/contador2026" replace />} />
-          <Route path="/super-admin/*" element={<Navigate to="/admin" replace />} />
-          <Route path="/super-admin2026ok" element={<Navigate to="/admin/login" replace />} />
-
-          {/* 404 */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </Suspense>
-    </FirstLoadGuard>
+        {/* ========== 404 ========== */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Suspense>
   );
 }
 

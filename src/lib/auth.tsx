@@ -26,7 +26,7 @@ import {
   logLoadComplete
 } from "@/lib/debug/auth-logger";
 import { validateSession, clearLocalStorageToken } from "@/lib/debug/session-validator";
-import { getDashboardForRole, getLoginPathFromRoute } from "@/lib/debug/route-config";
+import { getDashboardForRole, getLoginForRoute, ROLE_PRIORITY } from "@/lib/route-config";
 
 // ============================================
 // TYPES
@@ -80,10 +80,7 @@ const PENDING_ROLE_STORAGE_KEY = "scb_pending_role";
 const PENDING_ROLE_USER_KEY = "scb_pending_role_user_id";
 const SELF_ASSIGNABLE_ROLES: AppRole[] = ["cliente", "dono", "afiliado_saas"];
 
-const ROLE_PRIORITY: AppRole[] = [
-  'super_admin', 'contador', 'dono', 'profissional', 
-  'afiliado_saas', 'afiliado_barbearia', 'cliente'
-];
+// ROLE_PRIORITY imported from route-config
 
 // ============================================
 // CONTEXT
@@ -487,7 +484,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null);
       setRoles([]);
       roleBootstrapAttemptedRef.current = false;
-      const loginPath = getLoginPathFromRoute(currentPath);
+      const loginPath = getLoginForRoute(currentPath);
       window.location.href = loginPath;
     } catch (err) {
       logCriticalError("signOut", err);
@@ -539,4 +536,4 @@ export function useAuth() {
 // RE-EXPORTS
 // ============================================
 
-export { getDashboardForRole, getLoginPathFromRoute, getLoginPathForRole } from "@/lib/debug/route-config";
+export { getDashboardForRole, getLoginForRoute, getLoginForRole as getLoginPathForRole } from "@/lib/route-config";

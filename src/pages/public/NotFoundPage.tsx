@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Home, ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useAuth } from "@/lib/auth";
-import { getDashboardForRole, getLoginPathFromRoute } from "@/lib/debug/route-config";
+import { getDashboardForRole, getLoginForRoute } from "@/lib/route-config";
 import { logRouteError } from "@/lib/debug/auth-logger";
 
 /**
@@ -63,7 +63,7 @@ const NotFoundPage = () => {
 
   // Determine appropriate login path based on attempted URL
   const attemptedPath = window.location.pathname;
-  const loginPath = getLoginPathFromRoute(attemptedPath);
+  const loginPath = getLoginForRoute(attemptedPath);
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
