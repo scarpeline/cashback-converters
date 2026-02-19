@@ -41,6 +41,27 @@ serve(async (req) => {
       role: "dono",
     },
     {
+      email: "profissional.teste@salao.app",
+      password: "Teste@123",
+      name: "Profissional Teste",
+      whatsapp: "11999990004",
+      role: "profissional",
+    },
+    {
+      email: "afiliado.teste@salao.app",
+      password: "Teste@123",
+      name: "Afiliado SaaS Teste",
+      whatsapp: "11999990005",
+      role: "afiliado_saas",
+    },
+    {
+      email: "contador.teste@salao.app",
+      password: "Teste@123",
+      name: "Contador Teste",
+      whatsapp: "11999990006",
+      role: "contador",
+    },
+    {
       email: "escarpelineparticular@gmail.com",
       password: "Admin@2026",
       name: "Super Admin",
@@ -126,10 +147,90 @@ serve(async (req) => {
           .maybeSingle();
 
         if (!existingShop) {
-          await admin.from("barbershops").insert({
+          const { data: newShop } = await admin.from("barbershops").insert({
             owner_user_id: userId,
             name: "Barbearia Teste",
             phone: u.whatsapp,
+          }).select("id").single();
+
+          // Create a test service for the barbershop
+          if (newShop) {
+            await admin.from("services").insert({
+              barbershop_id: newShop.id,
+              name: "Corte Masculino",
+              price: 45.00,
+              duration_minutes: 30,
+              description: "Corte masculino completo",
+            });
+            await admin.from("services").insert({
+              barbershop_id: newShop.id,
+              name: "Barba",
+              price: 25.00,
+              duration_minutes: 20,
+              description: "Barba com navalha",
+            });
+          }
+        }
+      }
+
+      // For profissional, link to the test barbershop
+      if (u.role === "profissional") {
+        const { data: testShop } = await admin
+          .from("barbershops")
+          .select("id")
+          .eq("name", "Barbearia Teste")
+          .maybeSingle();
+
+        if (testShop) {
+          const { data: existingPro } = await admin
+            .from("professionals")
+            .select("id")
+            .eq("user_id", userId)
+            .maybeSingle();
+
+          if (!existingPro) {
+            await admin.from("professionals").insert({
+              user_id: userId,
+              barbershop_id: testShop.id,
+              name: u.name,
+              email: u.email,
+              whatsapp: u.whatsapp,
+            });
+          }
+        }
+      }
+
+      // For afiliado_saas, create affiliate record
+      if (u.role === "afiliado_saas") {
+        const { data: existingAff } = await admin
+          .from("affiliates")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (!existingAff) {
+          await admin.from("affiliates").insert({
+            user_id: userId,
+            type: "afiliado_saas",
+            referral_code: "TESTE" + Math.random().toString(36).substring(2, 6).toUpperCase(),
+          });
+        }
+      }
+
+      // For contador, create accountant record
+      if (u.role === "contador") {
+        const { data: existingAcc } = await admin
+          .from("accountants")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (!existingAcc) {
+          await admin.from("accountants").insert({
+            user_id: userId,
+            name: u.name,
+            email: u.email,
+            whatsapp: u.whatsapp,
           });
         }
       }
