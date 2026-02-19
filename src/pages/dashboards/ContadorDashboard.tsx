@@ -21,7 +21,7 @@ const ContadorDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const basePath = "/contador2026/dashboard";
+  const basePath = "/contador2026";
   
   const navigation = [
     { name: "Dashboard", href: basePath, icon: LayoutDashboard },

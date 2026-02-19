@@ -21,7 +21,7 @@ const ProfissionalDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const basePath = "/app/profissional/dashboard";
+  const basePath = "/painel-profissional";
   
   const navigation = [
     { name: "Dashboard", href: basePath, icon: LayoutDashboard },

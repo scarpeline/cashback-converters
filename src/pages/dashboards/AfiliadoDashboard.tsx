@@ -25,7 +25,7 @@ const AfiliadoDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const basePath = "/afiliado-saas/dashboard";
+  const basePath = "/afiliado-saas";
   
   const navigation = [
     { name: "Dashboard", href: basePath, icon: LayoutDashboard },
