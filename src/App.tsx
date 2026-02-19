@@ -74,12 +74,7 @@ function AppRoutes() {
         <Route path="/auth" element={<Navigate to="/login" replace />} />
         <Route path="/public/login" element={<Navigate to="/login" replace />} />
         <Route path="/public/404" element={<Navigate to="/404" replace />} />
-        <Route path="/app/dashboard/*" element={<Navigate to="/painel-dono" replace />} />
-        <Route path="/app/cliente/*" element={<Navigate to="/app" replace />} />
         <Route path="/app/profissional/*" element={<Navigate to="/painel-profissional" replace />} />
-        <Route path="/afiliado-saas/dashboard/*" element={<Navigate to="/afiliado-saas" replace />} />
-        <Route path="/contador2026/dashboard/*" element={<Navigate to="/contador2026" replace />} />
-        <Route path="/admin/dashboard/*" element={<Navigate to="/admin" replace />} />
         <Route path="/cliente/*" element={<Navigate to="/app" replace />} />
         <Route path="/dono/*" element={<Navigate to="/painel-dono" replace />} />
         <Route path="/profissional/*" element={<Navigate to="/painel-profissional" replace />} />
