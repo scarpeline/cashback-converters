@@ -2,6 +2,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Loader2 } from "lucide-react";
 import { getDashboardForRole, getLoginForRoute } from "@/lib/route-config";
+import { useEffect, useState } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,19 +10,19 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
-/**
- * ProtectedRoute - Único guard do sistema
- * 
- * Fluxo:
- * 1. authResolved = false → loading spinner
- * 2. Sem user → redirect para login contextual
- * 3. Sem roles ainda → loading (com timeout)
- * 4. Role não permitida → redirect para dashboard correto
- * 5. Tudo OK → renderiza children
- */
 export function ProtectedRoute({ children, allowedRoles, redirectTo }: ProtectedRouteProps) {
   const { user, roles, getPrimaryRole, authResolved, profileLoading } = useAuth();
   const location = useLocation();
+  const [rolesTimeout, setRolesTimeout] = useState(false);
+
+  // Timeout: if roles don't load within 5s after auth resolved, force redirect
+  useEffect(() => {
+    if (authResolved && user && roles.length === 0 && !profileLoading) {
+      const timer = setTimeout(() => setRolesTimeout(true), 5000);
+      return () => clearTimeout(timer);
+    }
+    if (roles.length > 0) setRolesTimeout(false);
+  }, [authResolved, user, roles, profileLoading]);
 
   // STEP 1: Aguardar auth resolver
   if (!authResolved || profileLoading) {
@@ -34,8 +35,12 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
-  // STEP 3: Sessão OK mas sem roles → aguardar brevemente
+  // STEP 3: Sessão OK mas sem roles → aguardar brevemente (com timeout)
   if (roles.length === 0) {
+    if (rolesTimeout) {
+      const loginPath = redirectTo || getLoginForRoute(location.pathname);
+      return <Navigate to={loginPath} state={{ from: location }} replace />;
+    }
     return <LoadingScreen message="Carregando permissões..." />;
   }
 

@@ -437,8 +437,21 @@ const PublicLoginPage = () => {
             </p>
           )}
 
+          {/* Test Credentials */}
+          <div className="mt-6 p-4 rounded-lg bg-muted/50 border border-border">
+            <p className="text-xs font-semibold text-foreground mb-2">🧪 Credenciais de Teste:</p>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <p><span className="font-medium text-foreground">👤 Cliente:</span> WhatsApp: 11999990001 | Senha: Teste@123</p>
+              <p><span className="font-medium text-foreground">🏪 Dono:</span> Email: dono.teste@salao.app | Senha: Teste@123</p>
+              <p><span className="font-medium text-foreground">✂️ Profissional:</span> Email: profissional.teste@salao.app | Senha: Teste@123</p>
+              <p><span className="font-medium text-foreground">🤝 Afiliado:</span> <Link to="/afiliado-saas/login" className="underline text-primary">Acessar login afiliado</Link></p>
+              <p><span className="font-medium text-foreground">📊 Contador:</span> <Link to="/contador2026/login" className="underline text-primary">Acessar login contador</Link></p>
+              <p><span className="font-medium text-foreground">🛡️ Admin:</span> <Link to="/admin/login" className="underline text-primary">Acessar login admin</Link></p>
+            </div>
+          </div>
+
           {/* Affiliate Link */}
-          <div className="mt-8 pt-6 border-t border-border text-center">
+          <div className="mt-4 pt-4 border-t border-border text-center">
             <Link 
               to="/afiliado-saas/login" 
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
