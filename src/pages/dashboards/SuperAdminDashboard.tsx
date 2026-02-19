@@ -41,7 +41,7 @@ const SuperAdminDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const basePath = "/admin/dashboard";
+  const basePath = "/admin";
   
   const navigation = [
     { name: "Dashboard", href: basePath, icon: LayoutDashboard },

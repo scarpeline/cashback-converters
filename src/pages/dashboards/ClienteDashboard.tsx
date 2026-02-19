@@ -23,7 +23,7 @@ const ClienteDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const basePath = "/app/cliente";
+  const basePath = "/app";
   
   const navigation = [
     { name: "Agendar", href: basePath, icon: Calendar },

@@ -27,7 +27,7 @@ const DonoDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const basePath = "/app/dashboard";
+  const basePath = "/painel-dono";
   
   const navigation = [
     { name: "Dashboard", href: basePath, icon: LayoutDashboard },
