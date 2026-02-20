@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Routes, Route, Link, useLocation } from "react-router-dom";
+import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   Calendar, 
   Gift, 
@@ -14,9 +16,14 @@ import {
   X,
   QrCode,
   Users,
-  Clock
+  Clock,
+  Search,
+  MapPin,
+  Star,
+  ChevronRight
 } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { toast } from "sonner";
 
 const ClienteDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -72,7 +79,7 @@ const ClienteDashboard = () => {
 
           <div className="p-4 border-b border-border">
             <p className="font-medium truncate">{profile?.name || "Cliente"}</p>
-            <p className="text-sm text-muted-foreground truncate">{profile?.whatsapp}</p>
+            <p className="text-sm text-muted-foreground truncate">{profile?.whatsapp || profile?.email}</p>
           </div>
 
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -142,76 +149,130 @@ const ClienteDashboard = () => {
   );
 };
 
-const HomePage = () => (
-  <div className="space-y-6">
-    <div>
-      <h1 className="font-display text-2xl font-bold">Olá! 👋</h1>
-      <p className="text-muted-foreground">O que deseja fazer hoje?</p>
+const MOCK_BARBERSHOPS = [
+  { id: "1", name: "Barbearia Teste", address: "Rua das Flores, 123", rating: 4.8, services: 5 },
+  { id: "2", name: "Corte & Estilo", address: "Av. Principal, 456", rating: 4.5, services: 8 },
+  { id: "3", name: "Barbearia Premium", address: "Rua Central, 789", rating: 4.9, services: 6 },
+];
+
+const HomePage = () => {
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  
+  const filtered = MOCK_BARBERSHOPS.filter(b => 
+    b.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-bold">Olá! 👋</h1>
+        <p className="text-muted-foreground">Encontre uma barbearia e agende seu horário</p>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-3 gap-3">
+        <button
+          onClick={() => navigate("/app/agendamentos")}
+          className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-center hover:bg-primary/20 transition-colors"
+        >
+          <Clock className="w-6 h-6 text-primary mx-auto mb-1" />
+          <span className="text-xs font-medium text-primary">Meus Agendamentos</span>
+        </button>
+        <button
+          onClick={() => navigate("/app/cashback")}
+          className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-center hover:bg-primary/20 transition-colors"
+        >
+          <Gift className="w-6 h-6 text-primary mx-auto mb-1" />
+          <span className="text-xs font-medium text-primary">Meu Cashback</span>
+        </button>
+        <button
+          onClick={() => navigate("/app/indicar")}
+          className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-center hover:bg-primary/20 transition-colors"
+        >
+          <Users className="w-6 h-6 text-primary mx-auto mb-1" />
+          <span className="text-xs font-medium text-primary">Indicar</span>
+        </button>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+        <Input
+          placeholder="Buscar barbearia..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      {/* Barbershops */}
+      <div className="space-y-3">
+        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Barbearias Disponíveis</h2>
+        {filtered.map((shop) => (
+          <Card key={shop.id} className="hover:border-primary transition-colors cursor-pointer" onClick={() => {
+            toast.success(`Abrindo ${shop.name}... (Simulação)`);
+          }}>
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-xl">✂️</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold">{shop.name}</p>
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <MapPin className="w-3 h-3" /> {shop.address}
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs flex items-center gap-1 text-yellow-500">
+                    <Star className="w-3 h-3 fill-yellow-500" /> {shop.rating}
+                  </span>
+                  <span className="text-xs text-muted-foreground">• {shop.services} serviços</span>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
+  );
+};
 
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <Card className="hover:border-primary transition-colors cursor-pointer">
-        <CardHeader>
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-            <Calendar className="w-6 h-6 text-primary" />
-          </div>
-          <CardTitle>Agendar Serviço</CardTitle>
-          <CardDescription>Escolha uma barbearia e agende seu horário</CardDescription>
-        </CardHeader>
-      </Card>
-
-      <Card className="hover:border-primary transition-colors cursor-pointer">
-        <CardHeader>
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-            <Gift className="w-6 h-6 text-primary" />
-          </div>
-          <CardTitle>Meu Cashback</CardTitle>
-          <CardDescription>Veja seus créditos disponíveis</CardDescription>
-        </CardHeader>
-      </Card>
-
-      <Card className="hover:border-primary transition-colors cursor-pointer">
-        <CardHeader>
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-            <Users className="w-6 h-6 text-primary" />
-          </div>
-          <CardTitle>Indique e Ganhe</CardTitle>
-          <CardDescription>Ganhe cashback indicando amigos</CardDescription>
-        </CardHeader>
-      </Card>
-    </div>
-
-    <Card>
-      <CardHeader>
-        <CardTitle>Próximo Agendamento</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground text-center py-8">
-          Você não tem agendamentos futuros.
-        </p>
-        <Button variant="gold" className="w-full">
+const AgendamentosPage = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-2xl font-bold">Meus Agendamentos</h1>
+        <Button variant="gold" onClick={() => navigate("/app")}>
           <Calendar className="w-4 h-4 mr-2" />
-          Agendar agora
+          Novo
         </Button>
-      </CardContent>
-    </Card>
-  </div>
-);
+      </div>
+      
+      {/* Tabs */}
+      <div className="flex gap-2">
+        {["Próximos", "Concluídos", "Cancelados"].map((tab, i) => (
+          <button key={tab} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            i === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+          }`}>
+            {tab}
+          </button>
+        ))}
+      </div>
 
-const AgendamentosPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Meus Agendamentos</h1>
-    <Card>
-      <CardContent className="py-12 text-center">
-        <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground">Nenhum agendamento encontrado.</p>
-        <Button variant="gold" className="mt-4">
-          Fazer meu primeiro agendamento
-        </Button>
-      </CardContent>
-    </Card>
-  </div>
-);
+      <Card>
+        <CardContent className="py-12 text-center">
+          <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">Nenhum agendamento encontrado.</p>
+          <Button variant="gold" className="mt-4" onClick={() => navigate("/app")}>
+            Fazer meu primeiro agendamento
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 const CashbackPage = () => (
   <div className="space-y-6">
@@ -223,9 +284,12 @@ const CashbackPage = () => (
         <CardTitle className="text-4xl text-gradient-gold">R$ 0,00</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground mb-3">
           Use seu cashback no próximo agendamento!
         </p>
+        <Button variant="gold" size="sm" onClick={() => toast.info("Cashback será aplicado automaticamente no próximo agendamento.")}>
+          Como usar?
+        </Button>
       </CardContent>
     </Card>
 
@@ -236,6 +300,7 @@ const CashbackPage = () => (
       <CardContent className="text-center py-8">
         <Gift className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
         <p className="text-muted-foreground">Nenhum cashback recebido ainda.</p>
+        <p className="text-sm text-muted-foreground mt-2">Faça um agendamento para começar a ganhar!</p>
       </CardContent>
     </Card>
   </div>
@@ -244,6 +309,15 @@ const CashbackPage = () => (
 const HistoricoPage = () => (
   <div className="space-y-6">
     <h1 className="font-display text-2xl font-bold">Histórico</h1>
+    <div className="flex gap-2">
+      {["Todos", "Pagamentos", "Cashback"].map((tab, i) => (
+        <button key={tab} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+          i === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+        }`}>
+          {tab}
+        </button>
+      ))}
+    </div>
     <Card>
       <CardContent className="py-12 text-center">
         <History className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -253,51 +327,88 @@ const HistoricoPage = () => (
   </div>
 );
 
-const IndicarPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Indique e Ganhe</h1>
-    
-    <Card className="bg-gradient-card border-primary/20">
-      <CardHeader>
-        <CardTitle>Ganhe cashback indicando amigos!</CardTitle>
-        <CardDescription>
-          Quando seu amigo fizer o primeiro agendamento, vocês dois ganham.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="p-4 bg-background rounded-lg flex items-center justify-between">
-          <code className="text-sm">salao.app/r/SEU-CODIGO</code>
-          <Button variant="outline" size="sm">
-            Copiar
-          </Button>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="gold" className="flex-1">
-            <QrCode className="w-4 h-4 mr-2" />
-            Ver QR Code
-          </Button>
-          <Button variant="outline" className="flex-1">
-            Compartilhar
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+const IndicarPage = () => {
+  const referralCode = "SCB-TESTE01";
+  
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Indique e Ganhe</h1>
+      
+      <Card className="bg-gradient-card border-primary/20">
+        <CardHeader>
+          <CardTitle>Ganhe cashback indicando amigos!</CardTitle>
+          <CardDescription>
+            Quando seu amigo fizer o primeiro agendamento, vocês dois ganham R$ 10,00 de cashback.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label className="text-xs text-muted-foreground">SEU CÓDIGO DE INDICAÇÃO</Label>
+            <div className="p-4 bg-background rounded-lg flex items-center justify-between mt-1 border border-border">
+              <code className="text-lg font-bold text-primary">{referralCode}</code>
+              <Button variant="outline" size="sm" onClick={() => {
+                navigator.clipboard?.writeText(`salao.app/r/${referralCode}`);
+                toast.success("Link copiado!");
+              }}>
+                Copiar Link
+              </Button>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="gold" className="flex-1" onClick={() => toast.info("QR Code: " + referralCode)}>
+              <QrCode className="w-4 h-4 mr-2" />
+              Ver QR Code
+            </Button>
+            <Button variant="outline" className="flex-1" onClick={() => {
+              if (navigator.share) {
+                navigator.share({ title: "SalãoCashBack", url: `https://salao.app/r/${referralCode}` });
+              } else {
+                toast.info("Compartilhe o link: salao.app/r/" + referralCode);
+              }
+            }}>
+              Compartilhar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-    <Card>
-      <CardHeader>
-        <CardTitle>Quero ser Afiliado</CardTitle>
-        <CardDescription>
-          Ganhe ainda mais indicando barbearias para usar o SalãoCashBack
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Button variant="outline" className="w-full">
-          Saber mais sobre o programa
-        </Button>
-      </CardContent>
-    </Card>
-  </div>
-);
+      <div className="grid grid-cols-3 gap-3">
+        <Card className="text-center">
+          <CardContent className="pt-4 pb-4">
+            <p className="text-2xl font-bold">0</p>
+            <p className="text-xs text-muted-foreground">Indicados</p>
+          </CardContent>
+        </Card>
+        <Card className="text-center">
+          <CardContent className="pt-4 pb-4">
+            <p className="text-2xl font-bold">0</p>
+            <p className="text-xs text-muted-foreground">Convertidos</p>
+          </CardContent>
+        </Card>
+        <Card className="text-center bg-gradient-card border-primary/20">
+          <CardContent className="pt-4 pb-4">
+            <p className="text-2xl font-bold text-gradient-gold">R$ 0</p>
+            <p className="text-xs text-muted-foreground">Ganhos</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Quero ser Afiliado SaaS</CardTitle>
+          <CardDescription>
+            Indique barbearias para usar o SalãoCashBack e ganhe comissões recorrentes!
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" className="w-full" onClick={() => toast.info("Entre em contato pelo WhatsApp para se tornar um Afiliado SaaS.")}>
+            Saber mais sobre o programa
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 const NotificacoesPage = () => (
   <div className="space-y-6">
@@ -306,6 +417,7 @@ const NotificacoesPage = () => (
       <CardContent className="py-12 text-center">
         <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
         <p className="text-muted-foreground">Nenhuma notificação.</p>
+        <p className="text-sm text-muted-foreground mt-2">As notificações de agendamentos e cashback aparecerão aqui.</p>
       </CardContent>
     </Card>
   </div>
@@ -313,25 +425,37 @@ const NotificacoesPage = () => (
 
 const PerfilPage = () => {
   const { profile } = useAuth();
+  const [editing, setEditing] = useState(false);
   
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Meu Perfil</h1>
       <Card>
         <CardContent className="pt-6 space-y-4">
-          <div>
-            <label className="text-sm text-muted-foreground">Nome</label>
-            <p className="font-medium">{profile?.name || "-"}</p>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <User className="w-8 h-8 text-primary" />
+            </div>
+            <div>
+              <p className="font-bold text-lg">{profile?.name || "Cliente"}</p>
+              <p className="text-sm text-muted-foreground">Perfil Ativo</p>
+            </div>
           </div>
-          <div>
-            <label className="text-sm text-muted-foreground">WhatsApp</label>
-            <p className="font-medium">{profile?.whatsapp || "-"}</p>
+          <div className="grid gap-3">
+            <div className="p-3 bg-muted rounded-lg">
+              <label className="text-xs text-muted-foreground">Nome</label>
+              <p className="font-medium">{profile?.name || "-"}</p>
+            </div>
+            <div className="p-3 bg-muted rounded-lg">
+              <label className="text-xs text-muted-foreground">WhatsApp</label>
+              <p className="font-medium">{profile?.whatsapp || "-"}</p>
+            </div>
+            <div className="p-3 bg-muted rounded-lg">
+              <label className="text-xs text-muted-foreground">E-mail</label>
+              <p className="font-medium">{profile?.email || "-"}</p>
+            </div>
           </div>
-          <div>
-            <label className="text-sm text-muted-foreground">E-mail</label>
-            <p className="font-medium">{profile?.email || "-"}</p>
-          </div>
-          <Button variant="outline" className="w-full">
+          <Button variant="gold" className="w-full" onClick={() => toast.info("Edição de perfil em breve!")}>
             Editar Perfil
           </Button>
         </CardContent>

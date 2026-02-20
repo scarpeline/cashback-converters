@@ -65,7 +65,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, metadata: SignUpMetadata) => Promise<{ error: Error | null; needsConfirmation?: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithWhatsApp: (whatsapp: string, password: string) => Promise<{ error: Error | null }>;
-  signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
+  signInWithMagicLink: (email: string, returnPath?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
   getPrimaryRole: () => AppRole | null;
@@ -456,9 +456,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signInWithMagicLink = async (email: string) => {
+  const signInWithMagicLink = async (email: string, returnPath?: string) => {
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      // Use current path so magic link returns to the correct login page
+      const path = returnPath || window.location.pathname;
+      const redirectUrl = `${window.location.origin}${path}`;
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: { emailRedirectTo: redirectUrl },
