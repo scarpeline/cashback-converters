@@ -1,8 +1,11 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   LayoutDashboard,
   Users,
@@ -18,18 +21,18 @@ import {
   Menu,
   X,
   Activity,
-  AlertTriangle,
   CheckCircle,
   TrendingUp,
   Plug,
-  Loader2
+  Loader2,
+  Send
 } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { toast } from "sonner";
+import { lazy, Suspense } from "react";
 
-// Lazy load das páginas de integração
 const IntegrationSettingsPage = lazy(() => import("@/pages/admin/IntegrationSettingsPage"));
 
-// Page loader para lazy components
 const PageFallback = () => (
   <div className="flex items-center justify-center min-h-[400px]">
     <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -65,10 +68,7 @@ const SuperAdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background flex">
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       <aside className={`
@@ -82,14 +82,9 @@ const SuperAdminDashboard = () => {
               <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
                 <Shield className="w-5 h-5 text-destructive" />
               </div>
-              <span className="font-display font-bold text-lg">
-                Super Admin
-              </span>
+              <span className="font-display font-bold text-lg">Super Admin</span>
             </Link>
-            <button 
-              className="lg:hidden text-muted-foreground"
-              onClick={() => setSidebarOpen(false)}
-            >
+            <button className="lg:hidden text-muted-foreground" onClick={() => setSidebarOpen(false)}>
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -105,13 +100,8 @@ const SuperAdminDashboard = () => {
                 key={item.name}
                 to={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`
-                  flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium
-                  transition-colors
-                  ${isActive(item.href) 
-                    ? "bg-destructive text-destructive-foreground" 
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"}
-                `}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                  ${isActive(item.href) ? "bg-destructive text-destructive-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
               >
                 <item.icon className="w-5 h-5" />
                 {item.name}
@@ -120,11 +110,7 @@ const SuperAdminDashboard = () => {
           </nav>
 
           <div className="p-4 border-t border-border">
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start gap-3 text-muted-foreground"
-              onClick={signOut}
-            >
+            <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground" onClick={signOut}>
               <LogOut className="w-5 h-5" />
               Sair
             </Button>
@@ -134,10 +120,7 @@ const SuperAdminDashboard = () => {
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 border-b border-border flex items-center justify-between px-4 lg:px-6 bg-card">
-          <button 
-            className="lg:hidden text-foreground"
-            onClick={() => setSidebarOpen(true)}
-          >
+          <button className="lg:hidden text-foreground" onClick={() => setSidebarOpen(true)}>
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex-1" />
@@ -152,14 +135,10 @@ const SuperAdminDashboard = () => {
             <Route path="afiliados" element={<AfiliadosPage />} />
             <Route path="contadores" element={<ContadoresPage />} />
             <Route path="financeiro" element={<FinanceiroPage />} />
-            <Route path="integracoes" element={
-              <Suspense fallback={<PageFallback />}>
-                <IntegrationSettingsPage />
-              </Suspense>
-            } />
+            <Route path="integracoes" element={<Suspense fallback={<PageFallback />}><IntegrationSettingsPage /></Suspense>} />
             <Route path="pixels" element={<PixelsPage />} />
             <Route path="suporte" element={<SuportePage />} />
-            <Route path="notificacoes" element={<NotificacoesPage />} />
+            <Route path="notificacoes" element={<NotificacoesAdminPage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
           </Routes>
         </main>
@@ -169,328 +148,304 @@ const SuperAdminDashboard = () => {
 };
 
 const SystemStatus = () => (
-  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 text-green-500 text-sm">
+  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 text-success text-sm">
     <Activity className="w-4 h-4" />
-    <span>SYSTEM_STATUS = OK</span>
+    <span>Sistema OK</span>
   </div>
 );
 
-const DashboardHome = () => (
-  <div className="space-y-6">
-    <div>
-      <h1 className="font-display text-2xl font-bold">Painel Super Admin</h1>
-      <p className="text-muted-foreground">Visão geral do sistema</p>
-    </div>
+const DashboardHome = () => {
+  const [stats, setStats] = useState({ users: 0, barbershops: 0, affiliates: 0 });
 
-    {/* System Check */}
-    <Card className="border-green-500/20 bg-green-500/5">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <CheckCircle className="w-5 h-5 text-green-500" />
-          <CardTitle>Sistema Operacional</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-green-500" />
-            <span>Auth</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-green-500" />
-            <span>ASAAS</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-green-500" />
-            <span>Split</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-green-500" />
-            <span>Mensagens</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+  useEffect(() => {
+    Promise.all([
+      supabase.from("profiles").select("id", { count: "exact", head: true }),
+      supabase.from("barbershops").select("id", { count: "exact", head: true }),
+      supabase.from("affiliates").select("id", { count: "exact", head: true }),
+    ]).then(([p, b, a]) => {
+      setStats({
+        users: p.count || 0,
+        barbershops: b.count || 0,
+        affiliates: a.count || 0,
+      });
+    });
+  }, []);
 
-    {/* Stats */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardDescription>Total de Usuários</CardDescription>
-          <CardTitle className="text-2xl">0</CardTitle>
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-bold">Painel Super Admin</h1>
+        <p className="text-muted-foreground">Visão geral do sistema</p>
+      </div>
+
+      <Card className="border-success/20 bg-success/5">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 text-success" />
+            <CardTitle>Sistema Operacional</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            <TrendingUp className="w-3 h-3" /> +0 esta semana
-          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            {["Auth", "ASAAS", "Split", "Mensagens"].map(s => (
+              <div key={s} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-success" /><span>{s}</span></div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardDescription>Barbearias Ativas</CardDescription>
-          <CardTitle className="text-2xl">0</CardTitle>
-        </CardHeader>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card><CardHeader className="pb-2"><CardDescription>Total de Usuários</CardDescription><CardTitle className="text-2xl">{stats.users}</CardTitle></CardHeader></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>Barbearias Ativas</CardDescription><CardTitle className="text-2xl">{stats.barbershops}</CardTitle></CardHeader></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>Afiliados Ativos</CardDescription><CardTitle className="text-2xl">{stats.affiliates}</CardTitle></CardHeader></Card>
+        <Card className="bg-gradient-card border-primary/20"><CardHeader className="pb-2"><CardDescription>Receita do Mês</CardDescription><CardTitle className="text-2xl text-gradient-gold">R$ 0,00</CardTitle></CardHeader></Card>
+      </div>
+    </div>
+  );
+};
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardDescription>Afiliados Ativos</CardDescription>
-          <CardTitle className="text-2xl">0</CardTitle>
-        </CardHeader>
-      </Card>
+// ============ NOTIFICAÇÕES ADMIN ============
 
-      <Card className="bg-gradient-card border-primary/20">
-        <CardHeader className="pb-2">
-          <CardDescription>Receita do Mês</CardDescription>
-          <CardTitle className="text-2xl text-gradient-gold">R$ 0,00</CardTitle>
+const NotificacoesAdminPage = () => {
+  const [target, setTarget] = useState<"all" | "donos" | "profissionais" | "clientes">("all");
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const handleSend = async () => {
+    if (!title || !message) {
+      toast.error("Preencha título e mensagem.");
+      return;
+    }
+    setSending(true);
+
+    // Get target users based on role
+    let roleFilter: string | null = null;
+    if (target === "donos") roleFilter = "dono";
+    else if (target === "profissionais") roleFilter = "profissional";
+    else if (target === "clientes") roleFilter = "cliente";
+
+    let userIds: string[] = [];
+    if (roleFilter) {
+      const { data } = await supabase.from("user_roles").select("user_id").eq("role", roleFilter as any);
+      userIds = data?.map(r => r.user_id) || [];
+    } else {
+      // All users
+      const { data } = await supabase.from("profiles").select("user_id");
+      userIds = data?.map(r => r.user_id) || [];
+    }
+
+    if (userIds.length === 0) {
+      toast.error("Nenhum usuário encontrado para o filtro selecionado.");
+      setSending(false);
+      return;
+    }
+
+    const notifications = userIds.map(uid => ({
+      user_id: uid,
+      title,
+      message,
+      type: "info" as const,
+      priority: "normal" as const,
+    }));
+
+    const { error } = await supabase.from("notifications").insert(notifications);
+    setSending(false);
+
+    if (error) {
+      toast.error("Erro: " + error.message);
+      return;
+    }
+
+    toast.success(`Notificação enviada para ${userIds.length} usuário(s)!`);
+    setTitle("");
+    setMessage("");
+  };
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Enviar Notificação</h1>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Destinatários</CardTitle>
+          <CardDescription>Selecione quem receberá a notificação</CardDescription>
         </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {(["all", "donos", "profissionais", "clientes"] as const).map((t) => (
+              <Button
+                key={t}
+                variant={target === t ? "gold" : "outline"}
+                size="sm"
+                onClick={() => setTarget(t)}
+              >
+                {t === "all" ? "Todos" : t === "donos" ? "Donos" : t === "profissionais" ? "Profissionais" : "Clientes"}
+              </Button>
+            ))}
+          </div>
+          <div>
+            <Label>Título *</Label>
+            <Input placeholder="Título da notificação" value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1" />
+          </div>
+          <div>
+            <Label>Mensagem *</Label>
+            <Input placeholder="Corpo da mensagem..." value={message} onChange={(e) => setMessage(e.target.value)} className="mt-1" />
+          </div>
+          <Button variant="gold" onClick={handleSend} disabled={sending}>
+            <Send className="w-4 h-4 mr-2" />
+            {sending ? "Enviando..." : "Enviar Notificação"}
+          </Button>
+        </CardContent>
       </Card>
     </div>
+  );
+};
 
-    {/* Quick Actions */}
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <Card className="hover:border-primary transition-colors cursor-pointer">
-        <CardHeader>
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
-            <Calculator className="w-5 h-5 text-primary" />
-          </div>
-          <CardTitle className="text-lg">Adicionar Contador</CardTitle>
-          <CardDescription>Cadastrar novo contador parceiro</CardDescription>
-        </CardHeader>
-      </Card>
+// ============ OTHER PAGES ============
 
-      <Card className="hover:border-primary transition-colors cursor-pointer">
-        <CardHeader>
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
-            <Bell className="w-5 h-5 text-primary" />
-          </div>
-          <CardTitle className="text-lg">Enviar Notificação</CardTitle>
-          <CardDescription>Notificar usuários ou perfis</CardDescription>
-        </CardHeader>
-      </Card>
+const UsuariosPage = () => {
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-      <Card className="hover:border-primary transition-colors cursor-pointer">
-        <CardHeader>
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
-            <Settings className="w-5 h-5 text-primary" />
-          </div>
-          <CardTitle className="text-lg">Configurar Planos</CardTitle>
-          <CardDescription>Editar preços e taxas</CardDescription>
-        </CardHeader>
-      </Card>
+  useEffect(() => {
+    supabase.from("profiles").select("*, user_roles(role)").limit(50).then(({ data }) => {
+      setUsers(data || []);
+      setLoading(false);
+    });
+  }, []);
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Usuários</h1>
+      {loading ? (
+        <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div>
+      ) : users.length === 0 ? (
+        <Card><CardContent className="py-12 text-center"><Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum usuário.</p></CardContent></Card>
+      ) : (
+        <div className="space-y-2">
+          {users.map((u) => (
+            <Card key={u.id}>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold">{u.name}</p>
+                  <p className="text-sm text-muted-foreground">{u.email} {u.whatsapp ? `• ${u.whatsapp}` : ""}</p>
+                </div>
+                <div className="flex gap-1">
+                  {u.user_roles?.map((r: any) => (
+                    <span key={r.role} className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{r.role}</span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
-const UsuariosPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Usuários</h1>
-    <Card>
-      <CardContent className="py-12 text-center">
-        <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground">Listagem de usuários em desenvolvimento.</p>
-      </CardContent>
-    </Card>
-  </div>
-);
+const BarbeariasPage = () => {
+  const [shops, setShops] = useState<any[]>([]);
+  useEffect(() => { supabase.from("barbershops").select("*").then(({ data }) => setShops(data || [])); }, []);
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Barbearias</h1>
+      {shops.length === 0 ? (
+        <Card><CardContent className="py-12 text-center"><Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhuma barbearia.</p></CardContent></Card>
+      ) : shops.map(s => (
+        <Card key={s.id}><CardContent className="p-4 flex items-center gap-4">
+          <Building2 className="w-5 h-5 text-primary" />
+          <div className="flex-1"><p className="font-semibold">{s.name}</p><p className="text-sm text-muted-foreground">{s.phone || "Sem telefone"} • {s.subscription_status || "trial"}</p></div>
+          <span className={`text-xs px-2 py-1 rounded-full ${s.is_active ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>{s.is_active ? "Ativo" : "Inativo"}</span>
+        </CardContent></Card>
+      ))}
+    </div>
+  );
+};
 
-const BarbeariasPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Barbearias</h1>
-    <Card>
-      <CardContent className="py-12 text-center">
-        <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground">Nenhuma barbearia cadastrada.</p>
-      </CardContent>
-    </Card>
-  </div>
-);
+const AfiliadosPage = () => {
+  const [affiliates, setAffiliates] = useState<any[]>([]);
+  useEffect(() => { supabase.from("affiliates").select("*, profiles:user_id(name, email)").then(({ data }) => setAffiliates(data || [])); }, []);
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Afiliados</h1>
+      {affiliates.length === 0 ? (
+        <Card><CardContent className="py-12 text-center"><Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum afiliado.</p></CardContent></Card>
+      ) : affiliates.map(a => (
+        <Card key={a.id}><CardContent className="p-4 flex items-center gap-4">
+          <Users className="w-5 h-5 text-primary" />
+          <div className="flex-1"><p className="font-semibold">{(a as any).profiles?.name || "Afiliado"}</p><p className="text-sm text-muted-foreground">Código: {a.referral_code}</p></div>
+          <span className="text-xs bg-success/10 text-success px-2 py-1 rounded-full">{a.type}</span>
+        </CardContent></Card>
+      ))}
+    </div>
+  );
+};
 
-const AfiliadosPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Afiliados</h1>
-    <Card>
-      <CardContent className="py-12 text-center">
-        <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground">Nenhum afiliado cadastrado.</p>
-      </CardContent>
-    </Card>
-  </div>
-);
-
-const ContadoresPage = () => (
-  <div className="space-y-6">
-    <div className="flex items-center justify-between">
+const ContadoresPage = () => {
+  const [accountants, setAccountants] = useState<any[]>([]);
+  useEffect(() => { supabase.from("accountants").select("*").then(({ data }) => setAccountants(data || [])); }, []);
+  return (
+    <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Contadores</h1>
-      <Button variant="gold">Adicionar Contador</Button>
+      {accountants.length === 0 ? (
+        <Card><CardContent className="py-12 text-center"><Calculator className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum contador.</p></CardContent></Card>
+      ) : accountants.map(a => (
+        <Card key={a.id}><CardContent className="p-4 flex items-center gap-4">
+          <Calculator className="w-5 h-5 text-primary" />
+          <div className="flex-1"><p className="font-semibold">{a.name}</p><p className="text-sm text-muted-foreground">{a.email}</p></div>
+        </CardContent></Card>
+      ))}
     </div>
-    <Card>
-      <CardContent className="py-12 text-center">
-        <Calculator className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground">Nenhum contador cadastrado.</p>
-      </CardContent>
-    </Card>
-  </div>
-);
+  );
+};
 
 const FinanceiroPage = () => (
   <div className="space-y-6">
     <h1 className="font-display text-2xl font-bold">Financeiro</h1>
-    
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <Card className="bg-gradient-card border-primary/20">
-        <CardHeader>
-          <CardDescription>Receita Total</CardDescription>
-          <CardTitle className="text-3xl text-gradient-gold">R$ 0,00</CardTitle>
-        </CardHeader>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardDescription>Taxa SaaS Acumulada</CardDescription>
-          <CardTitle className="text-2xl">R$ 0,00</CardTitle>
-        </CardHeader>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardDescription>Comissões Pagas</CardDescription>
-          <CardTitle className="text-2xl">R$ 0,00</CardTitle>
-        </CardHeader>
-      </Card>
+      <Card className="bg-gradient-card border-primary/20"><CardHeader><CardDescription>Receita Total</CardDescription><CardTitle className="text-3xl text-gradient-gold">R$ 0,00</CardTitle></CardHeader></Card>
+      <Card><CardHeader><CardDescription>Taxa SaaS</CardDescription><CardTitle className="text-2xl">R$ 0,00</CardTitle></CardHeader></Card>
+      <Card><CardHeader><CardDescription>Comissões Pagas</CardDescription><CardTitle className="text-2xl">R$ 0,00</CardTitle></CardHeader></Card>
     </div>
   </div>
 );
 
 const PixelsPage = () => (
   <div className="space-y-6">
-    <div className="flex items-center justify-between">
-      <h1 className="font-display text-2xl font-bold">Pixels Globais</h1>
-      <Button variant="gold">Adicionar Pixel</Button>
-    </div>
-    <Card>
-      <CardHeader>
-        <CardTitle>Pixels do SaaS</CardTitle>
-        <CardDescription>Rastreamento global da plataforma</CardDescription>
-      </CardHeader>
-      <CardContent className="text-center py-8">
-        <Image className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground">Nenhum pixel configurado.</p>
-      </CardContent>
-    </Card>
+    <h1 className="font-display text-2xl font-bold">Pixels Globais</h1>
+    <Card><CardContent className="py-8 text-center"><Image className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum pixel configurado.</p></CardContent></Card>
   </div>
 );
 
 const SuportePage = () => (
   <div className="space-y-6">
     <h1 className="font-display text-2xl font-bold">Suporte</h1>
-    <Card>
-      <CardHeader>
-        <CardTitle>Chats Abertos</CardTitle>
-      </CardHeader>
-      <CardContent className="text-center py-8">
-        <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground">Nenhum chat aberto.</p>
-      </CardContent>
-    </Card>
-  </div>
-);
-
-const NotificacoesPage = () => (
-  <div className="space-y-6">
-    <div className="flex items-center justify-between">
-      <h1 className="font-display text-2xl font-bold">Notificações</h1>
-      <Button variant="gold">Enviar Notificação</Button>
-    </div>
-    <Card>
-      <CardHeader>
-        <CardTitle>Enviar para</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          <Button variant="outline" size="sm">Todos</Button>
-          <Button variant="outline" size="sm">Donos</Button>
-          <Button variant="outline" size="sm">Profissionais</Button>
-          <Button variant="outline" size="sm">Clientes</Button>
-        </div>
-      </CardContent>
-    </Card>
+    <Card><CardContent className="py-8 text-center"><MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum chat aberto.</p></CardContent></Card>
   </div>
 );
 
 const ConfiguracoesPage = () => (
   <div className="space-y-6">
     <h1 className="font-display text-2xl font-bold">Configurações</h1>
-    
     <div className="grid gap-4">
       <Card>
-        <CardHeader>
-          <CardTitle>Planos e Preços</CardTitle>
-          <CardDescription>Configure os valores dos planos do SaaS</CardDescription>
-        </CardHeader>
+        <CardHeader><CardTitle>Planos e Preços</CardTitle><CardDescription>Configure os valores dos planos</CardDescription></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-muted-foreground">7 dias grátis</p>
-              <p className="font-bold">R$ 0,00</p>
-            </div>
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-muted-foreground">Mês 1</p>
-              <p className="font-bold">R$ 19,90</p>
-            </div>
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-muted-foreground">Mês 2+</p>
-              <p className="font-bold">R$ 29,90</p>
-            </div>
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-muted-foreground">3 meses</p>
-              <p className="font-bold">R$ 79,90</p>
-            </div>
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-muted-foreground">6 meses</p>
-              <p className="font-bold">R$ 145,90</p>
-            </div>
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-muted-foreground">12 meses</p>
-              <p className="font-bold">R$ 199,90</p>
-            </div>
-          </div>
-          <Button variant="outline" className="mt-4">Editar Planos</Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Taxa SaaS</CardTitle>
-          <CardDescription>Porcentagem sobre transações</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-2xl font-bold text-gradient-gold">0,5%</p>
-            </div>
-            <Button variant="outline">Editar</Button>
+            {[{ l: "7 dias grátis", v: "R$ 0,00" }, { l: "Mês 1", v: "R$ 19,90" }, { l: "Mês 2+", v: "R$ 29,90" }, { l: "3 meses", v: "R$ 79,90" }, { l: "6 meses", v: "R$ 145,90" }, { l: "12 meses", v: "R$ 199,90" }].map(p => (
+              <div key={p.l} className="p-3 bg-muted rounded-lg"><p className="text-muted-foreground">{p.l}</p><p className="font-bold">{p.v}</p></div>
+            ))}
           </div>
         </CardContent>
       </Card>
-
       <Card>
-        <CardHeader>
-          <CardTitle>Landing Page</CardTitle>
-          <CardDescription>Personalize textos, cores e imagens</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="outline">Editar Landing Page</Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Módulo Fiscal</CardTitle>
-          <CardDescription>Ativar/desativar módulo fiscal</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="outline">Configurar</Button>
-        </CardContent>
+        <CardHeader><CardTitle>Taxa SaaS</CardTitle></CardHeader>
+        <CardContent><div className="p-3 bg-muted rounded-lg inline-block"><p className="text-2xl font-bold text-gradient-gold">0,5%</p></div></CardContent>
       </Card>
     </div>
   </div>
