@@ -169,6 +169,11 @@
     background: var(--gradient-card);
   }
 
+  /* Dark gradient for landing sections */
+  .bg-gradient-dark {
+    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background-subtle)) 100%);
+  }
+
   .shadow-gold {
     box-shadow: var(--shadow-orange);
   }

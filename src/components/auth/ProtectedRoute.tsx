@@ -14,18 +14,31 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
   const { user, roles, getPrimaryRole, authResolved, profileLoading } = useAuth();
   const location = useLocation();
   const [rolesTimeout, setRolesTimeout] = useState(false);
+  const [globalTimeout, setGlobalTimeout] = useState(false);
+
+  // Global safety timeout: if anything takes >8s, force redirect
+  useEffect(() => {
+    const timer = setTimeout(() => setGlobalTimeout(true), 8000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Timeout: if roles don't load within 5s after auth resolved, force redirect
   useEffect(() => {
-    if (authResolved && user && roles.length === 0 && !profileLoading) {
+    if (authResolved && user && roles.length === 0) {
       const timer = setTimeout(() => setRolesTimeout(true), 5000);
       return () => clearTimeout(timer);
     }
     if (roles.length > 0) setRolesTimeout(false);
-  }, [authResolved, user, roles, profileLoading]);
+  }, [authResolved, user, roles]);
 
-  // STEP 1: Aguardar auth resolver
-  if (!authResolved || profileLoading) {
+  // Global timeout: force redirect to login
+  if (globalTimeout && (!authResolved || (user && roles.length === 0))) {
+    const loginPath = redirectTo || getLoginForRoute(location.pathname);
+    return <Navigate to={loginPath} state={{ from: location }} replace />;
+  }
+
+  // STEP 1: Aguardar auth resolver (with profileLoading capped by timeout)
+  if (!authResolved) {
     return <LoadingScreen message="Carregando..." />;
   }
 

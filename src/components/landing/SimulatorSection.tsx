@@ -5,7 +5,7 @@ const SimulatorSection = () => {
   const navigate = useNavigate();
 
   const handleCTA = () => {
-    navigate("/auth");
+    navigate("/login");
   };
 
   return (
