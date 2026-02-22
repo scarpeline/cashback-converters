@@ -317,6 +317,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // 2. INITIAL load - controls loading, authResolved, initialLoadComplete
     const initializeAuth = async () => {
+      // Safety timeout: force resolve after 6 seconds no matter what
+      const safetyTimer = setTimeout(() => {
+        if (isMounted) {
+          console.warn('[AUTH] Safety timeout reached - forcing auth resolved');
+          setLoading(false);
+          setProfileLoading(false);
+          setInitialLoadComplete(true);
+          setAuthResolved(true);
+        }
+      }, 6000);
+
       try {
         const { data: { session: existingSession }, error } = await supabase.auth.getSession();
         
@@ -355,6 +366,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         logCriticalError("initializeAuth", error);
       } finally {
+        clearTimeout(safetyTimer);
         if (isMounted) {
           const duration = Date.now() - startTime;
           logLoadComplete({ duration_ms: duration, status: 'liberado' });
