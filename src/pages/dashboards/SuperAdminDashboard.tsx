@@ -350,18 +350,98 @@ const UsuariosPage = () => {
 
 const BarbeariasPage = () => {
   const [shops, setShops] = useState<any[]>([]);
-  useEffect(() => { supabase.from("barbershops").select("*").then(({ data }) => setShops(data || [])); }, []);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "active" | "trial" | "incomplete" | "delinquent">("all");
+
+  useEffect(() => {
+    supabase.from("barbershops").select("*, profiles:owner_user_id(name, email, whatsapp)").then(({ data }) => {
+      setShops(data || []);
+      setLoading(false);
+    });
+  }, []);
+
+  const now = new Date();
+  const filtered = shops.filter((s) => {
+    if (filter === "all") return true;
+    if (filter === "active") return s.subscription_status === "active" || s.subscription_status === "paid";
+    if (filter === "trial") return s.subscription_status === "trial" || !s.subscription_status;
+    if (filter === "incomplete") return !s.phone && !s.address;
+    if (filter === "delinquent") {
+      if (!s.subscription_ends_at) return false;
+      return new Date(s.subscription_ends_at) < now && s.subscription_status !== "active";
+    }
+    return true;
+  });
+
+  const counts = {
+    all: shops.length,
+    active: shops.filter(s => s.subscription_status === "active" || s.subscription_status === "paid").length,
+    trial: shops.filter(s => s.subscription_status === "trial" || !s.subscription_status).length,
+    incomplete: shops.filter(s => !s.phone && !s.address).length,
+    delinquent: shops.filter(s => s.subscription_ends_at && new Date(s.subscription_ends_at) < now && s.subscription_status !== "active").length,
+  };
+
+  const filterLabels: Record<string, string> = {
+    all: "Todos",
+    active: "Assinantes",
+    trial: "Em Teste",
+    incomplete: "Incompletos",
+    delinquent: "Inadimplentes",
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Barbearias</h1>
-      {shops.length === 0 ? (
-        <Card><CardContent className="py-12 text-center"><Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhuma barbearia.</p></CardContent></Card>
-      ) : shops.map(s => (
-        <Card key={s.id}><CardContent className="p-4 flex items-center gap-4">
-          <Building2 className="w-5 h-5 text-primary" />
-          <div className="flex-1"><p className="font-semibold">{s.name}</p><p className="text-sm text-muted-foreground">{s.phone || "Sem telefone"} • {s.subscription_status || "trial"}</p></div>
-          <span className={`text-xs px-2 py-1 rounded-full ${s.is_active ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>{s.is_active ? "Ativo" : "Inativo"}</span>
-        </CardContent></Card>
+
+      <div className="flex flex-wrap gap-2">
+        {(["all", "active", "trial", "incomplete", "delinquent"] as const).map((f) => (
+          <Button
+            key={f}
+            variant={filter === f ? "gold" : "outline"}
+            size="sm"
+            onClick={() => setFilter(f)}
+          >
+            {filterLabels[f]} ({counts[f]})
+          </Button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div>
+      ) : filtered.length === 0 ? (
+        <Card><CardContent className="py-12 text-center"><Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhuma barbearia nesta categoria.</p></CardContent></Card>
+      ) : filtered.map(s => (
+        <Card key={s.id}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <Building2 className="w-5 h-5 text-primary flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold">{s.name}</p>
+                <p className="text-sm text-muted-foreground truncate">
+                  Dono: {(s as any).profiles?.name || "N/A"} • {(s as any).profiles?.email || ""} {(s as any).profiles?.whatsapp ? `• ${(s as any).profiles.whatsapp}` : ""}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {s.phone || "Sem tel"} • {s.address || "Sem endereço"}
+                  {s.subscription_ends_at && ` • Expira: ${new Date(s.subscription_ends_at).toLocaleDateString("pt-BR")}`}
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                  s.subscription_status === "active" || s.subscription_status === "paid"
+                    ? "bg-success/10 text-success"
+                    : s.subscription_status === "trial" || !s.subscription_status
+                    ? "bg-secondary/10 text-secondary"
+                    : "bg-destructive/10 text-destructive"
+                }`}>
+                  {s.subscription_status === "active" || s.subscription_status === "paid" ? "Ativo" : s.subscription_status === "trial" || !s.subscription_status ? "Trial" : s.subscription_status}
+                </span>
+                <span className={`text-xs px-2 py-1 rounded-full ${s.is_active ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
+                  {s.is_active ? "Online" : "Offline"}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );

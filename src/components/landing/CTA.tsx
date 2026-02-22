@@ -31,7 +31,7 @@ const CTA = () => {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/public/login">
+            <Link to="/login">
               <Button variant="hero" size="xl">
                 Começar 7 Dias Grátis
                 <ArrowRight className="w-5 h-5" />

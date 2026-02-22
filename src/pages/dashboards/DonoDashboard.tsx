@@ -690,10 +690,61 @@ const ServicosPage = () => {
 const NotificacoesDonoPage = () => {
   const { barbershop } = useBarbershop();
   const { professionals } = useProfessionals(barbershop?.id);
-  const [target, setTarget] = useState<"all" | "professionals" | "clients">("all");
+  const [target, setTarget] = useState<"all" | "professionals" | "clients_15" | "clients_30" | "clients_60">("all");
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [clientCounts, setClientCounts] = useState({ c15: 0, c30: 0, c60: 0 });
+
+  // Fetch client counts by booking period
+  useEffect(() => {
+    if (!barbershop?.id) return;
+    const now = new Date();
+    const d15 = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString();
+    const d30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const d60 = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString();
+
+    Promise.all([
+      supabase.from("appointments").select("client_user_id").eq("barbershop_id", barbershop.id).gte("scheduled_at", d15).not("client_user_id", "is", null),
+      supabase.from("appointments").select("client_user_id").eq("barbershop_id", barbershop.id).gte("scheduled_at", d30).not("client_user_id", "is", null),
+      supabase.from("appointments").select("client_user_id").eq("barbershop_id", barbershop.id).gte("scheduled_at", d60).not("client_user_id", "is", null),
+    ]).then(([r15, r30, r60]) => {
+      setClientCounts({
+        c15: new Set(r15.data?.map(a => a.client_user_id)).size,
+        c30: new Set(r30.data?.map(a => a.client_user_id)).size,
+        c60: new Set(r60.data?.map(a => a.client_user_id)).size,
+      });
+    });
+  }, [barbershop?.id]);
+
+  const getTargetUserIds = async (): Promise<string[]> => {
+    if (!barbershop?.id) return [];
+    let userIds: string[] = [];
+
+    if (target === "professionals" || target === "all") {
+      const proUserIds = professionals.filter(p => p.user_id).map(p => p.user_id);
+      userIds = [...userIds, ...proUserIds];
+    }
+
+    if (target === "all" || target.startsWith("clients_")) {
+      let daysAgo = 60;
+      if (target === "clients_15") daysAgo = 15;
+      else if (target === "clients_30") daysAgo = 30;
+
+      const since = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from("appointments")
+        .select("client_user_id")
+        .eq("barbershop_id", barbershop.id)
+        .gte("scheduled_at", since)
+        .not("client_user_id", "is", null);
+
+      const clientIds = [...new Set(data?.map(a => a.client_user_id).filter(Boolean) as string[])];
+      userIds = [...new Set([...userIds, ...clientIds])];
+    }
+
+    return userIds;
+  };
 
   const handleSend = async () => {
     if (!title || !message) {
@@ -702,38 +753,42 @@ const NotificacoesDonoPage = () => {
     }
 
     setSending(true);
-    
-    // Get target user IDs
-    let userIds: string[] = [];
-    
-    if (target === "professionals" || target === "all") {
-      const proUserIds = professionals.filter(p => p.user_id).map(p => p.user_id);
-      userIds = [...userIds, ...proUserIds];
+    const userIds = await getTargetUserIds();
+
+    if (userIds.length === 0) {
+      toast.error("Nenhum destinatário encontrado para este filtro.");
+      setSending(false);
+      return;
     }
 
-    // For demo: insert notifications for target users
-    if (userIds.length > 0) {
-      const notifications = userIds.map(uid => ({
-        user_id: uid,
-        title,
-        message,
-        type: "info",
-        priority: "normal",
-      }));
+    const notifications = userIds.map(uid => ({
+      user_id: uid,
+      title,
+      message,
+      type: "info",
+      priority: "normal",
+    }));
 
-      const { error } = await supabase.from("notifications").insert(notifications);
-      if (error) {
-        toast.error("Erro: " + error.message);
-        setSending(false);
-        return;
-      }
+    const { error } = await supabase.from("notifications").insert(notifications);
+    setSending(false);
+
+    if (error) {
+      toast.error("Erro: " + error.message);
+      return;
     }
 
-    toast.success(`Notificação enviada para ${target === "all" ? "todos" : target}!`);
+    toast.success(`Notificação enviada para ${userIds.length} usuário(s)!`);
     setTitle("");
     setMessage("");
-    setSending(false);
   };
+
+  const targets = [
+    { key: "all" as const, label: "Todos" },
+    { key: "professionals" as const, label: `Profissionais (${professionals.length})` },
+    { key: "clients_15" as const, label: `Clientes 15 dias (${clientCounts.c15})` },
+    { key: "clients_30" as const, label: `Clientes 30 dias (${clientCounts.c30})` },
+    { key: "clients_60" as const, label: `Clientes 60 dias (${clientCounts.c60})` },
+  ];
 
   return (
     <div className="space-y-6">
@@ -742,17 +797,18 @@ const NotificacoesDonoPage = () => {
       <Card>
         <CardHeader>
           <CardTitle>Destinatários</CardTitle>
+          <CardDescription>Selecione o grupo que receberá a notificação</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            {(["all", "professionals", "clients"] as const).map((t) => (
+          <div className="flex flex-wrap gap-2">
+            {targets.map((t) => (
               <Button
-                key={t}
-                variant={target === t ? "gold" : "outline"}
+                key={t.key}
+                variant={target === t.key ? "gold" : "outline"}
                 size="sm"
-                onClick={() => setTarget(t)}
+                onClick={() => setTarget(t.key)}
               >
-                {t === "all" ? "Todos" : t === "professionals" ? "Profissionais" : "Clientes"}
+                {t.label}
               </Button>
             ))}
           </div>
@@ -763,6 +819,10 @@ const NotificacoesDonoPage = () => {
           <div>
             <Label>Mensagem *</Label>
             <Input placeholder="Escreva a mensagem..." value={message} onChange={(e) => setMessage(e.target.value)} className="mt-1" />
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Bell className="w-3 h-3" />
+            <span>Notificação interna do app. SMS/WhatsApp requer integração ativa com Twilio.</span>
           </div>
           <Button variant="gold" onClick={handleSend} disabled={sending}>
             <Send className="w-4 h-4 mr-2" />

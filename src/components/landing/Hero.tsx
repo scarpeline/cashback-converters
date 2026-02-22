@@ -12,8 +12,8 @@ const Hero = () => {
         className="absolute inset-0 opacity-30"
         style={{ background: "var(--gradient-glow)" }}
       />
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gold/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-bronze/5 rounded-full blur-3xl" />
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-secondary/5 rounded-full blur-3xl" />
 
       <div className="container relative z-10 mx-auto">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
@@ -51,7 +51,7 @@ const Hero = () => {
             style={{ animationDelay: "0.2s" }}
           >
             Transforme seus clientes em um{" "}
-            <span className="text-gold font-semibold">exército de vendedores.</span>
+            <span className="text-primary font-semibold">exército de vendedores.</span>
           </p>
 
           {/* Copy */}
@@ -68,7 +68,7 @@ const Hero = () => {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in"
             style={{ animationDelay: "0.4s" }}
           >
-            <Link to="/public/login">
+            <Link to="/login">
               <Button variant="hero" size="xl" className="w-full sm:w-auto">
                 Começar Grátis
                 <ArrowRight className="w-5 h-5" />

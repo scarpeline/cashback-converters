@@ -40,12 +40,12 @@ const Header = () => {
 
           {/* Desktop CTAs */}
           <div className="hidden md:flex items-center gap-4">
-            <Link to="/public/login">
+            <Link to="/login">
               <Button variant="ghost" size="sm">
                 Entrar
               </Button>
             </Link>
-            <Link to="/public/login">
+            <Link to="/login">
               <Button variant="gold" size="sm">
                 Começar Grátis
               </Button>
@@ -76,12 +76,12 @@ const Header = () => {
                 </a>
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-border/50">
-                <Link to="/public/login" onClick={() => setIsMenuOpen(false)}>
+                <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                   <Button variant="ghost" className="w-full justify-center">
                     Entrar
                   </Button>
                 </Link>
-                <Link to="/public/login" onClick={() => setIsMenuOpen(false)}>
+                <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                   <Button variant="gold" className="w-full justify-center">
                     Começar Grátis
                   </Button>
