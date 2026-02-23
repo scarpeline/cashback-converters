@@ -211,6 +211,7 @@ const NotificacoesAdminPage = () => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [channel, setChannel] = useState<"app" | "sms" | "whatsapp">("app");
 
   const handleSend = async () => {
     if (!title || !message) {
@@ -219,7 +220,6 @@ const NotificacoesAdminPage = () => {
     }
     setSending(true);
 
-    // Get target users based on role
     let roleFilter: string | null = null;
     if (target === "donos") roleFilter = "dono";
     else if (target === "profissionais") roleFilter = "profissional";
@@ -230,7 +230,6 @@ const NotificacoesAdminPage = () => {
       const { data } = await supabase.from("user_roles").select("user_id").eq("role", roleFilter as any);
       userIds = data?.map(r => r.user_id) || [];
     } else {
-      // All users
       const { data } = await supabase.from("profiles").select("user_id");
       userIds = data?.map(r => r.user_id) || [];
     }
@@ -241,6 +240,7 @@ const NotificacoesAdminPage = () => {
       return;
     }
 
+    // Always save in-app notifications
     const notifications = userIds.map(uid => ({
       user_id: uid,
       title,
@@ -248,16 +248,43 @@ const NotificacoesAdminPage = () => {
       type: "info" as const,
       priority: "normal" as const,
     }));
-
     const { error } = await supabase.from("notifications").insert(notifications);
-    setSending(false);
 
-    if (error) {
-      toast.error("Erro: " + error.message);
-      return;
+    // If SMS or WhatsApp, also send via Twilio
+    if (channel === "sms" || channel === "whatsapp") {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("whatsapp")
+        .in("user_id", userIds);
+
+      const phones = profiles?.map(p => p.whatsapp).filter(Boolean) || [];
+      let sentCount = 0;
+
+      for (const phone of phones) {
+        try {
+          await supabase.functions.invoke("send-sms", {
+            body: {
+              action: channel === "whatsapp" ? "whatsapp" : "sms",
+              to: phone,
+              body: `${title}: ${message}`,
+            },
+          });
+          sentCount++;
+        } catch (e) {
+          console.error(`[NOTIF] Failed to send ${channel} to ${phone}:`, e);
+        }
+      }
+
+      toast.success(`${sentCount} ${channel.toUpperCase()} enviado(s) + ${userIds.length} notificação(ões) no app!`);
+    } else {
+      if (error) {
+        toast.error("Erro: " + error.message);
+      } else {
+        toast.success(`Notificação enviada para ${userIds.length} usuário(s)!`);
+      }
     }
 
-    toast.success(`Notificação enviada para ${userIds.length} usuário(s)!`);
+    setSending(false);
     setTitle("");
     setMessage("");
   };
@@ -284,6 +311,27 @@ const NotificacoesAdminPage = () => {
               </Button>
             ))}
           </div>
+
+          <div>
+            <Label>Canal de Envio</Label>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {([
+                { key: "app" as const, label: "📱 App (interno)" },
+                { key: "sms" as const, label: "💬 SMS" },
+                { key: "whatsapp" as const, label: "📲 WhatsApp" },
+              ]).map((c) => (
+                <Button
+                  key={c.key}
+                  variant={channel === c.key ? "gold" : "outline"}
+                  size="sm"
+                  onClick={() => setChannel(c.key)}
+                >
+                  {c.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
           <div>
             <Label>Título *</Label>
             <Input placeholder="Título da notificação" value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1" />
@@ -292,9 +340,15 @@ const NotificacoesAdminPage = () => {
             <Label>Mensagem *</Label>
             <Input placeholder="Corpo da mensagem..." value={message} onChange={(e) => setMessage(e.target.value)} className="mt-1" />
           </div>
+          {channel !== "app" && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted p-2 rounded">
+              <Bell className="w-3 h-3" />
+              <span>{channel === "sms" ? "SMS será enviado via Twilio para números cadastrados." : "WhatsApp será enviado via Twilio API."}</span>
+            </div>
+          )}
           <Button variant="gold" onClick={handleSend} disabled={sending}>
             <Send className="w-4 h-4 mr-2" />
-            {sending ? "Enviando..." : "Enviar Notificação"}
+            {sending ? "Enviando..." : `Enviar via ${channel === "app" ? "App" : channel.toUpperCase()}`}
           </Button>
         </CardContent>
       </Card>
