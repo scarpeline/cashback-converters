@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { DonoOnboarding } from "@/components/onboarding/DonoOnboarding";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,12 @@ const DonoDashboard = () => {
   const { profile, signOut } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { barbershop: mainBarbershop, loading: barbershopLoading, refetch: refetchBarbershop } = useBarbershop();
+
+  // Show onboarding if no barbershop exists
+  if (!barbershopLoading && !mainBarbershop) {
+    return <DonoOnboarding onComplete={refetchBarbershop} />;
+  }
 
   const basePath = "/painel-dono";
   
@@ -171,20 +178,21 @@ function useBarbershop() {
   const [barbershop, setBarbershop] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const refetch = useCallback(async () => {
     if (!user) return;
-    supabase
+    setLoading(true);
+    const { data } = await supabase
       .from("barbershops")
       .select("*")
       .eq("owner_user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setBarbershop(data);
-        setLoading(false);
-      });
+      .maybeSingle();
+    setBarbershop(data);
+    setLoading(false);
   }, [user]);
 
-  return { barbershop, loading };
+  useEffect(() => { refetch(); }, [refetch]);
+
+  return { barbershop, loading, refetch };
 }
 
 function useServices(barbershopId: string | undefined) {
