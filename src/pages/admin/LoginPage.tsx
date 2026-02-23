@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,36 +36,37 @@ const AdminLoginPage = () => {
     }
   }, [user, authLoading, roles, navigate, getPrimaryRole]);
 
-  const checkAuthorization = async (email: string): Promise<boolean> => {
+  const checkAuthorization = useCallback(async (emailToCheck: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase
         .from("authorized_super_admins")
         .select("email, is_active")
-        .eq("email", email)
+        .eq("email", emailToCheck)
         .eq("is_active", true)
         .maybeSingle();
       
-      return !!data && !error;
+      if (error) return false;
+      return !!data;
     } catch {
       return false;
     }
-  };
+  }, []);
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setError("");
     setUnauthorized(false);
     
-    try {
-      emailSchema.parse({ email });
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        setError(err.errors[0].message);
-        return;
-      }
+    const emailValue = email.trim();
+    const passwordValue = password;
+    
+    if (!emailValue || !emailValue.includes("@")) {
+      setError("E-mail inválido");
+      return;
     }
 
-    if (!password) {
+    if (!passwordValue) {
       setError("Senha obrigatória");
       return;
     }
@@ -73,7 +74,7 @@ const AdminLoginPage = () => {
     setLoading(true);
 
     try {
-      const isAuthorized = await checkAuthorization(email);
+      const isAuthorized = await checkAuthorization(emailValue);
       
       if (!isAuthorized) {
         setUnauthorized(true);
@@ -81,7 +82,7 @@ const AdminLoginPage = () => {
         return;
       }
 
-      const { error: signInError } = await signIn(email, password);
+      const { error: signInError } = await signIn(emailValue, passwordValue);
       
       if (signInError) {
         const msg = signInError.message || "";
@@ -97,9 +98,19 @@ const AdminLoginPage = () => {
       }
       
       toast.success("Acesso autorizado!");
+      
+      // Give auth state time to update, then redirect
+      setTimeout(() => {
+        const role = getPrimaryRole();
+        if (role) {
+          navigate(getDashboardForRole(role), { replace: true });
+        } else {
+          navigate("/admin", { replace: true });
+        }
+        setLoading(false);
+      }, 2000);
     } catch (err) {
       toast.error("Ocorreu um erro. Tente novamente.");
-    } finally {
       setLoading(false);
     }
   };
@@ -109,8 +120,10 @@ const AdminLoginPage = () => {
     setError("");
     setUnauthorized(false);
     
+    const emailValue = email.trim();
+    
     try {
-      emailSchema.parse({ email });
+      emailSchema.parse({ email: emailValue });
     } catch (err) {
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);
@@ -121,7 +134,7 @@ const AdminLoginPage = () => {
     setLoading(true);
 
     try {
-      const isAuthorized = await checkAuthorization(email);
+      const isAuthorized = await checkAuthorization(emailValue);
       
       if (!isAuthorized) {
         setUnauthorized(true);
@@ -129,8 +142,7 @@ const AdminLoginPage = () => {
         return;
       }
 
-      // Pass returnPath so magic link redirects back to /admin/login
-      const { error } = await signInWithMagicLink(email, "/admin/login");
+      const { error } = await signInWithMagicLink(emailValue, "/super-admin2026ok");
       
       if (error) {
         toast.error(error.message || "Erro ao enviar link de acesso");

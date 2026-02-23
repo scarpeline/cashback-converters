@@ -28,7 +28,7 @@ export const ROLE_DASHBOARD: Record<AppRole, string> = {
 // ============================================
 
 const LOGIN_MAP: [prefix: string, login: string][] = [
-  ['/admin', '/admin/login'],
+  ['/admin', '/super-admin2026ok'],
   ['/contador2026', '/contador2026/login'],
   ['/afiliado-saas', '/afiliado-saas/login'],
 ];
@@ -51,7 +51,7 @@ const PUBLIC_PATHS = new Set([
   '/afiliado-saas/login',
   '/afiliado-saas/cadastro',
   '/contador2026/login',
-  '/admin/login',
+  '/super-admin2026ok',
   '/404',
 ]);
 
@@ -67,7 +67,7 @@ const LOGIN_PATHS = new Set([
   '/login',
   '/afiliado-saas/login',
   '/contador2026/login',
-  '/admin/login',
+  '/super-admin2026ok',
 ]);
 
 export function isLoginRoute(pathname: string): boolean {
