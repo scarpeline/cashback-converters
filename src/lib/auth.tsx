@@ -416,6 +416,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .update({ cpf_cnpj: metadata.cpf_cnpj, pix_key: metadata.pix_key })
             .eq("user_id", data.user.id);
         }
+
+        // If auto-confirm is enabled (session returned immediately), assign role now
+        if (data.session && SELF_ASSIGNABLE_ROLES.includes(metadata.role)) {
+          const { error: roleError } = await supabase.from("user_roles").insert({
+            user_id: data.user.id,
+            role: metadata.role,
+          });
+          if (!roleError) {
+            setRoles([metadata.role]);
+          }
+        }
       }
 
       const needsConfirmation = !data.session;

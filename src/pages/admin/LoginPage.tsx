@@ -15,7 +15,7 @@ const emailSchema = z.object({
 
 const AdminLoginPage = () => {
   const navigate = useNavigate();
-  const { user, signIn, signInWithMagicLink, getPrimaryRole, loading: authLoading } = useAuth();
+  const { user, signIn, signInWithMagicLink, getPrimaryRole, roles, loading: authLoading } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -26,13 +26,15 @@ const AdminLoginPage = () => {
   const [unauthorized, setUnauthorized] = useState(false);
   const [loginMode, setLoginMode] = useState<"password" | "magiclink">("password");
 
-  // Redirect if already logged in
+  // Redirect if already logged in AND roles loaded
   useEffect(() => {
-    if (user && !authLoading) {
+    if (user && !authLoading && roles.length > 0) {
       const role = getPrimaryRole();
-      navigate(getDashboardForRole(role), { replace: true });
+      if (role) {
+        navigate(getDashboardForRole(role), { replace: true });
+      }
     }
-  }, [user, authLoading, navigate, getPrimaryRole]);
+  }, [user, authLoading, roles, navigate, getPrimaryRole]);
 
   const checkAuthorization = async (email: string): Promise<boolean> => {
     try {
