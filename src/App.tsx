@@ -82,6 +82,7 @@ function AppRoutes() {
         <Route path="/contador/*" element={<Navigate to="/contador2026" replace />} />
         <Route path="/super-admin/*" element={<Navigate to="/admin" replace />} />
         <Route path="/super-admin2026ok" element={<Navigate to="/admin/login" replace />} />
+        <Route path="/notificacoes" element={<Navigate to="/painel-dono/notificacoes" replace />} />
 
         {/* ========== 404 ========== */}
         <Route path="*" element={<NotFoundPage />} />

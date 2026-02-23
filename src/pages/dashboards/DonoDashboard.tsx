@@ -694,9 +694,9 @@ const NotificacoesDonoPage = () => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [channel, setChannel] = useState<"app" | "sms" | "whatsapp">("app");
   const [clientCounts, setClientCounts] = useState({ c15: 0, c30: 0, c60: 0 });
 
-  // Fetch client counts by booking period
   useEffect(() => {
     if (!barbershop?.id) return;
     const now = new Date();
@@ -761,6 +761,7 @@ const NotificacoesDonoPage = () => {
       return;
     }
 
+    // Always save as in-app notification
     const notifications = userIds.map(uid => ({
       user_id: uid,
       title,
@@ -768,16 +769,44 @@ const NotificacoesDonoPage = () => {
       type: "info",
       priority: "normal",
     }));
-
     const { error } = await supabase.from("notifications").insert(notifications);
-    setSending(false);
 
-    if (error) {
-      toast.error("Erro: " + error.message);
-      return;
+    // If SMS or WhatsApp, also send via Twilio
+    if (channel === "sms" || channel === "whatsapp") {
+      // Get phone numbers for target users
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("whatsapp")
+        .in("user_id", userIds);
+
+      const phones = profiles?.map(p => p.whatsapp).filter(Boolean) || [];
+      let sentCount = 0;
+
+      for (const phone of phones) {
+        try {
+          await supabase.functions.invoke("send-sms", {
+            body: {
+              action: channel === "whatsapp" ? "whatsapp" : "sms",
+              to: phone,
+              body: `${title}: ${message}`,
+            },
+          });
+          sentCount++;
+        } catch (e) {
+          console.error(`[NOTIF] Failed to send ${channel} to ${phone}:`, e);
+        }
+      }
+
+      toast.success(`${sentCount} ${channel.toUpperCase()} enviado(s) + ${userIds.length} notificação(ões) no app!`);
+    } else {
+      if (error) {
+        toast.error("Erro: " + error.message);
+      } else {
+        toast.success(`Notificação enviada para ${userIds.length} usuário(s)!`);
+      }
     }
 
-    toast.success(`Notificação enviada para ${userIds.length} usuário(s)!`);
+    setSending(false);
     setTitle("");
     setMessage("");
   };
@@ -812,6 +841,27 @@ const NotificacoesDonoPage = () => {
               </Button>
             ))}
           </div>
+
+          <div>
+            <Label>Canal de Envio</Label>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {([
+                { key: "app" as const, label: "📱 App (interno)", icon: Bell },
+                { key: "sms" as const, label: "💬 SMS", icon: Phone },
+                { key: "whatsapp" as const, label: "📲 WhatsApp", icon: MessageCircle },
+              ]).map((c) => (
+                <Button
+                  key={c.key}
+                  variant={channel === c.key ? "gold" : "outline"}
+                  size="sm"
+                  onClick={() => setChannel(c.key)}
+                >
+                  {c.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
           <div>
             <Label>Título *</Label>
             <Input placeholder="Título da notificação" value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1" />
@@ -820,13 +870,15 @@ const NotificacoesDonoPage = () => {
             <Label>Mensagem *</Label>
             <Input placeholder="Escreva a mensagem..." value={message} onChange={(e) => setMessage(e.target.value)} className="mt-1" />
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Bell className="w-3 h-3" />
-            <span>Notificação interna do app. SMS/WhatsApp requer integração ativa com Twilio.</span>
-          </div>
+          {channel !== "app" && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted p-2 rounded">
+              <Phone className="w-3 h-3" />
+              <span>{channel === "sms" ? "SMS será enviado via Twilio para números com WhatsApp cadastrado." : "WhatsApp será enviado via Twilio API."}</span>
+            </div>
+          )}
           <Button variant="gold" onClick={handleSend} disabled={sending}>
             <Send className="w-4 h-4 mr-2" />
-            {sending ? "Enviando..." : "Enviar Notificação"}
+            {sending ? "Enviando..." : `Enviar via ${channel === "app" ? "App" : channel.toUpperCase()}`}
           </Button>
         </CardContent>
       </Card>
