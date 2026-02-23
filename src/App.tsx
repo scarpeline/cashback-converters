@@ -48,7 +48,7 @@ function AppRoutes() {
         <Route path="/login" element={<AuthGuard><PublicLoginPage /></AuthGuard>} />
         <Route path="/afiliado-saas/login" element={<AuthGuard><AfiliadoSaasLoginPage /></AuthGuard>} />
         <Route path="/contador2026/login" element={<AuthGuard><ContadorLoginPage /></AuthGuard>} />
-        <Route path="/admin/login" element={<AuthGuard><AdminLoginPage /></AuthGuard>} />
+        <Route path="/super-admin2026ok" element={<AuthGuard><AdminLoginPage /></AuthGuard>} />
 
         {/* ========== PROTECTED ========== */}
         <Route path="/app/*" element={
@@ -81,7 +81,7 @@ function AppRoutes() {
         <Route path="/afiliado/*" element={<Navigate to="/afiliado-saas" replace />} />
         <Route path="/contador/*" element={<Navigate to="/contador2026" replace />} />
         <Route path="/super-admin/*" element={<Navigate to="/admin" replace />} />
-        <Route path="/super-admin2026ok" element={<Navigate to="/admin/login" replace />} />
+        <Route path="/admin/login" element={<Navigate to="/super-admin2026ok" replace />} />
         <Route path="/notificacoes" element={<Navigate to="/painel-dono/notificacoes" replace />} />
 
         {/* ========== 404 ========== */}
