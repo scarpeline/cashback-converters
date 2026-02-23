@@ -19,7 +19,9 @@ const plans = [
       "WhatsApp automático",
       "Dashboard financeiro"
     ],
-    popular: false
+    popular: false,
+    checkoutUrl: "https://sandbox.asaas.com/c/wyg2cu1i6z2e52el",
+    planIndex: 0,
   },
   {
     name: "Trimestral",
@@ -36,7 +38,9 @@ const plans = [
       "Estoque e produtos",
       "Exportação de dados"
     ],
-    popular: true
+    popular: true,
+    checkoutUrl: "https://sandbox.asaas.com/c/ntu1tp1iloyj99de",
+    planIndex: 1,
   },
   {
     name: "Anual",
@@ -54,11 +58,22 @@ const plans = [
       "Suporte VIP 24h"
     ],
     popular: false,
-    bestValue: true
+    bestValue: true,
+    checkoutUrl: "https://sandbox.asaas.com/c/0yhsb6e32ieawwvv",
+    planIndex: 2,
   }
 ];
 
 const Pricing = () => {
+  const handleSelectPlan = (plan: typeof plans[0]) => {
+    // Store selected plan for post-login redirect
+    localStorage.setItem("selected_plan", JSON.stringify({
+      index: plan.planIndex,
+      name: plan.name,
+      checkoutUrl: plan.checkoutUrl,
+    }));
+  };
+
   return (
     <section id="pricing" className="py-24 px-4 relative overflow-hidden">
       {/* Background */}
@@ -147,7 +162,7 @@ const Pricing = () => {
               </div>
 
               {/* CTA */}
-              <Link to="/login">
+              <Link to="/login" onClick={() => handleSelectPlan(plan)}>
                 <Button
                   variant={plan.popular ? "gold" : "outline"}
                   className="w-full mb-6"

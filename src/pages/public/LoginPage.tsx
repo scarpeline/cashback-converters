@@ -53,6 +53,19 @@ const PublicLoginPage = () => {
     if (user && !authLoading && roles.length > 0) {
       const role = getPrimaryRole();
       if (role) {
+        // Check if user selected a plan from pricing - redirect to checkout
+        const selectedPlan = localStorage.getItem("selected_plan");
+        if (selectedPlan && (role === "dono")) {
+          try {
+            const plan = JSON.parse(selectedPlan);
+            localStorage.removeItem("selected_plan");
+            if (plan.checkoutUrl) {
+              window.location.href = plan.checkoutUrl;
+              return;
+            }
+          } catch { /* ignore parse errors */ }
+        }
+        localStorage.removeItem("selected_plan");
         navigate(getDashboardForRole(role), { replace: true });
       }
     }
