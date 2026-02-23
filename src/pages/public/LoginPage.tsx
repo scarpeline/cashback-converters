@@ -30,7 +30,7 @@ const signupSchema = z.object({
 
 const PublicLoginPage = () => {
   const navigate = useNavigate();
-  const { user, signUp, signIn, signInWithWhatsApp, getPrimaryRole, loading: authLoading } = useAuth();
+  const { user, signUp, signIn, signInWithWhatsApp, getPrimaryRole, roles, loading: authLoading } = useAuth();
   
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [userType, setUserType] = useState<UserType>("cliente");
@@ -48,13 +48,15 @@ const PublicLoginPage = () => {
     pix: ""
   });
 
-  // Redirect if already logged in
+  // Redirect if already logged in AND roles loaded
   useEffect(() => {
-    if (user && !authLoading) {
+    if (user && !authLoading && roles.length > 0) {
       const role = getPrimaryRole();
-      navigate(getDashboardForRole(role), { replace: true });
+      if (role) {
+        navigate(getDashboardForRole(role), { replace: true });
+      }
     }
-  }, [user, authLoading, navigate, getPrimaryRole]);
+  }, [user, authLoading, roles, navigate, getPrimaryRole]);
 
   const isBusinessUser = userType === "dono";
 

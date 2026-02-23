@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles } from "lucide-react";
 
@@ -146,13 +147,15 @@ const Pricing = () => {
               </div>
 
               {/* CTA */}
-              <Button
-                variant={plan.popular ? "gold" : "outline"}
-                className="w-full mb-6"
-                size="lg"
-              >
-                Começar Grátis
-              </Button>
+              <Link to="/login">
+                <Button
+                  variant={plan.popular ? "gold" : "outline"}
+                  className="w-full mb-6"
+                  size="lg"
+                >
+                  Começar Grátis
+                </Button>
+              </Link>
 
               {/* Features */}
               <ul className="space-y-3">
