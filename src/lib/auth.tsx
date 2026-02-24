@@ -102,7 +102,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [authResolved, setAuthResolved] = useState(false);
   
-  const initRef = useRef(false);
   const roleBootstrapAttemptedRef = useRef(false);
 
   // ============================================
@@ -286,9 +285,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================
 
   useEffect(() => {
-    if (initRef.current) return;
-    initRef.current = true;
-
     let isMounted = true;
     const startTime = Date.now();
 
@@ -384,7 +380,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [loadUserComplete]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ============================================
   // AUTH METHODS
