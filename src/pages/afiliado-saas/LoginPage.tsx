@@ -111,7 +111,7 @@ const AfiliadoSaasLoginPage = () => {
         }
         
         toast.success("Login realizado com sucesso!");
-        window.location.href = "/afiliado-saas";
+        // Let useEffect handle redirect once roles load
         return;
       } else {
         const { error } = await signUp(formData.email, formData.password, {
