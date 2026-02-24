@@ -27,7 +27,7 @@ const loginSchema = z.object({
 
 const AfiliadoSaasLoginPage = () => {
   const navigate = useNavigate();
-  const { user, signUp, signIn, getPrimaryRole, roles: authRoles, loading: authLoading } = useAuth();
+  const { user, signUp, signIn, getPrimaryRole, roles: authRoles, loading: authLoading, authResolved } = useAuth();
   
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
@@ -142,7 +142,7 @@ const AfiliadoSaasLoginPage = () => {
     }
   };
 
-  if (authLoading) {
+  if (!authResolved && authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />

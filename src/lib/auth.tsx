@@ -239,8 +239,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       let fetchedRoles = await fetchUserData(sessionUser.id);
 
-      if (fetchedRoles.length === 0) {
-        await bootstrapRoles(sessionUser);
+      // Only try bootstrap if no roles found - with 3s timeout to avoid cold-start delays
+      if (fetchedRoles.length === 0 && !roleBootstrapAttemptedRef.current) {
+        try {
+          await Promise.race([
+            bootstrapRoles(sessionUser),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('bootstrap timeout')), 3000)),
+          ]);
+        } catch { /* timeout or error - continue */ }
         fetchedRoles = await fetchUserData(sessionUser.id);
       }
 

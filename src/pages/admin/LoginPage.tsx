@@ -15,7 +15,7 @@ const emailSchema = z.object({
 
 const AdminLoginPage = () => {
   const navigate = useNavigate();
-  const { user, signIn, signInWithMagicLink, getPrimaryRole, roles, loading: authLoading } = useAuth();
+  const { user, signIn, signInWithMagicLink, getPrimaryRole, roles, loading: authLoading, authResolved } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -150,7 +150,7 @@ const AdminLoginPage = () => {
     }
   };
 
-  if (authLoading) {
+  if (!authResolved && authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />

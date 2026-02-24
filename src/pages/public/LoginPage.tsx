@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Eye, EyeOff, Loader2, User, Scissors, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole, getDashboardForRole } from "@/lib/auth";
-import { AuthGuard } from "@/components/auth/AuthGuard";
+// AuthGuard removed - redirect handled by useEffect
 import { supabase } from "@/integrations/supabase/client";
 import { formatCpfCnpjBR, formatWhatsAppBR } from "@/lib/input-masks";
 import logo from "@/assets/logo.png";
@@ -31,7 +31,7 @@ const signupSchema = z.object({
 
 const PublicLoginPage = () => {
   const navigate = useNavigate();
-  const { user, signUp, signIn, signInWithWhatsApp, getPrimaryRole, roles, loading: authLoading } = useAuth();
+  const { user, signUp, signIn, signInWithWhatsApp, getPrimaryRole, roles, loading: authLoading, authResolved } = useAuth();
   
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [userType, setUserType] = useState<UserType>("cliente");
@@ -208,7 +208,9 @@ const PublicLoginPage = () => {
     { value: "dono", label: "Sou Dono de Barbearia", icon: Store },
   ];
 
-  if (authLoading) {
+  // Only show loading if we're checking an existing session (user might be logged in)
+  // If authResolved and no user, skip straight to form
+  if (!authResolved && authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
