@@ -145,48 +145,28 @@ const PublicLoginPage = () => {
         
         toast.success("Login realizado com sucesso!");
         
-        // Direct redirect: fetch roles and navigate immediately
-        try {
-          const { data: { session: newSession } } = await supabase.auth.getSession();
-          if (newSession?.user) {
-            const { data: rolesData } = await supabase
-              .from("user_roles")
-              .select("role")
-              .eq("user_id", newSession.user.id);
-            
-            const userRoles = rolesData?.map(r => r.role as AppRole) || [];
-            if (userRoles.length > 0) {
-              const primaryRole = userRoles.sort((a, b) => {
-                const priority: AppRole[] = ['super_admin', 'contador', 'dono', 'profissional', 'afiliado_saas', 'afiliado_barbearia', 'cliente'];
-                return priority.indexOf(a) - priority.indexOf(b);
-              })[0];
-              
-              // Check for selected plan redirect
-              const selectedPlan = localStorage.getItem("selected_plan");
-              if (selectedPlan && primaryRole === "dono") {
-                try {
-                  const plan = JSON.parse(selectedPlan);
-                  localStorage.removeItem("selected_plan");
-                  if (plan.checkoutUrl) {
-                    window.location.href = plan.checkoutUrl;
-                    return;
-                  }
-                } catch { /* ignore */ }
-              }
-              localStorage.removeItem("selected_plan");
-              
-              const target = getDashboardForRole(primaryRole);
-              window.location.href = target;
+        // Check for selected plan redirect (dono only)
+        const selectedPlan = localStorage.getItem("selected_plan");
+        if (selectedPlan && loginType === "dono") {
+          try {
+            const plan = JSON.parse(selectedPlan);
+            localStorage.removeItem("selected_plan");
+            if (plan.checkoutUrl) {
+              window.location.href = plan.checkoutUrl;
               return;
             }
-          }
-        } catch { /* ignore fetch errors */ }
+          } catch { /* ignore */ }
+        }
+        localStorage.removeItem("selected_plan");
         
-        // Fallback: hard reload after brief wait to let auth settle
-        setTimeout(() => {
-          window.location.href = "/login";
-        }, 2500);
-        return; // Don't setLoading(false) - page will reload
+        // Direct redirect based on login type - ProtectedRoute validates
+        const targetMap: Record<LoginType, string> = {
+          cliente: "/app",
+          profissional: "/painel-profissional",
+          dono: "/painel-dono",
+        };
+        window.location.href = targetMap[loginType];
+        return;
       } else {
         // Signup - email is required for business users
         const email = isBusinessUser 

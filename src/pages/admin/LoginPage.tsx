@@ -98,12 +98,8 @@ const AdminLoginPage = () => {
       }
       
       toast.success("Acesso autorizado!");
-      
-      // Hard redirect - most reliable
-      setTimeout(() => {
-        window.location.href = "/admin";
-      }, 500);
-      return; // Don't setLoading(false) - page will redirect
+      window.location.href = "/admin";
+      return;
     } catch (err) {
       toast.error("Ocorreu um erro. Tente novamente.");
       setLoading(false);
