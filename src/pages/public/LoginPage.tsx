@@ -146,45 +146,47 @@ const PublicLoginPage = () => {
         toast.success("Login realizado com sucesso!");
         
         // Direct redirect: fetch roles and navigate immediately
-        const { data: { session: newSession } } = await supabase.auth.getSession();
-        if (newSession?.user) {
-          const { data: rolesData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", newSession.user.id);
-          
-          const userRoles = rolesData?.map(r => r.role as AppRole) || [];
-          if (userRoles.length > 0) {
-            const primaryRole = userRoles.sort((a, b) => {
-              const priority: AppRole[] = ['super_admin', 'contador', 'dono', 'profissional', 'afiliado_saas', 'afiliado_barbearia', 'cliente'];
-              return priority.indexOf(a) - priority.indexOf(b);
-            })[0];
+        try {
+          const { data: { session: newSession } } = await supabase.auth.getSession();
+          if (newSession?.user) {
+            const { data: rolesData } = await supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", newSession.user.id);
             
-            // Check for selected plan redirect
-            const selectedPlan = localStorage.getItem("selected_plan");
-            if (selectedPlan && primaryRole === "dono") {
-              try {
-                const plan = JSON.parse(selectedPlan);
-                localStorage.removeItem("selected_plan");
-                if (plan.checkoutUrl) {
-                  window.location.href = plan.checkoutUrl;
-                  return;
-                }
-              } catch { /* ignore */ }
+            const userRoles = rolesData?.map(r => r.role as AppRole) || [];
+            if (userRoles.length > 0) {
+              const primaryRole = userRoles.sort((a, b) => {
+                const priority: AppRole[] = ['super_admin', 'contador', 'dono', 'profissional', 'afiliado_saas', 'afiliado_barbearia', 'cliente'];
+                return priority.indexOf(a) - priority.indexOf(b);
+              })[0];
+              
+              // Check for selected plan redirect
+              const selectedPlan = localStorage.getItem("selected_plan");
+              if (selectedPlan && primaryRole === "dono") {
+                try {
+                  const plan = JSON.parse(selectedPlan);
+                  localStorage.removeItem("selected_plan");
+                  if (plan.checkoutUrl) {
+                    window.location.href = plan.checkoutUrl;
+                    return;
+                  }
+                } catch { /* ignore */ }
+              }
+              localStorage.removeItem("selected_plan");
+              
+              const target = getDashboardForRole(primaryRole);
+              window.location.href = target;
+              return;
             }
-            localStorage.removeItem("selected_plan");
-            navigate(getDashboardForRole(primaryRole), { replace: true });
-            return;
           }
-        }
+        } catch { /* ignore fetch errors */ }
         
-        // Fallback: wait and retry
+        // Fallback: hard reload after brief wait to let auth settle
         setTimeout(() => {
-          const role = getPrimaryRole();
-          if (role) {
-            navigate(getDashboardForRole(role), { replace: true });
-          }
-        }, 2000);
+          window.location.href = "/login";
+        }, 2500);
+        return; // Don't setLoading(false) - page will reload
       } else {
         // Signup - email is required for business users
         const email = isBusinessUser 
@@ -216,7 +218,6 @@ const PublicLoginPage = () => {
       }
     } catch (err) {
       toast.error("Ocorreu um erro. Tente novamente.");
-    } finally {
       setLoading(false);
     }
   };

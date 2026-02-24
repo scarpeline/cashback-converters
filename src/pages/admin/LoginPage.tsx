@@ -99,26 +99,11 @@ const AdminLoginPage = () => {
       
       toast.success("Acesso autorizado!");
       
-      // Direct redirect: fetch roles and navigate immediately
-      const { data: { session: newSession } } = await supabase.auth.getSession();
-      if (newSession?.user) {
-        const { data: rolesData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", newSession.user.id);
-        
-        if (rolesData && rolesData.length > 0) {
-          navigate("/admin", { replace: true });
-          setLoading(false);
-          return;
-        }
-      }
-      
-      // Fallback: wait and retry
+      // Hard redirect - most reliable
       setTimeout(() => {
-        navigate("/admin", { replace: true });
-        setLoading(false);
-      }, 2000);
+        window.location.href = "/admin";
+      }, 500);
+      return; // Don't setLoading(false) - page will redirect
     } catch (err) {
       toast.error("Ocorreu um erro. Tente novamente.");
       setLoading(false);

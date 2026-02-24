@@ -109,6 +109,12 @@ const AfiliadoSaasLoginPage = () => {
         }
         
         toast.success("Login realizado com sucesso!");
+        
+        // Hard redirect - most reliable
+        setTimeout(() => {
+          window.location.href = "/afiliado-saas";
+        }, 500);
+        return; // Don't setLoading(false) - page will redirect
       } else {
         const { error } = await signUp(formData.email, formData.password, {
           name: formData.name,
