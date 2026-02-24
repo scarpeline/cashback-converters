@@ -7,6 +7,7 @@ import { ArrowLeft, Eye, EyeOff, Loader2, User, Scissors, Store } from "lucide-r
 import { toast } from "sonner";
 import { useAuth, AppRole, getDashboardForRole } from "@/lib/auth";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { supabase } from "@/integrations/supabase/client";
 import { formatCpfCnpjBR, formatWhatsAppBR } from "@/lib/input-masks";
 import logo from "@/assets/logo.png";
 import { z } from "zod";
@@ -143,6 +144,47 @@ const PublicLoginPage = () => {
         }
         
         toast.success("Login realizado com sucesso!");
+        
+        // Direct redirect: fetch roles and navigate immediately
+        const { data: { session: newSession } } = await supabase.auth.getSession();
+        if (newSession?.user) {
+          const { data: rolesData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", newSession.user.id);
+          
+          const userRoles = rolesData?.map(r => r.role as AppRole) || [];
+          if (userRoles.length > 0) {
+            const primaryRole = userRoles.sort((a, b) => {
+              const priority: AppRole[] = ['super_admin', 'contador', 'dono', 'profissional', 'afiliado_saas', 'afiliado_barbearia', 'cliente'];
+              return priority.indexOf(a) - priority.indexOf(b);
+            })[0];
+            
+            // Check for selected plan redirect
+            const selectedPlan = localStorage.getItem("selected_plan");
+            if (selectedPlan && primaryRole === "dono") {
+              try {
+                const plan = JSON.parse(selectedPlan);
+                localStorage.removeItem("selected_plan");
+                if (plan.checkoutUrl) {
+                  window.location.href = plan.checkoutUrl;
+                  return;
+                }
+              } catch { /* ignore */ }
+            }
+            localStorage.removeItem("selected_plan");
+            navigate(getDashboardForRole(primaryRole), { replace: true });
+            return;
+          }
+        }
+        
+        // Fallback: wait and retry
+        setTimeout(() => {
+          const role = getPrimaryRole();
+          if (role) {
+            navigate(getDashboardForRole(role), { replace: true });
+          }
+        }, 2000);
       } else {
         // Signup - email is required for business users
         const email = isBusinessUser 
