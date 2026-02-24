@@ -2,6 +2,22 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles } from "lucide-react";
 
+const allFeatures = [
+  "7 dias grátis para testar",
+  "Agendamentos ilimitados",
+  "Pagamentos PIX, Cartão e NFC",
+  "Split automático de comissões",
+  "Cashback configurável",
+  "WhatsApp automático",
+  "Dashboard financeiro completo",
+  "Relatórios e métricas",
+  "Múltiplos profissionais",
+  "Sistema de afiliados",
+  "Gestão de estoque e produtos",
+  "Exportação de dados",
+  "Suporte via chat",
+];
+
 const plans = [
   {
     name: "Mensal",
@@ -10,15 +26,7 @@ const plans = [
       { label: "1º mês", price: "19,90" },
       { label: "A partir do 2º mês", price: "29,90" }
     ],
-    features: [
-      "7 dias grátis",
-      "Agendamentos ilimitados",
-      "Pagamentos PIX, Cartão e NFC",
-      "Split automático",
-      "Cashback configurável",
-      "WhatsApp automático",
-      "Dashboard financeiro"
-    ],
+    features: allFeatures,
     popular: false,
     checkoutUrl: "https://sandbox.asaas.com/c/wyg2cu1i6z2e52el",
     planIndex: 0,
@@ -29,15 +37,7 @@ const plans = [
     price: "79,90",
     priceLabel: "/3 meses",
     monthlyEquivalent: "26,63/mês",
-    features: [
-      "Tudo do plano mensal",
-      "Suporte prioritário",
-      "Relatórios avançados",
-      "Múltiplos profissionais",
-      "Sistema de afiliados",
-      "Estoque e produtos",
-      "Exportação de dados"
-    ],
+    features: allFeatures,
     popular: true,
     checkoutUrl: "https://sandbox.asaas.com/c/ntu1tp1iloyj99de",
     planIndex: 1,
@@ -48,15 +48,7 @@ const plans = [
     price: "199,90",
     priceLabel: "/ano",
     monthlyEquivalent: "16,65/mês",
-    features: [
-      "Tudo do plano trimestral",
-      "Onboarding dedicado",
-      "Consultoria de marketing",
-      "API personalizada",
-      "Multi-unidades",
-      "Contador integrado",
-      "Suporte VIP 24h"
-    ],
+    features: allFeatures,
     popular: false,
     bestValue: true,
     checkoutUrl: "https://sandbox.asaas.com/c/0yhsb6e32ieawwvv",
