@@ -159,13 +159,8 @@ const PublicLoginPage = () => {
         }
         localStorage.removeItem("selected_plan");
         
-        // Direct redirect based on login type - ProtectedRoute validates
-        const targetMap: Record<LoginType, string> = {
-          cliente: "/app",
-          profissional: "/painel-profissional",
-          dono: "/painel-dono",
-        };
-        window.location.href = targetMap[loginType];
+        // Let useEffect handle redirect once roles load
+        // Don't setLoading(false) - keep spinner until redirect happens
         return;
       } else {
         // Signup - email is required for business users

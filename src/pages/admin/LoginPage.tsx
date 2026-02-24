@@ -98,7 +98,7 @@ const AdminLoginPage = () => {
       }
       
       toast.success("Acesso autorizado!");
-      window.location.href = "/admin";
+      // Let useEffect handle redirect once roles load
       return;
     } catch (err) {
       toast.error("Ocorreu um erro. Tente novamente.");
