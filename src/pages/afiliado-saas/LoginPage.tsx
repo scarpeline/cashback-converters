@@ -27,7 +27,7 @@ const loginSchema = z.object({
 
 const AfiliadoSaasLoginPage = () => {
   const navigate = useNavigate();
-  const { user, signUp, signIn, getPrimaryRole, loading: authLoading } = useAuth();
+  const { user, signUp, signIn, getPrimaryRole, roles: authRoles, loading: authLoading } = useAuth();
   
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
@@ -44,13 +44,15 @@ const AfiliadoSaasLoginPage = () => {
     password: ""
   });
 
-  // Redirect if already logged in
+  // Redirect if already logged in AND has roles
   useEffect(() => {
-    if (user && !authLoading) {
+    if (user && !authLoading && authRoles.length > 0) {
       const role = getPrimaryRole();
-      navigate(getDashboardForRole(role), { replace: true });
+      if (role) {
+        navigate(getDashboardForRole(role), { replace: true });
+      }
     }
-  }, [user, authLoading, navigate, getPrimaryRole]);
+  }, [user, authLoading, authRoles, navigate, getPrimaryRole]);
 
   const validateForm = () => {
     setErrors({});
@@ -109,12 +111,8 @@ const AfiliadoSaasLoginPage = () => {
         }
         
         toast.success("Login realizado com sucesso!");
-        
-        // Hard redirect - most reliable
-        setTimeout(() => {
-          window.location.href = "/afiliado-saas";
-        }, 500);
-        return; // Don't setLoading(false) - page will redirect
+        window.location.href = "/afiliado-saas";
+        return;
       } else {
         const { error } = await signUp(formData.email, formData.password, {
           name: formData.name,
@@ -136,10 +134,10 @@ const AfiliadoSaasLoginPage = () => {
 
         toast.success("Conta criada! Verifique seu e-mail para confirmar e depois faça login.");
         setMode("login");
+        setLoading(false);
       }
     } catch (err) {
       toast.error("Ocorreu um erro. Tente novamente.");
-    } finally {
       setLoading(false);
     }
   };
