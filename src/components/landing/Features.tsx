@@ -1,60 +1,62 @@
-import { 
-  Calendar, 
-  CreditCard, 
-  Gift, 
-  MessageSquare, 
-  PieChart, 
-  Shield, 
-  Smartphone, 
+import {
+  Calendar,
+  CreditCard,
+  Gift,
+  MessageSquare,
+  PieChart,
+  Shield,
+  Smartphone,
   Users,
-  Zap
+  Zap,
+  Briefcase,
+  FileText
 } from "lucide-react";
 
 const features = [
   {
     icon: Calendar,
     title: "Agendamento Inteligente",
-    description: "Seus clientes agendam online, 24h. Você só aparece pra cortar."
+    description: "Seus clientes agendam online, 24h. Você só foca em realizar o atendimento."
   },
   {
     icon: CreditCard,
     title: "PIX, Cartão e NFC",
-    description: "Receba de qualquer forma. Split automático entre profissionais."
+    description: "Receba de qualquer forma. Split automático de pagamentos entre os profissionais."
   },
   {
     icon: Gift,
     title: "Cashback Automático",
-    description: "Cliente gasta, ganha crédito. Volta sempre. Simples assim."
+    description: "O cliente consome, ganha crédito e sempre retorna de forma orgânica."
   },
   {
     icon: Users,
     title: "Afiliados que Vendem",
-    description: "Seus clientes indicam amigos e ganham. Você cresce dormindo."
+    description: "Seus clientes indicam amigos e ganham. Você escala seu negócio no piloto automático."
   },
   {
     icon: MessageSquare,
     title: "WhatsApp Automático",
-    description: "Lembretes, confirmações e promoções. Tudo no automático."
+    description: "Lembretes, confirmações e promoções. Tudo sincronizado sem esforço manual."
   },
   {
     icon: PieChart,
     title: "Gestão Financeira",
-    description: "Dashboard completo. Saiba quanto entra, quanto sai, quanto sobra."
+    description: "Dashboard completo para donos. Saiba exatamente quanto entra, sai e sobra no caixa."
   },
   {
-    icon: Shield,
-    title: "Seguro e Confiável",
-    description: "Dados criptografados. Pagamentos via gateway certificado."
+    icon: Briefcase,
+    title: "Múltiplos Perfis",
+    description: "Acessos separados para Donos do Salão, Profissionais (barbeiros), Clientes e Afiliados."
   },
   {
-    icon: Smartphone,
-    title: "Mobile First",
-    description: "Funciona perfeito no celular. Pra você e pro cliente."
+    icon: FileText,
+    title: "Acesso para Contadores",
+    description: "Integração simplificada para seu contador extrair relatórios e faturamentos com um clique."
   },
   {
     icon: Zap,
-    title: "Setup em 5 Minutos",
-    description: "Nada de complicação. Cria a conta e já sai usando."
+    title: "Setup Rápido",
+    description: "Sem implantações demoradas. Crie sua conta e comece a escalar imediatamente."
   }
 ];
 
@@ -64,7 +66,7 @@ const Features = () => {
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-dark" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-      
+
       <div className="container relative z-10 mx-auto">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
@@ -90,16 +92,16 @@ const Features = () => {
             >
               {/* Glow effect on hover */}
               <div className="absolute inset-0 rounded-2xl bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              
+
               <div className="relative">
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                   <feature.icon className="w-6 h-6 text-primary" />
                 </div>
-                
+
                 <h3 className="font-display text-xl font-bold mb-2 group-hover:text-primary transition-colors">
                   {feature.title}
                 </h3>
-                
+
                 <p className="text-muted-foreground text-sm leading-relaxed">
                   {feature.description}
                 </p>

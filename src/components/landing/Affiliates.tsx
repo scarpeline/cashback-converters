@@ -15,7 +15,7 @@ const benefits = [
   {
     icon: Users,
     title: "10% de Sub-afiliados",
-    description: "Indique outros afiliados e ganhe 10% do lucro deles também."
+    description: "Indique outros afiliados e ganhe 10% da receita gerada por eles também."
   }
 ];
 
@@ -25,7 +25,7 @@ const Affiliates = () => {
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-dark" />
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-      
+
       <div className="container relative z-10 mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Content */}
@@ -33,12 +33,12 @@ const Affiliates = () => {
             <span className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
               Programa de Afiliados
             </span>
-            
+
             <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Ganhe dinheiro{" "}
               <span className="text-gradient-gold">indicando barbearias</span>
             </h2>
-            
+
             <p className="text-lg text-muted-foreground mb-8">
               Você conhece donos de barbearias? Indique o SalãoCashBack e ganhe comissões recorrentes.
               Sem limite de ganhos. Saque a partir de 3 barbearias ativas.
@@ -68,7 +68,7 @@ const Affiliates = () => {
           {/* Visual */}
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-radial from-primary/10 via-transparent to-transparent blur-2xl" />
-            
+
             <div className="relative p-8 rounded-3xl bg-gradient-card border border-border/50">
               <div className="text-center mb-8">
                 <span className="text-sm text-muted-foreground">Exemplo de Ganhos</span>

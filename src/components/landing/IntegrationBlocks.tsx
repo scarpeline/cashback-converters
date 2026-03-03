@@ -1,7 +1,7 @@
-import { 
-  Rocket, 
-  Gift, 
-  Target, 
+import {
+  Rocket,
+  Gift,
+  Target,
   Zap,
   CreditCard,
   MessageSquare,
@@ -35,7 +35,7 @@ const integrations = [
     icon: Zap,
     title: "Split Automático = Zero Dor de Cabeça",
     description: "Pagamento entrou? O sistema já divide: 60% pro barbeiro, 30% pro dono, comissão do afiliado. Tudo cai no PIX de cada um. Sem planilha, sem erro.",
-    accent: "Sua contabilidade agradece.",
+    accent: "Seu fechamento financeiro sem estresse.",
     accentColor: "text-accent"
   }
 ];
@@ -76,7 +76,7 @@ const IntegrationBlocks = () => {
     <section className="py-24 px-4 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-dark" />
-      
+
       <div className="container relative z-10 mx-auto">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-6">
@@ -97,16 +97,16 @@ const IntegrationBlocks = () => {
               <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
                 <item.icon className="w-7 h-7 text-primary" />
               </div>
-              
+
               {/* Content */}
               <h3 className="font-display text-xl font-bold mb-3 text-foreground">
                 {item.title}
               </h3>
-              
+
               <p className="text-muted-foreground text-sm leading-relaxed mb-4">
                 {item.description}
               </p>
-              
+
               {/* Accent Text */}
               <p className={`text-sm font-medium ${item.accentColor}`}>
                 {item.accent}
@@ -137,28 +137,27 @@ const IntegrationBlocks = () => {
               className="group relative p-6 rounded-2xl bg-gradient-card border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-gold"
             >
               {/* Status Badge */}
-              <div className={`absolute top-4 right-4 px-2 py-0.5 rounded-full text-xs font-medium ${
-                block.status === 'ready' 
-                  ? 'bg-success/20 text-success' 
+              <div className={`absolute top-4 right-4 px-2 py-0.5 rounded-full text-xs font-medium ${block.status === 'ready'
+                  ? 'bg-success/20 text-success'
                   : 'bg-muted text-muted-foreground'
-              }`}>
+                }`}>
                 {block.status === 'ready' ? 'Ativo' : 'Em breve'}
               </div>
-              
+
               {/* Icon */}
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                 <block.icon className="w-6 h-6 text-primary" />
               </div>
-              
+
               {/* Content */}
               <h3 className="font-display text-lg font-bold mb-2 text-foreground">
                 {block.title}
               </h3>
-              
+
               <p className="text-muted-foreground text-sm leading-relaxed mb-4">
                 {block.description}
               </p>
-              
+
               {/* Placeholder Box */}
               <div className="p-3 rounded-lg bg-muted/30 border border-dashed border-border text-center">
                 <p className="text-xs text-muted-foreground">
