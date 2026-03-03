@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Calendar, 
-  Gift, 
-  History, 
-  Bell, 
-  User, 
-  LogOut, 
-  Menu, 
+import {
+  Calendar,
+  Gift,
+  History,
+  Bell,
+  User,
+  LogOut,
+  Menu,
   X,
   QrCode,
   Users,
@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 const ClienteDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -31,7 +33,7 @@ const ClienteDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const basePath = "/app";
-  
+
   const navigation = [
     { name: "Agendar", href: basePath, icon: Calendar },
     { name: "Meus Agendamentos", href: `${basePath}/agendamentos`, icon: Clock },
@@ -50,7 +52,7 @@ const ClienteDashboard = () => {
   return (
     <div className="min-h-screen bg-background flex">
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -69,7 +71,7 @@ const ClienteDashboard = () => {
                 SalãoCashBack
               </span>
             </Link>
-            <button 
+            <button
               className="lg:hidden text-muted-foreground"
               onClick={() => setSidebarOpen(false)}
             >
@@ -91,8 +93,8 @@ const ClienteDashboard = () => {
                 className={`
                   flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium
                   transition-colors
-                  ${isActive(item.href) 
-                    ? "bg-primary text-primary-foreground" 
+                  ${isActive(item.href)
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"}
                 `}
               >
@@ -103,8 +105,8 @@ const ClienteDashboard = () => {
           </nav>
 
           <div className="p-4 border-t border-border">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="w-full justify-start gap-3 text-muted-foreground"
               onClick={signOut}
             >
@@ -117,7 +119,7 @@ const ClienteDashboard = () => {
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 border-b border-border flex items-center justify-between px-4 lg:px-6 bg-card">
-          <button 
+          <button
             className="lg:hidden text-foreground"
             onClick={() => setSidebarOpen(true)}
           >
@@ -125,6 +127,7 @@ const ClienteDashboard = () => {
           </button>
           <div className="flex-1 lg:flex-none" />
           <div className="flex items-center gap-4">
+            <LanguageSelector />
             <Link to={`${basePath}/notificacoes`}>
               <Button variant="ghost" size="icon">
                 <Bell className="w-5 h-5" />
@@ -158,8 +161,8 @@ const MOCK_BARBERSHOPS = [
 const HomePage = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  
-  const filtered = MOCK_BARBERSHOPS.filter(b => 
+
+  const filtered = MOCK_BARBERSHOPS.filter(b =>
     b.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -249,13 +252,12 @@ const AgendamentosPage = () => {
           Novo
         </Button>
       </div>
-      
+
       {/* Tabs */}
       <div className="flex gap-2">
         {["Próximos", "Concluídos", "Cancelados"].map((tab, i) => (
-          <button key={tab} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            i === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
-          }`}>
+          <button key={tab} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${i === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+            }`}>
             {tab}
           </button>
         ))}
@@ -277,7 +279,7 @@ const AgendamentosPage = () => {
 const CashbackPage = () => (
   <div className="space-y-6">
     <h1 className="font-display text-2xl font-bold">Meu Cashback</h1>
-    
+
     <Card className="bg-gradient-card border-primary/20">
       <CardHeader>
         <CardDescription>Saldo Disponível</CardDescription>
@@ -311,9 +313,8 @@ const HistoricoPage = () => (
     <h1 className="font-display text-2xl font-bold">Histórico</h1>
     <div className="flex gap-2">
       {["Todos", "Pagamentos", "Cashback"].map((tab, i) => (
-        <button key={tab} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-          i === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
-        }`}>
+        <button key={tab} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${i === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+          }`}>
           {tab}
         </button>
       ))}
@@ -329,11 +330,11 @@ const HistoricoPage = () => (
 
 const IndicarPage = () => {
   const referralCode = "SCB-TESTE01";
-  
+
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Indique e Ganhe</h1>
-      
+
       <Card className="bg-gradient-card border-primary/20">
         <CardHeader>
           <CardTitle>Ganhe cashback indicando amigos!</CardTitle>
@@ -426,7 +427,7 @@ const NotificacoesPage = () => (
 const PerfilPage = () => {
   const { profile } = useAuth();
   const [editing, setEditing] = useState(false);
-  
+
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Meu Perfil</h1>

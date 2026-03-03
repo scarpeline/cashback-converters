@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   const navLinks = [
-    { label: "Funcionalidades", href: "#features" },
-    { label: "Preços", href: "#pricing" },
+    { label: t("features", "Funcionalidades"), href: "#features" },
+    { label: t("pricing", "Preços"), href: "#pricing" },
   ];
 
   return (
@@ -39,14 +42,15 @@ const Header = () => {
 
           {/* Desktop CTAs */}
           <div className="hidden md:flex items-center gap-4">
+            <LanguageSelector />
             <Link to="/login">
               <Button variant="ghost" size="sm">
-                Entrar
+                {t("login", "Entrar")}
               </Button>
             </Link>
             <Link to="/login">
               <Button variant="gold" size="sm">
-                Começar Grátis
+                {t("get_started", "Começar Grátis")}
               </Button>
             </Link>
           </div>
@@ -75,14 +79,17 @@ const Header = () => {
                 </a>
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-border/50">
+                <div className="flex justify-center mb-2">
+                  <LanguageSelector />
+                </div>
                 <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                   <Button variant="ghost" className="w-full justify-center">
-                    Entrar
+                    {t("login", "Entrar")}
                   </Button>
                 </Link>
                 <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                   <Button variant="gold" className="w-full justify-center">
-                    Começar Grátis
+                    {t("get_started", "Começar Grátis")}
                   </Button>
                 </Link>
               </div>
