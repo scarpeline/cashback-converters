@@ -35,7 +35,7 @@ const integrations = [
     icon: Zap,
     title: "Split Automático = Zero Dor de Cabeça",
     description: "Pagamento entrou? O sistema já divide: 60% pro barbeiro, 30% pro dono, comissão do afiliado. Tudo cai no PIX de cada um. Sem planilha, sem erro.",
-    accent: "Seu fechamento financeiro sem estresse.",
+    accent: "Sua contabilidade agradece.",
     accentColor: "text-accent"
   }
 ];
@@ -138,8 +138,8 @@ const IntegrationBlocks = () => {
             >
               {/* Status Badge */}
               <div className={`absolute top-4 right-4 px-2 py-0.5 rounded-full text-xs font-medium ${block.status === 'ready'
-                  ? 'bg-success/20 text-success'
-                  : 'bg-muted text-muted-foreground'
+                ? 'bg-success/20 text-success'
+                : 'bg-muted text-muted-foreground'
                 }`}>
                 {block.status === 'ready' ? 'Ativo' : 'Em breve'}
               </div>
