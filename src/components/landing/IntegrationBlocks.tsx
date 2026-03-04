@@ -34,7 +34,7 @@ const integrations = [
   {
     icon: Zap,
     title: "Split Automático = Zero Dor de Cabeça",
-    description: "Pagamento entrou? O sistema já divide: 60% pro barbeiro, 30% pro dono, comissão do afiliado. Tudo cai no PIX de cada um. Sem planilha, sem erro.",
+    description: "Pagamento entrou? O sistema já divide: 60% pro barbeiro e 30% pro dono (% configurável pelo dono), além da comissão. Tudo cai no PIX de cada um. Sem planilha, sem erro.",
     accent: "Sua contabilidade agradece.",
     accentColor: "text-accent"
   }
