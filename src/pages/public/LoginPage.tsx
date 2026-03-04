@@ -216,15 +216,7 @@ const PublicLoginPage = () => {
     { value: "dono", label: "Sou Dono de Barbearia", icon: Store },
   ];
 
-  // Only show loading if we're checking an existing session (user might be logged in)
-  // If authResolved and no user, skip straight to form
-  if (!authResolved && authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // Auth Provider já segura e mostra um loader global, retirar esse pre-mount resolve dom errors
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">

@@ -18,18 +18,12 @@ interface AuthGuardProps {
 export function AuthGuard({ children }: AuthGuardProps) {
   const { user, authResolved, roles, getPrimaryRole } = useAuth();
   const location = useLocation();
-  const [timeout, setTimeoutReached] = useState(false);
+  // O timeout de segurança já é gerenciado 100% pelo hook useAuth
+  // Não precisamos gerenciar outro timeout condicional aqui.
 
-  // Safety timeout: if auth doesn't resolve in 6s, render children anyway
-  useEffect(() => {
-    if (authResolved) return;
-    const timer = setTimeout(() => setTimeoutReached(true), 6000);
-    return () => clearTimeout(timer);
-  }, [authResolved]);
-
-  if (!authResolved && !timeout) {
+  if (!authResolved) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-background" aria-hidden="true">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );

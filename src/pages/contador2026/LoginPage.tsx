@@ -105,13 +105,7 @@ const ContadorLoginPage = () => {
     }
   };
 
-  if (!authResolved && authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // Auth Provider cuida da segurança de UX inicial
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">

@@ -146,13 +146,8 @@ const AfiliadoSaasLoginPage = () => {
     }
   };
 
-  if (!authResolved && authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // O AuthGuard ou Provider já cuidam de barrar a visão inicial
+  // A UI será construída e aguardará silenciosamente o status mudar
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
@@ -245,8 +240,8 @@ const AfiliadoSaasLoginPage = () => {
               type="button"
               onClick={() => setMode("login")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${mode === "login"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
                 }`}
             >
               Entrar
@@ -255,8 +250,8 @@ const AfiliadoSaasLoginPage = () => {
               type="button"
               onClick={() => setMode("signup")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${mode === "signup"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
                 }`}
             >
               Criar Conta
