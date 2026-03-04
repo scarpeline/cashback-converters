@@ -32,7 +32,7 @@ const signupSchema = z.object({
 const PublicLoginPage = () => {
   const navigate = useNavigate();
   const { user, signUp, signIn, signInWithWhatsApp, getPrimaryRole, roles, loading: authLoading, authResolved } = useAuth();
-  
+
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [userType, setUserType] = useState<UserType>("cliente");
   const [loginType, setLoginType] = useState<LoginType>("cliente");
@@ -51,32 +51,38 @@ const PublicLoginPage = () => {
 
   // Redirect if already logged in AND roles loaded
   useEffect(() => {
-    if (user && !authLoading && roles.length > 0) {
-      const role = getPrimaryRole();
-      if (role) {
-        // Check if user selected a plan from pricing - redirect to checkout
-        const selectedPlan = localStorage.getItem("selected_plan");
-        if (selectedPlan && (role === "dono")) {
-          try {
-            const plan = JSON.parse(selectedPlan);
-            localStorage.removeItem("selected_plan");
-            if (plan.checkoutUrl) {
-              window.location.href = plan.checkoutUrl;
-              return;
-            }
-          } catch { /* ignore parse errors */ }
+    if (user && !authLoading) {
+      if (roles.length > 0) {
+        const role = getPrimaryRole();
+        if (role) {
+          // Check if user selected a plan from pricing - redirect to checkout
+          const selectedPlan = localStorage.getItem("selected_plan");
+          if (selectedPlan && (role === "dono")) {
+            try {
+              const plan = JSON.parse(selectedPlan);
+              localStorage.removeItem("selected_plan");
+              if (plan.checkoutUrl) {
+                window.location.href = plan.checkoutUrl;
+                return;
+              }
+            } catch { /* ignore parse errors */ }
+          }
+          localStorage.removeItem("selected_plan");
+          navigate(getDashboardForRole(role), { replace: true });
         }
-        localStorage.removeItem("selected_plan");
-        navigate(getDashboardForRole(role), { replace: true });
+      } else if (authResolved) {
+        // Fallback: Sessão existe mas usuário está sem perfis vinculados
+        setLoading(false);
+        toast.error("Conta sem perfil associado. Entre em contato com o suporte.");
       }
     }
-  }, [user, authLoading, roles, navigate, getPrimaryRole]);
+  }, [user, authLoading, roles, authResolved, navigate, getPrimaryRole]);
 
   const isBusinessUser = userType === "dono";
 
   const validateForm = () => {
     setErrors({});
-    
+
     try {
       if (mode === "login") {
         loginSchema.parse({
@@ -89,11 +95,11 @@ const PublicLoginPage = () => {
           whatsapp: formData.whatsapp,
           password: formData.password,
         };
-        
+
         if (isBusinessUser) {
           dataToValidate.email = formData.email;
         }
-        
+
         signupSchema.parse(dataToValidate);
       }
       return true;
@@ -113,15 +119,15 @@ const PublicLoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setLoading(true);
 
     try {
       if (mode === "login") {
         let result;
-        
+
         if (loginType === "cliente") {
           // Cliente logs in with WhatsApp
           result = await signInWithWhatsApp(formData.whatsapp, formData.password);
@@ -129,7 +135,7 @@ const PublicLoginPage = () => {
           // Profissional and Dono log in with email
           result = await signIn(formData.email, formData.password);
         }
-        
+
         if (result.error) {
           const msg = result.error.message || "Erro ao fazer login";
           if (msg.toLowerCase().includes("email not confirmed")) {
@@ -142,9 +148,12 @@ const PublicLoginPage = () => {
           setLoading(false);
           return;
         }
-        
+
         toast.success("Login realizado com sucesso!");
-        
+
+        // Adiciona timer máximo para o botão de loading caso o redirecionamento (useEffect) falhe por ausência de roles
+        setTimeout(() => setLoading(false), 5000);
+
         // Check for selected plan redirect (dono only)
         const selectedPlan = localStorage.getItem("selected_plan");
         if (selectedPlan && loginType === "dono") {
@@ -158,16 +167,15 @@ const PublicLoginPage = () => {
           } catch { /* ignore */ }
         }
         localStorage.removeItem("selected_plan");
-        
+
         // Let useEffect handle redirect once roles load
-        // Don't setLoading(false) - keep spinner until redirect happens
         return;
       } else {
         // Signup - email is required for business users
-        const email = isBusinessUser 
-          ? formData.email 
+        const email = isBusinessUser
+          ? formData.email
           : `${formData.whatsapp.replace(/\D/g, '')}@salao.app`;
-        
+
         const { error } = await signUp(email, formData.password, {
           name: formData.name,
           whatsapp: formData.whatsapp,
@@ -224,8 +232,8 @@ const PublicLoginPage = () => {
       <div className="flex-1 flex flex-col justify-center px-4 py-12 lg:px-12">
         <div className="w-full max-w-md mx-auto">
           {/* Back Button */}
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -245,8 +253,8 @@ const PublicLoginPage = () => {
             {mode === "login" ? "Bem-vindo de volta!" : "Crie sua conta"}
           </h1>
           <p className="text-muted-foreground mb-8">
-            {mode === "login" 
-              ? "Entre para acessar sua conta" 
+            {mode === "login"
+              ? "Entre para acessar sua conta"
               : "Preencha os dados para começar"}
           </p>
 
@@ -255,22 +263,20 @@ const PublicLoginPage = () => {
             <button
               type="button"
               onClick={() => setMode("login")}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                mode === "login" 
-                  ? "bg-primary text-primary-foreground shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${mode === "login"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+                }`}
             >
               Entrar
             </button>
             <button
               type="button"
               onClick={() => setMode("signup")}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                mode === "signup" 
-                  ? "bg-primary text-primary-foreground shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${mode === "signup"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+                }`}
             >
               Criar Conta
             </button>
@@ -286,11 +292,10 @@ const PublicLoginPage = () => {
                     key={type.value}
                     type="button"
                     onClick={() => setLoginType(type.value)}
-                    className={`p-3 rounded-lg border text-center transition-all ${
-                      loginType === type.value
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                    }`}
+                    className={`p-3 rounded-lg border text-center transition-all ${loginType === type.value
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/50"
+                      }`}
                   >
                     <type.icon className={`w-5 h-5 mx-auto mb-1 ${loginType === type.value ? "text-primary" : "text-muted-foreground"}`} />
                     <span className={`text-xs font-medium block ${loginType === type.value ? "text-primary" : "text-muted-foreground"}`}>
@@ -312,11 +317,10 @@ const PublicLoginPage = () => {
                     key={type.value}
                     type="button"
                     onClick={() => setUserType(type.value)}
-                    className={`p-4 rounded-lg border text-left transition-all flex items-center gap-3 ${
-                      userType === type.value
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                    }`}
+                    className={`p-4 rounded-lg border text-left transition-all flex items-center gap-3 ${userType === type.value
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/50"
+                      }`}
                   >
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${userType === type.value ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                       <type.icon className="w-5 h-5" />
@@ -453,10 +457,10 @@ const PublicLoginPage = () => {
             )}
 
             {/* Submit Button */}
-            <Button 
-              type="submit" 
-              variant="gold" 
-              className="w-full" 
+            <Button
+              type="submit"
+              variant="gold"
+              className="w-full"
               size="lg"
               disabled={loading}
             >
@@ -487,8 +491,8 @@ const PublicLoginPage = () => {
 
           {/* Affiliate Link */}
           <div className="mt-4 pt-4 border-t border-border text-center">
-            <Link 
-              to="/afiliado-saas/login" 
+            <Link
+              to="/afiliado-saas/login"
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               Quer ser afiliado do SaaS? <span className="underline">Clique aqui</span>
@@ -501,11 +505,11 @@ const PublicLoginPage = () => {
       <div className="hidden lg:flex flex-1 bg-gradient-card items-center justify-center p-12 relative overflow-hidden">
         <div className="absolute inset-0" style={{ background: "var(--gradient-glow)" }} />
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-        
+
         <div className="relative text-center max-w-lg">
-          <img 
-            src={logo} 
-            alt="SalãoCashBack" 
+          <img
+            src={logo}
+            alt="SalãoCashBack"
             className="w-64 h-64 mx-auto mb-8 animate-float drop-shadow-2xl"
           />
           <h2 className="font-display text-3xl font-bold mb-4">
@@ -513,7 +517,7 @@ const PublicLoginPage = () => {
             <span className="text-gradient-gold">próximo nível</span>
           </h2>
           <p className="text-muted-foreground">
-            Automatize vendas, agendamentos e pagamentos. 
+            Automatize vendas, agendamentos e pagamentos.
             Foque no que importa: seu cliente.
           </p>
         </div>

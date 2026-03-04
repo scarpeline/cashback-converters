@@ -28,7 +28,7 @@ const loginSchema = z.object({
 const AfiliadoSaasLoginPage = () => {
   const navigate = useNavigate();
   const { user, signUp, signIn, getPrimaryRole, roles: authRoles, loading: authLoading, authResolved } = useAuth();
-  
+
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -56,7 +56,7 @@ const AfiliadoSaasLoginPage = () => {
 
   const validateForm = () => {
     setErrors({});
-    
+
     try {
       if (mode === "login") {
         loginSchema.parse({
@@ -65,7 +65,7 @@ const AfiliadoSaasLoginPage = () => {
         });
       } else {
         signupSchema.parse(formData);
-        
+
         if (!antiFraudAccepted) {
           toast.error("Você deve aceitar as regras anti-fraude para continuar.");
           return false;
@@ -88,15 +88,15 @@ const AfiliadoSaasLoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setLoading(true);
 
     try {
       if (mode === "login") {
         const { error } = await signIn(formData.email, formData.password);
-        
+
         if (error) {
           const msg = error.message || "Erro ao fazer login";
           if (msg.toLowerCase().includes("email not confirmed")) {
@@ -109,8 +109,12 @@ const AfiliadoSaasLoginPage = () => {
           setLoading(false);
           return;
         }
-        
+
         toast.success("Login realizado com sucesso!");
+
+        // Timer de segurança para destravar botão se o redirect engasgar
+        setTimeout(() => setLoading(false), 5000);
+
         // Let useEffect handle redirect once roles load
         return;
       } else {
@@ -156,15 +160,15 @@ const AfiliadoSaasLoginPage = () => {
       <div className="hidden lg:flex flex-1 bg-gradient-card items-center justify-center p-12 relative overflow-hidden">
         <div className="absolute inset-0" style={{ background: "var(--gradient-glow)" }} />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-        
+
         <div className="relative max-w-lg">
           <img src={logo} alt="SalãoCashBack" className="w-20 h-20 mb-8" />
-          
+
           <h2 className="font-display text-3xl font-bold mb-6">
             Ganhe dinheiro indicando{" "}
             <span className="text-gradient-gold">barbearias</span>
           </h2>
-          
+
           <div className="space-y-6">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
@@ -177,7 +181,7 @@ const AfiliadoSaasLoginPage = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
                 <Users className="w-6 h-6 text-primary" />
@@ -189,7 +193,7 @@ const AfiliadoSaasLoginPage = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
                 <TrendingUp className="w-6 h-6 text-primary" />
@@ -209,8 +213,8 @@ const AfiliadoSaasLoginPage = () => {
       <div className="flex-1 flex flex-col justify-center px-4 py-12 lg:px-12">
         <div className="w-full max-w-md mx-auto">
           {/* Back Button */}
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -230,8 +234,8 @@ const AfiliadoSaasLoginPage = () => {
             {mode === "login" ? "Acesse seu painel" : "Torne-se um Afiliado"}
           </h1>
           <p className="text-muted-foreground mb-8">
-            {mode === "login" 
-              ? "Entre com sua conta de afiliado" 
+            {mode === "login"
+              ? "Entre com sua conta de afiliado"
               : "Crie sua conta e comece a ganhar"}
           </p>
 
@@ -240,22 +244,20 @@ const AfiliadoSaasLoginPage = () => {
             <button
               type="button"
               onClick={() => setMode("login")}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                mode === "login" 
-                  ? "bg-primary text-primary-foreground shadow-sm" 
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${mode === "login"
+                  ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               Entrar
             </button>
             <button
               type="button"
               onClick={() => setMode("signup")}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                mode === "signup" 
-                  ? "bg-primary text-primary-foreground shadow-sm" 
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${mode === "signup"
+                  ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               Criar Conta
             </button>
@@ -380,7 +382,7 @@ const AfiliadoSaasLoginPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Checkbox 
+                  <Checkbox
                     id="antifraud"
                     checked={antiFraudAccepted}
                     onCheckedChange={(checked) => setAntiFraudAccepted(checked === true)}
@@ -393,10 +395,10 @@ const AfiliadoSaasLoginPage = () => {
             )}
 
             {/* Submit Button */}
-            <Button 
-              type="submit" 
-              variant="gold" 
-              className="w-full" 
+            <Button
+              type="submit"
+              variant="gold"
+              className="w-full"
               size="lg"
               disabled={loading || (mode === "signup" && !antiFraudAccepted)}
             >
@@ -407,8 +409,8 @@ const AfiliadoSaasLoginPage = () => {
 
           {/* Login Link */}
           <div className="mt-8 pt-6 border-t border-border text-center">
-            <Link 
-              to="/login" 
+            <Link
+              to="/login"
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               Não é afiliado? <span className="underline">Acesse a área geral</span>

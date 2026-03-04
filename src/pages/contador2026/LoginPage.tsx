@@ -15,7 +15,7 @@ const emailSchema = z.object({
 const ContadorLoginPage = () => {
   const navigate = useNavigate();
   const { user, signIn, signInWithMagicLink, getPrimaryRole, loading: authLoading, authResolved } = useAuth();
-  
+
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +34,7 @@ const ContadorLoginPage = () => {
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    
+
     try {
       emailSchema.parse({ email });
     } catch (err) {
@@ -48,11 +48,11 @@ const ContadorLoginPage = () => {
       setError("Senha obrigatória");
       return;
     }
-    
+
     setLoading(true);
     try {
       const { error: signInError } = await signIn(email, password);
-      
+
       if (signInError) {
         const msg = signInError.message || "";
         if (msg.toLowerCase().includes("invalid login credentials")) {
@@ -63,8 +63,9 @@ const ContadorLoginPage = () => {
         setLoading(false);
         return;
       }
-      
+
       toast.success("Acesso realizado!");
+      setTimeout(() => setLoading(false), 5000);
     } catch (err) {
       toast.error("Ocorreu um erro. Tente novamente.");
     } finally {
@@ -75,7 +76,7 @@ const ContadorLoginPage = () => {
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    
+
     try {
       emailSchema.parse({ email });
     } catch (err) {
@@ -84,17 +85,17 @@ const ContadorLoginPage = () => {
         return;
       }
     }
-    
+
     setLoading(true);
     try {
       const { error } = await signInWithMagicLink(email, "/contador2026/login");
-      
+
       if (error) {
         toast.error(error.message || "Erro ao enviar link de acesso");
         setLoading(false);
         return;
       }
-      
+
       setEmailSent(true);
       toast.success("Link de acesso enviado!");
     } catch (err) {
@@ -115,8 +116,8 @@ const ContadorLoginPage = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md">
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -144,8 +145,8 @@ const ContadorLoginPage = () => {
                 Enviamos um link de acesso para <strong>{email}</strong>.
                 Clique no link para entrar.
               </p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full mt-4"
                 onClick={() => setEmailSent(false)}
               >
@@ -164,18 +165,16 @@ const ContadorLoginPage = () => {
                 <button
                   type="button"
                   onClick={() => { setLoginMode("password"); setError(""); }}
-                  className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${
-                    loginMode === "password" ? "bg-card shadow text-foreground" : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${loginMode === "password" ? "bg-card shadow text-foreground" : "text-muted-foreground hover:text-foreground"
+                    }`}
                 >
                   Email + Senha
                 </button>
                 <button
                   type="button"
                   onClick={() => { setLoginMode("magiclink"); setError(""); }}
-                  className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${
-                    loginMode === "magiclink" ? "bg-card shadow text-foreground" : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${loginMode === "magiclink" ? "bg-card shadow text-foreground" : "text-muted-foreground hover:text-foreground"
+                    }`}
                 >
                   Magic Link
                 </button>
@@ -227,10 +226,10 @@ const ContadorLoginPage = () => {
                     </div>
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    variant="gold" 
-                    className="w-full" 
+                  <Button
+                    type="submit"
+                    variant="gold"
+                    className="w-full"
                     size="lg"
                     disabled={loading}
                   >
@@ -256,10 +255,10 @@ const ContadorLoginPage = () => {
                     {error && <p className="text-xs text-destructive mt-1">{error}</p>}
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    variant="gold" 
-                    className="w-full" 
+                  <Button
+                    type="submit"
+                    variant="gold"
+                    className="w-full"
                     size="lg"
                     disabled={loading}
                   >
