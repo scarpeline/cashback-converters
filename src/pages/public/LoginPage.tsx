@@ -68,7 +68,12 @@ const PublicLoginPage = () => {
             } catch { /* ignore parse errors */ }
           }
           localStorage.removeItem("selected_plan");
-          navigate(getDashboardForRole(role), { replace: true });
+
+          // Navegação segura usando URL Base em vez de react-router se possível para forçar reload de layout
+          const dashboardUrl = getDashboardForRole(role);
+          if (dashboardUrl) {
+            window.location.href = dashboardUrl;
+          }
         }
       } else if (authResolved) {
         // Fallback: Sessão existe mas usuário está sem perfis vinculados
@@ -76,7 +81,7 @@ const PublicLoginPage = () => {
         toast.error("Conta sem perfil associado. Entre em contato com o suporte.");
       }
     }
-  }, [user, authLoading, roles, authResolved, navigate, getPrimaryRole]);
+  }, [user, authLoading, roles, authResolved, getPrimaryRole]);
 
   const isBusinessUser = userType === "dono";
 

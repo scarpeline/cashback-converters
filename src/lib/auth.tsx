@@ -11,10 +11,10 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useRef, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  logAuthStart, 
-  logAuthValidate, 
-  logAuthRole, 
+import {
+  logAuthStart,
+  logAuthValidate,
+  logAuthRole,
   logAuthError,
   logAuthSuccess,
   logSessionExpired,
@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profileLoading, setProfileLoading] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [authResolved, setAuthResolved] = useState(false);
-  
+
   const roleBootstrapAttemptedRef = useRef(false);
 
   // ============================================
@@ -243,10 +243,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (fetchedRoles.length === 0 && !roleBootstrapAttemptedRef.current) {
         try {
           await Promise.race([
-            bootstrapRoles(sessionUser),
+            bootstrapRoles(sessionUser).catch(e => console.warn("Bootstrap soft-failed:", e)),
             new Promise((_, reject) => setTimeout(() => reject(new Error('bootstrap timeout')), 3000)),
           ]);
-        } catch { /* timeout or error - continue */ }
+        } catch (e) {
+          console.warn("Bootstrap timeout/error managed:", e);
+        }
         fetchedRoles = await fetchUserData(sessionUser.id);
       }
 
@@ -332,7 +334,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         const { data: { session: existingSession }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           logAuthError("getSession failed", { error: error.message });
         }
@@ -348,16 +350,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logAuthValidate({ token_valido: validation.isValid });
 
         if (validation.isExpired) {
-          logSessionExpired({ 
+          logSessionExpired({
             expires_at: validation.expiresAt || 'unknown',
-            reason: validation.reason 
+            reason: validation.reason
           });
         }
 
         // Fetch profile + roles BEFORE releasing loading
         if (existingSession?.user && validation.isValid) {
           const fetchedRoles = await loadUserComplete(existingSession.user);
-          
+
           logDebugSummary('Initial Auth Complete', {
             user_id: existingSession.user.id,
             email: existingSession.user.email,
@@ -386,7 +388,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isMounted = false;
       subscription.unsubscribe();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ============================================
@@ -457,12 +459,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithWhatsApp = async (whatsapp: string, password: string) => {
     try {
       const normalizedWhatsApp = whatsapp.replace(/\D/g, '');
-      
+
       // Use SECURITY DEFINER function to bypass RLS on profiles
       const { data: emailFromNormalized } = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: normalizedWhatsApp });
-      
+
       let email = emailFromNormalized;
-      
+
       // Try with formatted whatsapp if not found
       if (!email && whatsapp !== normalizedWhatsApp) {
         const { data: emailFromFormatted } = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: whatsapp });
