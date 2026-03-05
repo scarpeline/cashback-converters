@@ -27,6 +27,7 @@ const ProfissionalDashboard = lazy(() => import("./pages/dashboards/Profissional
 const AfiliadoDashboard = lazy(() => import("./pages/dashboards/AfiliadoDashboard"));
 const ContadorDashboard = lazy(() => import("./pages/dashboards/ContadorDashboard"));
 const SuperAdminDashboard = lazy(() => import("./pages/dashboards/SuperAdminDashboard"));
+const PaymentSimulationPage = lazy(() => import("./pages/public/PaymentSimulationPage"));
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ function AppRoutes() {
         {/* ========== PUBLIC ========== */}
         <Route path="/" element={<Index />} />
         <Route path="/404" element={<NotFoundPage />} />
+        <Route path="/simulacao-pagamento" element={<PaymentSimulationPage />} />
 
         {/* ========== LOGIN (AuthGuard: se logado, vai pro dashboard) ========== */}
         <Route path="/login" element={<PublicLoginPage />} />

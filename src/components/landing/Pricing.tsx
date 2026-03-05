@@ -1,6 +1,13 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, CreditCard, Smartphone, Wifi } from "lucide-react";
+
+// Taxas Asaas (gateway) + taxa do app
+const ASAAS_FEES = {
+  pix: { gateway: 0.99, app: 0.5, total: 1.49 },
+  card: { gateway: 2.99, extra: "R$0,49/tx", app: 0.5, total: 3.49 },
+  nfc: { gateway: 1.99, app: 0.5, total: 2.49 },
+};
 
 const allFeatures = [
   "7 dias grátis para testar",
@@ -30,6 +37,7 @@ const plans = [
     popular: false,
     checkoutUrl: "https://sandbox.asaas.com/c/wyg2cu1i6z2e52el",
     planIndex: 0,
+    showTrialButton: true,
   },
   {
     name: "Trimestral",
@@ -41,6 +49,7 @@ const plans = [
     popular: true,
     checkoutUrl: "https://sandbox.asaas.com/c/ntu1tp1iloyj99de",
     planIndex: 1,
+    showTrialButton: false,
   },
   {
     name: "Anual",
@@ -53,6 +62,7 @@ const plans = [
     bestValue: true,
     checkoutUrl: "https://sandbox.asaas.com/c/0yhsb6e32ieawwvv",
     planIndex: 2,
+    showTrialButton: false,
   }
 ];
 
@@ -71,7 +81,7 @@ const Pricing = () => {
       {/* Background */}
       <div className="absolute inset-0 bg-background-subtle" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-primary/3 blur-3xl" />
-      
+
       <div className="container relative z-10 mx-auto">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
@@ -79,11 +89,11 @@ const Pricing = () => {
             Preços Simples
           </span>
           <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-            Comece grátis,{" "}
-            <span className="text-gradient-gold">cresça sem limites</span>
+            {t("pricing_title_start", "Comece grátis,")}{" "}
+            <span className="text-gradient-gold">{t("pricing_title_highlight", "cresça sem limites")}</span>
           </h2>
           <p className="text-muted-foreground text-lg">
-            7 dias grátis para testar. Sem cartão de crédito. Cancele quando quiser.
+            {t("trial_days")}. {t("no_credit_card")}
           </p>
         </div>
 
@@ -92,11 +102,10 @@ const Pricing = () => {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative rounded-2xl p-6 lg:p-8 transition-all duration-300 ${
-                plan.popular
-                  ? "bg-gradient-card border-2 border-primary shadow-gold scale-105 z-10"
-                  : "bg-gradient-card border border-border/50 hover:border-primary/30"
-              }`}
+              className={`relative rounded-2xl p-6 lg:p-8 transition-all duration-300 ${plan.popular
+                ? "bg-gradient-card border-2 border-primary shadow-gold scale-105 z-10"
+                : "bg-gradient-card border border-border/50 hover:border-primary/30"
+                }`}
             >
               {/* Popular Badge */}
               {plan.popular && (
@@ -154,15 +163,40 @@ const Pricing = () => {
               </div>
 
               {/* CTA */}
-              <Link to="/login" onClick={() => handleSelectPlan(plan)}>
-                <Button
-                  variant={plan.popular ? "gold" : "outline"}
-                  className="w-full mb-6"
-                  size="lg"
-                >
-                  Começar Grátis
-                </Button>
-              </Link>
+              <div className="space-y-3 mb-6">
+                <Link to="/login" onClick={() => handleSelectPlan(plan)} className="block">
+                  <Button
+                    variant={plan.popular ? "gold" : "outline"}
+                    className="w-full"
+                    size="lg"
+                  >
+                    Começar Grátis
+                  </Button>
+                </Link>
+
+                {/* Botão "Assinar agora e testar 7 dias grátis" apenas no plano Mensal */}
+                {plan.showTrialButton ? (
+                  <Link to="/login" onClick={() => handleSelectPlan(plan)} className="block">
+                    <Button
+                      variant="ghost"
+                      className="w-full border border-primary/40 hover:bg-primary/10 text-primary font-semibold"
+                      size="lg"
+                    >
+                      Assinar agora e testar 7 dias grátis
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to="/simulacao-pagamento" onClick={() => handleSelectPlan(plan)} className="block">
+                    <Button
+                      variant="ghost"
+                      className="w-full border border-primary/20 hover:bg-primary/10 text-primary"
+                      size="lg"
+                    >
+                      Assinar Agora
+                    </Button>
+                  </Link>
+                )}
+              </div>
 
               {/* Features */}
               <ul className="space-y-3">
@@ -179,13 +213,101 @@ const Pricing = () => {
           ))}
         </div>
 
-        {/* Additional Info */}
-        <p className="text-center text-muted-foreground text-sm mt-12">
-          Todos os planos incluem{" "}
-          <span className="text-primary">taxa de apenas 0,5%</span> sobre transações.
-          <br />
-          Pagamentos processados de forma segura via ASAAS.
-        </p>
+        {/* Taxas detalhadas por método de pagamento */}
+        <div className="max-w-3xl mx-auto mt-16">
+          <div className="rounded-2xl border border-border/50 bg-gradient-card p-6 lg:p-8">
+            <h3 className="text-center font-display text-lg font-bold mb-2">
+              Taxas por Método de Pagamento
+            </h3>
+            <p className="text-center text-muted-foreground text-sm mb-6">
+              {t("app_fee_desc")}
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* PIX */}
+              <div className="rounded-xl bg-background/60 border border-border/30 p-4 text-center">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                  <Smartphone className="w-5 h-5 text-primary" />
+                </div>
+                <p className="font-semibold text-sm mb-2">PIX</p>
+                <div className="space-y-1 text-xs text-muted-foreground mb-3">
+                  <div className="flex justify-between">
+                    <span>Gateway Asaas:</span>
+                    <span>{ASAAS_FEES.pix.gateway}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Taxa do App:</span>
+                    <span>{ASAAS_FEES.pix.app}%</span>
+                  </div>
+                </div>
+                <div className="border-t border-border/30 pt-2">
+                  <span className="font-display text-xl font-bold text-gradient-gold">
+                    {ASAAS_FEES.pix.total.toFixed(2)}%
+                  </span>
+                  <p className="text-xs text-muted-foreground">total por transação</p>
+                </div>
+              </div>
+
+              {/* Cartão */}
+              <div className="rounded-xl bg-background/60 border border-primary/20 p-4 text-center relative">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                  <CreditCard className="w-5 h-5 text-primary" />
+                </div>
+                <p className="font-semibold text-sm mb-2">Cartão de Crédito</p>
+                <div className="space-y-1 text-xs text-muted-foreground mb-3">
+                  <div className="flex justify-between">
+                    <span>Gateway Asaas:</span>
+                    <span>{ASAAS_FEES.card.gateway}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Taxa fixa:</span>
+                    <span>{ASAAS_FEES.card.extra}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Taxa do App:</span>
+                    <span>{ASAAS_FEES.card.app}%</span>
+                  </div>
+                </div>
+                <div className="border-t border-border/30 pt-2">
+                  <span className="font-display text-xl font-bold text-gradient-gold">
+                    {ASAAS_FEES.card.total.toFixed(2)}%
+                  </span>
+                  <p className="text-xs text-muted-foreground">+ R$0,49 por transação</p>
+                </div>
+              </div>
+
+              {/* NFC */}
+              <div className="rounded-xl bg-background/60 border border-border/30 p-4 text-center">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                  <Wifi className="w-5 h-5 text-primary" />
+                </div>
+                <p className="font-semibold text-sm mb-2">NFC / Débito</p>
+                <div className="space-y-1 text-xs text-muted-foreground mb-3">
+                  <div className="flex justify-between">
+                    <span>Gateway Asaas:</span>
+                    <span>{ASAAS_FEES.nfc.gateway}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Taxa do App:</span>
+                    <span>{ASAAS_FEES.nfc.app}%</span>
+                  </div>
+                </div>
+                <div className="border-t border-border/30 pt-2">
+                  <span className="font-display text-xl font-bold text-gradient-gold">
+                    {ASAAS_FEES.nfc.total.toFixed(2)}%
+                  </span>
+                  <p className="text-xs text-muted-foreground">total por transação</p>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-center text-muted-foreground text-xs mt-6">
+              🔒 Pagamentos processados de forma segura via{" "}
+              <span className="text-primary font-medium">ASAAS</span>.
+              Taxas sujeitas à atualização conforme tabela oficial do gateway.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   );

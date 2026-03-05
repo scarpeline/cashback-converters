@@ -295,23 +295,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
     const startTime = Date.now();
+    // Track the current user ID to avoid reloading roles for the same user
+    let currentUserId: string | null = null;
 
     // 1. Set up listener for ONGOING changes (does NOT control loading/authResolved)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         if (!isMounted) return;
+
         // Skip INITIAL_SESSION - handled by initializeAuth below
         if (event === 'INITIAL_SESSION') return;
 
-        // Update state synchronously for ongoing changes
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user) {
-          // Reload user data (fire and forget for ongoing changes)
-          await loadUserComplete(currentSession.user);
-        } else {
-          // Logged out
+          const incomingUserId = currentSession.user.id;
+          // Only reload user data if the user ID actually changed (new login)
+          // TOKEN_REFRESHED with same user should NOT clear roles
+          if (incomingUserId !== currentUserId || event === 'SIGNED_IN') {
+            currentUserId = incomingUserId;
+            await loadUserComplete(currentSession.user);
+          }
+        } else if (event === 'SIGNED_OUT' || !currentSession) {
+          // Logged out - clear everything
+          currentUserId = null;
           setProfile(null);
           setRoles([]);
           roleBootstrapAttemptedRef.current = false;
@@ -356,16 +364,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
         }
 
-        // Fetch profile + roles BEFORE releasing loading
         if (existingSession?.user && validation.isValid) {
-          const fetchedRoles = await loadUserComplete(existingSession.user);
-
-          logDebugSummary('Initial Auth Complete', {
-            user_id: existingSession.user.id,
-            email: existingSession.user.email,
-            roles: fetchedRoles,
-            session_valid: validation.isValid,
-          });
+          try {
+            await loadUserComplete(existingSession.user);
+            logDebugSummary('Initial Auth Complete', {
+              user_id: existingSession.user.id,
+              email: existingSession.user.email,
+              session_valid: validation.isValid,
+            });
+          } catch (userDataError) {
+            console.error('[AUTH] Failed to load user data during init:', userDataError);
+          }
         }
       } catch (error) {
         logCriticalError("initializeAuth", error);

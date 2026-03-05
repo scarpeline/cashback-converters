@@ -7,10 +7,10 @@ import { DonoOnboarding } from "@/components/onboarding/DonoOnboarding";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
+import {
   LayoutDashboard,
-  Calendar, 
-  Users, 
+  Calendar,
+  Users,
   Scissors,
   DollarSign,
   Package,
@@ -45,7 +45,7 @@ const DonoDashboard = () => {
   }
 
   const basePath = "/painel-dono";
-  
+
   const navigation = [
     { name: "Dashboard", href: basePath, icon: LayoutDashboard },
     { name: "Agendamentos", href: `${basePath}/agendamentos`, icon: Calendar },
@@ -54,6 +54,8 @@ const DonoDashboard = () => {
     { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
     { name: "Estoque", href: `${basePath}/estoque`, icon: Package },
     { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
+    { name: "Rifas", href: `${basePath}/rifas`, icon: Scissors },
+    { name: "Automação", href: `${basePath}/automacao`, icon: MessageCircle },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
     { name: "Pixels & Marketing", href: `${basePath}/pixels`, icon: Image },
     { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
@@ -68,7 +70,7 @@ const DonoDashboard = () => {
   return (
     <div className="min-h-screen bg-background flex">
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -87,7 +89,7 @@ const DonoDashboard = () => {
                 Painel Dono
               </span>
             </Link>
-            <button 
+            <button
               className="lg:hidden text-muted-foreground"
               onClick={() => setSidebarOpen(false)}
             >
@@ -109,8 +111,8 @@ const DonoDashboard = () => {
                 className={`
                   flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium
                   transition-colors
-                  ${isActive(item.href) 
-                    ? "bg-primary text-primary-foreground" 
+                  ${isActive(item.href)
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"}
                 `}
               >
@@ -121,8 +123,8 @@ const DonoDashboard = () => {
           </nav>
 
           <div className="p-4 border-t border-border">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="w-full justify-start gap-3 text-muted-foreground"
               onClick={signOut}
             >
@@ -135,7 +137,7 @@ const DonoDashboard = () => {
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 border-b border-border flex items-center justify-between px-4 lg:px-6 bg-card">
-          <button 
+          <button
             className="lg:hidden text-foreground"
             onClick={() => setSidebarOpen(true)}
           >
@@ -160,6 +162,8 @@ const DonoDashboard = () => {
             <Route path="financeiro" element={<FinanceiroPage />} />
             <Route path="estoque" element={<EstoquePage />} />
             <Route path="cashback" element={<CashbackPage />} />
+            <Route path="rifas" element={<RifasPage />} />
+            <Route path="automacao" element={<AutomacaoPage />} />
             <Route path="notificacoes" element={<NotificacoesDonoPage />} />
             <Route path="pixels" element={<PixelsPage />} />
             <Route path="suporte" element={<SuportePage />} />
@@ -257,7 +261,7 @@ function useAppointments(barbershopId: string | undefined) {
 const DashboardHome = () => {
   const navigate = useNavigate();
   const { barbershop } = useBarbershop();
-  
+
   return (
     <div className="space-y-6">
       <div>
@@ -997,19 +1001,209 @@ const SuportePage = () => (
   </div>
 );
 
+const RifasPage = () => {
+  const { barbershop } = useBarbershop();
+  const [raffles, setRaffles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ name: "", description: "", ticket_price: "10", credit_award: "50", max_tickets: "100" });
+
+  useEffect(() => {
+    if (barbershop?.id) {
+      supabase.from("raffles").select("*").eq("barbershop_id", barbershop.id).order("created_at", { ascending: false }).then(({ data }) => {
+        setRaffles(data || []);
+        setLoading(false);
+      });
+    }
+  }, [barbershop?.id]);
+
+  const handleCreate = async () => {
+    if (!form.name || !barbershop?.id) return toast.error("Preencha o nome");
+    const { data, error } = await supabase.from("raffles").insert([{
+      barbershop_id: barbershop.id,
+      name: form.name,
+      description: form.description,
+      ticket_price: Number(form.ticket_price),
+      credit_award: Number(form.credit_award),
+      max_tickets: Number(form.max_tickets)
+    }]).select();
+
+    if (error) toast.error(error.message);
+    else {
+      setRaffles([...(data as any[]), ...raffles]);
+      setShowAdd(false);
+      toast.success("Rifa criada com sucesso!");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="font-display text-2xl font-bold">Rifas e Sorteios</h1>
+        <Button variant="gold" onClick={() => setShowAdd(true)}>Criar Rifa</Button>
+      </div>
+
+      {showAdd && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader><CardTitle>Nova Rifa</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Nome da Rifa</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ex: Rifa de Natal" /></div>
+              <div className="space-y-2"><Label>Preço por Bilhete (R$)</Label><Input type="number" value={form.ticket_price} onChange={e => setForm({ ...form, ticket_price: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Prêmio em Créditos (R$)</Label><Input type="number" value={form.credit_award} onChange={e => setForm({ ...form, credit_award: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Número Máximo de Bilhetes</Label><Input type="number" value={form.max_tickets} onChange={e => setForm({ ...form, max_tickets: e.target.value })} /></div>
+            </div>
+            <div className="space-y-2"><Label>Descrição</Label><Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Detalhes do sorteio..." /></div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setShowAdd(false)}>Cancelar</Button>
+              <Button variant="gold" onClick={handleCreate}>Salvar Rifa</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {loading ? <Loader2 className="w-8 h-8 animate-spin mx-auto" /> : raffles.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground">Nenhuma rifa criada ainda.</CardContent></Card>
+      ) : (
+        <div className="grid gap-4">
+          {raffles.map(r => (
+            <Card key={r.id}>
+              <CardContent className="p-4 flex justify-between items-center">
+                <div>
+                  <h3 className="font-bold">{r.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Preço: R$ {Number(r.ticket_price).toFixed(2)} • Prêmio: R$ {Number(r.credit_award).toFixed(2)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">Status: <span className="capitalize">{r.status}</span></p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => toast.info("Visualizar inscritos em breve")}>Bilhetes</Button>
+                  <Button variant="destructive" size="sm" onClick={() => toast.info("Função de sorteio em breve")}>Sortear</Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const AutomacaoPage = () => {
+  const { barbershop, refetch } = useBarbershop();
+  const [flows, setFlows] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (barbershop?.marketing_flows) {
+      setFlows(barbershop.marketing_flows);
+    }
+  }, [barbershop]);
+
+  const daysLabels: Record<string, string> = {
+    "0": "Domingo", "1": "Segunda", "2": "Terça", "3": "Quarta", "4": "Quinta", "5": "Sexta", "6": "Sábado"
+  };
+
+  const toggleDay = async (day: string) => {
+    const currentFlows = flows || [];
+    const exists = currentFlows.find((f: any) => f.day === day);
+    let newFlows;
+
+    if (exists) {
+      newFlows = currentFlows.filter((f: any) => f.day !== day);
+    } else {
+      newFlows = [...currentFlows, { day, message: "Olá! Aproveite nossos serviços hoje!", active: true }];
+    }
+
+    const { error } = await supabase.from("barbershops").update({ marketing_flows: newFlows }).eq("id", barbershop.id);
+    if (!error) {
+      setFlows(newFlows);
+      toast.success("Fluxo atualizado!");
+      refetch();
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Automação de Marketing</h1>
+      <Card>
+        <CardHeader>
+          <CardTitle>Programação Semanal</CardTitle>
+          <CardDescription>Envio automático de lembretes via WhatsApp/SMS</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4">
+            {Object.entries(daysLabels).map(([key, label]) => {
+              const flow = flows?.find((f: any) => f.day === key);
+              return (
+                <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{label}</p>
+                    <p className="text-xs text-muted-foreground">{flow ? "Ativo: " + flow.message : "Desativado"}</p>
+                  </div>
+                  <Button variant={flow ? "gold" : "outline"} size="sm" onClick={() => toggleDay(key)}>
+                    {flow ? "Configurado" : "Ativar"}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 const ConfiguracoesPage = () => {
-  const { profile } = useAuth();
+  const { barbershop, refetch } = useBarbershop();
+  const [rewardType, setRewardType] = useState("commission");
+
+  useEffect(() => {
+    if (barbershop?.affiliate_reward_type) {
+      setRewardType(barbershop.affiliate_reward_type);
+    }
+  }, [barbershop]);
+
+  const updateReward = async (type: string) => {
+    const { error } = await supabase.from("barbershops").update({ affiliate_reward_type: type }).eq("id", barbershop.id);
+    if (!error) {
+      setRewardType(type);
+      toast.success("Recompensa de afiliados atualizada!");
+      refetch();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Configurações</h1>
       <div className="grid gap-4">
         <Card>
-          <CardHeader><CardTitle>Dados da Barbearia</CardTitle></CardHeader>
-          <CardContent><div className="p-3 bg-muted rounded-lg"><p className="text-xs text-muted-foreground">Nome</p><p className="font-medium">Barbearia Teste</p></div></CardContent>
+          <CardHeader><CardTitle>Afiliados</CardTitle><CardDescription>Como recompensar indicações?</CardDescription></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-4">
+              <Button
+                variant={rewardType === "commission" ? "gold" : "outline"}
+                className="flex-1"
+                onClick={() => updateReward("commission")}
+              >
+                Comissão (Dinheiro)
+              </Button>
+              <Button
+                variant={rewardType === "credit" ? "gold" : "outline"}
+                className="flex-1"
+                onClick={() => updateReward("credit")}
+              >
+                Créditos (Serviços)
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground italic">
+              * Comissão será paga via ASAAS. Créditos serão adicionados ao saldo do cliente para desconto em novos serviços.
+            </p>
+          </CardContent>
         </Card>
+
         <Card>
-          <CardHeader><CardTitle>Plano Atual</CardTitle></CardHeader>
-          <CardContent><div className="p-3 bg-muted rounded-lg"><p className="text-xs text-muted-foreground">Plano</p><p className="font-bold text-gradient-gold">Trial Gratuito</p></div></CardContent>
+          <CardHeader><CardTitle>Dados da Barbearia</CardTitle></CardHeader>
+          <CardContent><div className="p-3 bg-muted rounded-lg"><p className="text-xs text-muted-foreground">Nome</p><p className="font-medium">{barbershop?.name}</p></div></CardContent>
         </Card>
       </div>
     </div>

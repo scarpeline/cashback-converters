@@ -40,6 +40,7 @@ const ClienteDashboard = () => {
     { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
     { name: "Histórico", href: `${basePath}/historico`, icon: History },
     { name: "Indique Amigos", href: `${basePath}/indicar`, icon: Users },
+    { name: "Rifas", href: `${basePath}/rifas`, icon: Scissors },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
     { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
   ];
@@ -143,6 +144,7 @@ const ClienteDashboard = () => {
             <Route path="cashback" element={<CashbackPage />} />
             <Route path="historico" element={<HistoricoPage />} />
             <Route path="indicar" element={<IndicarPage />} />
+            <Route path="rifas" element={<RifasClientPage />} />
             <Route path="notificacoes" element={<NotificacoesPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Routes>
@@ -461,6 +463,55 @@ const PerfilPage = () => {
           </Button>
         </CardContent>
       </Card>
+    </div>
+  );
+};
+
+const RifasClientPage = () => {
+  const [raffles, setRaffles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from("raffles").select("*").eq("status", "open").order("created_at", { ascending: false }).then(({ data }) => {
+      setRaffles(data || []);
+      setLoading(false);
+    });
+  }, []);
+
+  const handleJoin = async (raffleId: string) => {
+    toast.success("Você adquiriu um bilhete! (Simulação de Crédito)");
+  };
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Rifas Disponíveis</h1>
+      <Card className="bg-gradient-card border-primary/20">
+        <CardHeader>
+          <CardTitle>Participe e ganhe créditos!</CardTitle>
+          <CardDescription>O valor do prêmio é convertido em saldo para você usar no salão.</CardDescription>
+        </CardHeader>
+      </Card>
+
+      {loading ? (
+        <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+      ) : raffles.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground">Nenhuma rifa aberta no momento.</CardContent></Card>
+      ) : (
+        <div className="grid gap-4">
+          {raffles.map(r => (
+            <Card key={r.id}>
+              <CardContent className="p-4 flex justify-between items-center">
+                <div>
+                  <h3 className="font-bold">{r.name}</h3>
+                  <p className="text-sm text-muted-foreground">Prêmio: <span className="text-primary font-bold">R$ {Number(r.credit_award).toFixed(2)} em créditos</span></p>
+                  <p className="text-xs text-muted-foreground">Preço do Bilhete: R$ {Number(r.ticket_price).toFixed(2)}</p>
+                </div>
+                <Button variant="gold" size="sm" onClick={() => handleJoin(r.id)}>Garantir Bilhete</Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

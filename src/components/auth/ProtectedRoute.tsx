@@ -16,16 +16,16 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
   const [rolesTimeout, setRolesTimeout] = useState(false);
   const [globalTimeout, setGlobalTimeout] = useState(false);
 
-  // Global safety timeout: if anything takes >8s, force redirect
+  // Global safety timeout: if anything takes >15s, force redirect
   useEffect(() => {
-    const timer = setTimeout(() => setGlobalTimeout(true), 8000);
+    const timer = setTimeout(() => setGlobalTimeout(true), 15000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Timeout: if roles don't load within 5s after auth resolved, force redirect
+  // Timeout: if roles don't load within 10s after auth resolved, force redirect
   useEffect(() => {
     if (authResolved && user && roles.length === 0) {
-      const timer = setTimeout(() => setRolesTimeout(true), 5000);
+      const timer = setTimeout(() => setRolesTimeout(true), 10000);
       return () => clearTimeout(timer);
     }
     if (roles.length > 0) setRolesTimeout(false);
@@ -33,13 +33,15 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
 
   // Global timeout: force redirect to login
   if (globalTimeout && (!authResolved || (user && roles.length === 0))) {
+    console.warn('[ProtectedRoute] Global timeout reached - forcing redirect to login');
     const loginPath = redirectTo || getLoginForRoute(location.pathname);
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
-  // STEP 1: Aguardar auth resolver (with profileLoading capped by timeout)
-  if (!authResolved) {
-    return <LoadingScreen message="Carregando..." />;
+  // STEP 1: Aguardar auth resolver E carregamento de perfil (profileLoading)
+  // Só bloqueia se auth não resolveu OU se tem usuário mas ainda estamos buscando o perfil/roles e não deu timeout
+  if (!authResolved || (user && profileLoading && roles.length === 0 && !globalTimeout)) {
+    return <LoadingScreen message="Carregando ambiente seguro..." />;
   }
 
   // STEP 2: Sem sessão → login
@@ -49,12 +51,14 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
   }
 
   // STEP 3: Sessão OK mas sem roles → aguardar brevemente (com timeout)
+  // Se profileLoading acabou e roles continuam 0, o timeout vai agir
   if (roles.length === 0) {
     if (rolesTimeout) {
+      console.warn('[ProtectedRoute] Roles timeout (10s) - redirecting to login. User:', user?.email);
       const loginPath = redirectTo || getLoginForRoute(location.pathname);
       return <Navigate to={loginPath} state={{ from: location }} replace />;
     }
-    return <LoadingScreen message="Carregando permissões..." />;
+    return <LoadingScreen message="Validando permissões..." />;
   }
 
   // STEP 4: Verificar permissão

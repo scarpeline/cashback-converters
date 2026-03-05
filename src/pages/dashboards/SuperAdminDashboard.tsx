@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
+import {
   LayoutDashboard,
   Users,
   Building2,
@@ -45,7 +45,7 @@ const SuperAdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const basePath = "/admin";
-  
+
   const navigation = [
     { name: "Dashboard", href: basePath, icon: LayoutDashboard },
     { name: "Usuários", href: `${basePath}/usuarios`, icon: Users },
@@ -55,6 +55,7 @@ const SuperAdminDashboard = () => {
     { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
     { name: "Integrações", href: `${basePath}/integracoes`, icon: Plug },
     { name: "Pixels Globais", href: `${basePath}/pixels`, icon: Image },
+    { name: "Mensagens Sistema", href: `${basePath}/mensagens-sistema`, icon: MessageCircle },
     { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
     { name: "Configurações", href: `${basePath}/configuracoes`, icon: Settings },
@@ -137,6 +138,7 @@ const SuperAdminDashboard = () => {
             <Route path="financeiro" element={<FinanceiroPage />} />
             <Route path="integracoes" element={<Suspense fallback={<PageFallback />}><IntegrationSettingsPage /></Suspense>} />
             <Route path="pixels" element={<PixelsPage />} />
+            <Route path="mensagens-sistema" element={<MensagensSistemaPage />} />
             <Route path="suporte" element={<SuportePage />} />
             <Route path="notificacoes" element={<NotificacoesAdminPage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
@@ -292,7 +294,7 @@ const NotificacoesAdminPage = () => {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Enviar Notificação</h1>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Destinatários</CardTitle>
@@ -480,13 +482,12 @@ const BarbeariasPage = () => {
                 </p>
               </div>
               <div className="flex flex-col items-end gap-1">
-                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                  s.subscription_status === "active" || s.subscription_status === "paid"
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${s.subscription_status === "active" || s.subscription_status === "paid"
                     ? "bg-success/10 text-success"
                     : s.subscription_status === "trial" || !s.subscription_status
-                    ? "bg-secondary/10 text-secondary"
-                    : "bg-destructive/10 text-destructive"
-                }`}>
+                      ? "bg-secondary/10 text-secondary"
+                      : "bg-destructive/10 text-destructive"
+                  }`}>
                   {s.subscription_status === "active" || s.subscription_status === "paid" ? "Ativo" : s.subscription_status === "trial" || !s.subscription_status ? "Trial" : s.subscription_status}
                 </span>
                 <span className={`text-xs px-2 py-1 rounded-full ${s.is_active ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
@@ -549,12 +550,208 @@ const FinanceiroPage = () => (
   </div>
 );
 
-const PixelsPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Pixels Globais</h1>
-    <Card><CardContent className="py-8 text-center"><Image className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum pixel configurado.</p></CardContent></Card>
-  </div>
-);
+const PixelsPage = () => {
+  const [pixels, setPixels] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newPixel, setNewPixel] = useState({ platform: "facebook", pixel_id: "", is_active: true });
+
+  useEffect(() => {
+    supabase.from("pixels").select("*").eq("owner_type", "system").then(({ data }) => {
+      setPixels(data || []);
+      setLoading(false);
+    });
+  }, []);
+
+  const handleAddPixel = async () => {
+    if (!newPixel.pixel_id) return toast.error("Insira o ID do Pixel");
+    const { data, error } = await supabase.from("pixels").insert([{
+      ...newPixel,
+      owner_type: "system",
+      pixel_type: newPixel.platform
+    }]).select();
+
+    if (error) toast.error(error.message);
+    else {
+      setPixels([...pixels, ...data]);
+      setShowAdd(false);
+      toast.success("Pixel adicionado!");
+    }
+  };
+
+  const togglePixel = async (id: string, active: boolean) => {
+    const { error } = await supabase.from("pixels").update({ active }).eq("id", id);
+    if (error) toast.error(error.message);
+    else {
+      setPixels(pixels.map(p => p.id === id ? { ...p, active } : p));
+      toast.success("Status atualizado");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="font-display text-2xl font-bold">Pixels Globais</h1>
+        <Button variant="gold" onClick={() => setShowAdd(true)}>Adicionar Pixel</Button>
+      </div>
+
+      {showAdd && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader><CardTitle>Novo Pixel</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Plataforma</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={newPixel.platform}
+                  onChange={e => setNewPixel({ ...newPixel, platform: e.target.value })}
+                >
+                  <option value="facebook">Facebook</option>
+                  <option value="google">Google Ads</option>
+                  <option value="tiktok">TikTok</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Pixel ID / AW-ID</Label>
+                <Input value={newPixel.pixel_id} onChange={e => setNewPixel({ ...newPixel, pixel_id: e.target.value })} placeholder="P-12345678" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setShowAdd(false)}>Cancelar</Button>
+              <Button variant="gold" onClick={handleAddPixel}>Salvar Pixel</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {loading ? <Loader2 className="w-8 h-8 animate-spin mx-auto" /> : pixels.length === 0 ? (
+        <Card><CardContent className="py-8 text-center text-muted-foreground">Nenhum pixel global.</CardContent></Card>
+      ) : (
+        <div className="grid gap-4">
+          {pixels.map(p => (
+            <Card key={p.id}>
+              <CardContent className="p-4 flex justify-between items-center">
+                <div>
+                  <p className="font-bold flex items-center gap-2">
+                    <span className="capitalize">{p.platform}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${p.active ? "bg-success/20 text-success" : "bg-muted text-muted-foreground"}`}>
+                      {p.active ? "Ativo" : "Inativo"}
+                    </span>
+                  </p>
+                  <p className="text-sm text-muted-foreground">{p.pixel_id}</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => togglePixel(p.id, !p.active)}>
+                  {p.active ? "Desativar" : "Ativar"}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const MensagensSistemaPage = () => {
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [role, setRole] = useState("all");
+
+  useEffect(() => {
+    supabase.from("internal_system_messages").select("*").order("created_at", { ascending: false }).then(({ data }) => {
+      setMessages(data || []);
+      setLoading(false);
+    });
+  }, []);
+
+  const handlePost = async () => {
+    if (!title || !body) return toast.error("Preencha tudo");
+    const { data, error } = await supabase.from("internal_system_messages").insert([{
+      title, body, target_role: role === "all" ? null : role
+    }]).select();
+
+    if (error) toast.error(error.message);
+    else {
+      setMessages([...(data || []), ...messages]);
+      setShowAdd(false);
+      setTitle("");
+      setBody("");
+      toast.success("Comunicado enviado!");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="font-display text-2xl font-bold">Mensagens do Sistema</h1>
+        <Button variant="gold" onClick={() => setShowAdd(true)}>Novo Comunicado</Button>
+      </div>
+
+      {showAdd && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader><CardTitle>Novo Comunicado Geral</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Para quem?</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={role}
+                onChange={e => setRole(e.target.value)}
+              >
+                <option value="all">Todos</option>
+                <option value="dono">Apenas Donos</option>
+                <option value="cliente">Apenas Clientes</option>
+                <option value="profissional">Apenas Profissionais</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Título</Label>
+              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Manutenção agendada" />
+            </div>
+            <div className="space-y-2">
+              <Label>Mensagem</Label>
+              <textarea
+                className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={body}
+                onChange={e => setBody(e.target.value)}
+                placeholder="Conteúdo do comunicado..."
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setShowAdd(false)}>Cancelar</Button>
+              <Button variant="gold" onClick={handlePost}>Postar Mensagem</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {loading ? <Loader2 className="w-8 h-8 animate-spin mx-auto" /> : (
+        <div className="space-y-4">
+          {messages.map(m => (
+            <Card key={m.id}>
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-bold">{m.title}</h3>
+                  <span className="text-[10px] bg-muted px-2 py-1 rounded">
+                    {m.target_role ? `Role: ${m.target_role}` : "Todos"}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">{m.body}</p>
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  {new Date(m.created_at).toLocaleString("pt-BR")}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const SuportePage = () => (
   <div className="space-y-6">

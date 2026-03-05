@@ -59,10 +59,12 @@ const Affiliates = () => {
               ))}
             </div>
 
-            <Button variant="gold" size="lg">
-              Quero Ser Afiliado
-              <ArrowRight className="w-5 h-5" />
-            </Button>
+            <Link to="/afiliado-saas/login">
+              <Button variant="gold" size="lg">
+                Quero Ser Afiliado
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
           </div>
 
           {/* Visual */}

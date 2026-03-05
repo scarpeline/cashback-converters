@@ -199,8 +199,17 @@ const PublicLoginPage = () => {
           return;
         }
 
-        toast.success("Conta criada! Verifique seu e-mail para confirmar e depois faça login.");
-        setMode("login");
+        // Se dono, abrir link Asaas em nova aba para criar conta de pagamentos
+        if (isBusinessUser) {
+          toast.success("Conta criada! Abrindo a Asaas para configurar seus pagamentos...");
+          setTimeout(() => {
+            window.open("https://www.asaas.com/r/4095742a-0dd1-4fb7-b9ce-61431bb4f632", "_blank", "noopener,noreferrer");
+          }, 1000);
+          setTimeout(() => setMode("login"), 1500);
+        } else {
+          toast.success("Conta criada! Verifique seu e-mail para confirmar e depois faça login.");
+          setMode("login");
+        }
         setLoginType(userType === "dono" ? "dono" : "cliente");
         return;
       }
@@ -468,21 +477,102 @@ const PublicLoginPage = () => {
 
           {/* Info for business users */}
           {mode === "signup" && isBusinessUser && (
-            <p className="text-xs text-muted-foreground text-center mt-4">
-              Sua conta ASAAS será criada automaticamente para receber pagamentos.
-            </p>
+            <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <p className="text-xs text-muted-foreground text-center">
+                Ao criar sua conta, você será direcionado para a{" "}
+                <a
+                  href="https://www.asaas.com/r/4095742a-0dd1-4fb7-b9ce-61431bb4f632"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary font-semibold underline hover:opacity-80 transition-opacity"
+                >
+                  Asaas
+                </a>{" "}
+                para configurar sua conta de pagamentos. É rápido e gratuito graças ao nosso link de parceiro!
+              </p>
+            </div>
           )}
 
-          {/* Test Credentials */}
-          <div className="mt-6 p-4 rounded-lg bg-muted/50 border border-border">
-            <p className="text-xs font-semibold text-foreground mb-2">🧪 Credenciais de Teste:</p>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <p><span className="font-medium text-foreground">👤 Cliente:</span> WhatsApp: 11999990001 | Senha: Teste@123</p>
-              <p><span className="font-medium text-foreground">🏪 Dono:</span> Email: dono.teste@salao.app | Senha: Teste@123</p>
-              <p><span className="font-medium text-foreground">✂️ Profissional:</span> Email: profissional.teste@salao.app | Senha: Teste@123</p>
-              <p><span className="font-medium text-foreground">🤝 Afiliado:</span> <Link to="/afiliado-saas/login" className="underline text-primary">Acessar login afiliado</Link></p>
-              <p><span className="font-medium text-foreground">📊 Contador:</span> <Link to="/contador2026/login" className="underline text-primary">Acessar login contador</Link></p>
-              <p><span className="font-medium text-foreground">🛡️ Admin:</span> <Link to="/admin/login" className="underline text-primary">Acessar login admin</Link></p>
+          {/* Test Credentials Interativas */}
+          <div className="mt-6 p-4 rounded-xl bg-muted/30 border border-primary/20 backdrop-blur-sm relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-100 transition-opacity">
+              <span className="text-[10px] font-mono text-primary uppercase tracking-widest">Safe Test Environment</span>
+            </div>
+
+            <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              🧪 Ambiente de Testes Interativo
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {[
+                { role: "cliente", label: "Cliente", id: "11999990001", type: "cliente", icon: User },
+                { role: "dono", label: "Barbearia", id: "dono.teste@salao.app", type: "dono", icon: Store },
+                { role: "profissional", label: "Profissional", id: "profissional.teste@salao.app", type: "profissional", icon: Scissors },
+                { role: "afiliado_saas", label: "Afiliado", id: "afiliado.teste@salao.app", type: "dono", icon: Scissors },
+                { role: "contador", label: "Contador", id: "contador.teste@salao.app", type: "dono", icon: User },
+                { role: "super_admin", label: "Admin", id: "admin.teste@salao.app", type: "dono", icon: Store },
+              ].map((testUser) => (
+                <Button
+                  key={testUser.role}
+                  variant="outline"
+                  size="sm"
+                  className="justify-start gap-2 h-9 text-xs border-primary/10 hover:border-primary/50 hover:bg-primary/5 transition-all"
+                  onClick={async () => {
+                    setFormData({
+                      ...formData,
+                      whatsapp: testUser.role === "cliente" ? formatWhatsAppBR(testUser.id) : "",
+                      email: testUser.role !== "cliente" ? testUser.id : "",
+                      password: "Teste@123"
+                    });
+                    setLoginType(testUser.type as LoginType);
+                    setMode("login");
+                    toast.info(`Preenchendo como ${testUser.label}... Clique em Entrar.`);
+                  }}
+                >
+                  <testUser.icon className="w-3 h-3 text-primary" />
+                  <span className="truncate">{testUser.label}</span>
+                </Button>
+              ))}
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-primary/10 flex flex-col gap-2">
+              <p className="text-[10px] text-muted-foreground leading-tight italic">
+                * Senha padrão para todos: <code className="text-primary font-bold">Teste@123</code>
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full text-[10px] h-7 text-muted-foreground hover:text-primary"
+                onClick={async () => {
+                  setLoading(true);
+                  const users = [
+                    { email: "dono.teste@salao.app", role: "dono", name: "Dono Teste" },
+                    { email: "profissional.teste@salao.app", role: "profissional", name: "Profissional Teste" },
+                    { email: "afiliado.teste@salao.app", role: "afiliado_saas", name: "Afiliado Teste" },
+                    { email: "contador.teste@salao.app", role: "contador", name: "Contador Teste" },
+                    { email: "admin.teste@salao.app", role: "super_admin", name: "Admin Teste" },
+                    { email: "11999990001@salao.app", role: "cliente", name: "Cliente Teste", whatsapp: "11999990001" },
+                  ];
+
+                  let successCount = 0;
+                  for (const u of users) {
+                    const { error } = await signUp(u.email, "Teste@123", {
+                      name: u.name,
+                      role: u.role as AppRole,
+                      whatsapp: u.whatsapp
+                    });
+                    if (!error || error.message.includes("already registered")) {
+                      successCount++;
+                    }
+                  }
+
+                  setLoading(false);
+                  toast.success(`${successCount} contas de teste prontas para uso!`);
+                }}
+              >
+                Ativar/Criar todos os usuários de teste no banco
+              </Button>
             </div>
           </div>
 
