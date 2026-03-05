@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
   Star,
   ChevronRight
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -40,7 +41,7 @@ const ClienteDashboard = () => {
     { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
     { name: "Histórico", href: `${basePath}/historico`, icon: History },
     { name: "Indique Amigos", href: `${basePath}/indicar`, icon: Users },
-    { name: "Rifas", href: `${basePath}/rifas`, icon: Scissors },
+    { name: "Rifas", href: `${basePath}/rifas`, icon: Gift },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
     { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
   ];
@@ -472,7 +473,7 @@ const RifasClientPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.from("raffles").select("*").eq("status", "open").order("created_at", { ascending: false }).then(({ data }) => {
+    (supabase as any).from("raffles").select("*").eq("status", "open").order("created_at", { ascending: false }).then(({ data }: any) => {
       setRaffles(data || []);
       setLoading(false);
     });

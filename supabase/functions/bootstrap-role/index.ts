@@ -152,7 +152,7 @@ function json(data: unknown, status = 200) {
 }
 
 async function ensureRole(
-  admin: ReturnType<typeof createClient>,
+  admin: any,
   userId: string,
   role: "cliente" | "dono" | "profissional" | "afiliado_barbearia" | "afiliado_saas" | "contador" | "super_admin",
 ) {
