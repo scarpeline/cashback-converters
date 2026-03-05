@@ -30,6 +30,7 @@ import {
   Phone,
   Send
 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 
@@ -1010,7 +1011,7 @@ const RifasPage = () => {
 
   useEffect(() => {
     if (barbershop?.id) {
-      supabase.from("raffles").select("*").eq("barbershop_id", barbershop.id).order("created_at", { ascending: false }).then(({ data }) => {
+      (supabase as any).from("raffles").select("*").eq("barbershop_id", barbershop.id).order("created_at", { ascending: false }).then(({ data }: any) => {
         setRaffles(data || []);
         setLoading(false);
       });
@@ -1019,7 +1020,7 @@ const RifasPage = () => {
 
   const handleCreate = async () => {
     if (!form.name || !barbershop?.id) return toast.error("Preencha o nome");
-    const { data, error } = await supabase.from("raffles").insert([{
+    const { data, error } = await (supabase as any).from("raffles").insert([{
       barbershop_id: barbershop.id,
       name: form.name,
       description: form.description,
@@ -1114,7 +1115,7 @@ const AutomacaoPage = () => {
       newFlows = [...currentFlows, { day, message: "Olá! Aproveite nossos serviços hoje!", active: true }];
     }
 
-    const { error } = await supabase.from("barbershops").update({ marketing_flows: newFlows }).eq("id", barbershop.id);
+    const { error } = await (supabase as any).from("barbershops").update({ marketing_flows: newFlows }).eq("id", barbershop.id);
     if (!error) {
       setFlows(newFlows);
       toast.success("Fluxo atualizado!");
@@ -1164,7 +1165,7 @@ const ConfiguracoesPage = () => {
   }, [barbershop]);
 
   const updateReward = async (type: string) => {
-    const { error } = await supabase.from("barbershops").update({ affiliate_reward_type: type }).eq("id", barbershop.id);
+    const { error } = await (supabase as any).from("barbershops").update({ affiliate_reward_type: type }).eq("id", barbershop.id);
     if (!error) {
       setRewardType(type);
       toast.success("Recompensa de afiliados atualizada!");

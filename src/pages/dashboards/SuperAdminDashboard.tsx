@@ -662,7 +662,7 @@ const MensagensSistemaPage = () => {
   const [role, setRole] = useState("all");
 
   useEffect(() => {
-    supabase.from("internal_system_messages").select("*").order("created_at", { ascending: false }).then(({ data }) => {
+    (supabase as any).from("internal_system_messages").select("*").order("created_at", { ascending: false }).then(({ data }: any) => {
       setMessages(data || []);
       setLoading(false);
     });
@@ -670,7 +670,7 @@ const MensagensSistemaPage = () => {
 
   const handlePost = async () => {
     if (!title || !body) return toast.error("Preencha tudo");
-    const { data, error } = await supabase.from("internal_system_messages").insert([{
+    const { data, error } = await (supabase as any).from("internal_system_messages").insert([{
       title, body, target_role: role === "all" ? null : role
     }]).select();
 

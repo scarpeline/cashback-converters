@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles, CreditCard, Smartphone, Wifi } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // Taxas Asaas (gateway) + taxa do app
 const ASAAS_FEES = {
@@ -67,6 +68,7 @@ const plans = [
 ];
 
 const Pricing = () => {
+  const { t } = useTranslation();
   const handleSelectPlan = (plan: typeof plans[0]) => {
     // Store selected plan for post-login redirect
     localStorage.setItem("selected_plan", JSON.stringify({

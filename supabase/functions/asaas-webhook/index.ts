@@ -53,7 +53,7 @@ function verifyWebhookSignature(
  * Log do evento no banco
  */
 async function logWebhookEvent(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   service: string,
   environment: string,
   eventType: string,
