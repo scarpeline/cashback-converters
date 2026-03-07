@@ -50,6 +50,17 @@ const PublicLoginPage = () => {
   });
 
   // Redirect if already logged in AND roles loaded
+  const [noRolesTimer, setNoRolesTimer] = useState(false);
+
+  // Give roles 8 seconds to load after login before showing error
+  useEffect(() => {
+    if (user && authResolved && roles.length === 0 && !profileLoading) {
+      const timer = setTimeout(() => setNoRolesTimer(true), 8000);
+      return () => clearTimeout(timer);
+    }
+    if (roles.length > 0) setNoRolesTimer(false);
+  }, [user, authResolved, roles, profileLoading]);
+
   useEffect(() => {
     if (user && !authLoading) {
       if (roles.length > 0) {
@@ -69,19 +80,18 @@ const PublicLoginPage = () => {
           }
           localStorage.removeItem("selected_plan");
 
-          // Navegação segura usando URL Base em vez de react-router se possível para forçar reload de layout
           const dashboardUrl = getDashboardForRole(role);
           if (dashboardUrl) {
             window.location.href = dashboardUrl;
           }
         }
-      } else if (authResolved) {
-        // Fallback: Sessão existe mas usuário está sem perfis vinculados
+      } else if (authResolved && !profileLoading && noRolesTimer) {
+        // Only show error after grace period - roles may still be loading via onAuthStateChange
         setLoading(false);
         toast.error("Conta sem perfil associado. Entre em contato com o suporte.");
       }
     }
-  }, [user, authLoading, roles, authResolved, getPrimaryRole]);
+  }, [user, authLoading, roles, authResolved, profileLoading, getPrimaryRole, noRolesTimer]);
 
   const isBusinessUser = userType === "dono";
 
