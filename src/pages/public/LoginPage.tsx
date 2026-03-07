@@ -166,24 +166,27 @@ const PublicLoginPage = () => {
 
         toast.success("Login realizado com sucesso!");
 
-        // Adiciona timer máximo para o botão de loading caso o redirecionamento (useEffect) falhe por ausência de roles
-        setTimeout(() => setLoading(false), 5000);
-
-        // Check for selected plan redirect (dono only)
-        const selectedPlan = localStorage.getItem("selected_plan");
-        if (selectedPlan && loginType === "dono") {
-          try {
-            const plan = JSON.parse(selectedPlan);
-            localStorage.removeItem("selected_plan");
-            if (plan.checkoutUrl) {
-              window.location.href = plan.checkoutUrl;
-              return;
+        // Fetch roles directly and redirect - don't rely on onAuthStateChange timing
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.user) {
+          const userId = sessionData.session.user.id;
+          // Poll for roles (may take a moment for bootstrap)
+          for (let i = 0; i < 5; i++) {
+            const { data: rolesData } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+            if (rolesData && rolesData.length > 0) {
+              const userRole = rolesData[0].role as string;
+              const dashUrl = getDashboardForRole(userRole as any);
+              if (dashUrl) {
+                window.location.href = dashUrl;
+                return;
+              }
             }
-          } catch { /* ignore */ }
+            await new Promise(r => setTimeout(r, 1000));
+          }
         }
-        localStorage.removeItem("selected_plan");
 
-        // Let useEffect handle redirect once roles load
+        // Fallback timeout
+        setTimeout(() => setLoading(false), 3000);
         return;
       } else {
         // Signup - email is required for business users
