@@ -14,7 +14,7 @@ const emailSchema = z.object({
 
 const ContadorLoginPage = () => {
   const navigate = useNavigate();
-  const { user, signIn, signInWithMagicLink, getPrimaryRole, loading: authLoading, authResolved } = useAuth();
+  const { user, signIn, signInWithMagicLink, getPrimaryRole, roles, loading: authLoading, authResolved } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
