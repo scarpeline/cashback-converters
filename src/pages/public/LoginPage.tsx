@@ -31,7 +31,7 @@ const signupSchema = z.object({
 
 const PublicLoginPage = () => {
   const navigate = useNavigate();
-  const { user, signUp, signIn, signInWithWhatsApp, getPrimaryRole, roles, loading: authLoading, authResolved } = useAuth();
+  const { user, signUp, signIn, signInWithWhatsApp, getPrimaryRole, roles, loading: authLoading, authResolved, profileLoading } = useAuth();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [userType, setUserType] = useState<UserType>("cliente");
