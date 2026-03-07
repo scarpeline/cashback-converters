@@ -31,7 +31,7 @@ const signupSchema = z.object({
 
 const PublicLoginPage = () => {
   const navigate = useNavigate();
-  const { user, signUp, signIn, signInWithWhatsApp, getPrimaryRole, roles, loading: authLoading, authResolved } = useAuth();
+  const { user, signUp, signIn, signInWithWhatsApp, getPrimaryRole, roles, loading: authLoading, authResolved, profileLoading } = useAuth();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [userType, setUserType] = useState<UserType>("cliente");
@@ -50,6 +50,17 @@ const PublicLoginPage = () => {
   });
 
   // Redirect if already logged in AND roles loaded
+  const [noRolesTimer, setNoRolesTimer] = useState(false);
+
+  // Give roles 8 seconds to load after login before showing error
+  useEffect(() => {
+    if (user && authResolved && roles.length === 0 && !profileLoading) {
+      const timer = setTimeout(() => setNoRolesTimer(true), 8000);
+      return () => clearTimeout(timer);
+    }
+    if (roles.length > 0) setNoRolesTimer(false);
+  }, [user, authResolved, roles, profileLoading]);
+
   useEffect(() => {
     if (user && !authLoading) {
       if (roles.length > 0) {
@@ -69,19 +80,18 @@ const PublicLoginPage = () => {
           }
           localStorage.removeItem("selected_plan");
 
-          // Navegação segura usando URL Base em vez de react-router se possível para forçar reload de layout
           const dashboardUrl = getDashboardForRole(role);
           if (dashboardUrl) {
             window.location.href = dashboardUrl;
           }
         }
-      } else if (authResolved) {
-        // Fallback: Sessão existe mas usuário está sem perfis vinculados
+      } else if (authResolved && !profileLoading && noRolesTimer) {
+        // Only show error after grace period - roles may still be loading via onAuthStateChange
         setLoading(false);
         toast.error("Conta sem perfil associado. Entre em contato com o suporte.");
       }
     }
-  }, [user, authLoading, roles, authResolved, getPrimaryRole]);
+  }, [user, authLoading, roles, authResolved, profileLoading, getPrimaryRole, noRolesTimer]);
 
   const isBusinessUser = userType === "dono";
 
@@ -156,24 +166,27 @@ const PublicLoginPage = () => {
 
         toast.success("Login realizado com sucesso!");
 
-        // Adiciona timer máximo para o botão de loading caso o redirecionamento (useEffect) falhe por ausência de roles
-        setTimeout(() => setLoading(false), 5000);
-
-        // Check for selected plan redirect (dono only)
-        const selectedPlan = localStorage.getItem("selected_plan");
-        if (selectedPlan && loginType === "dono") {
-          try {
-            const plan = JSON.parse(selectedPlan);
-            localStorage.removeItem("selected_plan");
-            if (plan.checkoutUrl) {
-              window.location.href = plan.checkoutUrl;
-              return;
+        // Fetch roles directly and redirect - don't rely on onAuthStateChange timing
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.user) {
+          const userId = sessionData.session.user.id;
+          // Poll for roles (may take a moment for bootstrap)
+          for (let i = 0; i < 5; i++) {
+            const { data: rolesData } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+            if (rolesData && rolesData.length > 0) {
+              const userRole = rolesData[0].role as string;
+              const dashUrl = getDashboardForRole(userRole as any);
+              if (dashUrl) {
+                window.location.href = dashUrl;
+                return;
+              }
             }
-          } catch { /* ignore */ }
+            await new Promise(r => setTimeout(r, 1000));
+          }
         }
-        localStorage.removeItem("selected_plan");
 
-        // Let useEffect handle redirect once roles load
+        // Fallback timeout
+        setTimeout(() => setLoading(false), 3000);
         return;
       } else {
         // Signup - email is required for business users

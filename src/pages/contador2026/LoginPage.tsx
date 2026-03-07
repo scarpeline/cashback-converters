@@ -14,7 +14,7 @@ const emailSchema = z.object({
 
 const ContadorLoginPage = () => {
   const navigate = useNavigate();
-  const { user, signIn, signInWithMagicLink, getPrimaryRole, loading: authLoading, authResolved } = useAuth();
+  const { user, signIn, signInWithMagicLink, getPrimaryRole, roles, loading: authLoading, authResolved } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -25,11 +25,13 @@ const ContadorLoginPage = () => {
   const [loginMode, setLoginMode] = useState<"password" | "magiclink">("password");
 
   useEffect(() => {
-    if (user && !authLoading) {
+    if (user && !authLoading && roles.length > 0) {
       const role = getPrimaryRole();
-      navigate(getDashboardForRole(role), { replace: true });
+      if (role) {
+        navigate(getDashboardForRole(role), { replace: true });
+      }
     }
-  }, [user, authLoading, navigate, getPrimaryRole]);
+  }, [user, authLoading, roles, navigate, getPrimaryRole]);
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
