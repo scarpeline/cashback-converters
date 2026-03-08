@@ -659,6 +659,54 @@ export type Database = {
         }
         Relationships: []
       }
+      job_queue: {
+        Row: {
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          job_type: string
+          last_error: string | null
+          max_attempts: number
+          payload: Json
+          priority: number
+          scheduled_at: string
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          job_type: string
+          last_error?: string | null
+          max_attempts?: number
+          payload?: Json
+          priority?: number
+          scheduled_at?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          job_type?: string
+          last_error?: string | null
+          max_attempts?: number
+          payload?: Json
+          priority?: number
+          scheduled_at?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -939,6 +987,39 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          identifier: string
+          max_requests: number
+          request_count: number
+          window_seconds: number
+          window_start: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          identifier: string
+          max_requests?: number
+          request_count?: number
+          window_seconds?: number
+          window_start?: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          identifier?: string
+          max_requests?: number
+          request_count?: number
+          window_seconds?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           barbershop_id: string
@@ -1115,6 +1196,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          _action_type: string
+          _identifier: string
+          _max_requests?: number
+          _window_seconds?: number
+        }
+        Returns: boolean
+      }
+      claim_next_job: {
+        Args: { _job_types?: string[] }
+        Returns: {
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          job_type: string
+          last_error: string | null
+          max_attempts: number
+          payload: Json
+          priority: number
+          scheduled_at: string
+          started_at: string | null
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "job_queue"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       generate_referral_code: { Args: never; Returns: string }
       get_email_by_whatsapp: { Args: { _whatsapp: string }; Returns: string }
       has_role: {
