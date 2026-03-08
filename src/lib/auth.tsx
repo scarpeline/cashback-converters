@@ -103,6 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authResolved, setAuthResolved] = useState(false);
 
   const roleBootstrapAttemptedRef = useRef(false);
+  const userLoadInFlightRef = useRef<Promise<AppRole[]> | null>(null);
+  const userLoadInFlightUserIdRef = useRef<string | null>(null);
 
   // ============================================
   // PENDING ROLE STORAGE
