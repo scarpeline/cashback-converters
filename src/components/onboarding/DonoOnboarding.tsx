@@ -62,27 +62,74 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
 
     setSaving(true);
     try {
-      // Create barbershop
-      const slug = form.name
+      // Create or update barbershop (idempotent for owners with existing records)
+      const baseSlug = form.name
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
+        .replace(/(^-|-$)/g, "") || `barbearia-${user.id.slice(0, 8)}`;
 
-      const { error } = await supabase.from("barbershops").insert({
+      const payload = {
         owner_user_id: user.id,
         name: form.name,
         address: form.address,
         phone: form.phone || null,
         description: form.description || null,
-        slug,
-      });
+      };
 
-      if (error) {
-        toast.error("Erro ao cadastrar barbearia: " + error.message);
+      const { data: existingList, error: existingError } = await supabase
+        .from("barbershops")
+        .select("id, slug")
+        .eq("owner_user_id", user.id)
+        .order("created_at", { ascending: true })
+        .limit(1);
+
+      if (existingError) {
+        toast.error("Erro ao validar cadastro existente: " + existingError.message);
         setSaving(false);
         return;
+      }
+
+      const existing = existingList?.[0];
+
+      if (existing) {
+        const { error: updateError } = await supabase
+          .from("barbershops")
+          .update({
+            ...payload,
+            slug: existing.slug || baseSlug,
+          })
+          .eq("id", existing.id);
+
+        if (updateError) {
+          toast.error("Erro ao atualizar barbearia: " + updateError.message);
+          setSaving(false);
+          return;
+        }
+      } else {
+        let slugToUse = baseSlug;
+
+        const insertOnce = async (slug: string) =>
+          supabase.from("barbershops").insert({
+            ...payload,
+            slug,
+          });
+
+        let { error: insertError } = await insertOnce(slugToUse);
+
+        // Retry once with unique suffix if slug already exists
+        if (insertError?.message?.toLowerCase().includes("barbershops_slug_key")) {
+          slugToUse = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+          const retry = await insertOnce(slugToUse);
+          insertError = retry.error;
+        }
+
+        if (insertError) {
+          toast.error("Erro ao cadastrar barbearia: " + insertError.message);
+          setSaving(false);
+          return;
+        }
       }
 
       // Update profile with CPF/CNPJ if provided
