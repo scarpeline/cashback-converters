@@ -7,25 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  LayoutDashboard,
-  Users,
-  Building2,
-  DollarSign,
-  Settings,
-  Shield,
-  Image,
-  MessageCircle,
-  Bell,
-  Calculator,
-  LogOut,
-  Menu,
-  X,
-  Activity,
-  CheckCircle,
-  TrendingUp,
-  Plug,
-  Loader2,
-  Send
+  LayoutDashboard, Users, Building2, DollarSign, Settings, Shield, Image, MessageCircle,
+  Bell, Calculator, LogOut, Menu, X, Activity, CheckCircle, TrendingUp, Plug, Loader2, Send, Phone
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -68,66 +51,39 @@ const SuperAdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card border-r border-border
-        transform transition-transform duration-200 ease-in-out
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-      `}>
+      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border transform transition-transform duration-200 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
         <div className="flex flex-col h-full">
-          <div className="p-4 border-b border-border flex items-center justify-between">
+          <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
             <Link to={basePath} className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-destructive" />
-              </div>
-              <span className="font-display font-bold text-lg">Super Admin</span>
+              <div className="w-8 h-8 rounded-lg bg-destructive/20 flex items-center justify-center"><Shield className="w-5 h-5 text-destructive" /></div>
+              <span className="font-display font-bold text-lg text-sidebar-foreground">Super Admin</span>
             </Link>
-            <button className="lg:hidden text-muted-foreground" onClick={() => setSidebarOpen(false)}>
-              <X className="w-5 h-5" />
-            </button>
+            <button className="lg:hidden text-sidebar-foreground/60" onClick={() => setSidebarOpen(false)}><X className="w-5 h-5" /></button>
           </div>
-
-          <div className="p-4 border-b border-border">
-            <p className="font-medium truncate">{profile?.name || "Admin"}</p>
-            <p className="text-sm text-muted-foreground truncate">{profile?.email}</p>
+          <div className="p-4 border-b border-sidebar-border">
+            <p className="font-medium truncate text-sidebar-foreground">{profile?.name || "Admin"}</p>
+            <p className="text-sm text-sidebar-foreground/60 truncate">{profile?.email}</p>
           </div>
-
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                  ${isActive(item.href) ? "bg-destructive text-destructive-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-              >
-                <item.icon className="w-5 h-5" />
-                {item.name}
+              <Link key={item.name} to={item.href} onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(item.href) ? "bg-destructive text-destructive-foreground" : "text-sidebar-foreground/60 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground"}`}>
+                <item.icon className="w-5 h-5" />{item.name}
               </Link>
             ))}
           </nav>
-
-          <div className="p-4 border-t border-border">
-            <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground" onClick={signOut}>
-              <LogOut className="w-5 h-5" />
-              Sair
-            </Button>
+          <div className="p-4 border-t border-sidebar-border">
+            <Button variant="ghost" className="w-full justify-start gap-3 text-sidebar-foreground/60 hover:text-sidebar-foreground" onClick={signOut}><LogOut className="w-5 h-5" />Sair</Button>
           </div>
         </div>
       </aside>
-
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 border-b border-border flex items-center justify-between px-4 lg:px-6 bg-card">
-          <button className="lg:hidden text-foreground" onClick={() => setSidebarOpen(true)}>
-            <Menu className="w-6 h-6" />
-          </button>
+          <button className="lg:hidden text-foreground" onClick={() => setSidebarOpen(true)}><Menu className="w-6 h-6" /></button>
           <div className="flex-1" />
           <SystemStatus />
         </header>
-
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <Routes>
             <Route index element={<DashboardHome />} />
@@ -139,7 +95,7 @@ const SuperAdminDashboard = () => {
             <Route path="integracoes" element={<Suspense fallback={<PageFallback />}><IntegrationSettingsPage /></Suspense>} />
             <Route path="pixels" element={<PixelsPage />} />
             <Route path="mensagens-sistema" element={<MensagensSistemaPage />} />
-            <Route path="suporte" element={<SuportePage />} />
+            <Route path="suporte" element={<SuporteAdminPage />} />
             <Route path="notificacoes" element={<NotificacoesAdminPage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
           </Routes>
@@ -151,56 +107,147 @@ const SuperAdminDashboard = () => {
 
 const SystemStatus = () => (
   <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 text-success text-sm">
-    <Activity className="w-4 h-4" />
-    <span>Sistema OK</span>
+    <Activity className="w-4 h-4" /><span>Sistema OK</span>
   </div>
 );
 
 const DashboardHome = () => {
   const [stats, setStats] = useState({ users: 0, barbershops: 0, affiliates: 0 });
-
   useEffect(() => {
     Promise.all([
       supabase.from("profiles").select("id", { count: "exact", head: true }),
       supabase.from("barbershops").select("id", { count: "exact", head: true }),
       supabase.from("affiliates").select("id", { count: "exact", head: true }),
-    ]).then(([p, b, a]) => {
-      setStats({
-        users: p.count || 0,
-        barbershops: b.count || 0,
-        affiliates: a.count || 0,
-      });
-    });
+    ]).then(([p, b, a]) => setStats({ users: p.count || 0, barbershops: b.count || 0, affiliates: a.count || 0 }));
   }, []);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Painel Super Admin</h1>
-        <p className="text-muted-foreground">Visão geral do sistema</p>
-      </div>
-
+      <div><h1 className="font-display text-2xl font-bold">Painel Super Admin</h1><p className="text-muted-foreground">Visão geral do sistema</p></div>
       <Card className="border-success/20 bg-success/5">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-success" />
-            <CardTitle>Sistema Operacional</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            {["Auth", "ASAAS", "Split", "Mensagens"].map(s => (
-              <div key={s} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-success" /><span>{s}</span></div>
-            ))}
-          </div>
-        </CardContent>
+        <CardHeader><div className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-success" /><CardTitle>Sistema Operacional</CardTitle></div></CardHeader>
+        <CardContent><div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">{["Auth", "ASAAS", "Split", "Mensagens"].map(s => (<div key={s} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-success" /><span>{s}</span></div>))}</div></CardContent>
       </Card>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card><CardHeader className="pb-2"><CardDescription>Total de Usuários</CardDescription><CardTitle className="text-2xl">{stats.users}</CardTitle></CardHeader></Card>
         <Card><CardHeader className="pb-2"><CardDescription>Barbearias Ativas</CardDescription><CardTitle className="text-2xl">{stats.barbershops}</CardTitle></CardHeader></Card>
         <Card><CardHeader className="pb-2"><CardDescription>Afiliados Ativos</CardDescription><CardTitle className="text-2xl">{stats.affiliates}</CardTitle></CardHeader></Card>
-        <Card className="bg-gradient-card border-primary/20"><CardHeader className="pb-2"><CardDescription>Receita do Mês</CardDescription><CardTitle className="text-2xl text-gradient-gold">R$ 0,00</CardTitle></CardHeader></Card>
+        <Card className="border-primary/20"><CardHeader className="pb-2"><CardDescription>Receita do Mês</CardDescription><CardTitle className="text-2xl text-gradient-gold">R$ 0,00</CardTitle></CardHeader></Card>
+      </div>
+    </div>
+  );
+};
+
+// ============ SUPORTE ADMIN (chats reais) ============
+
+const SuporteAdminPage = () => {
+  const { user } = useAuth();
+  const [chats, setChats] = useState<any[]>([]);
+  const [activeChat, setActiveChat] = useState<any>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [newMsg, setNewMsg] = useState("");
+  const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from("support_chats").select("*, profiles:user_id(name, email, whatsapp)")
+      .order("updated_at", { ascending: false }).then(({ data }) => { setChats(data || []); setLoading(false); });
+  }, []);
+
+  const loadMessages = async (chatId: string) => {
+    const { data } = await supabase.from("support_messages").select("*").eq("chat_id", chatId).order("created_at", { ascending: true });
+    setMessages(data || []);
+  };
+
+  const selectChat = (chat: any) => {
+    setActiveChat(chat);
+    loadMessages(chat.id);
+  };
+
+  const sendMessage = async () => {
+    if (!newMsg.trim() || !activeChat || !user) return;
+    setSending(true);
+    const { error } = await supabase.from("support_messages").insert({
+      chat_id: activeChat.id, sender_id: user.id, message: newMsg.trim(), is_from_support: true,
+    });
+    setSending(false);
+    if (error) { toast.error("Erro: " + error.message); return; }
+    setNewMsg("");
+    loadMessages(activeChat.id);
+  };
+
+  const updateStatus = async (chatId: string, status: string) => {
+    await supabase.from("support_chats").update({ status, assigned_to: user?.id }).eq("id", chatId);
+    toast.success(`Chat ${status}`);
+    supabase.from("support_chats").select("*, profiles:user_id(name, email, whatsapp)").order("updated_at", { ascending: false }).then(({ data }) => setChats(data || []));
+  };
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Suporte - Atendimento</h1>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Chat list */}
+        <div className="space-y-2">
+          <h2 className="font-semibold text-sm text-muted-foreground uppercase">Chamados ({chats.length})</h2>
+          {loading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : chats.length === 0 ? (
+            <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">Nenhum chamado.</CardContent></Card>
+          ) : chats.map(c => (
+            <Card key={c.id} className={`cursor-pointer hover:border-primary transition-colors ${activeChat?.id === c.id ? 'border-primary bg-primary/5' : ''}`} onClick={() => selectChat(c)}>
+              <CardContent className="p-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-medium text-sm">{(c as any).profiles?.name || "Usuário"}</p>
+                    <p className="text-xs text-muted-foreground">{(c as any).profiles?.whatsapp || (c as any).profiles?.email || ""}</p>
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${c.status === 'open' ? 'bg-destructive/10 text-destructive' : c.status === 'in_progress' ? 'bg-primary/10 text-primary' : 'bg-success/10 text-success'}`}>
+                    {c.status === 'open' ? 'Aberto' : c.status === 'in_progress' ? 'Em Atendimento' : 'Fechado'}
+                  </span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">{new Date(c.created_at).toLocaleString("pt-BR")}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        
+        {/* Chat messages */}
+        <div className="lg:col-span-2">
+          {!activeChat ? (
+            <Card><CardContent className="py-12 text-center"><MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Selecione um chat para responder.</p></CardContent></Card>
+          ) : (
+            <Card>
+              <CardHeader className="border-b py-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-sm">{(activeChat as any).profiles?.name}</CardTitle>
+                    <CardDescription className="text-xs">{(activeChat as any).profiles?.whatsapp || (activeChat as any).profiles?.email}</CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    {activeChat.status === 'open' && <Button size="sm" variant="outline" onClick={() => updateStatus(activeChat.id, 'in_progress')}>Assumir</Button>}
+                    {activeChat.status !== 'closed' && <Button size="sm" variant="outline" onClick={() => updateStatus(activeChat.id, 'closed')}>Fechar</Button>}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="h-80 overflow-y-auto p-4 space-y-3">
+                  {messages.length === 0 ? (
+                    <p className="text-center text-sm text-muted-foreground py-8">Nenhuma mensagem.</p>
+                  ) : messages.map(m => (
+                    <div key={m.id} className={`flex ${m.is_from_support ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${m.is_from_support ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-foreground'}`}>
+                        {m.message}
+                        <p className="text-[10px] opacity-60 mt-1">{new Date(m.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-4 border-t flex gap-2">
+                  <Input placeholder="Responder..." value={newMsg} onChange={e => setNewMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} />
+                  <Button variant="gold" onClick={sendMessage} disabled={sending}>Enviar</Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -216,12 +263,8 @@ const NotificacoesAdminPage = () => {
   const [channel, setChannel] = useState<"app" | "sms" | "whatsapp">("app");
 
   const handleSend = async () => {
-    if (!title || !message) {
-      toast.error("Preencha título e mensagem.");
-      return;
-    }
+    if (!title || !message) { toast.error("Preencha título e mensagem."); return; }
     setSending(true);
-
     let roleFilter: string | null = null;
     if (target === "donos") roleFilter = "dono";
     else if (target === "profissionais") roleFilter = "profissional";
@@ -236,122 +279,49 @@ const NotificacoesAdminPage = () => {
       userIds = data?.map(r => r.user_id) || [];
     }
 
-    if (userIds.length === 0) {
-      toast.error("Nenhum usuário encontrado para o filtro selecionado.");
-      setSending(false);
-      return;
-    }
+    if (userIds.length === 0) { toast.error("Nenhum usuário encontrado."); setSending(false); return; }
 
-    // Always save in-app notifications
-    const notifications = userIds.map(uid => ({
-      user_id: uid,
-      title,
-      message,
-      type: "info" as const,
-      priority: "normal" as const,
-    }));
+    const notifications = userIds.map(uid => ({ user_id: uid, title, message, type: "info" as const, priority: "normal" as const }));
     const { error } = await supabase.from("notifications").insert(notifications);
 
-    // If SMS or WhatsApp, also send via Twilio
     if (channel === "sms" || channel === "whatsapp") {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("whatsapp")
-        .in("user_id", userIds);
-
+      const { data: profiles } = await supabase.from("profiles").select("whatsapp").in("user_id", userIds);
       const phones = profiles?.map(p => p.whatsapp).filter(Boolean) || [];
-      let sentCount = 0;
-
+      let sent = 0;
       for (const phone of phones) {
-        try {
-          await supabase.functions.invoke("send-sms", {
-            body: {
-              action: channel === "whatsapp" ? "whatsapp" : "sms",
-              to: phone,
-              body: `${title}: ${message}`,
-            },
-          });
-          sentCount++;
-        } catch (e) {
-          console.error(`[NOTIF] Failed to send ${channel} to ${phone}:`, e);
-        }
+        try { await supabase.functions.invoke("send-sms", { body: { action: channel === "whatsapp" ? "whatsapp" : "sms", to: phone, body: `${title}: ${message}` } }); sent++; } catch {}
       }
-
-      toast.success(`${sentCount} ${channel.toUpperCase()} enviado(s) + ${userIds.length} notificação(ões) no app!`);
+      toast.success(`${sent} ${channel.toUpperCase()} + ${userIds.length} notificações!`);
     } else {
-      if (error) {
-        toast.error("Erro: " + error.message);
-      } else {
-        toast.success(`Notificação enviada para ${userIds.length} usuário(s)!`);
-      }
+      if (error) toast.error("Erro: " + error.message);
+      else toast.success(`Notificação para ${userIds.length} usuário(s)!`);
     }
-
-    setSending(false);
-    setTitle("");
-    setMessage("");
+    setSending(false); setTitle(""); setMessage("");
   };
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Enviar Notificação</h1>
-
       <Card>
-        <CardHeader>
-          <CardTitle>Destinatários</CardTitle>
-          <CardDescription>Selecione quem receberá a notificação</CardDescription>
-        </CardHeader>
+        <CardHeader><CardTitle>Destinatários</CardTitle><CardDescription>Selecione quem receberá a notificação</CardDescription></CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
             {(["all", "donos", "profissionais", "clientes"] as const).map((t) => (
-              <Button
-                key={t}
-                variant={target === t ? "gold" : "outline"}
-                size="sm"
-                onClick={() => setTarget(t)}
-              >
+              <Button key={t} variant={target === t ? "gold" : "outline"} size="sm" onClick={() => setTarget(t)}>
                 {t === "all" ? "Todos" : t === "donos" ? "Donos" : t === "profissionais" ? "Profissionais" : "Clientes"}
               </Button>
             ))}
           </div>
-
-          <div>
-            <Label>Canal de Envio</Label>
+          <div><Label>Canal de Envio</Label>
             <div className="flex flex-wrap gap-2 mt-1">
-              {([
-                { key: "app" as const, label: "📱 App (interno)" },
-                { key: "sms" as const, label: "💬 SMS" },
-                { key: "whatsapp" as const, label: "📲 WhatsApp" },
-              ]).map((c) => (
-                <Button
-                  key={c.key}
-                  variant={channel === c.key ? "gold" : "outline"}
-                  size="sm"
-                  onClick={() => setChannel(c.key)}
-                >
-                  {c.label}
-                </Button>
+              {([{ key: "app" as const, label: "📱 App" }, { key: "sms" as const, label: "💬 SMS" }, { key: "whatsapp" as const, label: "📲 WhatsApp" }]).map(c => (
+                <Button key={c.key} variant={channel === c.key ? "gold" : "outline"} size="sm" onClick={() => setChannel(c.key)}>{c.label}</Button>
               ))}
             </div>
           </div>
-
-          <div>
-            <Label>Título *</Label>
-            <Input placeholder="Título da notificação" value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1" />
-          </div>
-          <div>
-            <Label>Mensagem *</Label>
-            <Input placeholder="Corpo da mensagem..." value={message} onChange={(e) => setMessage(e.target.value)} className="mt-1" />
-          </div>
-          {channel !== "app" && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted p-2 rounded">
-              <Bell className="w-3 h-3" />
-              <span>{channel === "sms" ? "SMS será enviado via Twilio para números cadastrados." : "WhatsApp será enviado via Twilio API."}</span>
-            </div>
-          )}
-          <Button variant="gold" onClick={handleSend} disabled={sending}>
-            <Send className="w-4 h-4 mr-2" />
-            {sending ? "Enviando..." : `Enviar via ${channel === "app" ? "App" : channel.toUpperCase()}`}
-          </Button>
+          <div><Label>Título *</Label><Input placeholder="Título" value={title} onChange={e => setTitle(e.target.value)} className="mt-1" /></div>
+          <div><Label>Mensagem *</Label><Input placeholder="Mensagem..." value={message} onChange={e => setMessage(e.target.value)} className="mt-1" /></div>
+          <Button variant="gold" onClick={handleSend} disabled={sending}><Send className="w-4 h-4 mr-2" />{sending ? "Enviando..." : "Enviar"}</Button>
         </CardContent>
       </Card>
     </div>
@@ -363,42 +333,20 @@ const NotificacoesAdminPage = () => {
 const UsuariosPage = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase.from("profiles").select("*, user_roles(role)").limit(50).then(({ data }) => {
-      setUsers(data || []);
-      setLoading(false);
-    });
-  }, []);
-
+  useEffect(() => { supabase.from("profiles").select("*, user_roles(role)").limit(50).then(({ data }) => { setUsers(data || []); setLoading(false); }); }, []);
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Usuários</h1>
-      {loading ? (
-        <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div>
-      ) : users.length === 0 ? (
+      {loading ? <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div> : users.length === 0 ? (
         <Card><CardContent className="py-12 text-center"><Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum usuário.</p></CardContent></Card>
       ) : (
-        <div className="space-y-2">
-          {users.map((u) => (
-            <Card key={u.id}>
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold">{u.name}</p>
-                  <p className="text-sm text-muted-foreground">{u.email} {u.whatsapp ? `• ${u.whatsapp}` : ""}</p>
-                </div>
-                <div className="flex gap-1">
-                  {u.user_roles?.map((r: any) => (
-                    <span key={r.role} className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{r.role}</span>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <div className="space-y-2">{users.map(u => (
+          <Card key={u.id}><CardContent className="p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center"><Users className="w-5 h-5 text-primary" /></div>
+            <div className="flex-1"><p className="font-semibold">{u.name}</p><p className="text-sm text-muted-foreground">{u.email} {u.whatsapp ? `• ${u.whatsapp}` : ""}</p></div>
+            <div className="flex gap-1">{u.user_roles?.map((r: any) => (<span key={r.role} className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{r.role}</span>))}</div>
+          </CardContent></Card>
+        ))}</div>
       )}
     </div>
   );
@@ -407,96 +355,36 @@ const UsuariosPage = () => {
 const BarbeariasPage = () => {
   const [shops, setShops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "active" | "trial" | "incomplete" | "delinquent">("all");
+  const [filter, setFilter] = useState<"all" | "active" | "trial">("all");
 
-  useEffect(() => {
-    supabase.from("barbershops").select("*, profiles:owner_user_id(name, email, whatsapp)").then(({ data }) => {
-      setShops(data || []);
-      setLoading(false);
-    });
-  }, []);
+  useEffect(() => { supabase.from("barbershops").select("*, profiles:owner_user_id(name, email, whatsapp)").then(({ data }) => { setShops(data || []); setLoading(false); }); }, []);
 
   const now = new Date();
-  const filtered = shops.filter((s) => {
+  const filtered = shops.filter(s => {
     if (filter === "all") return true;
     if (filter === "active") return s.subscription_status === "active" || s.subscription_status === "paid";
-    if (filter === "trial") return s.subscription_status === "trial" || !s.subscription_status;
-    if (filter === "incomplete") return !s.phone && !s.address;
-    if (filter === "delinquent") {
-      if (!s.subscription_ends_at) return false;
-      return new Date(s.subscription_ends_at) < now && s.subscription_status !== "active";
-    }
-    return true;
+    return s.subscription_status === "trial" || !s.subscription_status;
   });
-
-  const counts = {
-    all: shops.length,
-    active: shops.filter(s => s.subscription_status === "active" || s.subscription_status === "paid").length,
-    trial: shops.filter(s => s.subscription_status === "trial" || !s.subscription_status).length,
-    incomplete: shops.filter(s => !s.phone && !s.address).length,
-    delinquent: shops.filter(s => s.subscription_ends_at && new Date(s.subscription_ends_at) < now && s.subscription_status !== "active").length,
-  };
-
-  const filterLabels: Record<string, string> = {
-    all: "Todos",
-    active: "Assinantes",
-    trial: "Em Teste",
-    incomplete: "Incompletos",
-    delinquent: "Inadimplentes",
-  };
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Barbearias</h1>
-
       <div className="flex flex-wrap gap-2">
-        {(["all", "active", "trial", "incomplete", "delinquent"] as const).map((f) => (
-          <Button
-            key={f}
-            variant={filter === f ? "gold" : "outline"}
-            size="sm"
-            onClick={() => setFilter(f)}
-          >
-            {filterLabels[f]} ({counts[f]})
-          </Button>
+        {(["all", "active", "trial"] as const).map(f => (
+          <Button key={f} variant={filter === f ? "gold" : "outline"} size="sm" onClick={() => setFilter(f)}>{f === "all" ? "Todos" : f === "active" ? "Ativos" : "Trial"}</Button>
         ))}
       </div>
-
-      {loading ? (
-        <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div>
-      ) : filtered.length === 0 ? (
-        <Card><CardContent className="py-12 text-center"><Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhuma barbearia nesta categoria.</p></CardContent></Card>
-      ) : filtered.map(s => (
-        <Card key={s.id}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <Building2 className="w-5 h-5 text-primary flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold">{s.name}</p>
-                <p className="text-sm text-muted-foreground truncate">
-                  Dono: {(s as any).profiles?.name || "N/A"} • {(s as any).profiles?.email || ""} {(s as any).profiles?.whatsapp ? `• ${(s as any).profiles.whatsapp}` : ""}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {s.phone || "Sem tel"} • {s.address || "Sem endereço"}
-                  {s.subscription_ends_at && ` • Expira: ${new Date(s.subscription_ends_at).toLocaleDateString("pt-BR")}`}
-                </p>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className={`text-xs px-2 py-1 rounded-full font-medium ${s.subscription_status === "active" || s.subscription_status === "paid"
-                    ? "bg-success/10 text-success"
-                    : s.subscription_status === "trial" || !s.subscription_status
-                      ? "bg-secondary/10 text-secondary"
-                      : "bg-destructive/10 text-destructive"
-                  }`}>
-                  {s.subscription_status === "active" || s.subscription_status === "paid" ? "Ativo" : s.subscription_status === "trial" || !s.subscription_status ? "Trial" : s.subscription_status}
-                </span>
-                <span className={`text-xs px-2 py-1 rounded-full ${s.is_active ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
-                  {s.is_active ? "Online" : "Offline"}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {loading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : filtered.map(s => (
+        <Card key={s.id}><CardContent className="p-4 flex items-center gap-4">
+          <Building2 className="w-5 h-5 text-primary flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold">{s.name}</p>
+            <p className="text-sm text-muted-foreground truncate">Dono: {(s as any).profiles?.name || "N/A"} • {(s as any).profiles?.email || ""}</p>
+          </div>
+          <span className={`text-xs px-2 py-1 rounded-full font-medium ${s.subscription_status === "active" ? "bg-success/10 text-success" : "bg-primary/10 text-primary"}`}>
+            {s.subscription_status || "trial"}
+          </span>
+        </CardContent></Card>
       ))}
     </div>
   );
@@ -543,7 +431,7 @@ const FinanceiroPage = () => (
   <div className="space-y-6">
     <h1 className="font-display text-2xl font-bold">Financeiro</h1>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <Card className="bg-gradient-card border-primary/20"><CardHeader><CardDescription>Receita Total</CardDescription><CardTitle className="text-3xl text-gradient-gold">R$ 0,00</CardTitle></CardHeader></Card>
+      <Card className="border-primary/20"><CardHeader><CardDescription>Receita Total</CardDescription><CardTitle className="text-3xl text-gradient-gold">R$ 0,00</CardTitle></CardHeader></Card>
       <Card><CardHeader><CardDescription>Taxa SaaS</CardDescription><CardTitle className="text-2xl">R$ 0,00</CardTitle></CardHeader></Card>
       <Card><CardHeader><CardDescription>Comissões Pagas</CardDescription><CardTitle className="text-2xl">R$ 0,00</CardTitle></CardHeader></Card>
     </div>
@@ -554,38 +442,21 @@ const PixelsPage = () => {
   const [pixels, setPixels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  const [newPixel, setNewPixel] = useState({ platform: "facebook", pixel_id: "", is_active: true });
+  const [newPixel, setNewPixel] = useState({ platform: "facebook", pixel_id: "" });
 
-  useEffect(() => {
-    supabase.from("pixels").select("*").eq("owner_type", "system").then(({ data }) => {
-      setPixels(data || []);
-      setLoading(false);
-    });
-  }, []);
+  useEffect(() => { supabase.from("pixels").select("*").eq("owner_type", "system").then(({ data }) => { setPixels(data || []); setLoading(false); }); }, []);
 
   const handleAddPixel = async () => {
     if (!newPixel.pixel_id) return toast.error("Insira o ID do Pixel");
-    const { data, error } = await supabase.from("pixels").insert([{
-      ...newPixel,
-      owner_type: "system",
-      pixel_type: newPixel.platform
-    }]).select();
-
+    const { data, error } = await supabase.from("pixels").insert([{ ...newPixel, owner_type: "system", pixel_type: newPixel.platform }]).select();
     if (error) toast.error(error.message);
-    else {
-      setPixels([...pixels, ...data]);
-      setShowAdd(false);
-      toast.success("Pixel adicionado!");
-    }
+    else { setPixels([...pixels, ...(data || [])]); setShowAdd(false); toast.success("Pixel adicionado!"); }
   };
 
   const togglePixel = async (id: string, active: boolean) => {
-    const { error } = await supabase.from("pixels").update({ active }).eq("id", id);
-    if (error) toast.error(error.message);
-    else {
-      setPixels(pixels.map(p => p.id === id ? { ...p, active } : p));
-      toast.success("Status atualizado");
-    }
+    await supabase.from("pixels").update({ active }).eq("id", id);
+    setPixels(pixels.map(p => p.id === id ? { ...p, active } : p));
+    toast.success("Status atualizado");
   };
 
   return (
@@ -594,60 +465,30 @@ const PixelsPage = () => {
         <h1 className="font-display text-2xl font-bold">Pixels Globais</h1>
         <Button variant="gold" onClick={() => setShowAdd(true)}>Adicionar Pixel</Button>
       </div>
-
       {showAdd && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader><CardTitle>Novo Pixel</CardTitle></CardHeader>
+        <Card className="border-primary/20 bg-primary/5"><CardHeader><CardTitle>Novo Pixel</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Plataforma</Label>
-                <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={newPixel.platform}
-                  onChange={e => setNewPixel({ ...newPixel, platform: e.target.value })}
-                >
-                  <option value="facebook">Facebook</option>
-                  <option value="google">Google Ads</option>
-                  <option value="tiktok">TikTok</option>
+              <div className="space-y-2"><Label>Plataforma</Label>
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={newPixel.platform} onChange={e => setNewPixel({ ...newPixel, platform: e.target.value })}>
+                  <option value="facebook">Facebook</option><option value="google">Google Ads</option><option value="tiktok">TikTok</option>
                 </select>
               </div>
-              <div className="space-y-2">
-                <Label>Pixel ID / AW-ID</Label>
-                <Input value={newPixel.pixel_id} onChange={e => setNewPixel({ ...newPixel, pixel_id: e.target.value })} placeholder="P-12345678" />
-              </div>
+              <div className="space-y-2"><Label>Pixel ID</Label><Input value={newPixel.pixel_id} onChange={e => setNewPixel({ ...newPixel, pixel_id: e.target.value })} placeholder="P-12345" /></div>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setShowAdd(false)}>Cancelar</Button>
-              <Button variant="gold" onClick={handleAddPixel}>Salvar Pixel</Button>
-            </div>
+            <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setShowAdd(false)}>Cancelar</Button><Button variant="gold" onClick={handleAddPixel}>Salvar</Button></div>
           </CardContent>
         </Card>
       )}
-
       {loading ? <Loader2 className="w-8 h-8 animate-spin mx-auto" /> : pixels.length === 0 ? (
         <Card><CardContent className="py-8 text-center text-muted-foreground">Nenhum pixel global.</CardContent></Card>
       ) : (
-        <div className="grid gap-4">
-          {pixels.map(p => (
-            <Card key={p.id}>
-              <CardContent className="p-4 flex justify-between items-center">
-                <div>
-                  <p className="font-bold flex items-center gap-2">
-                    <span className="capitalize">{p.platform}</span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${p.active ? "bg-success/20 text-success" : "bg-muted text-muted-foreground"}`}>
-                      {p.active ? "Ativo" : "Inativo"}
-                    </span>
-                  </p>
-                  <p className="text-sm text-muted-foreground">{p.pixel_id}</p>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => togglePixel(p.id, !p.active)}>
-                  {p.active ? "Desativar" : "Ativar"}
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <div className="grid gap-4">{pixels.map(p => (
+          <Card key={p.id}><CardContent className="p-4 flex justify-between items-center">
+            <div><p className="font-bold capitalize">{p.platform} <span className={`text-[10px] px-2 py-0.5 rounded-full ${p.active ? "bg-success/20 text-success" : "bg-muted text-muted-foreground"}`}>{p.active ? "Ativo" : "Inativo"}</span></p><p className="text-sm text-muted-foreground">{p.pixel_id}</p></div>
+            <Button variant="outline" size="sm" onClick={() => togglePixel(p.id, !p.active)}>{p.active ? "Desativar" : "Ativar"}</Button>
+          </CardContent></Card>
+        ))}</div>
       )}
     </div>
   );
@@ -662,26 +503,14 @@ const MensagensSistemaPage = () => {
   const [role, setRole] = useState("all");
 
   useEffect(() => {
-    (supabase as any).from("internal_system_messages").select("*").order("created_at", { ascending: false }).then(({ data }: any) => {
-      setMessages(data || []);
-      setLoading(false);
-    });
+    (supabase as any).from("internal_system_messages").select("*").order("created_at", { ascending: false }).then(({ data }: any) => { setMessages(data || []); setLoading(false); });
   }, []);
 
   const handlePost = async () => {
     if (!title || !body) return toast.error("Preencha tudo");
-    const { data, error } = await (supabase as any).from("internal_system_messages").insert([{
-      title, body, target_role: role === "all" ? null : role
-    }]).select();
-
+    const { data, error } = await (supabase as any).from("internal_system_messages").insert([{ title, body, target_role: role === "all" ? null : role }]).select();
     if (error) toast.error(error.message);
-    else {
-      setMessages([...(data || []), ...messages]);
-      setShowAdd(false);
-      setTitle("");
-      setBody("");
-      toast.success("Comunicado enviado!");
-    }
+    else { setMessages([...(data || []), ...messages]); setShowAdd(false); setTitle(""); setBody(""); toast.success("Comunicado enviado!"); }
   };
 
   return (
@@ -690,96 +519,83 @@ const MensagensSistemaPage = () => {
         <h1 className="font-display text-2xl font-bold">Mensagens do Sistema</h1>
         <Button variant="gold" onClick={() => setShowAdd(true)}>Novo Comunicado</Button>
       </div>
-
       {showAdd && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader><CardTitle>Novo Comunicado Geral</CardTitle></CardHeader>
+        <Card className="border-primary/20 bg-primary/5"><CardHeader><CardTitle>Novo Comunicado</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Para quem?</Label>
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={role}
-                onChange={e => setRole(e.target.value)}
-              >
-                <option value="all">Todos</option>
-                <option value="dono">Apenas Donos</option>
-                <option value="cliente">Apenas Clientes</option>
-                <option value="profissional">Apenas Profissionais</option>
+            <div className="space-y-2"><Label>Para quem?</Label>
+              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={role} onChange={e => setRole(e.target.value)}>
+                <option value="all">Todos</option><option value="dono">Donos</option><option value="cliente">Clientes</option><option value="profissional">Profissionais</option>
               </select>
             </div>
-            <div className="space-y-2">
-              <Label>Título</Label>
-              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Manutenção agendada" />
-            </div>
-            <div className="space-y-2">
-              <Label>Mensagem</Label>
-              <textarea
-                className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={body}
-                onChange={e => setBody(e.target.value)}
-                placeholder="Conteúdo do comunicado..."
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setShowAdd(false)}>Cancelar</Button>
-              <Button variant="gold" onClick={handlePost}>Postar Mensagem</Button>
-            </div>
+            <div className="space-y-2"><Label>Título</Label><Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Título" /></div>
+            <div className="space-y-2"><Label>Mensagem</Label><textarea className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={body} onChange={e => setBody(e.target.value)} /></div>
+            <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setShowAdd(false)}>Cancelar</Button><Button variant="gold" onClick={handlePost}>Postar</Button></div>
           </CardContent>
         </Card>
       )}
-
       {loading ? <Loader2 className="w-8 h-8 animate-spin mx-auto" /> : (
-        <div className="space-y-4">
-          {messages.map(m => (
-            <Card key={m.id}>
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold">{m.title}</h3>
-                  <span className="text-[10px] bg-muted px-2 py-1 rounded">
-                    {m.target_role ? `Role: ${m.target_role}` : "Todos"}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground">{m.body}</p>
-                <p className="text-[10px] text-muted-foreground mt-2">
-                  {new Date(m.created_at).toLocaleString("pt-BR")}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <div className="space-y-4">{messages.map((m: any) => (
+          <Card key={m.id}><CardContent className="p-4">
+            <div className="flex justify-between items-start mb-2"><h3 className="font-bold">{m.title}</h3><span className="text-[10px] bg-muted px-2 py-1 rounded">{m.target_role || "Todos"}</span></div>
+            <p className="text-sm text-muted-foreground">{m.body}</p>
+            <p className="text-[10px] text-muted-foreground mt-2">{new Date(m.created_at).toLocaleString("pt-BR")}</p>
+          </CardContent></Card>
+        ))}</div>
       )}
     </div>
   );
 };
 
-const SuportePage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Suporte</h1>
-    <Card><CardContent className="py-8 text-center"><MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum chat aberto.</p></CardContent></Card>
-  </div>
-);
+const ConfiguracoesPage = () => {
+  const [supportPhone, setSupportPhone] = useState("");
+  const [saving, setSaving] = useState(false);
 
-const ConfiguracoesPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Configurações</h1>
-    <div className="grid gap-4">
+  const saveSupportPhone = async () => {
+    setSaving(true);
+    // Save via integration_settings as support phone config
+    const { error } = await supabase.from("integration_settings").upsert({
+      service_name: "support_phone", environment: "production", is_active: true, base_url: supportPhone,
+    }, { onConflict: "service_name,environment" });
+    setSaving(false);
+    if (error) toast.error("Erro: " + error.message);
+    else toast.success("Telefone de suporte salvo!");
+  };
+
+  useEffect(() => {
+    supabase.from("integration_settings").select("base_url").eq("service_name", "support_phone").maybeSingle().then(({ data }) => {
+      if (data?.base_url) setSupportPhone(data.base_url);
+    });
+  }, []);
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Configurações</h1>
+
       <Card>
-        <CardHeader><CardTitle>Planos e Preços</CardTitle><CardDescription>Configure os valores dos planos</CardDescription></CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-            {[{ l: "7 dias grátis", v: "R$ 0,00" }, { l: "Mês 1", v: "R$ 19,90" }, { l: "Mês 2+", v: "R$ 29,90" }, { l: "3 meses", v: "R$ 79,90" }, { l: "6 meses", v: "R$ 145,90" }, { l: "12 meses", v: "R$ 199,90" }].map(p => (
-              <div key={p.l} className="p-3 bg-muted rounded-lg"><p className="text-muted-foreground">{p.l}</p><p className="font-bold">{p.v}</p></div>
-            ))}
+        <CardHeader><CardTitle><Phone className="w-5 h-5 inline mr-2" />Telefone de Suporte</CardTitle><CardDescription>Número exibido para os usuários no chat de suporte</CardDescription></CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex gap-2">
+            <Input placeholder="(11) 99999-0000" value={supportPhone} onChange={e => setSupportPhone(e.target.value)} />
+            <Button variant="gold" onClick={saveSupportPhone} disabled={saving}>{saving ? "..." : "Salvar"}</Button>
           </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader><CardTitle>Taxa SaaS</CardTitle></CardHeader>
-        <CardContent><div className="p-3 bg-muted rounded-lg inline-block"><p className="text-2xl font-bold text-gradient-gold">0,5%</p></div></CardContent>
-      </Card>
+
+      <div className="grid gap-4">
+        <Card>
+          <CardHeader><CardTitle>Planos e Preços</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+              {[{ l: "7 dias grátis", v: "R$ 0,00" }, { l: "Mês 1", v: "R$ 19,90" }, { l: "Mês 2+", v: "R$ 29,90" }, { l: "3 meses", v: "R$ 79,90" }, { l: "6 meses", v: "R$ 145,90" }, { l: "12 meses", v: "R$ 199,90" }].map(p => (
+                <div key={p.l} className="p-3 bg-muted rounded-lg"><p className="text-muted-foreground">{p.l}</p><p className="font-bold">{p.v}</p></div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card><CardHeader><CardTitle>Taxa SaaS</CardTitle></CardHeader><CardContent><div className="p-3 bg-muted rounded-lg inline-block"><p className="text-2xl font-bold text-gradient-gold">0,5%</p></div></CardContent></Card>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default SuperAdminDashboard;

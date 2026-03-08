@@ -61,29 +61,29 @@ const DonoDashboard = () => {
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-200 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border transform transition-transform duration-200 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
         <div className="flex flex-col h-full">
-          <div className="p-4 border-b border-border flex items-center justify-between">
+          <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
             <Link to={basePath} className="flex items-center gap-2">
               <img src={logo} alt="Logo" className="w-8 h-8" />
-              <span className="font-display font-bold text-lg text-gradient-gold">Painel Dono</span>
+              <span className="font-display font-bold text-lg text-sidebar-primary">Painel Dono</span>
             </Link>
-            <button className="lg:hidden text-muted-foreground" onClick={() => setSidebarOpen(false)}><X className="w-5 h-5" /></button>
+            <button className="lg:hidden text-sidebar-foreground/60" onClick={() => setSidebarOpen(false)}><X className="w-5 h-5" /></button>
           </div>
-          <div className="p-4 border-b border-border">
-            <p className="font-medium truncate">{profile?.name || "Dono"}</p>
-            <p className="text-sm text-muted-foreground truncate">{profile?.email}</p>
+          <div className="p-4 border-b border-sidebar-border">
+            <p className="font-medium truncate text-sidebar-foreground">{profile?.name || "Dono"}</p>
+            <p className="text-sm text-sidebar-foreground/60 truncate">{profile?.email}</p>
           </div>
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navigation.map((item) => (
               <Link key={item.name} to={item.href} onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(item.href) ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(item.href) ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground/60 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground"}`}>
                 <item.icon className="w-5 h-5" />{item.name}
               </Link>
             ))}
           </nav>
-          <div className="p-4 border-t border-border">
-            <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground" onClick={signOut}>
+          <div className="p-4 border-t border-sidebar-border">
+            <Button variant="ghost" className="w-full justify-start gap-3 text-sidebar-foreground/60 hover:text-sidebar-foreground" onClick={signOut}>
               <LogOut className="w-5 h-5" />Sair
             </Button>
           </div>
@@ -1253,20 +1253,84 @@ const PixelsPage = () => {
   );
 };
 
-// ============ SUPORTE ============
+// ============ SUPORTE (chat real) ============
 
-const SuportePage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Suporte</h1>
-    <Card>
-      <CardHeader><CardTitle>Falar com Suporte</CardTitle><CardDescription>Seg-Sex, 9h às 18h</CardDescription></CardHeader>
-      <CardContent className="space-y-3">
-        <Button variant="gold" className="w-full" onClick={() => toast.info("Chat em breve!")}><MessageCircle className="w-4 h-4 mr-2" />Iniciar Conversa</Button>
-        <Button variant="outline" className="w-full" onClick={() => window.open("https://wa.me/5511999990000", "_blank")}><Phone className="w-4 h-4 mr-2" />WhatsApp</Button>
-      </CardContent>
-    </Card>
-  </div>
-);
+const SuportePage = () => {
+  const { user } = useAuth();
+  const [chats, setChats] = useState<any[]>([]);
+  const [activeChat, setActiveChat] = useState<any>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [newMsg, setNewMsg] = useState("");
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("support_chats").select("*").eq("user_id", user.id).order("updated_at", { ascending: false }).then(({ data }) => {
+      setChats(data || []);
+      if (data && data.length > 0) { setActiveChat(data[0]); loadMessages(data[0].id); }
+    });
+  }, [user]);
+
+  const loadMessages = async (chatId: string) => {
+    const { data } = await supabase.from("support_messages").select("*").eq("chat_id", chatId).order("created_at", { ascending: true });
+    setMessages(data || []);
+  };
+
+  const startNewChat = async () => {
+    if (!user) return;
+    const { data, error } = await supabase.from("support_chats").insert({ user_id: user.id }).select().single();
+    if (error) { toast.error("Erro ao iniciar chat."); return; }
+    setActiveChat(data);
+    setChats([data, ...chats]);
+    setMessages([]);
+  };
+
+  const sendMessage = async () => {
+    if (!newMsg.trim() || !activeChat || !user) return;
+    setSending(true);
+    const { error } = await supabase.from("support_messages").insert({
+      chat_id: activeChat.id, sender_id: user.id, message: newMsg.trim(), is_from_support: false,
+    });
+    setSending(false);
+    if (error) { toast.error("Erro ao enviar."); return; }
+    setNewMsg("");
+    loadMessages(activeChat.id);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-2xl font-bold">Suporte</h1>
+        <Button variant="gold" onClick={startNewChat}><MessageCircle className="w-4 h-4 mr-2" />Nova Conversa</Button>
+      </div>
+      {!activeChat ? (
+        <Card><CardContent className="py-12 text-center"><MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum chat aberto.</p><Button variant="gold" className="mt-4" onClick={startNewChat}>Iniciar Conversa</Button></CardContent></Card>
+      ) : (
+        <Card>
+          <CardHeader className="border-b"><CardTitle className="text-sm">Chat #{activeChat.id.slice(0,8)} • {activeChat.status === 'open' ? 'Aberto' : activeChat.status === 'in_progress' ? 'Em Atendimento' : 'Fechado'}</CardTitle></CardHeader>
+          <CardContent className="p-0">
+            <div className="h-80 overflow-y-auto p-4 space-y-3">
+              {messages.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-8">Envie sua primeira mensagem.</p>
+              ) : messages.map(m => (
+                <div key={m.id} className={`flex ${m.is_from_support ? 'justify-start' : 'justify-end'}`}>
+                  <div className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${m.is_from_support ? 'bg-muted text-foreground' : 'bg-primary text-primary-foreground'}`}>
+                    {m.message}
+                    <p className="text-[10px] opacity-60 mt-1">{new Date(m.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t flex gap-2">
+              <Input placeholder="Digite sua mensagem..." value={newMsg} onChange={e => setNewMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} />
+              <Button variant="gold" onClick={sendMessage} disabled={sending}>Enviar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
 
 // ============ CONFIGURAÇÕES ============
 
