@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Calendar, Gift, History, Bell, User, LogOut, Menu, X, QrCode,
-  Users, Clock, Search, MapPin, Star, ChevronRight, Phone
+  Users, Clock, Search, MapPin, Star, ChevronRight, Phone, Wallet, MessageCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
@@ -26,10 +26,12 @@ const ClienteDashboard = () => {
   const navigation = [
     { name: "Agendar", href: basePath, icon: Calendar },
     { name: "Meus Agendamentos", href: `${basePath}/agendamentos`, icon: Clock },
+    { name: "Minhas Dívidas", href: `${basePath}/dividas`, icon: Wallet },
     { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
     { name: "Histórico", href: `${basePath}/historico`, icon: History },
     { name: "Indique Amigos", href: `${basePath}/indicar`, icon: Users },
     { name: "Ação entre Amigos", href: `${basePath}/acao-entre-amigos`, icon: Gift },
+    { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
     { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
   ];
@@ -42,29 +44,29 @@ const ClienteDashboard = () => {
   return (
     <div className="min-h-screen bg-background flex">
       {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-200 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border transform transition-transform duration-200 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
         <div className="flex flex-col h-full">
-          <div className="p-4 border-b border-border flex items-center justify-between">
+          <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
             <Link to={basePath} className="flex items-center gap-2">
               <img src={logo} alt="Logo" className="w-8 h-8" />
-              <span className="font-display font-bold text-lg text-gradient-gold">SalãoCashBack</span>
+              <span className="font-display font-bold text-lg text-sidebar-primary">SalãoCashBack</span>
             </Link>
-            <button className="lg:hidden text-muted-foreground" onClick={() => setSidebarOpen(false)}><X className="w-5 h-5" /></button>
+            <button className="lg:hidden text-sidebar-foreground/60" onClick={() => setSidebarOpen(false)}><X className="w-5 h-5" /></button>
           </div>
-          <div className="p-4 border-b border-border">
-            <p className="font-medium truncate">{profile?.name || "Cliente"}</p>
-            <p className="text-sm text-muted-foreground truncate">{profile?.whatsapp || profile?.email}</p>
+          <div className="p-4 border-b border-sidebar-border">
+            <p className="font-medium truncate text-sidebar-foreground">{profile?.name || "Cliente"}</p>
+            <p className="text-sm text-sidebar-foreground/60 truncate">{profile?.whatsapp || profile?.email}</p>
           </div>
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navigation.map((item) => (
               <Link key={item.name} to={item.href} onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(item.href) ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(item.href) ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground/60 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground"}`}>
                 <item.icon className="w-5 h-5" />{item.name}
               </Link>
             ))}
           </nav>
-          <div className="p-4 border-t border-border">
-            <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground" onClick={signOut}><LogOut className="w-5 h-5" />Sair</Button>
+          <div className="p-4 border-t border-sidebar-border">
+            <Button variant="ghost" className="w-full justify-start gap-3 text-sidebar-foreground/60 hover:text-sidebar-foreground" onClick={signOut}><LogOut className="w-5 h-5" />Sair</Button>
           </div>
         </div>
       </aside>
@@ -81,11 +83,13 @@ const ClienteDashboard = () => {
           <Routes>
             <Route index element={<HomePage />} />
             <Route path="agendamentos" element={<AgendamentosPage />} />
+            <Route path="dividas" element={<MinhasDividasPage />} />
             <Route path="cashback" element={<CashbackPage />} />
             <Route path="historico" element={<HistoricoPage />} />
             <Route path="indicar" element={<IndicarPage />} />
             <Route path="acao-entre-amigos" element={<AcaoEntreAmigosPage />} />
             <Route path="rifas" element={<AcaoEntreAmigosPage />} />
+            <Route path="suporte" element={<SuporteClientePage />} />
             <Route path="notificacoes" element={<NotificacoesPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Routes>
@@ -116,8 +120,8 @@ const HomePage = () => {
         <button onClick={() => navigate("/app/cashback")} className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-center hover:bg-primary/20 transition-colors">
           <Gift className="w-6 h-6 text-primary mx-auto mb-1" /><span className="text-xs font-medium text-primary">Meu Cashback</span>
         </button>
-        <button onClick={() => navigate("/app/indicar")} className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-center hover:bg-primary/20 transition-colors">
-          <Users className="w-6 h-6 text-primary mx-auto mb-1" /><span className="text-xs font-medium text-primary">Indicar</span>
+        <button onClick={() => navigate("/app/dividas")} className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-center hover:bg-destructive/20 transition-colors">
+          <Wallet className="w-6 h-6 text-destructive mx-auto mb-1" /><span className="text-xs font-medium text-destructive">Dívidas</span>
         </button>
       </div>
       <div className="relative"><Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" /><Input placeholder="Buscar barbearia..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" /></div>
@@ -152,10 +156,64 @@ const AgendamentosPage = () => {
         <h1 className="font-display text-2xl font-bold">Meus Agendamentos</h1>
         <Button variant="gold" onClick={() => navigate("/app")}><Calendar className="w-4 h-4 mr-2" />Novo</Button>
       </div>
-      <div className="flex gap-2">{["Próximos", "Concluídos", "Cancelados"].map((tab, i) => (
-        <button key={tab} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${i === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>{tab}</button>
-      ))}</div>
       <Card><CardContent className="py-12 text-center"><Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum agendamento encontrado.</p><Button variant="gold" className="mt-4" onClick={() => navigate("/app")}>Fazer meu primeiro agendamento</Button></CardContent></Card>
+    </div>
+  );
+};
+
+// ============ MINHAS DÍVIDAS (view for client) ============
+
+const MinhasDividasPage = () => {
+  const { user } = useAuth();
+  const [debts, setDebts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("debts").select("*, barbershops:barbershop_id(name)")
+      .eq("client_user_id", user.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => { setDebts(data || []); setLoading(false); });
+  }, [user]);
+
+  const totalPending = debts.filter(d => d.status === 'pending').reduce((s, d) => s + Number(d.amount), 0);
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Minhas Dívidas</h1>
+      {totalPending > 0 && (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div><p className="text-sm text-muted-foreground">Total Pendente</p><p className="text-2xl font-bold text-destructive">R$ {totalPending.toFixed(2)}</p></div>
+            <Wallet className="w-8 h-8 text-destructive" />
+          </CardContent>
+        </Card>
+      )}
+      {loading ? (
+        <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>
+      ) : debts.length === 0 ? (
+        <Card><CardContent className="py-12 text-center"><Wallet className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhuma dívida pendente. Tudo certo! 🎉</p></CardContent></Card>
+      ) : (
+        <div className="space-y-3">
+          {debts.map(d => (
+            <Card key={d.id}><CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold">{(d as any).barbershops?.name || "Barbearia"}</p>
+                  <p className="text-sm text-muted-foreground">{d.description || "Fiado"}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(d.created_at).toLocaleDateString("pt-BR")}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-lg">R$ {Number(d.amount).toFixed(2)}</p>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${d.status === 'pending' ? 'bg-destructive/10 text-destructive' : 'bg-success/10 text-success'}`}>
+                    {d.status === 'pending' ? 'Pendente' : 'Pago'}
+                  </span>
+                </div>
+              </div>
+            </CardContent></Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -163,12 +221,12 @@ const AgendamentosPage = () => {
 const CashbackPage = () => (
   <div className="space-y-6">
     <h1 className="font-display text-2xl font-bold">Meu Cashback</h1>
-    <Card className="bg-gradient-card border-primary/20">
+    <Card className="border-primary/20 bg-primary/5">
       <CardHeader><CardDescription>Saldo Disponível</CardDescription><CardTitle className="text-4xl text-gradient-gold">R$ 0,00</CardTitle></CardHeader>
       <CardContent><p className="text-sm text-muted-foreground mb-3">Use seu cashback no próximo agendamento!</p><Button variant="gold" size="sm" onClick={() => toast.info("Cashback será aplicado automaticamente no próximo agendamento.")}>Como usar?</Button></CardContent>
     </Card>
     <Card><CardHeader><CardTitle>Histórico de Cashback</CardTitle></CardHeader>
-      <CardContent className="text-center py-8"><Gift className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum cashback recebido ainda.</p><p className="text-sm text-muted-foreground mt-2">Faça um agendamento para começar a ganhar!</p></CardContent>
+      <CardContent className="text-center py-8"><Gift className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum cashback recebido ainda.</p></CardContent>
     </Card>
   </div>
 );
@@ -176,9 +234,6 @@ const CashbackPage = () => (
 const HistoricoPage = () => (
   <div className="space-y-6">
     <h1 className="font-display text-2xl font-bold">Histórico</h1>
-    <div className="flex gap-2">{["Todos", "Pagamentos", "Cashback"].map((tab, i) => (
-      <button key={tab} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${i === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>{tab}</button>
-    ))}</div>
     <Card><CardContent className="py-12 text-center"><History className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum histórico encontrado.</p></CardContent></Card>
   </div>
 );
@@ -188,7 +243,7 @@ const IndicarPage = () => {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Indique e Ganhe</h1>
-      <Card className="bg-gradient-card border-primary/20">
+      <Card className="border-primary/20 bg-primary/5">
         <CardHeader><CardTitle>Ganhe cashback indicando amigos!</CardTitle><CardDescription>Quando seu amigo fizer o primeiro agendamento, vocês dois ganham R$ 10,00 de cashback.</CardDescription></CardHeader>
         <CardContent className="space-y-4">
           <div><Label className="text-xs text-muted-foreground">SEU CÓDIGO DE INDICAÇÃO</Label>
@@ -206,21 +261,121 @@ const IndicarPage = () => {
       <div className="grid grid-cols-3 gap-3">
         <Card className="text-center"><CardContent className="pt-4 pb-4"><p className="text-2xl font-bold">0</p><p className="text-xs text-muted-foreground">Indicados</p></CardContent></Card>
         <Card className="text-center"><CardContent className="pt-4 pb-4"><p className="text-2xl font-bold">0</p><p className="text-xs text-muted-foreground">Convertidos</p></CardContent></Card>
-        <Card className="text-center bg-gradient-card border-primary/20"><CardContent className="pt-4 pb-4"><p className="text-2xl font-bold text-gradient-gold">R$ 0</p><p className="text-xs text-muted-foreground">Ganhos</p></CardContent></Card>
+        <Card className="text-center border-primary/20"><CardContent className="pt-4 pb-4"><p className="text-2xl font-bold text-gradient-gold">R$ 0</p><p className="text-xs text-muted-foreground">Ganhos</p></CardContent></Card>
       </div>
-      <Card><CardHeader><CardTitle>Quero ser Afiliado SaaS</CardTitle><CardDescription>Indique barbearias para usar o SalãoCashBack e ganhe comissões recorrentes!</CardDescription></CardHeader>
-        <CardContent><Button variant="outline" className="w-full" onClick={() => toast.info("Entre em contato pelo WhatsApp para se tornar um Afiliado SaaS.")}>Saber mais sobre o programa</Button></CardContent>
-      </Card>
     </div>
   );
 };
 
-const NotificacoesPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Notificações</h1>
-    <Card><CardContent className="py-12 text-center"><Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhuma notificação.</p><p className="text-sm text-muted-foreground mt-2">As notificações de agendamentos e cashback aparecerão aqui.</p></CardContent></Card>
-  </div>
-);
+const NotificacoesPage = () => {
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<any[]>([]);
+  
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50).then(({ data }) => setNotifications(data || []));
+  }, [user]);
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Notificações</h1>
+      {notifications.length === 0 ? (
+        <Card><CardContent className="py-12 text-center"><Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhuma notificação.</p></CardContent></Card>
+      ) : (
+        <div className="space-y-2">
+          {notifications.map(n => (
+            <Card key={n.id} className={!n.is_read ? "border-primary/30 bg-primary/5" : ""}>
+              <CardContent className="p-4">
+                <p className="font-semibold text-sm">{n.title}</p>
+                <p className="text-sm text-muted-foreground">{n.message}</p>
+                <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString("pt-BR")}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============ SUPORTE (com chat real) ============
+
+const SuporteClientePage = () => {
+  const { user } = useAuth();
+  const [chats, setChats] = useState<any[]>([]);
+  const [activeChat, setActiveChat] = useState<any>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [newMsg, setNewMsg] = useState("");
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("support_chats").select("*").eq("user_id", user.id).order("updated_at", { ascending: false }).then(({ data }) => {
+      setChats(data || []);
+      if (data && data.length > 0) { setActiveChat(data[0]); loadMessages(data[0].id); }
+    });
+  }, [user]);
+
+  const loadMessages = async (chatId: string) => {
+    const { data } = await supabase.from("support_messages").select("*").eq("chat_id", chatId).order("created_at", { ascending: true });
+    setMessages(data || []);
+  };
+
+  const startNewChat = async () => {
+    if (!user) return;
+    const { data, error } = await supabase.from("support_chats").insert({ user_id: user.id }).select().single();
+    if (error) { toast.error("Erro ao iniciar chat."); return; }
+    setActiveChat(data);
+    setChats([data, ...chats]);
+    setMessages([]);
+  };
+
+  const sendMessage = async () => {
+    if (!newMsg.trim() || !activeChat || !user) return;
+    setSending(true);
+    const { error } = await supabase.from("support_messages").insert({
+      chat_id: activeChat.id, sender_id: user.id, message: newMsg.trim(), is_from_support: false,
+    });
+    setSending(false);
+    if (error) { toast.error("Erro ao enviar."); return; }
+    setNewMsg("");
+    loadMessages(activeChat.id);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-2xl font-bold">Suporte</h1>
+        <Button variant="gold" onClick={startNewChat}><MessageCircle className="w-4 h-4 mr-2" />Nova Conversa</Button>
+      </div>
+      {!activeChat ? (
+        <Card><CardContent className="py-12 text-center"><MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum chat aberto.</p><Button variant="gold" className="mt-4" onClick={startNewChat}>Iniciar Conversa</Button></CardContent></Card>
+      ) : (
+        <Card>
+          <CardHeader className="border-b"><CardTitle className="text-sm">Chat #{activeChat.id.slice(0,8)} • {activeChat.status}</CardTitle></CardHeader>
+          <CardContent className="p-0">
+            <div className="h-80 overflow-y-auto p-4 space-y-3">
+              {messages.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-8">Envie sua primeira mensagem.</p>
+              ) : messages.map(m => (
+                <div key={m.id} className={`flex ${m.is_from_support ? 'justify-start' : 'justify-end'}`}>
+                  <div className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${m.is_from_support ? 'bg-muted text-foreground' : 'bg-primary text-primary-foreground'}`}>
+                    {m.message}
+                    <p className="text-[10px] opacity-60 mt-1">{new Date(m.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t flex gap-2">
+              <Input placeholder="Digite sua mensagem..." value={newMsg} onChange={e => setNewMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} />
+              <Button variant="gold" onClick={sendMessage} disabled={sending}>Enviar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
 
 const PerfilPage = () => {
   const { profile, user } = useAuth();
@@ -286,11 +441,11 @@ const AcaoEntreAmigosPage = () => {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Ação entre Amigos</h1>
-      <Card className="bg-gradient-card border-primary/20">
+      <Card className="border-primary/20 bg-primary/5">
         <CardHeader><CardTitle>Participe e ganhe créditos!</CardTitle><CardDescription>O valor do prêmio é convertido em saldo para você usar no salão.</CardDescription></CardHeader>
       </Card>
       {loading ? (
-        <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+        <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>
       ) : raffles.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">Nenhuma ação aberta no momento.</CardContent></Card>
       ) : (
