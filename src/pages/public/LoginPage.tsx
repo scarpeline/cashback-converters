@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { useAuth, AppRole, getDashboardForRole } from "@/lib/auth";
 import { formatCpfCnpjBR, formatWhatsAppBR } from "@/lib/input-masks";
 import logo from "@/assets/logo.png";
-import logo from "@/assets/logo.png";
 import { z } from "zod";
 
 type UserType = "cliente" | "dono";
