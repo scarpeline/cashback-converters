@@ -430,6 +430,71 @@ const PerfilPage = () => {
   );
 };
 
+// ============ SERVIÇOS CONTÁBEIS (cliente solicita) ============
+const ServicosContabeisPage = () => {
+  const { user } = useAuth();
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ service_type: "mei_declaration", description: "" });
+
+  useEffect(() => {
+    if (!user) return;
+    (supabase as any).from("fiscal_service_requests").select("*").eq("client_user_id", user.id).order("created_at", { ascending: false }).then(({ data }: any) => { setRequests(data || []); setLoading(false); });
+  }, [user]);
+
+  const handleSubmit = async () => {
+    if (!user) return;
+    setSaving(true);
+    const { error } = await (supabase as any).from("fiscal_service_requests").insert({ client_user_id: user.id, service_type: form.service_type, description: form.description || null });
+    setSaving(false);
+    if (error) { toast.error("Erro: " + error.message); return; }
+    toast.success("Pedido enviado ao contador!");
+    setShowForm(false); setForm({ service_type: "mei_declaration", description: "" });
+    (supabase as any).from("fiscal_service_requests").select("*").eq("client_user_id", user.id).order("created_at", { ascending: false }).then(({ data }: any) => setRequests(data || []));
+  };
+
+  const serviceLabels: Record<string, string> = { mei_declaration: "Declaração MEI", me_declaration: "Declaração ME", income_tax: "Imposto de Renda", cnpj_opening: "Abertura de CNPJ", cnpj_closing: "Encerramento de CNPJ", other: "Outro" };
+  const statusLabels: Record<string, string> = { pending: "Pendente", accepted: "Aceito", in_progress: "Em Andamento", completed: "Concluído", rejected: "Rejeitado" };
+  const statusColors: Record<string, string> = { pending: "bg-primary/10 text-primary", accepted: "bg-blue-500/10 text-blue-600", in_progress: "bg-yellow-500/10 text-yellow-600", completed: "bg-success/10 text-success", rejected: "bg-destructive/10 text-destructive" };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-2xl font-bold">Serviços Contábeis</h1>
+        <Button variant="gold" onClick={() => setShowForm(!showForm)}><ClipboardList className="w-4 h-4 mr-2" />Solicitar</Button>
+      </div>
+      {showForm && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader><CardTitle>Solicitar Serviço</CardTitle><CardDescription>Envie seu pedido para um contador da plataforma</CardDescription></CardHeader>
+          <CardContent className="space-y-4">
+            <div><Label>Tipo de Serviço</Label>
+              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1" value={form.service_type} onChange={e => setForm({ ...form, service_type: e.target.value })}>
+                {Object.entries(serviceLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            </div>
+            <div><Label>Descrição / Observações</Label><Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Detalhes do que precisa..." className="mt-1" /></div>
+            <div className="flex gap-2"><Button variant="gold" onClick={handleSubmit} disabled={saving}>{saving ? "Enviando..." : "Enviar Pedido"}</Button><Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button></div>
+          </CardContent>
+        </Card>
+      )}
+      {loading ? <Loader2 className="w-8 h-8 animate-spin mx-auto" /> : requests.length === 0 ? (
+        <Card><CardContent className="py-12 text-center"><FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum pedido realizado.</p></CardContent></Card>
+      ) : (
+        <div className="space-y-3">{requests.map(r => (
+          <Card key={r.id}><CardContent className="p-4">
+            <div className="flex justify-between items-center">
+              <div><p className="font-semibold">{serviceLabels[r.service_type] || r.service_type}</p>{r.description && <p className="text-sm text-muted-foreground">{r.description}</p>}<p className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("pt-BR")}</p></div>
+              <span className={`text-xs px-2 py-1 rounded-full ${statusColors[r.status] || ""}`}>{statusLabels[r.status] || r.status}</span>
+            </div>
+          </CardContent></Card>
+        ))}</div>
+      )}
+    </div>
+  );
+};
+
 const AcaoEntreAmigosPage = () => {
   const [raffles, setRaffles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
