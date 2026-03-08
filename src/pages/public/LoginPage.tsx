@@ -6,9 +6,8 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Eye, EyeOff, Loader2, User, Scissors, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole, getDashboardForRole } from "@/lib/auth";
-// AuthGuard removed - redirect handled by useEffect
-import { supabase } from "@/integrations/supabase/client";
 import { formatCpfCnpjBR, formatWhatsAppBR } from "@/lib/input-masks";
+import logo from "@/assets/logo.png";
 import logo from "@/assets/logo.png";
 import { z } from "zod";
 
