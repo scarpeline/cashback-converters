@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,6 +34,30 @@ serve(async (req) => {
       );
     }
 
+    // ============================================
+    // RATE LIMITING
+    // ============================================
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const actionType = action === "whatsapp" ? "send_whatsapp" : "send_sms";
+    // Max 5 SMS/WhatsApp per number per minute
+    const { data: allowed } = await supabase.rpc("check_rate_limit", {
+      _identifier: to,
+      _action_type: actionType,
+      _max_requests: 5,
+      _window_seconds: 60,
+    });
+
+    if (allowed === false) {
+      console.warn(`[SEND_SMS] Rate limit exceeded for ${to}`);
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Normalize phone number to E.164
     let phone = to.replace(/\D/g, "");
     if (!phone.startsWith("55")) phone = "55" + phone;
@@ -51,7 +76,6 @@ serve(async (req) => {
         messageBody = `SalãoCashBack: ${otpCode} - Código de verificação (${expMin}min)`;
       }
     } else if (action === "whatsapp") {
-      // Send via WhatsApp using Twilio WhatsApp sandbox/API
       messageBody = body || "Mensagem do SalãoCashBack";
       
       const whatsappFrom = `whatsapp:${TWILIO_PHONE_NUMBER}`;
@@ -90,7 +114,6 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     } else {
-      // Default: SMS
       messageBody = body || "Mensagem do SalãoCashBack";
     }
 
