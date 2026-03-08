@@ -452,12 +452,15 @@ const ServicosPage = () => {
   );
 };
 
-// ============ FINANCEIRO ============
+// ============ FINANCEIRO + REPASSE COMISSÕES ============
 
 const FinanceiroPage = () => {
   const { barbershop } = useBarbershop();
+  const { professionals } = useProfessionals(barbershop?.id);
   const [payments, setPayments] = useState<any[]>([]);
-  const [commissions, setCommissions] = useState<any[]>([]);
+  const [showPayout, setShowPayout] = useState(false);
+  const [payoutMode, setPayoutMode] = useState<"manual" | "auto">("manual");
+  const [payingId, setPayingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!barbershop?.id) return;
@@ -466,6 +469,25 @@ const FinanceiroPage = () => {
 
   const totalReceived = payments.filter(p => p.status === 'paid' || p.status === 'confirmed').reduce((s, p) => s + Number(p.amount), 0);
   const totalPending = payments.filter(p => p.status === 'pending').reduce((s, p) => s + Number(p.amount), 0);
+
+  const handlePayProfessional = async (prof: any) => {
+    setPayingId(prof.id);
+    try {
+      const commAmount = totalReceived * (Number(prof.commission_percentage) / 100);
+      if (commAmount <= 0) { toast.error("Sem valor para repasse."); setPayingId(null); return; }
+      if (prof.pix_key || prof.asaas_wallet_id) {
+        await supabase.functions.invoke("process-payment", {
+          body: { action: "transfer", amount: commAmount, recipient_wallet_id: prof.asaas_wallet_id, pix_key: prof.pix_key, description: `Comissão ${prof.name}` },
+        });
+        toast.success(`R$ ${commAmount.toFixed(2)} enviado para ${prof.name}!`);
+      } else {
+        toast.error(`${prof.name} não tem PIX cadastrado. Peça para configurar em Conta Bancária.`);
+      }
+    } catch {
+      toast.error("Erro ao processar repasse.");
+    }
+    setPayingId(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -478,6 +500,62 @@ const FinanceiroPage = () => {
         <Card><CardHeader><CardDescription>Pendente</CardDescription><CardTitle className="text-2xl">R$ {totalPending.toFixed(2)}</CardTitle></CardHeader></Card>
         <Card><CardHeader><CardDescription>Faturamento do Mês</CardDescription><CardTitle className="text-2xl">R$ {(totalReceived + totalPending).toFixed(2)}</CardTitle></CardHeader></Card>
       </div>
+
+      {/* REPASSE DE COMISSÕES */}
+      <Card className="border-secondary/20">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2"><Repeat className="w-5 h-5" />Repasse de Comissões</CardTitle>
+              <CardDescription>Repasse automático ou manual para profissionais</CardDescription>
+            </div>
+            <Button variant={showPayout ? "outline" : "gold"} size="sm" onClick={() => setShowPayout(!showPayout)}>
+              {showPayout ? "Fechar" : "Gerenciar Repasses"}
+            </Button>
+          </div>
+        </CardHeader>
+        {showPayout && (
+          <CardContent className="space-y-4">
+            <div className="flex gap-2 mb-4">
+              <Button variant={payoutMode === "manual" ? "gold" : "outline"} size="sm" onClick={() => setPayoutMode("manual")}>Manual</Button>
+              <Button variant={payoutMode === "auto" ? "gold" : "outline"} size="sm" onClick={() => setPayoutMode("auto")}>Automático</Button>
+            </div>
+            {payoutMode === "auto" && (
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">No modo automático, ao concluir um atendimento o sistema divide automaticamente o valor entre dono e profissional via split no gateway de pagamento.</p>
+                <p className="text-sm font-medium mt-2 text-primary">✓ Split automático ativo para novos pagamentos</p>
+              </div>
+            )}
+            {payoutMode === "manual" && (
+              <div className="space-y-3">
+                {professionals.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhum profissional cadastrado.</p>
+                ) : professionals.map(prof => {
+                  const commAmount = totalReceived * (Number(prof.commission_percentage) / 100);
+                  return (
+                    <div key={prof.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{prof.name}</p>
+                        <p className="text-sm text-muted-foreground">Comissão: {prof.commission_percentage}% • PIX: {prof.pix_key || "Não cadastrado"}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="font-bold text-gradient-gold">R$ {commAmount.toFixed(2)}</p>
+                          <p className="text-xs text-muted-foreground">estimado</p>
+                        </div>
+                        <Button size="sm" variant="gold" disabled={payingId === prof.id || commAmount <= 0} onClick={() => handlePayProfessional(prof)}>
+                          {payingId === prof.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign className="w-4 h-4" />}
+                          Pagar
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        )}
+      </Card>
 
       <Card>
         <CardHeader><CardTitle>Comissões de Afiliados</CardTitle><CardDescription>Comissões pagas e pendentes</CardDescription></CardHeader>
@@ -492,11 +570,6 @@ const FinanceiroPage = () => {
       <Card>
         <CardHeader><CardTitle>Cashback por Serviço</CardTitle><CardDescription>Créditos vinculados a clientes</CardDescription></CardHeader>
         <CardContent className="text-center py-6"><Gift className="w-8 h-8 text-muted-foreground mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum cashback distribuído ainda.</p></CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle>Créditos de Ação entre Amigos</CardTitle></CardHeader>
-        <CardContent className="text-center py-6"><Gift className="w-8 h-8 text-muted-foreground mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum crédito de sorteio registrado.</p></CardContent>
       </Card>
 
       {payments.length > 0 && (
