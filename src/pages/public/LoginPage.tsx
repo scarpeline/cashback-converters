@@ -147,8 +147,8 @@ const PublicLoginPage = () => {
 
         toast.success("Login realizado com sucesso!");
         // onAuthStateChange will load roles and the useEffect above will redirect
-        // Set a safety timeout to release loading state
-        setTimeout(() => setLoading(false), 8000);
+        // Release loading after 3s max — if redirect hasn't happened, user can retry
+        setTimeout(() => setLoading(false), 3000);
         return;
       } else {
         // Signup - email is required for business users
