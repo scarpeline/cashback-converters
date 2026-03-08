@@ -324,15 +324,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
     const startTime = Date.now();
-    // Track the current user ID to avoid reloading roles for the same user
     let currentUserId: string | null = null;
 
-    // 1. Set up listener for ONGOING changes (does NOT control loading/authResolved)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
         if (!isMounted) return;
-
-        // Skip INITIAL_SESSION - handled by initializeAuth below
         if (event === 'INITIAL_SESSION') return;
 
         setSession(currentSession);
@@ -340,25 +336,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (currentSession?.user) {
           const incomingUserId = currentSession.user.id;
-          // Only reload user data if the user ID actually changed (new login)
-          // TOKEN_REFRESHED with same user should NOT clear roles
-          if (incomingUserId !== currentUserId || event === 'SIGNED_IN') {
-            currentUserId = incomingUserId;
-            await loadUserComplete(currentSession.user);
+          const shouldReload = incomingUserId !== currentUserId || event === 'SIGNED_IN';
+          currentUserId = incomingUserId;
+
+          // Critical: never await inside onAuthStateChange callback
+          if (shouldReload) {
+            queueMicrotask(() => {
+              if (!isMounted) return;
+              void runUserLoad(currentSession.user, true);
+            });
           }
         } else if (event === 'SIGNED_OUT' || !currentSession) {
-          // Logged out - clear everything
           currentUserId = null;
           setProfile(null);
           setRoles([]);
           roleBootstrapAttemptedRef.current = false;
+          userLoadInFlightRef.current = null;
+          userLoadInFlightUserIdRef.current = null;
         }
       }
     );
 
-    // 2. INITIAL load - controls loading, authResolved, initialLoadComplete
     const initializeAuth = async () => {
-      // Safety timeout: force resolve after 6 seconds no matter what
+      // Safety timeout (increased to reduce false-positives on slower networks)
       const safetyTimer = setTimeout(() => {
         if (isMounted) {
           console.warn('[AUTH] Safety timeout reached - forcing auth resolved');
@@ -367,7 +367,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setInitialLoadComplete(true);
           setAuthResolved(true);
         }
-      }, 6000);
+      }, 10000);
 
       try {
         const { data: { session: existingSession }, error } = await supabase.auth.getSession();
@@ -377,7 +377,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         if (!isMounted) return;
 
-        // LOG ONCE
         logAuthStart({ token_existe: !!existingSession?.access_token });
 
         setSession(existingSession);
@@ -393,17 +392,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
         }
 
+        // Do not block auth resolution waiting for profile/roles
         if (existingSession?.user && validation.isValid) {
-          try {
-            await loadUserComplete(existingSession.user);
+          currentUserId = existingSession.user.id;
+          void runUserLoad(existingSession.user, true).then((fetchedRoles) => {
             logDebugSummary('Initial Auth Complete', {
               user_id: existingSession.user.id,
               email: existingSession.user.email,
               session_valid: validation.isValid,
+              roles: fetchedRoles,
             });
-          } catch (userDataError) {
-            console.error('[AUTH] Failed to load user data during init:', userDataError);
-          }
+          });
         }
       } catch (error) {
         logCriticalError("initializeAuth", error);
@@ -413,7 +412,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const duration = Date.now() - startTime;
           logLoadComplete({ duration_ms: duration, status: 'liberado' });
           setLoading(false);
-          setProfileLoading(false);
           setInitialLoadComplete(true);
           setAuthResolved(true);
         }
@@ -427,7 +425,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [runUserLoad]);
 
   // ============================================
   // AUTH METHODS
