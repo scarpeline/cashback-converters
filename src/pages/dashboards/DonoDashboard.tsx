@@ -184,14 +184,29 @@ function useBarbershop() {
   const [loading, setLoading] = useState(true);
 
   const refetch = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setBarbershop(null);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    const { data } = await supabase
+
+    const { data, error } = await supabase
       .from("barbershops")
       .select("*")
       .eq("owner_user_id", user.id)
-      .maybeSingle();
-    setBarbershop(data);
+      .order("created_at", { ascending: true })
+      .limit(1);
+
+    if (error) {
+      console.error("[DONO_DASHBOARD] Failed to load barbershop:", error.message);
+      setBarbershop(null);
+      setLoading(false);
+      return;
+    }
+
+    setBarbershop(data?.[0] ?? null);
     setLoading(false);
   }, [user]);
 
