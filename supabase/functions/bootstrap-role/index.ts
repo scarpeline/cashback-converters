@@ -54,17 +54,85 @@ serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
+    const action = typeof body?.action === "string" ? body.action : null;
     const userId = typeof body?.user_id === "string" ? body.user_id : null;
     const email = typeof body?.email === "string" ? body.email : null;
 
+    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // --- Action: create-professional (called by dono) ---
+    if (action === "create-professional") {
+      if (!jwtUserId) {
+        return json({ error: "Unauthorized" }, 401);
+      }
+      const proEmail = body.email;
+      const proPassword = body.password;
+      const proName = body.name;
+      const barbershopId = body.barbershop_id;
+      const proWhatsapp = body.whatsapp || null;
+      const commissionPct = body.commission_percentage || 60;
+
+      if (!proEmail || !proPassword || !proName || !barbershopId) {
+        return json({ error: "Missing required fields" }, 400);
+      }
+
+      // Verify caller owns the barbershop
+      const { data: ownership } = await admin
+        .from("barbershops")
+        .select("id")
+        .eq("id", barbershopId)
+        .eq("owner_user_id", jwtUserId)
+        .maybeSingle();
+
+      if (!ownership) {
+        return json({ error: "Not the owner of this barbershop" }, 403);
+      }
+
+      // Create auth user
+      const { data: newUser, error: createErr } = await admin.auth.admin.createUser({
+        email: proEmail,
+        password: proPassword,
+        email_confirm: true,
+        user_metadata: { name: proName },
+      });
+
+      if (createErr) {
+        return json({ error: createErr.message }, 400);
+      }
+
+      const newUserId = newUser.user.id;
+
+      // Create profile
+      await admin.from("profiles").upsert({
+        user_id: newUserId,
+        name: proName,
+        email: proEmail,
+        whatsapp: proWhatsapp,
+      }, { onConflict: "user_id" });
+
+      // Assign role
+      await ensureRole(admin, newUserId, "profissional");
+
+      // Create professional record
+      await admin.from("professionals").insert({
+        barbershop_id: barbershopId,
+        user_id: newUserId,
+        name: proName,
+        email: proEmail,
+        whatsapp: proWhatsapp,
+        commission_percentage: commissionPct,
+      });
+
+      return json({ success: true, user_id: newUserId });
+    }
+
+    // --- Default bootstrap flow ---
     if (!userId || !jwtUserId || userId !== jwtUserId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // 1) Super Admin (por lista autorizada)
     if (email) {
