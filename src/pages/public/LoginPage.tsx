@@ -74,6 +74,13 @@ const PublicLoginPage = () => {
     }
   }, [user, authResolved, roles, getPrimaryRole, navigate]);
 
+  // Failsafe: libera botão assim que auth/roles resolverem
+  useEffect(() => {
+    if (loading && user && authResolved && roles.length > 0) {
+      setLoading(false);
+    }
+  }, [loading, user, authResolved, roles]);
+
   const isBusinessUser = userType === "dono";
 
   const validateForm = () => {
