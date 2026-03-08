@@ -263,9 +263,18 @@ const ContaBancariaPage = () => {
     setSaving(true);
     const bankData = { bank_name: form.bank_name, agency: form.agency, account: form.account, account_type: form.account_type, pix_key_type: form.pix_key_type };
     const { error } = await supabase.from("profiles").update({ bank_info: bankData, pix_key: form.pix_key, cpf_cnpj: form.cpf_cnpj }).eq("user_id", user!.id);
+    if (error) { toast.error("Erro: " + error.message); setSaving(false); return; }
+    // Create wallet on gateway
+    try {
+      await supabase.functions.invoke("process-payment", {
+        body: { action: "create-wallet", user_id: user!.id, cpf_cnpj: form.cpf_cnpj, name: profile?.name, pix_key: form.pix_key },
+      });
+      toast.success("Conta bancária salva e carteira criada no gateway!");
+    } catch {
+      toast.success("Conta bancária salva! Carteira será criada automaticamente.");
+    }
     setSaving(false);
-    if (error) { toast.error("Erro: " + error.message); return; }
-    toast.success("Conta bancária salva!"); setBankInfo(bankData); setEditing(false);
+    setBankInfo(bankData); setEditing(false);
   };
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
