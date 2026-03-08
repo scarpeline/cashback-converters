@@ -268,6 +268,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchUserData, bootstrapRoles, ensureInitialRole]);
 
+  const runUserLoad = useCallback(async (sessionUser: User, force = false): Promise<AppRole[]> => {
+    if (
+      !force &&
+      userLoadInFlightRef.current &&
+      userLoadInFlightUserIdRef.current === sessionUser.id
+    ) {
+      return userLoadInFlightRef.current;
+    }
+
+    const runner = loadUserComplete(sessionUser)
+      .catch((error) => {
+        logCriticalError("runUserLoad", error);
+        return [] as AppRole[];
+      })
+      .finally(() => {
+        if (userLoadInFlightRef.current === runner) {
+          userLoadInFlightRef.current = null;
+          userLoadInFlightUserIdRef.current = null;
+        }
+      });
+
+    userLoadInFlightRef.current = runner;
+    userLoadInFlightUserIdRef.current = sessionUser.id;
+
+    return runner;
+  }, [loadUserComplete]);
+
   // ============================================
   // SESSION MANAGEMENT
   // ============================================
