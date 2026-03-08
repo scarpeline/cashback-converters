@@ -341,8 +341,13 @@ export type Database = {
       barbershops: {
         Row: {
           address: string | null
+          affiliate_auto_pay: boolean | null
+          affiliate_commission_pct: number | null
+          affiliate_reward_type: string | null
           asaas_customer_id: string | null
           asaas_wallet_id: string | null
+          automation_schedule: Json | null
+          cashback_percentage: number | null
           created_at: string
           description: string | null
           id: string
@@ -358,8 +363,13 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          affiliate_auto_pay?: boolean | null
+          affiliate_commission_pct?: number | null
+          affiliate_reward_type?: string | null
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
+          automation_schedule?: Json | null
+          cashback_percentage?: number | null
           created_at?: string
           description?: string | null
           id?: string
@@ -375,8 +385,13 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          affiliate_auto_pay?: boolean | null
+          affiliate_commission_pct?: number | null
+          affiliate_reward_type?: string | null
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
+          automation_schedule?: Json | null
+          cashback_percentage?: number | null
           created_at?: string
           description?: string | null
           id?: string
@@ -432,6 +447,66 @@ export type Database = {
             columns: ["barbershop_id"]
             isOneToOne: false
             referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      debts: {
+        Row: {
+          amount: number
+          barbershop_id: string
+          client_name: string
+          client_user_id: string | null
+          client_whatsapp: string | null
+          created_at: string
+          description: string | null
+          id: string
+          paid_at: string | null
+          payment_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          barbershop_id: string
+          client_name: string
+          client_user_id?: string | null
+          client_whatsapp?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          barbershop_id?: string
+          client_name?: string
+          client_user_id?: string | null
+          client_whatsapp?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debts_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "debts_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
             referencedColumns: ["id"]
           },
         ]
@@ -704,6 +779,71 @@ export type Database = {
           started_at?: string | null
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      messaging_credits: {
+        Row: {
+          barbershop_id: string
+          channel: string
+          id: string
+          remaining: number
+          total_purchased: number
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          channel?: string
+          id?: string
+          remaining?: number
+          total_purchased?: number
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          channel?: string
+          id?: string
+          remaining?: number
+          total_purchased?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messaging_credits_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messaging_packages: {
+        Row: {
+          channel: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          price: number
+          quantity: number
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price: number
+          quantity: number
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          quantity?: number
         }
         Relationships: []
       }
@@ -987,6 +1127,56 @@ export type Database = {
         }
         Relationships: []
       }
+      raffles: {
+        Row: {
+          barbershop_id: string
+          created_at: string
+          credit_award: number
+          description: string | null
+          id: string
+          max_tickets: number
+          name: string
+          status: string
+          ticket_price: number
+          updated_at: string
+          winner_user_id: string | null
+        }
+        Insert: {
+          barbershop_id: string
+          created_at?: string
+          credit_award?: number
+          description?: string | null
+          id?: string
+          max_tickets?: number
+          name: string
+          status?: string
+          ticket_price?: number
+          updated_at?: string
+          winner_user_id?: string | null
+        }
+        Update: {
+          barbershop_id?: string
+          created_at?: string
+          credit_award?: number
+          description?: string | null
+          id?: string
+          max_tickets?: number
+          name?: string
+          status?: string
+          ticket_price?: number
+          updated_at?: string
+          winner_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raffles_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limits: {
         Row: {
           action_type: string
@@ -1057,6 +1247,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "services_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_items: {
+        Row: {
+          barbershop_id: string
+          buy_price: number
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          quantity: number
+          sell_price: number
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          buy_price?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          quantity?: number
+          sell_price?: number
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          buy_price?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          quantity?: number
+          sell_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_items_barbershop_id_fkey"
             columns: ["barbershop_id"]
             isOneToOne: false
             referencedRelation: "barbershops"
