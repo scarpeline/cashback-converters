@@ -1253,20 +1253,84 @@ const PixelsPage = () => {
   );
 };
 
-// ============ SUPORTE ============
+// ============ SUPORTE (chat real) ============
 
-const SuportePage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Suporte</h1>
-    <Card>
-      <CardHeader><CardTitle>Falar com Suporte</CardTitle><CardDescription>Seg-Sex, 9h às 18h</CardDescription></CardHeader>
-      <CardContent className="space-y-3">
-        <Button variant="gold" className="w-full" onClick={() => toast.info("Chat em breve!")}><MessageCircle className="w-4 h-4 mr-2" />Iniciar Conversa</Button>
-        <Button variant="outline" className="w-full" onClick={() => window.open("https://wa.me/5511999990000", "_blank")}><Phone className="w-4 h-4 mr-2" />WhatsApp</Button>
-      </CardContent>
-    </Card>
-  </div>
-);
+const SuportePage = () => {
+  const { user } = useAuth();
+  const [chats, setChats] = useState<any[]>([]);
+  const [activeChat, setActiveChat] = useState<any>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [newMsg, setNewMsg] = useState("");
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("support_chats").select("*").eq("user_id", user.id).order("updated_at", { ascending: false }).then(({ data }) => {
+      setChats(data || []);
+      if (data && data.length > 0) { setActiveChat(data[0]); loadMessages(data[0].id); }
+    });
+  }, [user]);
+
+  const loadMessages = async (chatId: string) => {
+    const { data } = await supabase.from("support_messages").select("*").eq("chat_id", chatId).order("created_at", { ascending: true });
+    setMessages(data || []);
+  };
+
+  const startNewChat = async () => {
+    if (!user) return;
+    const { data, error } = await supabase.from("support_chats").insert({ user_id: user.id }).select().single();
+    if (error) { toast.error("Erro ao iniciar chat."); return; }
+    setActiveChat(data);
+    setChats([data, ...chats]);
+    setMessages([]);
+  };
+
+  const sendMessage = async () => {
+    if (!newMsg.trim() || !activeChat || !user) return;
+    setSending(true);
+    const { error } = await supabase.from("support_messages").insert({
+      chat_id: activeChat.id, sender_id: user.id, message: newMsg.trim(), is_from_support: false,
+    });
+    setSending(false);
+    if (error) { toast.error("Erro ao enviar."); return; }
+    setNewMsg("");
+    loadMessages(activeChat.id);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-2xl font-bold">Suporte</h1>
+        <Button variant="gold" onClick={startNewChat}><MessageCircle className="w-4 h-4 mr-2" />Nova Conversa</Button>
+      </div>
+      {!activeChat ? (
+        <Card><CardContent className="py-12 text-center"><MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum chat aberto.</p><Button variant="gold" className="mt-4" onClick={startNewChat}>Iniciar Conversa</Button></CardContent></Card>
+      ) : (
+        <Card>
+          <CardHeader className="border-b"><CardTitle className="text-sm">Chat #{activeChat.id.slice(0,8)} • {activeChat.status === 'open' ? 'Aberto' : activeChat.status === 'in_progress' ? 'Em Atendimento' : 'Fechado'}</CardTitle></CardHeader>
+          <CardContent className="p-0">
+            <div className="h-80 overflow-y-auto p-4 space-y-3">
+              {messages.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-8">Envie sua primeira mensagem.</p>
+              ) : messages.map(m => (
+                <div key={m.id} className={`flex ${m.is_from_support ? 'justify-start' : 'justify-end'}`}>
+                  <div className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${m.is_from_support ? 'bg-muted text-foreground' : 'bg-primary text-primary-foreground'}`}>
+                    {m.message}
+                    <p className="text-[10px] opacity-60 mt-1">{new Date(m.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t flex gap-2">
+              <Input placeholder="Digite sua mensagem..." value={newMsg} onChange={e => setNewMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} />
+              <Button variant="gold" onClick={sendMessage} disabled={sending}>Enviar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
 
 // ============ CONFIGURAÇÕES ============
 
