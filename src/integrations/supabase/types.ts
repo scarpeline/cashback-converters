@@ -109,6 +109,48 @@ export type Database = {
           },
         ]
       }
+      affiliate_invites: {
+        Row: {
+          affiliate_type: string
+          commission_first: number | null
+          commission_recurring: number | null
+          commission_saas_tax: number | null
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          invite_code: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          affiliate_type?: string
+          commission_first?: number | null
+          commission_recurring?: number | null
+          commission_saas_tax?: number | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          invite_code?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          affiliate_type?: string
+          commission_first?: number | null
+          commission_recurring?: number | null
+          commission_saas_tax?: number | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          invite_code?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
       affiliates: {
         Row: {
           active_referrals: number | null
@@ -1297,6 +1339,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscription_plans: {
+        Row: {
+          asaas_checkout_id: string | null
+          created_at: string
+          duration_months: number
+          id: string
+          is_active: boolean | null
+          name: string
+          price: number
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          asaas_checkout_id?: string | null
+          created_at?: string
+          duration_months?: number
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price?: number
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          asaas_checkout_id?: string | null
+          created_at?: string
+          duration_months?: number
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       support_chats: {
         Row: {
