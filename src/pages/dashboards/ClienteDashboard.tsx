@@ -85,6 +85,7 @@ const ClienteDashboard = () => {
             <Route index element={<HomePage />} />
             <Route path="agendamentos" element={<AgendamentosPage />} />
             <Route path="dividas" element={<MinhasDividasPage />} />
+            <Route path="servicos-contabeis" element={<ServicosContabeisPage />} />
             <Route path="cashback" element={<CashbackPage />} />
             <Route path="historico" element={<HistoricoPage />} />
             <Route path="indicar" element={<IndicarPage />} />
