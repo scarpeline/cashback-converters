@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   LayoutDashboard, Users, Building2, DollarSign, Settings, Shield, Image, MessageCircle,
-  Bell, Calculator, LogOut, Menu, X, Activity, CheckCircle, TrendingUp, Plug, Loader2, Send, Phone
+  Bell, Calculator, LogOut, Menu, X, Activity, CheckCircle, TrendingUp, Plug, Loader2, Send, Phone,
+  LinkIcon, Edit, Calendar, UserPlus, Copy, ExternalLink
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -138,8 +139,7 @@ const DashboardHome = () => {
   );
 };
 
-// ============ SUPORTE ADMIN (chats reais) ============
-
+// ============ SUPORTE ADMIN ============
 const SuporteAdminPage = () => {
   const { user } = useAuth();
   const [chats, setChats] = useState<any[]>([]);
@@ -159,21 +159,15 @@ const SuporteAdminPage = () => {
     setMessages(data || []);
   };
 
-  const selectChat = (chat: any) => {
-    setActiveChat(chat);
-    loadMessages(chat.id);
-  };
+  const selectChat = (chat: any) => { setActiveChat(chat); loadMessages(chat.id); };
 
   const sendMessage = async () => {
     if (!newMsg.trim() || !activeChat || !user) return;
     setSending(true);
-    const { error } = await supabase.from("support_messages").insert({
-      chat_id: activeChat.id, sender_id: user.id, message: newMsg.trim(), is_from_support: true,
-    });
+    const { error } = await supabase.from("support_messages").insert({ chat_id: activeChat.id, sender_id: user.id, message: newMsg.trim(), is_from_support: true });
     setSending(false);
     if (error) { toast.error("Erro: " + error.message); return; }
-    setNewMsg("");
-    loadMessages(activeChat.id);
+    setNewMsg(""); loadMessages(activeChat.id);
   };
 
   const updateStatus = async (chatId: string, status: string) => {
@@ -186,7 +180,6 @@ const SuporteAdminPage = () => {
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Suporte - Atendimento</h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chat list */}
         <div className="space-y-2">
           <h2 className="font-semibold text-sm text-muted-foreground uppercase">Chamados ({chats.length})</h2>
           {loading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : chats.length === 0 ? (
@@ -195,32 +188,23 @@ const SuporteAdminPage = () => {
             <Card key={c.id} className={`cursor-pointer hover:border-primary transition-colors ${activeChat?.id === c.id ? 'border-primary bg-primary/5' : ''}`} onClick={() => selectChat(c)}>
               <CardContent className="p-3">
                 <div className="flex justify-between items-center">
-                  <div>
-                    <p className="font-medium text-sm">{(c as any).profiles?.name || "Usuário"}</p>
-                    <p className="text-xs text-muted-foreground">{(c as any).profiles?.whatsapp || (c as any).profiles?.email || ""}</p>
-                  </div>
+                  <div><p className="font-medium text-sm">{(c as any).profiles?.name || "Usuário"}</p><p className="text-xs text-muted-foreground">{(c as any).profiles?.whatsapp || (c as any).profiles?.email || ""}</p></div>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full ${c.status === 'open' ? 'bg-destructive/10 text-destructive' : c.status === 'in_progress' ? 'bg-primary/10 text-primary' : 'bg-success/10 text-success'}`}>
                     {c.status === 'open' ? 'Aberto' : c.status === 'in_progress' ? 'Em Atendimento' : 'Fechado'}
                   </span>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-1">{new Date(c.created_at).toLocaleString("pt-BR")}</p>
               </CardContent>
             </Card>
           ))}
         </div>
-        
-        {/* Chat messages */}
         <div className="lg:col-span-2">
           {!activeChat ? (
-            <Card><CardContent className="py-12 text-center"><MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Selecione um chat para responder.</p></CardContent></Card>
+            <Card><CardContent className="py-12 text-center"><MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Selecione um chat.</p></CardContent></Card>
           ) : (
             <Card>
               <CardHeader className="border-b py-3">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-sm">{(activeChat as any).profiles?.name}</CardTitle>
-                    <CardDescription className="text-xs">{(activeChat as any).profiles?.whatsapp || (activeChat as any).profiles?.email}</CardDescription>
-                  </div>
+                  <div><CardTitle className="text-sm">{(activeChat as any).profiles?.name}</CardTitle><CardDescription className="text-xs">{(activeChat as any).profiles?.whatsapp || (activeChat as any).profiles?.email}</CardDescription></div>
                   <div className="flex gap-2">
                     {activeChat.status === 'open' && <Button size="sm" variant="outline" onClick={() => updateStatus(activeChat.id, 'in_progress')}>Assumir</Button>}
                     {activeChat.status !== 'closed' && <Button size="sm" variant="outline" onClick={() => updateStatus(activeChat.id, 'closed')}>Fechar</Button>}
@@ -229,9 +213,7 @@ const SuporteAdminPage = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="h-80 overflow-y-auto p-4 space-y-3">
-                  {messages.length === 0 ? (
-                    <p className="text-center text-sm text-muted-foreground py-8">Nenhuma mensagem.</p>
-                  ) : messages.map(m => (
+                  {messages.length === 0 ? <p className="text-center text-sm text-muted-foreground py-8">Nenhuma mensagem.</p> : messages.map(m => (
                     <div key={m.id} className={`flex ${m.is_from_support ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${m.is_from_support ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-foreground'}`}>
                         {m.message}
@@ -254,7 +236,6 @@ const SuporteAdminPage = () => {
 };
 
 // ============ NOTIFICAÇÕES ADMIN ============
-
 const NotificacoesAdminPage = () => {
   const [target, setTarget] = useState<"all" | "donos" | "profissionais" | "clientes">("all");
   const [title, setTitle] = useState("");
@@ -282,7 +263,7 @@ const NotificacoesAdminPage = () => {
     if (userIds.length === 0) { toast.error("Nenhum usuário encontrado."); setSending(false); return; }
 
     const notifications = userIds.map(uid => ({ user_id: uid, title, message, type: "info" as const, priority: "normal" as const }));
-    const { error } = await supabase.from("notifications").insert(notifications);
+    await supabase.from("notifications").insert(notifications);
 
     if (channel === "sms" || channel === "whatsapp") {
       const { data: profiles } = await supabase.from("profiles").select("whatsapp").in("user_id", userIds);
@@ -293,8 +274,7 @@ const NotificacoesAdminPage = () => {
       }
       toast.success(`${sent} ${channel.toUpperCase()} + ${userIds.length} notificações!`);
     } else {
-      if (error) toast.error("Erro: " + error.message);
-      else toast.success(`Notificação para ${userIds.length} usuário(s)!`);
+      toast.success(`Notificação para ${userIds.length} usuário(s)!`);
     }
     setSending(false); setTitle(""); setMessage("");
   };
@@ -303,22 +283,20 @@ const NotificacoesAdminPage = () => {
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Enviar Notificação</h1>
       <Card>
-        <CardHeader><CardTitle>Destinatários</CardTitle><CardDescription>Selecione quem receberá a notificação</CardDescription></CardHeader>
+        <CardHeader><CardTitle>Destinatários</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
-            {(["all", "donos", "profissionais", "clientes"] as const).map((t) => (
+            {(["all", "donos", "profissionais", "clientes"] as const).map(t => (
               <Button key={t} variant={target === t ? "gold" : "outline"} size="sm" onClick={() => setTarget(t)}>
                 {t === "all" ? "Todos" : t === "donos" ? "Donos" : t === "profissionais" ? "Profissionais" : "Clientes"}
               </Button>
             ))}
           </div>
-          <div><Label>Canal de Envio</Label>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {([{ key: "app" as const, label: "📱 App" }, { key: "sms" as const, label: "💬 SMS" }, { key: "whatsapp" as const, label: "📲 WhatsApp" }]).map(c => (
-                <Button key={c.key} variant={channel === c.key ? "gold" : "outline"} size="sm" onClick={() => setChannel(c.key)}>{c.label}</Button>
-              ))}
-            </div>
-          </div>
+          <div><Label>Canal</Label><div className="flex flex-wrap gap-2 mt-1">
+            {([{ key: "app" as const, label: "📱 App" }, { key: "sms" as const, label: "💬 SMS" }, { key: "whatsapp" as const, label: "📲 WhatsApp" }]).map(c => (
+              <Button key={c.key} variant={channel === c.key ? "gold" : "outline"} size="sm" onClick={() => setChannel(c.key)}>{c.label}</Button>
+            ))}
+          </div></div>
           <div><Label>Título *</Label><Input placeholder="Título" value={title} onChange={e => setTitle(e.target.value)} className="mt-1" /></div>
           <div><Label>Mensagem *</Label><Input placeholder="Mensagem..." value={message} onChange={e => setMessage(e.target.value)} className="mt-1" /></div>
           <Button variant="gold" onClick={handleSend} disabled={sending}><Send className="w-4 h-4 mr-2" />{sending ? "Enviando..." : "Enviar"}</Button>
@@ -328,8 +306,7 @@ const NotificacoesAdminPage = () => {
   );
 };
 
-// ============ OTHER PAGES ============
-
+// ============ USUÁRIOS ============
 const UsuariosPage = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -337,7 +314,7 @@ const UsuariosPage = () => {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Usuários</h1>
-      {loading ? <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div> : users.length === 0 ? (
+      {loading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : users.length === 0 ? (
         <Card><CardContent className="py-12 text-center"><Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum usuário.</p></CardContent></Card>
       ) : (
         <div className="space-y-2">{users.map(u => (
@@ -352,19 +329,38 @@ const UsuariosPage = () => {
   );
 };
 
+// ============ BARBEARIAS (com liberar acesso) ============
 const BarbeariasPage = () => {
   const [shops, setShops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "active" | "trial">("all");
+  const [editingShop, setEditingShop] = useState<any>(null);
+  const [accessDays, setAccessDays] = useState("30");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => { supabase.from("barbershops").select("*, profiles:owner_user_id(name, email, whatsapp)").then(({ data }) => { setShops(data || []); setLoading(false); }); }, []);
 
-  const now = new Date();
   const filtered = shops.filter(s => {
     if (filter === "all") return true;
     if (filter === "active") return s.subscription_status === "active" || s.subscription_status === "paid";
     return s.subscription_status === "trial" || !s.subscription_status;
   });
+
+  const grantAccess = async (shop: any) => {
+    setSaving(true);
+    const endsAt = new Date();
+    endsAt.setDate(endsAt.getDate() + parseInt(accessDays));
+    const { error } = await supabase.from("barbershops").update({
+      subscription_status: "active", subscription_ends_at: endsAt.toISOString(),
+    }).eq("id", shop.id);
+    setSaving(false);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`Acesso liberado por ${accessDays} dias!`);
+      setShops(shops.map(s => s.id === shop.id ? { ...s, subscription_status: "active", subscription_ends_at: endsAt.toISOString() } : s));
+      setEditingShop(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -374,70 +370,310 @@ const BarbeariasPage = () => {
           <Button key={f} variant={filter === f ? "gold" : "outline"} size="sm" onClick={() => setFilter(f)}>{f === "all" ? "Todos" : f === "active" ? "Ativos" : "Trial"}</Button>
         ))}
       </div>
+
+      {editingShop && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Calendar className="w-4 h-4" />Liberar Acesso: {editingShop.name}</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div><Label>Período (dias)</Label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {["7", "15", "30", "90", "180", "365"].map(d => (
+                  <Button key={d} variant={accessDays === d ? "gold" : "outline"} size="sm" onClick={() => setAccessDays(d)}>{d} dias</Button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="gold" onClick={() => grantAccess(editingShop)} disabled={saving}>{saving ? "..." : "Liberar Acesso"}</Button>
+              <Button variant="ghost" onClick={() => setEditingShop(null)}>Cancelar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {loading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : filtered.map(s => (
         <Card key={s.id}><CardContent className="p-4 flex items-center gap-4">
           <Building2 className="w-5 h-5 text-primary flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="font-semibold">{s.name}</p>
             <p className="text-sm text-muted-foreground truncate">Dono: {(s as any).profiles?.name || "N/A"} • {(s as any).profiles?.email || ""}</p>
+            {s.subscription_ends_at && <p className="text-xs text-muted-foreground">Expira: {new Date(s.subscription_ends_at).toLocaleDateString("pt-BR")}</p>}
           </div>
           <span className={`text-xs px-2 py-1 rounded-full font-medium ${s.subscription_status === "active" ? "bg-success/10 text-success" : "bg-primary/10 text-primary"}`}>
             {s.subscription_status || "trial"}
           </span>
+          <Button variant="outline" size="sm" onClick={() => setEditingShop(s)}><Calendar className="w-4 h-4 mr-1" />Liberar</Button>
         </CardContent></Card>
       ))}
     </div>
   );
 };
 
+// ============ AFILIADOS (convite + comissão individual) ============
 const AfiliadosPage = () => {
+  const { user } = useAuth();
   const [affiliates, setAffiliates] = useState<any[]>([]);
-  useEffect(() => { supabase.from("affiliates").select("*, profiles:user_id(name, email)").then(({ data }) => setAffiliates(data || [])); }, []);
+  const [loading, setLoading] = useState(true);
+  const [editingAffiliate, setEditingAffiliate] = useState<any>(null);
+  const [commissions, setCommissions] = useState({ first: 60, recurring: 20, saas_tax: 10 });
+  const [inviteLink, setInviteLink] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => { supabase.from("affiliates").select("*, profiles:user_id(name, email)").then(({ data }) => { setAffiliates(data || []); setLoading(false); }); }, []);
+
+  const generateInviteLink = async () => {
+    setCreating(true);
+    const { data, error } = await supabase.from("affiliate_invites" as any).insert([{
+      affiliate_type: "afiliado_saas",
+      commission_first: commissions.first,
+      commission_recurring: commissions.recurring,
+      commission_saas_tax: commissions.saas_tax,
+      created_by: user?.id,
+    }]).select().single();
+    setCreating(false);
+    if (error) { toast.error(error.message); return; }
+    const code = (data as any).invite_code;
+    const link = `${window.location.origin}/cadastro?ref=${code}&type=afiliado`;
+    setInviteLink(link);
+    toast.success("Link de convite gerado!");
+  };
+
+  const copyLink = () => { navigator.clipboard.writeText(inviteLink); toast.success("Link copiado!"); };
+
+  const saveCommission = async () => {
+    if (!editingAffiliate) return;
+    const { error } = await supabase.from("affiliates").update({
+      commission_first: commissions.first,
+      commission_recurring: commissions.recurring,
+      commission_saas_tax: commissions.saas_tax,
+    }).eq("id", editingAffiliate.id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Comissão atualizada!");
+      setAffiliates(affiliates.map(a => a.id === editingAffiliate.id ? { ...a, ...commissions } : a));
+      setEditingAffiliate(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold">Afiliados</h1>
-      {affiliates.length === 0 ? (
+      <div className="flex justify-between items-center flex-wrap gap-2">
+        <h1 className="font-display text-2xl font-bold">Afiliados</h1>
+        <Button variant="gold" onClick={generateInviteLink} disabled={creating}><LinkIcon className="w-4 h-4 mr-2" />{creating ? "..." : "Gerar Link de Convite"}</Button>
+      </div>
+
+      {inviteLink && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-4">
+            <Label className="text-sm font-medium">Link de Convite de Afiliado</Label>
+            <div className="flex gap-2 mt-2">
+              <Input value={inviteLink} readOnly className="text-xs" />
+              <Button variant="outline" size="sm" onClick={copyLink}><Copy className="w-4 h-4" /></Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {editingAffiliate && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader><CardTitle className="text-sm">Editar Comissão: {(editingAffiliate as any).profiles?.name}</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div><Label className="text-xs">1ª Mensalidade (%)</Label><Input type="number" value={commissions.first} onChange={e => setCommissions({ ...commissions, first: +e.target.value })} /></div>
+              <div><Label className="text-xs">Recorrente (%)</Label><Input type="number" value={commissions.recurring} onChange={e => setCommissions({ ...commissions, recurring: +e.target.value })} /></div>
+              <div><Label className="text-xs">Taxa SaaS (%)</Label><Input type="number" value={commissions.saas_tax} onChange={e => setCommissions({ ...commissions, saas_tax: +e.target.value })} /></div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="gold" onClick={saveCommission}>Salvar</Button>
+              <Button variant="ghost" onClick={() => setEditingAffiliate(null)}>Cancelar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {loading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : affiliates.length === 0 ? (
         <Card><CardContent className="py-12 text-center"><Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum afiliado.</p></CardContent></Card>
       ) : affiliates.map(a => (
         <Card key={a.id}><CardContent className="p-4 flex items-center gap-4">
           <Users className="w-5 h-5 text-primary" />
-          <div className="flex-1"><p className="font-semibold">{(a as any).profiles?.name || "Afiliado"}</p><p className="text-sm text-muted-foreground">Código: {a.referral_code}</p></div>
+          <div className="flex-1">
+            <p className="font-semibold">{(a as any).profiles?.name || "Afiliado"}</p>
+            <p className="text-sm text-muted-foreground">Código: {a.referral_code} • {a.commission_first}% / {a.commission_recurring}% / {a.commission_saas_tax}%</p>
+          </div>
           <span className="text-xs bg-success/10 text-success px-2 py-1 rounded-full">{a.type}</span>
+          <Button variant="outline" size="sm" onClick={() => { setEditingAffiliate(a); setCommissions({ first: a.commission_first || 60, recurring: a.commission_recurring || 20, saas_tax: a.commission_saas_tax || 10 }); }}>
+            <Edit className="w-4 h-4 mr-1" />Comissão
+          </Button>
         </CardContent></Card>
       ))}
     </div>
   );
 };
 
+// ============ CONTADORES (criar com login/senha) ============
 const ContadoresPage = () => {
   const [accountants, setAccountants] = useState<any[]>([]);
-  useEffect(() => { supabase.from("accountants").select("*").then(({ data }) => setAccountants(data || [])); }, []);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", password: "", whatsapp: "", cpf_cnpj: "" });
+  const [creating, setCreating] = useState(false);
+
+  const loadAccountants = () => { supabase.from("accountants").select("*").then(({ data }) => { setAccountants(data || []); setLoading(false); }); };
+  useEffect(() => { loadAccountants(); }, []);
+
+  const handleCreate = async () => {
+    if (!form.name || !form.email || !form.password) { toast.error("Preencha nome, e-mail e senha."); return; }
+    if (form.password.length < 6) { toast.error("Senha mínima de 6 caracteres."); return; }
+    setCreating(true);
+    const { data, error } = await supabase.functions.invoke("bootstrap-role", {
+      body: { action: "create-accountant", name: form.name, email: form.email, password: form.password, whatsapp: form.whatsapp || null, cpf_cnpj: form.cpf_cnpj || null },
+    });
+    setCreating(false);
+    if (error || data?.error) { toast.error(data?.error || error?.message || "Erro ao criar contador"); return; }
+    toast.success("Contador criado com sucesso!");
+    setShowCreate(false); setForm({ name: "", email: "", password: "", whatsapp: "", cpf_cnpj: "" });
+    loadAccountants();
+  };
+
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold">Contadores</h1>
-      {accountants.length === 0 ? (
+      <div className="flex justify-between items-center">
+        <h1 className="font-display text-2xl font-bold">Contadores</h1>
+        <Button variant="gold" onClick={() => setShowCreate(true)}><UserPlus className="w-4 h-4 mr-2" />Criar Contador</Button>
+      </div>
+
+      {showCreate && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader><CardTitle>Novo Contador</CardTitle><CardDescription>Crie login e senha de acesso ao portal do contador</CardDescription></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div><Label>Nome *</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Nome completo" className="mt-1" /></div>
+              <div><Label>E-mail *</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="email@exemplo.com" className="mt-1" /></div>
+              <div><Label>Senha *</Label><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Min. 6 caracteres" className="mt-1" /></div>
+              <div><Label>WhatsApp</Label><Input value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} placeholder="(11) 99999-0000" className="mt-1" /></div>
+              <div><Label>CPF/CNPJ</Label><Input value={form.cpf_cnpj} onChange={e => setForm({ ...form, cpf_cnpj: e.target.value })} placeholder="000.000.000-00" className="mt-1" /></div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="gold" onClick={handleCreate} disabled={creating}>{creating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <UserPlus className="w-4 h-4 mr-2" />}{creating ? "Criando..." : "Criar Contador"}</Button>
+              <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancelar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {loading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : accountants.length === 0 ? (
         <Card><CardContent className="py-12 text-center"><Calculator className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum contador.</p></CardContent></Card>
       ) : accountants.map(a => (
         <Card key={a.id}><CardContent className="p-4 flex items-center gap-4">
           <Calculator className="w-5 h-5 text-primary" />
-          <div className="flex-1"><p className="font-semibold">{a.name}</p><p className="text-sm text-muted-foreground">{a.email}</p></div>
+          <div className="flex-1">
+            <p className="font-semibold">{a.name}</p>
+            <p className="text-sm text-muted-foreground">{a.email} {a.whatsapp ? `• ${a.whatsapp}` : ""}</p>
+          </div>
+          <span className={`text-xs px-2 py-1 rounded-full ${a.is_active ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>{a.is_active ? "Ativo" : "Inativo"}</span>
         </CardContent></Card>
       ))}
     </div>
   );
 };
 
-const FinanceiroPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Financeiro</h1>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <Card className="border-primary/20"><CardHeader><CardDescription>Receita Total</CardDescription><CardTitle className="text-3xl text-gradient-gold">R$ 0,00</CardTitle></CardHeader></Card>
-      <Card><CardHeader><CardDescription>Taxa SaaS</CardDescription><CardTitle className="text-2xl">R$ 0,00</CardTitle></CardHeader></Card>
-      <Card><CardHeader><CardDescription>Comissões Pagas</CardDescription><CardTitle className="text-2xl">R$ 0,00</CardTitle></CardHeader></Card>
-    </div>
-  </div>
-);
+// ============ FINANCEIRO (receitas detalhadas + previsões 12 meses) ============
+const FinanceiroPage = () => {
+  const [payments, setPayments] = useState<any[]>([]);
+  const [commissions, setCommissions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(0); // 0 = current
 
+  useEffect(() => {
+    Promise.all([
+      supabase.from("payments").select("amount, status, payment_method, created_at, paid_at").order("created_at", { ascending: false }).limit(500),
+      supabase.from("affiliate_commissions").select("amount, status, created_at, paid_at").limit(500),
+    ]).then(([p, c]) => { setPayments(p.data || []); setCommissions(c.data || []); setLoading(false); });
+  }, []);
+
+  const months = useMemo(() => {
+    const result: { label: string; key: string; offset: number }[] = [];
+    for (let i = -3; i <= 12; i++) {
+      const d = new Date();
+      d.setMonth(d.getMonth() + i);
+      result.push({
+        label: d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" }),
+        key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+        offset: i,
+      });
+    }
+    return result;
+  }, []);
+
+  const getMonthData = (offset: number) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + offset);
+    const yearMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+
+    const monthPayments = payments.filter(p => p.created_at?.startsWith(yearMonth));
+    const monthCommissions = commissions.filter(c => c.created_at?.startsWith(yearMonth));
+
+    const totalRevenue = monthPayments.filter(p => p.status === "paid" || p.status === "confirmed").reduce((s, p) => s + Number(p.amount), 0);
+    const saasFee = totalRevenue * 0.005;
+    const subscriptionRevenue = monthPayments.filter(p => p.payment_method === "subscription").reduce((s, p) => s + Number(p.amount), 0);
+    const commissionsPaid = monthCommissions.filter(c => c.status === "paid").reduce((s, c) => s + Number(c.amount), 0);
+    const commissionsPending = monthCommissions.filter(c => c.status === "pending").reduce((s, c) => s + Number(c.amount), 0);
+
+    // Future projection: average last 3 months
+    const isFuture = offset > 0;
+    if (isFuture) {
+      const pastMonths = [-2, -1, 0].map(o => {
+        const pd = new Date(); pd.setMonth(pd.getMonth() + o);
+        const ym = `${pd.getFullYear()}-${String(pd.getMonth() + 1).padStart(2, "0")}`;
+        return payments.filter(p => p.created_at?.startsWith(ym) && (p.status === "paid" || p.status === "confirmed")).reduce((s, p) => s + Number(p.amount), 0);
+      });
+      const avg = pastMonths.reduce((a, b) => a + b, 0) / 3;
+      return { totalRevenue: avg, saasFee: avg * 0.005, subscriptionRevenue: avg * 0.6, commissionsPaid: 0, commissionsPending: 0, isFuture: true, count: 0 };
+    }
+
+    return { totalRevenue, saasFee, subscriptionRevenue, commissionsPaid, commissionsPending, isFuture: false, count: monthPayments.length };
+  };
+
+  const currentData = getMonthData(selectedMonth);
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Financeiro</h1>
+
+      {/* Month selector */}
+      <div className="flex gap-1 overflow-x-auto pb-2">
+        {months.map(m => (
+          <Button key={m.key} variant={selectedMonth === m.offset ? "gold" : "outline"} size="sm" className="text-xs whitespace-nowrap flex-shrink-0"
+            onClick={() => setSelectedMonth(m.offset)}>
+            {m.label} {m.offset > 0 && <TrendingUp className="w-3 h-3 ml-1" />}
+          </Button>
+        ))}
+      </div>
+
+      {loading ? <Loader2 className="w-8 h-8 animate-spin mx-auto" /> : (
+        <>
+          {currentData.isFuture && (
+            <Card className="border-primary/20 bg-primary/5"><CardContent className="p-3 text-sm text-primary flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />Previsão baseada na média dos últimos 3 meses
+            </CardContent></Card>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card className="border-primary/20"><CardHeader className="pb-2"><CardDescription>Receita Total {currentData.isFuture ? "(Projeção)" : ""}</CardDescription><CardTitle className="text-2xl text-gradient-gold">R$ {currentData.totalRevenue.toFixed(2)}</CardTitle></CardHeader></Card>
+            <Card><CardHeader className="pb-2"><CardDescription>Receita Assinaturas</CardDescription><CardTitle className="text-2xl">R$ {currentData.subscriptionRevenue.toFixed(2)}</CardTitle></CardHeader></Card>
+            <Card><CardHeader className="pb-2"><CardDescription>Taxa SaaS (0,5%)</CardDescription><CardTitle className="text-2xl">R$ {currentData.saasFee.toFixed(2)}</CardTitle></CardHeader></Card>
+            <Card><CardHeader className="pb-2"><CardDescription>Comissões Pagas</CardDescription><CardTitle className="text-2xl text-destructive">R$ {currentData.commissionsPaid.toFixed(2)}</CardTitle></CardHeader></Card>
+            <Card><CardHeader className="pb-2"><CardDescription>Comissões Pendentes</CardDescription><CardTitle className="text-2xl text-primary">R$ {currentData.commissionsPending.toFixed(2)}</CardTitle></CardHeader></Card>
+            <Card className="border-success/20"><CardHeader className="pb-2"><CardDescription>Lucro Líquido</CardDescription><CardTitle className="text-2xl text-success">R$ {(currentData.totalRevenue - currentData.commissionsPaid).toFixed(2)}</CardTitle></CardHeader></Card>
+          </div>
+
+          {!currentData.isFuture && <Card><CardHeader><CardTitle>Transações do Período</CardTitle><CardDescription>{currentData.count} pagamentos registrados</CardDescription></CardHeader></Card>}
+        </>
+      )}
+    </div>
+  );
+};
+
+// ============ PIXELS ============
 const PixelsPage = () => {
   const [pixels, setPixels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -455,16 +691,12 @@ const PixelsPage = () => {
 
   const togglePixel = async (id: string, active: boolean) => {
     await supabase.from("pixels").update({ active }).eq("id", id);
-    setPixels(pixels.map(p => p.id === id ? { ...p, active } : p));
-    toast.success("Status atualizado");
+    setPixels(pixels.map(p => p.id === id ? { ...p, active } : p)); toast.success("Status atualizado");
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="font-display text-2xl font-bold">Pixels Globais</h1>
-        <Button variant="gold" onClick={() => setShowAdd(true)}>Adicionar Pixel</Button>
-      </div>
+      <div className="flex justify-between items-center"><h1 className="font-display text-2xl font-bold">Pixels Globais</h1><Button variant="gold" onClick={() => setShowAdd(true)}>Adicionar Pixel</Button></div>
       {showAdd && (
         <Card className="border-primary/20 bg-primary/5"><CardHeader><CardTitle>Novo Pixel</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -494,6 +726,7 @@ const PixelsPage = () => {
   );
 };
 
+// ============ MENSAGENS SISTEMA ============
 const MensagensSistemaPage = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -515,10 +748,7 @@ const MensagensSistemaPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="font-display text-2xl font-bold">Mensagens do Sistema</h1>
-        <Button variant="gold" onClick={() => setShowAdd(true)}>Novo Comunicado</Button>
-      </div>
+      <div className="flex justify-between items-center"><h1 className="font-display text-2xl font-bold">Mensagens do Sistema</h1><Button variant="gold" onClick={() => setShowAdd(true)}>Novo Comunicado</Button></div>
       {showAdd && (
         <Card className="border-primary/20 bg-primary/5"><CardHeader><CardTitle>Novo Comunicado</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -546,54 +776,126 @@ const MensagensSistemaPage = () => {
   );
 };
 
+// ============ CONFIGURAÇÕES (editar planos + taxa SaaS) ============
 const ConfiguracoesPage = () => {
   const [supportPhone, setSupportPhone] = useState("");
   const [saving, setSaving] = useState(false);
-
-  const saveSupportPhone = async () => {
-    setSaving(true);
-    // Save via integration_settings as support phone config
-    const { error } = await supabase.from("integration_settings").upsert({
-      service_name: "support_phone", environment: "production", is_active: true, base_url: supportPhone,
-    }, { onConflict: "service_name,environment" });
-    setSaving(false);
-    if (error) toast.error("Erro: " + error.message);
-    else toast.success("Telefone de suporte salvo!");
-  };
+  const [plans, setPlans] = useState<any[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(true);
+  const [editingPlan, setEditingPlan] = useState<any>(null);
+  const [saasFee, setSaasFee] = useState("0.5");
+  const [savingFee, setSavingFee] = useState(false);
 
   useEffect(() => {
     supabase.from("integration_settings").select("base_url").eq("service_name", "support_phone").maybeSingle().then(({ data }) => {
       if (data?.base_url) setSupportPhone(data.base_url);
     });
+    supabase.from("integration_settings").select("base_url").eq("service_name", "saas_fee").maybeSingle().then(({ data }) => {
+      if (data?.base_url) setSaasFee(data.base_url);
+    });
+    (supabase as any).from("subscription_plans").select("*").order("sort_order", { ascending: true }).then(({ data }: any) => {
+      setPlans(data || []); setLoadingPlans(false);
+    });
   }, []);
+
+  const saveSupportPhone = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("integration_settings").upsert({
+      service_name: "support_phone", environment: "production", is_active: true, base_url: supportPhone,
+    }, { onConflict: "service_name,environment" });
+    setSaving(false);
+    if (error) toast.error(error.message); else toast.success("Telefone salvo!");
+  };
+
+  const saveSaasFeeConfig = async () => {
+    setSavingFee(true);
+    const { error } = await supabase.from("integration_settings").upsert({
+      service_name: "saas_fee", environment: "production", is_active: true, base_url: saasFee,
+    }, { onConflict: "service_name,environment" });
+    setSavingFee(false);
+    if (error) toast.error(error.message); else toast.success("Taxa SaaS salva!");
+  };
+
+  const savePlan = async () => {
+    if (!editingPlan) return;
+    const { error } = await (supabase as any).from("subscription_plans").update({
+      name: editingPlan.name, price: editingPlan.price, duration_months: editingPlan.duration_months,
+      asaas_checkout_id: editingPlan.asaas_checkout_id, is_active: editingPlan.is_active,
+    }).eq("id", editingPlan.id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Plano atualizado!");
+      setPlans(plans.map(p => p.id === editingPlan.id ? editingPlan : p));
+      setEditingPlan(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Configurações</h1>
 
       <Card>
-        <CardHeader><CardTitle><Phone className="w-5 h-5 inline mr-2" />Telefone de Suporte</CardTitle><CardDescription>Número exibido para os usuários no chat de suporte</CardDescription></CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex gap-2">
-            <Input placeholder="(11) 99999-0000" value={supportPhone} onChange={e => setSupportPhone(e.target.value)} />
-            <Button variant="gold" onClick={saveSupportPhone} disabled={saving}>{saving ? "..." : "Salvar"}</Button>
-          </div>
+        <CardHeader><CardTitle><Phone className="w-5 h-5 inline mr-2" />Telefone de Suporte</CardTitle></CardHeader>
+        <CardContent className="flex gap-2">
+          <Input placeholder="(11) 99999-0000" value={supportPhone} onChange={e => setSupportPhone(e.target.value)} />
+          <Button variant="gold" onClick={saveSupportPhone} disabled={saving}>{saving ? "..." : "Salvar"}</Button>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4">
-        <Card>
-          <CardHeader><CardTitle>Planos e Preços</CardTitle></CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-              {[{ l: "7 dias grátis", v: "R$ 0,00" }, { l: "Mês 1", v: "R$ 19,90" }, { l: "Mês 2+", v: "R$ 29,90" }, { l: "3 meses", v: "R$ 79,90" }, { l: "6 meses", v: "R$ 145,90" }, { l: "12 meses", v: "R$ 199,90" }].map(p => (
-                <div key={p.l} className="p-3 bg-muted rounded-lg"><p className="text-muted-foreground">{p.l}</p><p className="font-bold">{p.v}</p></div>
-              ))}
+      <Card>
+        <CardHeader><CardTitle>Taxa SaaS por Transação</CardTitle><CardDescription>Percentual cobrado sobre cada pagamento processado</CardDescription></CardHeader>
+        <CardContent className="flex gap-2 items-center">
+          <Input type="number" step="0.1" value={saasFee} onChange={e => setSaasFee(e.target.value)} className="w-32" />
+          <span className="text-lg font-bold">%</span>
+          <Button variant="gold" onClick={saveSaasFeeConfig} disabled={savingFee}>{savingFee ? "..." : "Salvar"}</Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Planos de Assinatura</CardTitle>
+          <CardDescription>Edite valores, nomes e links de checkout dos planos</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {loadingPlans ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : plans.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum plano cadastrado.</p>
+          ) : plans.map(p => (
+            <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-border">
+              <div className="flex-1">
+                <p className="font-semibold">{p.name}</p>
+                <p className="text-sm text-muted-foreground">{p.duration_months === 0 ? "Grátis" : `${p.duration_months} mês(es)`} • R$ {Number(p.price).toFixed(2)}</p>
+                {p.asaas_checkout_id && <p className="text-xs text-muted-foreground">Checkout: {p.asaas_checkout_id}</p>}
+              </div>
+              <span className={`text-xs px-2 py-1 rounded-full ${p.is_active ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>{p.is_active ? "Ativo" : "Inativo"}</span>
+              <Button variant="outline" size="sm" onClick={() => setEditingPlan({ ...p })}><Edit className="w-4 h-4" /></Button>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {editingPlan && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader><CardTitle className="text-sm">Editar Plano: {editingPlan.name}</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div><Label>Nome</Label><Input value={editingPlan.name} onChange={e => setEditingPlan({ ...editingPlan, name: e.target.value })} className="mt-1" /></div>
+              <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={editingPlan.price} onChange={e => setEditingPlan({ ...editingPlan, price: +e.target.value })} className="mt-1" /></div>
+              <div><Label>Duração (meses)</Label><Input type="number" value={editingPlan.duration_months} onChange={e => setEditingPlan({ ...editingPlan, duration_months: +e.target.value })} className="mt-1" /></div>
+              <div><Label>ASAAS Checkout ID</Label><Input value={editingPlan.asaas_checkout_id || ""} onChange={e => setEditingPlan({ ...editingPlan, asaas_checkout_id: e.target.value })} className="mt-1" /></div>
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" checked={editingPlan.is_active} onChange={e => setEditingPlan({ ...editingPlan, is_active: e.target.checked })} className="rounded" />
+                Plano Ativo
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="gold" onClick={savePlan}>Salvar</Button>
+              <Button variant="ghost" onClick={() => setEditingPlan(null)}>Cancelar</Button>
             </div>
           </CardContent>
         </Card>
-        <Card><CardHeader><CardTitle>Taxa SaaS</CardTitle></CardHeader><CardContent><div className="p-3 bg-muted rounded-lg inline-block"><p className="text-2xl font-bold text-gradient-gold">0,5%</p></div></CardContent></Card>
-      </div>
+      )}
     </div>
   );
 };
