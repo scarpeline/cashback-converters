@@ -6,8 +6,6 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Eye, EyeOff, Loader2, User, Scissors, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole, getDashboardForRole } from "@/lib/auth";
-// AuthGuard removed - redirect handled by useEffect
-import { supabase } from "@/integrations/supabase/client";
 import { formatCpfCnpjBR, formatWhatsAppBR } from "@/lib/input-masks";
 import logo from "@/assets/logo.png";
 import { z } from "zod";
@@ -50,48 +48,31 @@ const PublicLoginPage = () => {
   });
 
   // Redirect if already logged in AND roles loaded
-  const [noRolesTimer, setNoRolesTimer] = useState(false);
-
-  // Give roles 8 seconds to load after login before showing error
   useEffect(() => {
-    if (user && authResolved && roles.length === 0 && !profileLoading) {
-      const timer = setTimeout(() => setNoRolesTimer(true), 8000);
-      return () => clearTimeout(timer);
-    }
-    if (roles.length > 0) setNoRolesTimer(false);
-  }, [user, authResolved, roles, profileLoading]);
+    if (!user || !authResolved || roles.length === 0) return;
+    
+    const role = getPrimaryRole();
+    if (!role) return;
 
-  useEffect(() => {
-    if (user && !authLoading) {
-      if (roles.length > 0) {
-        const role = getPrimaryRole();
-        if (role) {
-          // Check if user selected a plan from pricing - redirect to checkout
-          const selectedPlan = localStorage.getItem("selected_plan");
-          if (selectedPlan && (role === "dono")) {
-            try {
-              const plan = JSON.parse(selectedPlan);
-              localStorage.removeItem("selected_plan");
-              if (plan.checkoutUrl) {
-                window.location.href = plan.checkoutUrl;
-                return;
-              }
-            } catch { /* ignore parse errors */ }
-          }
-          localStorage.removeItem("selected_plan");
-
-          const dashboardUrl = getDashboardForRole(role);
-          if (dashboardUrl) {
-            window.location.href = dashboardUrl;
-          }
+    // Check if user selected a plan from pricing
+    const selectedPlan = localStorage.getItem("selected_plan");
+    if (selectedPlan && role === "dono") {
+      try {
+        const plan = JSON.parse(selectedPlan);
+        localStorage.removeItem("selected_plan");
+        if (plan.checkoutUrl) {
+          window.location.href = plan.checkoutUrl;
+          return;
         }
-      } else if (authResolved && !profileLoading && noRolesTimer) {
-        // Only show error after grace period - roles may still be loading via onAuthStateChange
-        setLoading(false);
-        toast.error("Conta sem perfil associado. Entre em contato com o suporte.");
-      }
+      } catch { /* ignore */ }
     }
-  }, [user, authLoading, roles, authResolved, profileLoading, getPrimaryRole, noRolesTimer]);
+    localStorage.removeItem("selected_plan");
+
+    const dashboardUrl = getDashboardForRole(role);
+    if (dashboardUrl) {
+      navigate(dashboardUrl, { replace: true });
+    }
+  }, [user, authResolved, roles, getPrimaryRole, navigate]);
 
   const isBusinessUser = userType === "dono";
 
@@ -165,28 +146,9 @@ const PublicLoginPage = () => {
         }
 
         toast.success("Login realizado com sucesso!");
-
-        // Fetch roles directly and redirect - don't rely on onAuthStateChange timing
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData?.session?.user) {
-          const userId = sessionData.session.user.id;
-          // Poll for roles (may take a moment for bootstrap)
-          for (let i = 0; i < 5; i++) {
-            const { data: rolesData } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-            if (rolesData && rolesData.length > 0) {
-              const userRole = rolesData[0].role as string;
-              const dashUrl = getDashboardForRole(userRole as any);
-              if (dashUrl) {
-                window.location.href = dashUrl;
-                return;
-              }
-            }
-            await new Promise(r => setTimeout(r, 1000));
-          }
-        }
-
-        // Fallback timeout
-        setTimeout(() => setLoading(false), 3000);
+        // onAuthStateChange will load roles and the useEffect above will redirect
+        // Set a safety timeout to release loading state
+        setTimeout(() => setLoading(false), 8000);
         return;
       } else {
         // Signup - email is required for business users
