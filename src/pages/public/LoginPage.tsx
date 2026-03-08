@@ -148,28 +148,9 @@ const PublicLoginPage = () => {
         }
 
         toast.success("Login realizado com sucesso!");
-
-        // Fetch roles directly and redirect - don't rely on onAuthStateChange timing
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData?.session?.user) {
-          const userId = sessionData.session.user.id;
-          // Poll for roles (may take a moment for bootstrap)
-          for (let i = 0; i < 5; i++) {
-            const { data: rolesData } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-            if (rolesData && rolesData.length > 0) {
-              const userRole = rolesData[0].role as string;
-              const dashUrl = getDashboardForRole(userRole as any);
-              if (dashUrl) {
-                window.location.href = dashUrl;
-                return;
-              }
-            }
-            await new Promise(r => setTimeout(r, 1000));
-          }
-        }
-
-        // Fallback timeout
-        setTimeout(() => setLoading(false), 3000);
+        // onAuthStateChange will load roles and the useEffect above will redirect
+        // Set a safety timeout to release loading state
+        setTimeout(() => setLoading(false), 8000);
         return;
       } else {
         // Signup - email is required for business users
