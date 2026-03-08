@@ -27,6 +27,7 @@ const ClienteDashboard = () => {
     { name: "Agendar", href: basePath, icon: Calendar },
     { name: "Meus Agendamentos", href: `${basePath}/agendamentos`, icon: Clock },
     { name: "Minhas Dívidas", href: `${basePath}/dividas`, icon: Wallet },
+    { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: FileText },
     { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
     { name: "Histórico", href: `${basePath}/historico`, icon: History },
     { name: "Indique Amigos", href: `${basePath}/indicar`, icon: Users },
