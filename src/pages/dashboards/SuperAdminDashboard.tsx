@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   LayoutDashboard, Users, Building2, DollarSign, Settings, Shield, Image, MessageCircle,
   Bell, Calculator, LogOut, Menu, X, Activity, CheckCircle, TrendingUp, Plug, Loader2, Send, Phone,
-  LinkIcon, Edit, Calendar, UserPlus, Copy, ExternalLink
+  LinkIcon, Edit, Calendar, UserPlus, Copy, ExternalLink, Package, CreditCard, Eye, Wallet
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -329,7 +330,7 @@ const UsuariosPage = () => {
   );
 };
 
-// ============ BARBEARIAS (com liberar acesso) ============
+// ============ BARBEARIAS (com liberar acesso + criar usuario free) ============
 const BarbeariasPage = () => {
   const [shops, setShops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -337,6 +338,9 @@ const BarbeariasPage = () => {
   const [editingShop, setEditingShop] = useState<any>(null);
   const [accessDays, setAccessDays] = useState("30");
   const [saving, setSaving] = useState(false);
+  const [showCreateFree, setShowCreateFree] = useState(false);
+  const [freeForm, setFreeForm] = useState({ email: "", password: "", name: "", period: "30" });
+  const [creatingFree, setCreatingFree] = useState(false);
 
   useEffect(() => { supabase.from("barbershops").select("*, profiles:owner_user_id(name, email, whatsapp)").then(({ data }) => { setShops(data || []); setLoading(false); }); }, []);
 
@@ -362,14 +366,56 @@ const BarbeariasPage = () => {
     }
   };
 
+  const createFreeUser = async () => {
+    if (!freeForm.email || !freeForm.password || !freeForm.name) { toast.error("Preencha todos os campos."); return; }
+    setCreatingFree(true);
+    // Create user via bootstrap-role edge function 
+    const { data, error } = await supabase.functions.invoke("bootstrap-role", {
+      body: { action: "create-free-barbershop", email: freeForm.email, password: freeForm.password, name: freeForm.name, period_days: parseInt(freeForm.period) },
+    });
+    setCreatingFree(false);
+    if (error || data?.error) { toast.error(data?.error || error?.message || "Erro ao criar usuário."); return; }
+    toast.success(`Usuário free criado com ${freeForm.period} dias de acesso!`);
+    setShowCreateFree(false); setFreeForm({ email: "", password: "", name: "", period: "30" });
+    supabase.from("barbershops").select("*, profiles:owner_user_id(name, email, whatsapp)").then(({ data }) => setShops(data || []));
+  };
+
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold">Barbearias</h1>
+      <div className="flex justify-between items-center flex-wrap gap-2">
+        <h1 className="font-display text-2xl font-bold">Barbearias</h1>
+        <Button variant="gold" onClick={() => setShowCreateFree(true)}><UserPlus className="w-4 h-4 mr-2" />Criar Usuário Free</Button>
+      </div>
+
       <div className="flex flex-wrap gap-2">
         {(["all", "active", "trial"] as const).map(f => (
           <Button key={f} variant={filter === f ? "gold" : "outline"} size="sm" onClick={() => setFilter(f)}>{f === "all" ? "Todos" : f === "active" ? "Ativos" : "Trial"}</Button>
         ))}
       </div>
+
+      {showCreateFree && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader><CardTitle>Criar Usuário Free (Barbearia)</CardTitle><CardDescription>Cria um dono de barbearia com período de acesso gratuito</CardDescription></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div><Label>Nome *</Label><Input value={freeForm.name} onChange={e => setFreeForm({ ...freeForm, name: e.target.value })} placeholder="Nome completo" className="mt-1" /></div>
+              <div><Label>E-mail *</Label><Input type="email" value={freeForm.email} onChange={e => setFreeForm({ ...freeForm, email: e.target.value })} placeholder="email@exemplo.com" className="mt-1" /></div>
+              <div><Label>Senha *</Label><Input type="password" value={freeForm.password} onChange={e => setFreeForm({ ...freeForm, password: e.target.value })} placeholder="Min. 6 caracteres" className="mt-1" /></div>
+              <div><Label>Período de Acesso</Label>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {["7", "15", "30", "60", "90", "365"].map(d => (
+                    <Button key={d} variant={freeForm.period === d ? "gold" : "outline"} size="sm" onClick={() => setFreeForm({ ...freeForm, period: d })}>{d} dias</Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="gold" onClick={createFreeUser} disabled={creatingFree}>{creatingFree ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <UserPlus className="w-4 h-4 mr-2" />}{creatingFree ? "Criando..." : "Criar Usuário"}</Button>
+              <Button variant="ghost" onClick={() => setShowCreateFree(false)}>Cancelar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {editingShop && (
         <Card className="border-primary/20 bg-primary/5">
@@ -509,7 +555,7 @@ const AfiliadosPage = () => {
   );
 };
 
-// ============ CONTADORES (criar com login/senha) ============
+// ============ CONTADORES ============
 const ContadoresPage = () => {
   const [accountants, setAccountants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -576,16 +622,17 @@ const ContadoresPage = () => {
   );
 };
 
-// ============ FINANCEIRO (receitas detalhadas + previsões 12 meses) ============
+// ============ FINANCEIRO (receitas + transações detalhadas) ============
 const FinanceiroPage = () => {
   const [payments, setPayments] = useState<any[]>([]);
   const [commissions, setCommissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState(0); // 0 = current
+  const [selectedMonth, setSelectedMonth] = useState(0);
+  const [showTransactions, setShowTransactions] = useState(false);
 
   useEffect(() => {
     Promise.all([
-      supabase.from("payments").select("amount, status, payment_method, created_at, paid_at").order("created_at", { ascending: false }).limit(500),
+      supabase.from("payments").select("amount, status, payment_method, created_at, paid_at, barbershop_id").order("created_at", { ascending: false }).limit(1000),
       supabase.from("affiliate_commissions").select("amount, status, created_at, paid_at").limit(500),
     ]).then(([p, c]) => { setPayments(p.data || []); setCommissions(c.data || []); setLoading(false); });
   }, []);
@@ -618,7 +665,6 @@ const FinanceiroPage = () => {
     const commissionsPaid = monthCommissions.filter(c => c.status === "paid").reduce((s, c) => s + Number(c.amount), 0);
     const commissionsPending = monthCommissions.filter(c => c.status === "pending").reduce((s, c) => s + Number(c.amount), 0);
 
-    // Future projection: average last 3 months
     const isFuture = offset > 0;
     if (isFuture) {
       const pastMonths = [-2, -1, 0].map(o => {
@@ -627,17 +673,55 @@ const FinanceiroPage = () => {
         return payments.filter(p => p.created_at?.startsWith(ym) && (p.status === "paid" || p.status === "confirmed")).reduce((s, p) => s + Number(p.amount), 0);
       });
       const avg = pastMonths.reduce((a, b) => a + b, 0) / 3;
-      return { totalRevenue: avg, saasFee: avg * 0.005, subscriptionRevenue: avg * 0.6, commissionsPaid: 0, commissionsPending: 0, isFuture: true, count: 0 };
+      return { totalRevenue: avg, saasFee: avg * 0.005, subscriptionRevenue: avg * 0.6, commissionsPaid: 0, commissionsPending: 0, isFuture: true, count: 0, monthPayments: [] };
     }
 
-    return { totalRevenue, saasFee, subscriptionRevenue, commissionsPaid, commissionsPending, isFuture: false, count: monthPayments.length };
+    return { totalRevenue, saasFee, subscriptionRevenue, commissionsPaid, commissionsPending, isFuture: false, count: monthPayments.length, monthPayments };
   };
 
   const currentData = getMonthData(selectedMonth);
 
+  // Global stats
+  const totalAll = payments.filter(p => p.status === "paid" || p.status === "confirmed").reduce((s, p) => s + Number(p.amount), 0);
+  const totalPending = payments.filter(p => p.status === "pending").reduce((s, p) => s + Number(p.amount), 0);
+
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold">Financeiro</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="font-display text-2xl font-bold">Financeiro</h1>
+        <Button variant={showTransactions ? "gold" : "outline"} size="sm" onClick={() => setShowTransactions(!showTransactions)}>
+          <Eye className="w-4 h-4 mr-2" />{showTransactions ? "Ocultar" : "Ver"} Todas as Transações
+        </Button>
+      </div>
+
+      {/* Global totals */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-primary/20"><CardHeader className="pb-2"><CardDescription>Total Recebido (App)</CardDescription><CardTitle className="text-2xl text-gradient-gold">R$ {totalAll.toFixed(2)}</CardTitle></CardHeader></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>Total Pendente</CardDescription><CardTitle className="text-2xl">R$ {totalPending.toFixed(2)}</CardTitle></CardHeader></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>Total Transações</CardDescription><CardTitle className="text-2xl">{payments.length}</CardTitle></CardHeader></Card>
+      </div>
+
+      {/* All transactions view */}
+      {showTransactions && (
+        <Card>
+          <CardHeader><CardTitle>Todas as Transações</CardTitle><CardDescription>{payments.length} registros</CardDescription></CardHeader>
+          <CardContent>
+            <div className="max-h-96 overflow-y-auto space-y-2">
+              {payments.length === 0 ? (
+                <p className="text-center text-muted-foreground py-4">Nenhuma transação.</p>
+              ) : payments.slice(0, 100).map((p, i) => (
+                <div key={i} className="flex justify-between items-center p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium text-sm">R$ {Number(p.amount).toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">{p.payment_method} • {new Date(p.created_at).toLocaleDateString("pt-BR")}</p>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full ${p.status === 'paid' || p.status === 'confirmed' ? 'bg-success/10 text-success' : p.status === 'pending' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>{p.status}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Month selector */}
       <div className="flex gap-1 overflow-x-auto pb-2">
@@ -776,7 +860,7 @@ const MensagensSistemaPage = () => {
   );
 };
 
-// ============ CONFIGURAÇÕES (editar planos + taxa SaaS) ============
+// ============ CONFIGURAÇÕES (planos + pacotes SMS/WhatsApp + taxa SaaS) ============
 const ConfiguracoesPage = () => {
   const [supportPhone, setSupportPhone] = useState("");
   const [saving, setSaving] = useState(false);
@@ -785,6 +869,10 @@ const ConfiguracoesPage = () => {
   const [editingPlan, setEditingPlan] = useState<any>(null);
   const [saasFee, setSaasFee] = useState("0.5");
   const [savingFee, setSavingFee] = useState(false);
+  const [packages, setPackages] = useState<any[]>([]);
+  const [showAddPkg, setShowAddPkg] = useState(false);
+  const [pkgForm, setPkgForm] = useState({ name: "", quantity: "100", price: "29.90", channel: "sms" });
+  const [editPkg, setEditPkg] = useState<any>(null);
 
   useEffect(() => {
     supabase.from("integration_settings").select("base_url").eq("service_name", "support_phone").maybeSingle().then(({ data }) => {
@@ -796,6 +884,7 @@ const ConfiguracoesPage = () => {
     (supabase as any).from("subscription_plans").select("*").order("sort_order", { ascending: true }).then(({ data }: any) => {
       setPlans(data || []); setLoadingPlans(false);
     });
+    supabase.from("messaging_packages").select("*").order("created_at", { ascending: true }).then(({ data }) => setPackages(data || []));
   }, []);
 
   const saveSupportPhone = async () => {
@@ -830,6 +919,24 @@ const ConfiguracoesPage = () => {
     }
   };
 
+  const addPackage = async () => {
+    if (!pkgForm.name || !pkgForm.quantity || !pkgForm.price) { toast.error("Preencha todos os campos."); return; }
+    const { data, error } = await supabase.from("messaging_packages").insert({
+      name: pkgForm.name, quantity: parseInt(pkgForm.quantity), price: parseFloat(pkgForm.price), channel: pkgForm.channel,
+    }).select();
+    if (error) toast.error(error.message);
+    else { setPackages([...packages, ...(data || [])]); setShowAddPkg(false); toast.success("Pacote criado!"); setPkgForm({ name: "", quantity: "100", price: "29.90", channel: "sms" }); }
+  };
+
+  const savePackage = async () => {
+    if (!editPkg) return;
+    const { error } = await supabase.from("messaging_packages").update({
+      name: editPkg.name, quantity: editPkg.quantity, price: editPkg.price, channel: editPkg.channel, is_active: editPkg.is_active,
+    }).eq("id", editPkg.id);
+    if (error) toast.error(error.message);
+    else { toast.success("Pacote atualizado!"); setPackages(packages.map(p => p.id === editPkg.id ? editPkg : p)); setEditPkg(null); }
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Configurações</h1>
@@ -851,6 +958,75 @@ const ConfiguracoesPage = () => {
         </CardContent>
       </Card>
 
+      {/* Messaging Packages */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div><CardTitle><Package className="w-5 h-5 inline mr-2" />Pacotes de Mensagens</CardTitle><CardDescription>Configure pacotes SMS e WhatsApp para donos assinarem</CardDescription></div>
+            <Button variant="gold" size="sm" onClick={() => setShowAddPkg(true)}><CreditCard className="w-4 h-4 mr-2" />Novo Pacote</Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {showAddPkg && (
+            <div className="p-4 border rounded-lg bg-primary/5 space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div><Label>Nome *</Label><Input value={pkgForm.name} onChange={e => setPkgForm({ ...pkgForm, name: e.target.value })} placeholder="100 SMS" className="mt-1" /></div>
+                <div><Label>Canal</Label>
+                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1" value={pkgForm.channel} onChange={e => setPkgForm({ ...pkgForm, channel: e.target.value })}>
+                    <option value="sms">SMS</option><option value="whatsapp">WhatsApp</option>
+                  </select>
+                </div>
+                <div><Label>Quantidade</Label><Input type="number" value={pkgForm.quantity} onChange={e => setPkgForm({ ...pkgForm, quantity: e.target.value })} className="mt-1" /></div>
+                <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={pkgForm.price} onChange={e => setPkgForm({ ...pkgForm, price: e.target.value })} className="mt-1" /></div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="gold" onClick={addPackage}>Salvar</Button>
+                <Button variant="ghost" onClick={() => setShowAddPkg(false)}>Cancelar</Button>
+              </div>
+            </div>
+          )}
+
+          {editPkg && (
+            <div className="p-4 border rounded-lg bg-primary/5 space-y-3">
+              <Label className="text-sm font-medium">Editar: {editPkg.name}</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div><Label>Nome</Label><Input value={editPkg.name} onChange={e => setEditPkg({ ...editPkg, name: e.target.value })} className="mt-1" /></div>
+                <div><Label>Canal</Label>
+                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1" value={editPkg.channel} onChange={e => setEditPkg({ ...editPkg, channel: e.target.value })}>
+                    <option value="sms">SMS</option><option value="whatsapp">WhatsApp</option>
+                  </select>
+                </div>
+                <div><Label>Quantidade</Label><Input type="number" value={editPkg.quantity} onChange={e => setEditPkg({ ...editPkg, quantity: +e.target.value })} className="mt-1" /></div>
+                <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={editPkg.price} onChange={e => setEditPkg({ ...editPkg, price: +e.target.value })} className="mt-1" /></div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={editPkg.is_active} onCheckedChange={v => setEditPkg({ ...editPkg, is_active: v })} />
+                <Label>Ativo</Label>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="gold" onClick={savePackage}>Salvar</Button>
+                <Button variant="ghost" onClick={() => setEditPkg(null)}>Cancelar</Button>
+              </div>
+            </div>
+          )}
+
+          {packages.length === 0 && !showAddPkg ? (
+            <p className="text-sm text-muted-foreground">Nenhum pacote configurado.</p>
+          ) : packages.map(p => (
+            <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border">
+              <Package className="w-5 h-5 text-primary flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold">{p.name}</p>
+                <p className="text-sm text-muted-foreground">{p.quantity} {p.channel === 'sms' ? 'SMS' : 'WhatsApp'} • R$ {Number(p.price).toFixed(2)}</p>
+              </div>
+              <span className={`text-xs px-2 py-1 rounded-full ${p.is_active ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>{p.is_active ? "Ativo" : "Inativo"}</span>
+              <Button variant="outline" size="sm" onClick={() => setEditPkg({ ...p })}><Edit className="w-4 h-4" /></Button>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Subscription Plans */}
       <Card>
         <CardHeader>
           <CardTitle>Planos de Assinatura</CardTitle>

@@ -156,6 +156,7 @@ export type Database = {
           active_referrals: number | null
           anti_fraud_accepted: boolean | null
           anti_fraud_accepted_at: string | null
+          asaas_account_status: string | null
           asaas_customer_id: string | null
           asaas_wallet_id: string | null
           barbershop_id: string | null
@@ -177,6 +178,7 @@ export type Database = {
           active_referrals?: number | null
           anti_fraud_accepted?: boolean | null
           anti_fraud_accepted_at?: string | null
+          asaas_account_status?: string | null
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
           barbershop_id?: string | null
@@ -198,6 +200,7 @@ export type Database = {
           active_referrals?: number | null
           anti_fraud_accepted?: boolean | null
           anti_fraud_accepted_at?: string | null
+          asaas_account_status?: string | null
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
           barbershop_id?: string | null
@@ -596,6 +599,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fiscal_records_accountant_id_fkey"
+            columns: ["accountant_id"]
+            isOneToOne: false
+            referencedRelation: "accountants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fiscal_service_requests: {
+        Row: {
+          accountant_id: string | null
+          amount: number | null
+          client_user_id: string
+          created_at: string
+          description: string | null
+          id: string
+          notes: string | null
+          service_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accountant_id?: string | null
+          amount?: number | null
+          client_user_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          service_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accountant_id?: string | null
+          amount?: number | null
+          client_user_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          service_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_service_requests_accountant_id_fkey"
             columns: ["accountant_id"]
             isOneToOne: false
             referencedRelation: "accountants"
@@ -1133,6 +1183,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bank_info: Json | null
           cpf_cnpj: string | null
           created_at: string
           email: string | null
@@ -1145,6 +1196,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          bank_info?: Json | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
@@ -1157,6 +1209,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          bank_info?: Json | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
