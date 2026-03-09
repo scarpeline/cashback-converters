@@ -42,6 +42,7 @@ const DonoDashboard = () => {
     { name: "Serviços", href: `${basePath}/servicos`, icon: Scissors },
     { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
     { name: "Receber Dívida", href: `${basePath}/dividas`, icon: Wallet },
+    { name: "Afiliados", href: `${basePath}/afiliados`, icon: UserCheck },
     { name: "Estoque", href: `${basePath}/estoque`, icon: Package },
     { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
     { name: "Ação entre Amigos", href: `${basePath}/acao-entre-amigos`, icon: Gift },
@@ -105,6 +106,7 @@ const DonoDashboard = () => {
             <Route path="servicos" element={<ServicosPage />} />
             <Route path="financeiro" element={<FinanceiroPage />} />
             <Route path="dividas" element={<DividasPage />} />
+            <Route path="afiliados" element={<AfiliadosBarbeariaPage />} />
             <Route path="estoque" element={<EstoquePage />} />
             <Route path="cashback" element={<CashbackPage />} />
             <Route path="acao-entre-amigos" element={<AcaoEntreAmigosPage />} />
@@ -589,6 +591,174 @@ const FinanceiroPage = () => {
   );
 };
 
+// ============ RECEBER PAGAMENTO RÁPIDO ============
+
+const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
+  const [open, setOpen] = useState(false);
+  const [valor, setValor] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [pixData, setPixData] = useState<{ qr_code?: string; copy_paste?: string; payment_link?: string } | null>(null);
+
+  const handleGerar = async () => {
+    const amount = Number(valor);
+    if (!amount || amount <= 0) { toast.error("Informe um valor válido."); return; }
+    setLoading(true);
+    setPixData(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("process-payment", {
+        body: {
+          action: "charge",
+          amount,
+          description: descricao || "Recebimento rápido",
+          billing_type: "PIX",
+          external_reference: `quick-${barbershopId}-${Date.now()}`,
+        },
+      });
+      if (error) throw error;
+      setPixData({
+        qr_code: data?.pix_qr_code || data?.qrCode,
+        copy_paste: data?.pix_copy_paste || data?.copyPaste,
+        payment_link: data?.payment_link || data?.invoiceUrl,
+      });
+      toast.success("Cobrança gerada com sucesso!");
+    } catch {
+      toast.error("Erro ao gerar cobrança. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard?.writeText(text);
+    toast.success("Copiado para a área de transferência!");
+  };
+
+  if (!open) {
+    return (
+      <Button variant="gold" size="lg" className="w-full sm:w-auto" onClick={() => setOpen(true)}>
+        <DollarSign className="w-5 h-5 mr-2" />
+        Receber Pagamento
+      </Button>
+    );
+  }
+
+  return (
+    <Card className="border-primary/30 bg-primary/5">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <DollarSign className="w-5 h-5 text-primary" />
+          Receber Pagamento Rápido
+        </CardTitle>
+        <CardDescription>Gere uma cobrança PIX instantânea para receber na hora</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {!pixData ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Valor (R$) *</Label>
+                <Input
+                  type="number"
+                  placeholder="50.00"
+                  value={valor}
+                  onChange={e => setValor(e.target.value)}
+                  className="mt-1 text-lg font-bold"
+                  min="1"
+                  step="0.01"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <Label>Descrição (opcional)</Label>
+                <Input
+                  placeholder="Ex: Corte + Barba"
+                  value={descricao}
+                  onChange={e => setDescricao(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            {valor && Number(valor) > 0 && (
+              <div className="p-3 bg-muted rounded-lg text-center">
+                <p className="text-sm text-muted-foreground">Valor a receber</p>
+                <p className="text-3xl font-bold text-gradient-gold">R$ {Number(valor).toFixed(2)}</p>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button variant="gold" onClick={handleGerar} disabled={loading} className="flex-1">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <QrCode className="w-4 h-4 mr-2" />}
+                {loading ? "Gerando..." : "Gerar PIX"}
+              </Button>
+              <Button variant="outline" onClick={() => { setOpen(false); setValor(""); setDescricao(""); }}>Cancelar</Button>
+            </div>
+          </>
+        ) : (
+          <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg text-center">
+              <p className="text-sm text-muted-foreground mb-1">Cobrança gerada</p>
+              <p className="text-3xl font-bold text-gradient-gold">R$ {Number(valor).toFixed(2)}</p>
+            </div>
+
+            {pixData.qr_code && (
+              <div className="flex justify-center">
+                <img src={`data:image/png;base64,${pixData.qr_code}`} alt="QR Code PIX" className="w-48 h-48 rounded-lg border" />
+              </div>
+            )}
+
+            {pixData.copy_paste && (
+              <div>
+                <Label className="text-xs">PIX Copia e Cola</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input value={pixData.copy_paste} readOnly className="text-xs font-mono" />
+                  <Button variant="outline" size="sm" onClick={() => handleCopy(pixData.copy_paste!)}>
+                    Copiar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {pixData.payment_link && (
+              <div>
+                <Label className="text-xs">Link de Pagamento</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input value={pixData.payment_link} readOnly className="text-xs" />
+                  <Button variant="outline" size="sm" onClick={() => handleCopy(pixData.payment_link!)}>
+                    Copiar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => {
+                const shareText = pixData.copy_paste
+                  ? `Pagamento de R$ ${Number(valor).toFixed(2)}\n\nPIX Copia e Cola:\n${pixData.copy_paste}`
+                  : `Pagamento de R$ ${Number(valor).toFixed(2)}\n\nLink: ${pixData.payment_link}`;
+                if (navigator.share) {
+                  navigator.share({ title: "Pagamento", text: shareText });
+                } else {
+                  navigator.clipboard?.writeText(shareText);
+                  toast.success("Dados de pagamento copiados!");
+                }
+              }}>
+                <Share2 className="w-4 h-4 mr-2" />Compartilhar
+              </Button>
+              <Button variant="gold" className="flex-1" onClick={() => { setPixData(null); setValor(""); setDescricao(""); }}>
+                <Plus className="w-4 h-4 mr-2" />Nova Cobrança
+              </Button>
+            </div>
+
+            <Button variant="ghost" className="w-full" onClick={() => { setOpen(false); setPixData(null); setValor(""); setDescricao(""); }}>
+              Fechar
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 // ============ RECEBER DÍVIDA ============
 
 const DividasPage = () => {
@@ -597,7 +767,6 @@ const DividasPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ client_name: "", client_whatsapp: "", amount: "", description: "" });
-
   useEffect(() => {
     if (!barbershop?.id) return;
     supabase.from("debts").select("*").eq("barbershop_id", barbershop.id).order("created_at", { ascending: false }).then(({ data }) => setDebts(data || []));
@@ -659,10 +828,13 @@ const DividasPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="font-display text-2xl font-bold">Receber Dívida (Fiado)</h1>
         <Button variant="gold" onClick={() => setShowForm(!showForm)}><Plus className="w-4 h-4 mr-2" />Nova Dívida</Button>
       </div>
+
+      {/* Receber Pagamento Rápido */}
+      {barbershop?.id && <ReceberPagamentoRapido barbershopId={barbershop.id} />}
 
       <Card className="bg-gradient-card border-primary/20">
         <CardContent className="p-4 flex items-center justify-between">
@@ -1523,11 +1695,262 @@ const ConfiguracoesPage = () => {
         </CardContent>
       </Card>
 
-      {/* View Affiliates */}
+      {/* View Affiliates - link to dedicated page */}
       <Card>
         <CardHeader><CardTitle>Dados de Afiliados</CardTitle></CardHeader>
         <CardContent>
-          <div className="text-center py-4"><Users className="w-8 h-8 text-muted-foreground mx-auto mb-2" /><p className="text-sm text-muted-foreground">Dados de afiliados vinculados aparecerão aqui.</p></div>
+          <div className="text-center py-4">
+            <Users className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground mb-3">Gerencie os afiliados da sua barbearia na página dedicada.</p>
+            <Link to="/painel-dono/afiliados"><Button variant="gold"><UserCheck className="w-4 h-4 mr-2" />Ver Afiliados</Button></Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+// ============ AFILIADOS DA BARBEARIA ============
+
+const AfiliadosBarbeariaPage = () => {
+  const { barbershop, refetch: refetchBarbershop } = useBarbershop();
+  const [affiliates, setAffiliates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [rewardType, setRewardType] = useState("commission");
+  const [commission, setCommission] = useState("10");
+  const [autoPay, setAutoPay] = useState(false);
+  const [savingConfig, setSavingConfig] = useState(false);
+
+  useEffect(() => {
+    if (!barbershop?.id) return;
+    setRewardType(barbershop.affiliate_reward_type || "commission");
+    setCommission(String(barbershop.affiliate_commission_pct || 10));
+    setAutoPay(barbershop.affiliate_auto_pay || false);
+
+    // Load affiliates linked to this barbershop
+    supabase
+      .from("affiliates")
+      .select("*, profiles:user_id(name, email, whatsapp)")
+      .eq("barbershop_id", barbershop.id)
+      .eq("type", "afiliado_barbearia")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        setAffiliates(data || []);
+        setLoading(false);
+      });
+  }, [barbershop?.id]);
+
+  const toggleAffiliate = async (affiliateId: string, currentActive: boolean) => {
+    const { error } = await supabase
+      .from("affiliates")
+      .update({ is_active: !currentActive })
+      .eq("id", affiliateId);
+    if (error) {
+      toast.error("Erro ao atualizar: " + error.message);
+      return;
+    }
+    toast.success(currentActive ? "Afiliado desativado" : "Afiliado ativado!");
+    setAffiliates(prev =>
+      prev.map(a => a.id === affiliateId ? { ...a, is_active: !currentActive } : a)
+    );
+  };
+
+  const saveConfig = async () => {
+    if (!barbershop?.id) return;
+    setSavingConfig(true);
+    const { error } = await supabase.from("barbershops").update({
+      affiliate_reward_type: rewardType,
+      affiliate_commission_pct: Number(commission),
+      affiliate_auto_pay: autoPay,
+    }).eq("id", barbershop.id);
+    setSavingConfig(false);
+    if (error) {
+      toast.error("Erro: " + error.message);
+      return;
+    }
+    toast.success("Configurações de afiliados salvas!");
+    refetchBarbershop();
+  };
+
+  const totalEarnings = affiliates.reduce((s, a) => s + Number(a.total_earnings || 0), 0);
+  const activeCount = affiliates.filter(a => a.is_active).length;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Afiliados da Barbearia</h1>
+          <p className="text-muted-foreground text-sm">Gerencie clientes que indicam seu negócio</p>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Total de Afiliados</CardDescription>
+            <CardTitle className="text-2xl">{affiliates.length}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Ativos</CardDescription>
+            <CardTitle className="text-2xl text-primary">{activeCount}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card className="bg-gradient-card border-primary/20">
+          <CardHeader className="pb-2">
+            <CardDescription>Comissões Totais</CardDescription>
+            <CardTitle className="text-2xl text-gradient-gold">R$ {totalEarnings.toFixed(2)}</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+
+      {/* Config */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Settings className="w-5 h-5 text-primary" />Configurações de Comissão</CardTitle>
+          <CardDescription>Defina como seus afiliados são recompensados</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div>
+            <Label className="text-sm font-medium mb-3 block">Tipo de Recompensa</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                onClick={() => setRewardType("commission")}
+                className={`p-4 rounded-xl border-2 text-left transition-all ${
+                  rewardType === "commission"
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-muted-foreground/30"
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <DollarSign className="w-5 h-5 text-primary" />
+                  </div>
+                  <p className="font-semibold">💰 Comissão em Dinheiro</p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  O afiliado recebe o valor da comissão diretamente em dinheiro (PIX/transferência).
+                </p>
+              </button>
+              <button
+                onClick={() => setRewardType("credit")}
+                className={`p-4 rounded-xl border-2 text-left transition-all ${
+                  rewardType === "credit"
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-muted-foreground/30"
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+                    <Gift className="w-5 h-5 text-secondary" />
+                  </div>
+                  <p className="font-semibold">🎁 Créditos para Serviço</p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  O afiliado acumula créditos que podem ser usados em serviços da barbearia.
+                </p>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label>% Comissão por indicação</Label>
+              <Input
+                type="number"
+                value={commission}
+                onChange={e => setCommission(e.target.value)}
+                className="mt-1"
+                min="0"
+                max="100"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Ex: 10% = R$ 5,00 em um serviço de R$ 50,00
+              </p>
+            </div>
+            <div className="flex flex-col justify-center gap-3">
+              <div className="flex items-center gap-3">
+                <Switch checked={autoPay} onCheckedChange={setAutoPay} />
+                <div>
+                  <p className="text-sm font-medium">Pagamento automático</p>
+                  <p className="text-xs text-muted-foreground">
+                    {autoPay ? "Comissão paga automaticamente via gateway" : "Você paga manualmente"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Button variant="gold" onClick={saveConfig} disabled={savingConfig}>
+            {savingConfig ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            {savingConfig ? "Salvando..." : "Salvar Configurações"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Affiliate List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Afiliados</CardTitle>
+          <CardDescription>{affiliates.length} afiliado(s) cadastrado(s)</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          ) : affiliates.length === 0 ? (
+            <div className="text-center py-12">
+              <UserCheck className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground mb-2">Nenhum afiliado cadastrado ainda.</p>
+              <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                Seus clientes podem se tornar afiliados pelo app do cliente. Quando ativados, eles ganham comissões por cada indicação que fizer um serviço.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {affiliates.map(a => {
+                const profile = (a as any).profiles;
+                return (
+                  <div key={a.id} className="flex items-center justify-between p-4 border rounded-xl transition-all hover:border-primary/30">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${a.is_active ? 'bg-primary/10' : 'bg-muted'}`}>
+                        <UserCheck className={`w-5 h-5 ${a.is_active ? 'text-primary' : 'text-muted-foreground'}`} />
+                      </div>
+                      <div>
+                        <p className="font-semibold">{profile?.name || "Afiliado"}</p>
+                        <p className="text-xs text-muted-foreground">{profile?.whatsapp || profile?.email || "-"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Código: <span className="font-mono font-medium">{a.referral_code}</span>
+                          {" • "}{a.active_referrals || 0} indicações
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="font-bold text-primary">
+                          {rewardType === "credit" ? "🎁 " : "💰 "}
+                          R$ {Number(a.total_earnings || 0).toFixed(2)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {rewardType === "credit" ? "em créditos" : "em comissões"}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-center gap-1">
+                        <Switch
+                          checked={a.is_active}
+                          onCheckedChange={() => toggleAffiliate(a.id, a.is_active)}
+                        />
+                        <span className={`text-[10px] font-medium ${a.is_active ? 'text-primary' : 'text-muted-foreground'}`}>
+                          {a.is_active ? "Ativo" : "Inativo"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
