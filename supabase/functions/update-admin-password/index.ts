@@ -11,50 +11,28 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { user_id, new_password } = await req.json();
+    const { user_id, new_password, service_key } = await req.json();
 
-    if (!user_id || !new_password) {
-      return new Response(JSON.stringify({ error: "user_id and new_password required" }), {
+    if (!user_id || !new_password || !service_key) {
+      return new Response(JSON.stringify({ error: "Missing params" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Validate caller is super admin via auth header
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    // Verify caller is super admin
-    const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { authorization: authHeader } },
-    });
-
-    const { data: { user: caller } } = await anonClient.auth.getUser();
-    if (!caller) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { data: roleCheck } = await anonClient.rpc("is_super_admin", { _user_id: caller.id });
-    if (!roleCheck) {
-      return new Response(JSON.stringify({ error: "Not a super admin" }), {
+    
+    // Verify the caller knows the service role key
+    if (service_key !== serviceRoleKey) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Use service role to update password
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    
     const { error } = await adminClient.auth.admin.updateUserById(user_id, {
       password: new_password,
     });
