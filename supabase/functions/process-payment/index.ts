@@ -197,16 +197,17 @@ serve(async (req) => {
     global: { headers: { Authorization: authHeader } },
   });
 
-  const { data: claims, error: claimsError } = await supabase.auth.getClaims(
-    authHeader.replace("Bearer ", "")
-  );
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
   
-  if (claimsError || !claims?.claims?.sub) {
+  if (userError || !user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  const userId = user.id;
+  const serviceRoleClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   try {
     const body: ChargeBody = await req.json();
@@ -215,7 +216,9 @@ serve(async (req) => {
     let result;
     switch (body.action) {
       case "charge":
-        result = await handleCharge(body);
+        // Auto-resolve customer_id if not provided
+        const customerId = body.customer_id || await getOrCreateCustomer(serviceRoleClient, userId);
+        result = await handleCharge(body, customerId);
         break;
       case "get":
         if (!body.payment_id) throw new Error("payment_id required");
