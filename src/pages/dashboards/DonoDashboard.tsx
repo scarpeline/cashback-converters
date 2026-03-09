@@ -118,6 +118,8 @@ const DonoDashboard = () => {
             <Route path="automacao" element={<NotificacoesDonoPage />} />
             <Route path="notificacoes" element={<NotificacoesDonoPage />} />
             <Route path="pixels" element={<PixelsPage />} />
+            <Route path="servicos-contabeis" element={<SolicitarServicoFiscalPage />} />
+            <Route path="dados-bancarios" element={<DadosBancariosPage />} />
             <Route path="suporte" element={<SuportePage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
           </Routes>
