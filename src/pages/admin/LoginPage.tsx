@@ -239,12 +239,6 @@ const AdminLoginPage = () => {
                 </div>
               )}
 
-              {/* Test credentials hint */}
-              <div className="p-3 bg-muted/50 rounded-lg border border-border mb-4">
-                <p className="text-xs text-muted-foreground">
-                  🛡️ <span className="font-medium">Teste Admin:</span> escarpelineparticular@gmail.com | Admin@2026
-                </p>
-              </div>
 
               {loginMode === "password" ? (
                 <form onSubmit={handlePasswordLogin} className="space-y-4">
