@@ -94,8 +94,8 @@ async function getOrCreateCustomer(supabaseAdmin: any, userId: string): Promise<
   // If no valid CPF/CNPJ and we're in sandbox, use test CPF
   if (!cpfCnpj || cpfCnpj.replace(/\D/g, '').length < 11) {
     if (environment === 'sandbox') {
-      // ASAAS sandbox accepts any valid format CPF
-      cpfCnpj = '24971563792'; // CPF válido para testes
+      // CPF válido matematicamente para sandbox ASAAS
+      cpfCnpj = '53409043085';
     } else {
       throw new Error("CPF/CNPJ não cadastrado. Atualize seu perfil antes de receber pagamentos.");
     }
