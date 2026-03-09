@@ -392,17 +392,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
         }
 
-        // Do not block auth resolution waiting for profile/roles
+        // WAIT for roles to load before marking auth as resolved
         if (existingSession?.user && validation.isValid) {
           currentUserId = existingSession.user.id;
-          void runUserLoad(existingSession.user, true).then((fetchedRoles) => {
+          try {
+            const fetchedRoles = await runUserLoad(existingSession.user, true);
             logDebugSummary('Initial Auth Complete', {
               user_id: existingSession.user.id,
               email: existingSession.user.email,
               session_valid: validation.isValid,
               roles: fetchedRoles,
             });
-          });
+          } catch (e) {
+            console.warn('[AUTH] runUserLoad failed during init:', e);
+          }
         }
       } catch (error) {
         logCriticalError("initializeAuth", error);

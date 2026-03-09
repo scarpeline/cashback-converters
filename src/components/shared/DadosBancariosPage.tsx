@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CreditCard, Loader2, CheckCircle2, Building2 } from "lucide-react";
 
 /**
- * Exibe os dados bancários/gateway criados automaticamente no cadastro do Dono.
+ * Exibe os dados bancários/gateway criados via API quando o dono clicou em "Criar Conta Bancária".
  * Lê de: barbershops (asaas_customer_id, asaas_wallet_id) + profiles (cpf_cnpj, pix_key, bank_info)
  */
 const DadosBancariosPage = () => {
@@ -41,7 +41,7 @@ const DadosBancariosPage = () => {
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Dados Bancários</h1>
       <p className="text-muted-foreground text-sm">
-        Dados criados automaticamente no gateway durante seu cadastro.
+        Informações da conta criada via gateway de pagamentos.
       </p>
 
       {/* Gateway status */}
@@ -106,11 +106,13 @@ const DadosBancariosPage = () => {
   );
 };
 
-const InfoField = ({ label, value, mono }: { label: string; value?: string | null; mono?: boolean }) => (
-  <div className="p-3 bg-muted rounded-lg">
-    <p className="text-xs text-muted-foreground">{label}</p>
-    <p className={`font-medium ${mono ? "font-mono text-xs" : ""}`}>{value || "-"}</p>
-  </div>
-);
+function InfoField({ label, value, mono }: { label: string; value?: string | null; mono?: boolean }) {
+  return (
+    <div className="p-3 bg-muted rounded-lg">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={`font-medium ${mono ? "font-mono text-xs" : ""}`}>{value || "-"}</p>
+    </div>
+  );
+}
 
 export default DadosBancariosPage;
