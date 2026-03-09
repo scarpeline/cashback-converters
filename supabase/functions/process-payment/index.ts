@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 interface ChargeBody {
-  action: "charge" | "get" | "refund";
+  action: "charge" | "get" | "refund" | "create-professional-account";
   // charge fields
   customer_id?: string;
   amount?: number;
@@ -19,6 +19,12 @@ interface ChargeBody {
   split?: Array<{ wallet_id: string; fixed_value?: number; percentage_value?: number }>;
   // get/refund fields
   payment_id?: string;
+  // create-professional-account fields
+  professional_id?: string;
+  cpf_cnpj?: string;
+  name?: string;
+  email?: string;
+  pix_key?: string;
 }
 
 function getAsaasConfig() {
@@ -295,6 +301,38 @@ serve(async (req) => {
         if (!body.payment_id) throw new Error("payment_id required");
         result = await handleRefund(body.payment_id, body.amount);
         break;
+      case "create-professional-account": {
+        const doc = onlyDigits(body.cpf_cnpj);
+        const { environment } = getAsaasConfig();
+        const sandboxTestCPF = "11144477735";
+        const validDoc = isValidCpfCnpj(doc) ? doc : (environment === "sandbox" ? sandboxTestCPF : "");
+        if (!validDoc) throw new Error("CPF/CNPJ inválido. Atualize antes de continuar.");
+
+        // Create sub-account on ASAAS
+        const accountData = await asaasFetch("/accounts", {
+          method: "POST",
+          body: JSON.stringify({
+            name: body.name || "Profissional",
+            email: body.email || `prof-${body.professional_id}@placeholder.com`,
+            cpfCnpj: validDoc,
+            companyType: validDoc.length === 11 ? "INDIVIDUAL" : "LIMITED",
+            loginEmail: body.email || `prof-${body.professional_id}@placeholder.com`,
+          }),
+        });
+
+        const walletId = accountData.walletId || accountData.id;
+
+        // Save wallet_id back to professionals table
+        if (body.professional_id) {
+          await serviceRoleClient
+            .from("professionals")
+            .update({ asaas_wallet_id: walletId, asaas_customer_id: accountData.id })
+            .eq("id", body.professional_id);
+        }
+
+        result = { wallet_id: walletId, account_id: accountData.id };
+        break;
+      }
       default:
         throw new Error("Invalid action");
     }
