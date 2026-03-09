@@ -28,6 +28,7 @@ const ProfissionalDashboard = () => {
     { name: "Minha Agenda", href: `${basePath}/agenda`, icon: Calendar },
     { name: "Meus Ganhos", href: `${basePath}/ganhos`, icon: DollarSign },
     { name: "Conta Bancária", href: `${basePath}/conta-bancaria`, icon: CreditCard },
+    { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: FileText },
     { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
   ];
 
