@@ -26,6 +26,7 @@ import { Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import { formatWhatsAppBR, onlyDigits } from "@/lib/input-masks";
+import { isPaymentRequestSupported, processNfcPayment } from "@/lib/nfc/payment";
 
 const DonoDashboard = () => {
   const { profile, signOut } = useAuth();
