@@ -831,7 +831,6 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
                     const result = await processNfcPayment({
                       amount,
                       description: descricao || "Pagamento por aproximação",
-                      barbershop_id: barbershopId,
                     });
                     setNfcLoading(false);
                     if (result.success) {
