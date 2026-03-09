@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
   LayoutDashboard, DollarSign, Users, Link as LinkIcon, History, User, LogOut,
-  Menu, X, Copy, TrendingUp, Wallet, Loader2, CreditCard, Building2
+  Menu, X, Copy, TrendingUp, Wallet, Loader2, CreditCard, Building2, FileText
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import { formatCpfCnpjBR } from "@/lib/input-masks";
+import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 
 const AfiliadoDashboard = () => {
   const { profile, signOut } = useAuth();
