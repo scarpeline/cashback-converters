@@ -34,7 +34,7 @@ const DadosBancariosPage = () => {
     );
   }
 
-  const bankInfo = profile?.bank_info as any;
+  const bankInfo = profileData?.bank_info as any;
   const hasGateway = !!barbershop?.asaas_customer_id;
 
   return (
