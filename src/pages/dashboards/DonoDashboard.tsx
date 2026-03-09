@@ -1703,6 +1703,7 @@ const NotificacoesDonoPage = () => {
 
       {/* ============ ABA PACOTES ============ */}
       {tab === "pacotes" && (
+        <div className="space-y-4">
         <Card>
           <CardHeader><CardTitle>💬 Por que investir em SMS & WhatsApp?</CardTitle></CardHeader>
           <CardContent className="space-y-4">
