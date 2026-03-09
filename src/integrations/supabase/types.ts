@@ -1349,6 +1349,50 @@ export type Database = {
           },
         ]
       }
+      social_proofs: {
+        Row: {
+          barbershop_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          message: string
+          pages: Json
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          message: string
+          pages?: Json
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          message?: string
+          pages?: Json
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_proofs_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_items: {
         Row: {
           barbershop_id: string

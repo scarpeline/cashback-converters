@@ -5,16 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, ClipboardList, Loader2, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { FileText, ClipboardList, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const SERVICE_LABELS: Record<string, string> = {
-  mei_declaration: "Declaração MEI",
-  me_declaration: "Declaração ME",
-  income_tax: "Imposto de Renda",
   cnpj_opening: "Abertura de CNPJ (MEI/ME)",
-  cnpj_closing: "Encerramento de CNPJ",
+  mei_declaration: "Declaração Anual MEI (DASN-SIMEI)",
+  me_declaration: "Declaração ME / Simples Nacional",
+  income_tax: "Imposto de Renda (IRPF)",
   cnpj_migration: "Migração CPF → CNPJ",
+  cnpj_closing: "Encerramento de CNPJ",
   other: "Outro Serviço",
 };
 
@@ -26,17 +27,105 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   rejected: { label: "Rejeitado", color: "bg-destructive/10 text-destructive" },
 };
 
-const SolicitarServicoFiscalPage = () => {
+/** Campos dinâmicos por tipo de serviço */
+interface DynamicField {
+  key: string;
+  label: string;
+  placeholder: string;
+  type?: "text" | "select" | "textarea";
+  options?: { value: string; label: string }[];
+  required?: boolean;
+}
+
+const SERVICE_FIELDS: Record<string, DynamicField[]> = {
+  cnpj_opening: [
+    { key: "full_name", label: "Nome Completo", placeholder: "Nome conforme RG/CNH", required: true },
+    { key: "cpf", label: "CPF", placeholder: "000.000.000-00", required: true },
+    { key: "company_type", label: "Tipo de Empresa", placeholder: "", type: "select", options: [
+      { value: "mei", label: "MEI - Microempreendedor Individual" },
+      { value: "me", label: "ME - Microempresa (Simples Nacional)" },
+    ], required: true },
+    { key: "activity", label: "Atividade Principal (CNAE)", placeholder: "Ex: 9602-5/01 - Cabeleireiros, 9602-5/02 - Manicure" },
+    { key: "address", label: "Endereço Comercial", placeholder: "Rua, número, bairro, cidade/UF, CEP" },
+    { key: "phone", label: "Telefone de Contato", placeholder: "(11) 99999-0000" },
+    { key: "start_date", label: "Data Prevista de Início", placeholder: "Ex: 01/04/2026" },
+  ],
+  mei_declaration: [
+    { key: "cnpj", label: "CNPJ MEI", placeholder: "00.000.000/0001-00", required: true },
+    { key: "company_name", label: "Nome da Empresa", placeholder: "Razão social no CNPJ" },
+    { key: "year", label: "Ano-Calendário", placeholder: "Ex: 2025", required: true },
+    { key: "annual_revenue", label: "Faturamento Bruto Anual (R$)", placeholder: "Ex: 72.000,00", required: true },
+    { key: "had_employee", label: "Teve Funcionário?", type: "select", placeholder: "", options: [
+      { value: "no", label: "Não" },
+      { value: "yes", label: "Sim" },
+    ] },
+  ],
+  me_declaration: [
+    { key: "cnpj", label: "CNPJ da Empresa", placeholder: "00.000.000/0001-00", required: true },
+    { key: "company_name", label: "Razão Social", placeholder: "Nome da empresa" },
+    { key: "year", label: "Ano-Calendário", placeholder: "Ex: 2025", required: true },
+    { key: "annual_revenue", label: "Faturamento Bruto Anual (R$)", placeholder: "Ex: 360.000,00", required: true },
+    { key: "employees_count", label: "Nº de Funcionários", placeholder: "Ex: 3" },
+    { key: "tax_regime", label: "Regime Tributário", type: "select", placeholder: "", options: [
+      { value: "simples", label: "Simples Nacional" },
+      { value: "lucro_presumido", label: "Lucro Presumido" },
+      { value: "nao_sei", label: "Não sei" },
+    ] },
+  ],
+  income_tax: [
+    { key: "cpf", label: "CPF do Declarante", placeholder: "000.000.000-00", required: true },
+    { key: "full_name", label: "Nome Completo", placeholder: "Nome conforme documentos", required: true },
+    { key: "year", label: "Ano-Calendário", placeholder: "Ex: 2025", required: true },
+    { key: "income_sources", label: "Fontes de Renda", placeholder: "Ex: Salário, Autônomo, Aluguel, etc.", type: "textarea" },
+    { key: "dependents", label: "Nº de Dependentes", placeholder: "Ex: 2" },
+    { key: "has_assets", label: "Possui Bens (imóvel, veículo)?", type: "select", placeholder: "", options: [
+      { value: "no", label: "Não" },
+      { value: "yes", label: "Sim" },
+    ] },
+    { key: "had_investments", label: "Teve Investimentos?", type: "select", placeholder: "", options: [
+      { value: "no", label: "Não" },
+      { value: "yes", label: "Sim" },
+    ] },
+  ],
+  cnpj_migration: [
+    { key: "cpf", label: "CPF Atual", placeholder: "000.000.000-00", required: true },
+    { key: "full_name", label: "Nome Completo", placeholder: "Nome conforme RG", required: true },
+    { key: "target_type", label: "Migrar Para", type: "select", placeholder: "", options: [
+      { value: "mei", label: "MEI - Microempreendedor Individual" },
+      { value: "me", label: "ME - Microempresa" },
+    ], required: true },
+    { key: "activity", label: "Atividade Principal (CNAE)", placeholder: "Ex: 9602-5/01 - Cabeleireiros" },
+    { key: "monthly_revenue", label: "Faturamento Mensal Estimado (R$)", placeholder: "Ex: 5.000,00" },
+    { key: "address", label: "Endereço Comercial", placeholder: "Rua, número, bairro, cidade/UF" },
+  ],
+  cnpj_closing: [
+    { key: "cnpj", label: "CNPJ a Encerrar", placeholder: "00.000.000/0001-00", required: true },
+    { key: "company_name", label: "Razão Social", placeholder: "Nome da empresa" },
+    { key: "reason", label: "Motivo do Encerramento", type: "textarea", placeholder: "Ex: Encerramento das atividades, mudança de regime, etc." },
+    { key: "has_debts", label: "Possui Débitos Fiscais?", type: "select", placeholder: "", options: [
+      { value: "no", label: "Não" },
+      { value: "yes", label: "Sim" },
+      { value: "nao_sei", label: "Não sei" },
+    ] },
+  ],
+  other: [
+    { key: "description", label: "Descreva o Serviço", type: "textarea", placeholder: "Detalhe o que precisa para o contador avaliar", required: true },
+  ],
+};
+
+export default function SolicitarServicoFiscalPage() {
   const { user } = useAuth();
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ service_type: "cnpj_opening", description: "" });
+  const [serviceType, setServiceType] = useState("cnpj_opening");
+  const [fields, setFields] = useState<Record<string, string>>({});
+  const [notes, setNotes] = useState("");
 
   const fetchRequests = async () => {
     if (!user) return;
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("fiscal_service_requests")
       .select("*")
       .eq("client_user_id", user.id)
@@ -47,30 +136,66 @@ const SolicitarServicoFiscalPage = () => {
 
   useEffect(() => { fetchRequests(); }, [user]);
 
+  const openForm = (type: string) => {
+    setServiceType(type);
+    setFields({});
+    setNotes("");
+    setShowForm(true);
+  };
+
   const handleSubmit = async () => {
     if (!user) return;
+
+    // Validate required fields
+    const requiredFields = (SERVICE_FIELDS[serviceType] || []).filter(f => f.required);
+    const missing = requiredFields.filter(f => !fields[f.key]?.trim());
+    if (missing.length > 0) {
+      toast.error(`Preencha: ${missing.map(f => f.label).join(", ")}`);
+      return;
+    }
+
     setSaving(true);
-    const { error } = await (supabase as any).from("fiscal_service_requests").insert({
+
+    // Build description with all fields for the accountant
+    const dynamicFields = SERVICE_FIELDS[serviceType] || [];
+    const descriptionParts = dynamicFields
+      .filter(f => fields[f.key]?.trim())
+      .map(f => {
+        let val = fields[f.key];
+        if (f.type === "select" && f.options) {
+          const opt = f.options.find(o => o.value === val);
+          if (opt) val = opt.label;
+        }
+        return `${f.label}: ${val}`;
+      });
+    if (notes.trim()) descriptionParts.push(`Observações: ${notes}`);
+
+    const description = descriptionParts.join("\n");
+
+    const { error } = await supabase.from("fiscal_service_requests").insert({
       client_user_id: user.id,
-      service_type: form.service_type,
-      description: form.description || null,
+      service_type: serviceType,
+      description,
     });
     setSaving(false);
     if (error) { toast.error("Erro: " + error.message); return; }
-    toast.success("Pedido enviado ao contador!");
+    toast.success("Pedido enviado ao contador com todos os dados!");
     setShowForm(false);
-    setForm({ service_type: "cnpj_opening", description: "" });
+    setFields({});
+    setNotes("");
     fetchRequests();
   };
 
+  const currentFields = SERVICE_FIELDS[serviceType] || [];
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold">Serviços Contábeis</h1>
           <p className="text-muted-foreground text-sm">Solicite abertura de CNPJ, declarações e mais</p>
         </div>
-        <Button variant="gold" onClick={() => setShowForm(!showForm)}>
+        <Button variant="gold" onClick={() => openForm("cnpj_opening")} className="w-full sm:w-auto">
           <ClipboardList className="w-4 h-4 mr-2" />Solicitar
         </Button>
       </div>
@@ -78,60 +203,105 @@ const SolicitarServicoFiscalPage = () => {
       {showForm && (
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
-            <CardTitle>Novo Pedido</CardTitle>
-            <CardDescription>Selecione o serviço e envie ao contador da plataforma</CardDescription>
+            <CardTitle className="text-lg">Novo Pedido — {SERVICE_LABELS[serviceType]}</CardTitle>
+            <CardDescription>Preencha os dados para o contador processar seu pedido</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Service type selector */}
             <div>
               <Label>Tipo de Serviço</Label>
               <select
                 className="flex h-11 w-full rounded-lg border border-input bg-muted/30 px-4 py-2 text-sm mt-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                value={form.service_type}
-                onChange={(e) => setForm({ ...form, service_type: e.target.value })}
+                value={serviceType}
+                onChange={(e) => { setServiceType(e.target.value); setFields({}); }}
               >
                 {Object.entries(SERVICE_LABELS).map(([k, v]) => (
                   <option key={k} value={k}>{v}</option>
                 ))}
               </select>
             </div>
-            <div>
-              <Label>Descrição / Observações</Label>
-              <Input
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Detalhes do que precisa, CNAE sugerido, etc."
-                className="mt-1"
-              />
+
+            {/* Dynamic fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {currentFields.map((field) => (
+                <div key={field.key} className={field.type === "textarea" ? "sm:col-span-2" : ""}>
+                  <Label>
+                    {field.label}
+                    {field.required && <span className="text-destructive ml-1">*</span>}
+                  </Label>
+                  {field.type === "select" ? (
+                    <select
+                      className="flex h-11 w-full rounded-lg border border-input bg-muted/30 px-4 py-2 text-sm mt-1"
+                      value={fields[field.key] || ""}
+                      onChange={(e) => setFields({ ...fields, [field.key]: e.target.value })}
+                    >
+                      <option value="">Selecione...</option>
+                      {field.options?.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  ) : field.type === "textarea" ? (
+                    <Textarea
+                      className="mt-1 min-h-[80px]"
+                      placeholder={field.placeholder}
+                      value={fields[field.key] || ""}
+                      onChange={(e) => setFields({ ...fields, [field.key]: e.target.value })}
+                    />
+                  ) : (
+                    <Input
+                      className="mt-1"
+                      placeholder={field.placeholder}
+                      value={fields[field.key] || ""}
+                      onChange={(e) => setFields({ ...fields, [field.key]: e.target.value })}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
-            <div className="flex gap-2">
-              <Button variant="gold" onClick={handleSubmit} disabled={saving}>
+
+            {/* Extra notes */}
+            {serviceType !== "other" && (
+              <div>
+                <Label>Observações Adicionais</Label>
+                <Textarea
+                  className="mt-1 min-h-[60px]"
+                  placeholder="Informações extras que ajudem o contador..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button variant="gold" onClick={handleSubmit} disabled={saving} className="w-full sm:w-auto">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 {saving ? "Enviando..." : "Enviar Pedido"}
               </Button>
-              <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+              <Button variant="outline" onClick={() => setShowForm(false)} className="w-full sm:w-auto">Cancelar</Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Available services info */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      {/* Available services grid - mobile friendly */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[
           { key: "cnpj_opening", icon: "🏢", desc: "Abrir MEI ou ME" },
-          { key: "mei_declaration", icon: "📋", desc: "Declaração anual MEI" },
+          { key: "mei_declaration", icon: "📋", desc: "DASN-SIMEI anual" },
           { key: "me_declaration", icon: "📊", desc: "Declaração ME" },
-          { key: "income_tax", icon: "💰", desc: "IRPF" },
+          { key: "income_tax", icon: "💰", desc: "Declaração IRPF" },
           { key: "cnpj_migration", icon: "🔄", desc: "CPF → CNPJ" },
-          { key: "other", icon: "📝", desc: "Outros" },
+          { key: "cnpj_closing", icon: "🚫", desc: "Encerrar CNPJ" },
+          { key: "other", icon: "📝", desc: "Outros serviços" },
         ].map((s) => (
           <button
             key={s.key}
-            onClick={() => { setForm({ service_type: s.key, description: "" }); setShowForm(true); }}
-            className="p-3 rounded-xl border border-border bg-card text-center hover:border-primary/50 hover:bg-primary/5 transition-colors"
+            onClick={() => openForm(s.key)}
+            className="p-3 rounded-xl border border-border bg-card text-center hover:border-primary/50 hover:bg-primary/5 transition-colors active:scale-95"
           >
             <span className="text-2xl block mb-1">{s.icon}</span>
-            <p className="text-xs font-medium">{SERVICE_LABELS[s.key]}</p>
-            <p className="text-[10px] text-muted-foreground">{s.desc}</p>
+            <p className="text-xs font-medium leading-tight">{SERVICE_LABELS[s.key]}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{s.desc}</p>
           </button>
         ))}
       </div>
@@ -155,13 +325,18 @@ const SolicitarServicoFiscalPage = () => {
             return (
               <Card key={r.id}>
                 <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-semibold">{SERVICE_LABELS[r.service_type] || r.service_type}</p>
-                      {r.description && <p className="text-sm text-muted-foreground mt-1">{r.description}</p>}
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm">{SERVICE_LABELS[r.service_type] || r.service_type}</p>
+                      {r.description && (
+                        <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line line-clamp-3">{r.description}</p>
+                      )}
                       <p className="text-xs text-muted-foreground mt-1">
                         {new Date(r.created_at).toLocaleDateString("pt-BR")}
                       </p>
+                      {r.notes && (
+                        <p className="text-xs text-primary mt-1 italic">Resposta: {r.notes}</p>
+                      )}
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full shrink-0 ${sc.color}`}>{sc.label}</span>
                   </div>
@@ -173,6 +348,4 @@ const SolicitarServicoFiscalPage = () => {
       )}
     </div>
   );
-};
-
-export default SolicitarServicoFiscalPage;
+}

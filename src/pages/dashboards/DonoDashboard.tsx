@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 import DadosBancariosPage from "@/components/shared/DadosBancariosPage";
+import { SocialProofManager } from "@/components/social-proof/SocialProofManager";
+import { SocialProofPopup } from "@/components/social-proof/SocialProofPopup";
 import { DonoOnboarding } from "@/components/onboarding/DonoOnboarding";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,6 +50,7 @@ const DonoDashboard = () => {
     { name: "Estoque", href: `${basePath}/estoque`, icon: Package },
     { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
     { name: "Ação entre Amigos", href: `${basePath}/acao-entre-amigos`, icon: Gift },
+    { name: "Prova Social", href: `${basePath}/prova-social`, icon: TrendingUp },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
     { name: "Pixels & Marketing", href: `${basePath}/pixels`, icon: Image },
     { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: Scissors },
@@ -115,6 +118,7 @@ const DonoDashboard = () => {
             <Route path="cashback" element={<CashbackPage />} />
             <Route path="acao-entre-amigos" element={<AcaoEntreAmigosPage />} />
             <Route path="rifas" element={<AcaoEntreAmigosPage />} />
+            <Route path="prova-social" element={<SocialProofManager barbershopId={mainBarbershop?.id} />} />
             <Route path="automacao" element={<NotificacoesDonoPage />} />
             <Route path="notificacoes" element={<NotificacoesDonoPage />} />
             <Route path="pixels" element={<PixelsPage />} />
@@ -123,6 +127,7 @@ const DonoDashboard = () => {
             <Route path="suporte" element={<SuportePage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
           </Routes>
+          <SocialProofPopup currentPage="painel-dono" />
         </main>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
+import { SocialProofManager } from "@/components/social-proof/SocialProofManager";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ const SuperAdminDashboard = () => {
     { name: "Afiliados", href: `${basePath}/afiliados`, icon: Users },
     { name: "Contadores", href: `${basePath}/contadores`, icon: Calculator },
     { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
+    { name: "Prova Social", href: `${basePath}/prova-social`, icon: Activity },
     { name: "Integrações", href: `${basePath}/integracoes`, icon: Plug },
     { name: "Pixels Globais", href: `${basePath}/pixels`, icon: Image },
     { name: "Mensagens Sistema", href: `${basePath}/mensagens-sistema`, icon: MessageCircle },
@@ -94,6 +96,7 @@ const SuperAdminDashboard = () => {
             <Route path="afiliados" element={<AfiliadosPage />} />
             <Route path="contadores" element={<ContadoresPage />} />
             <Route path="financeiro" element={<FinanceiroPage />} />
+            <Route path="prova-social" element={<SocialProofManager showPageSelector />} />
             <Route path="integracoes" element={<Suspense fallback={<PageFallback />}><IntegrationSettingsPage /></Suspense>} />
             <Route path="pixels" element={<PixelsPage />} />
             <Route path="mensagens-sistema" element={<MensagensSistemaPage />} />
