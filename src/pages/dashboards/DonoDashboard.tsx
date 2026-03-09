@@ -598,21 +598,44 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
   const [valor, setValor] = useState("");
   const [descricao, setDescricao] = useState("");
   const [loading, setLoading] = useState(false);
-  const [pixData, setPixData] = useState<{ qr_code?: string; copy_paste?: string; payment_link?: string } | null>(null);
+  const [pixData, setPixData] = useState<{ qr_code?: string; copy_paste?: string; payment_link?: string; payment_id?: string } | null>(null);
+  
+  // Vincular a devedor
+  const [vincularDevedor, setVincularDevedor] = useState(false);
+  const [devedorSelecionado, setDevedorSelecionado] = useState<string>("");
+  const [devedores, setDevedores] = useState<any[]>([]);
+  
+  useEffect(() => {
+    if (open && barbershopId) {
+      supabase.from("debts")
+        .select("*")
+        .eq("barbershop_id", barbershopId)
+        .eq("status", "pending")
+        .order("client_name")
+        .then(({ data }) => setDevedores(data || []));
+    }
+  }, [open, barbershopId]);
 
   const handleGerar = async () => {
     const amount = Number(valor);
     if (!amount || amount <= 0) { toast.error("Informe um valor válido."); return; }
     setLoading(true);
     setPixData(null);
+    
+    const devedorInfo = vincularDevedor && devedorSelecionado 
+      ? devedores.find(d => d.id === devedorSelecionado) 
+      : null;
+    
     try {
       const { data, error } = await supabase.functions.invoke("process-payment", {
         body: {
           action: "charge",
           amount,
-          description: descricao || "Recebimento rápido",
+          description: devedorInfo 
+            ? `Pagamento dívida: ${devedorInfo.client_name}` 
+            : (descricao || "Recebimento rápido"),
           billing_type: "PIX",
-          external_reference: `quick-${barbershopId}-${Date.now()}`,
+          external_reference: devedorInfo?.id || `quick-${barbershopId}-${Date.now()}`,
         },
       });
       if (error) throw error;
@@ -620,6 +643,7 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
         qr_code: data?.pix_qr_code || data?.qrCode,
         copy_paste: data?.pix_copy_paste || data?.copyPaste,
         payment_link: data?.payment_link || data?.invoiceUrl,
+        payment_id: data?.payment_id,
       });
       toast.success("Cobrança gerada com sucesso!");
     } catch {
@@ -634,6 +658,43 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
     toast.success("Copiado para a área de transferência!");
   };
 
+  const handleMarcarPago = async () => {
+    if (!vincularDevedor || !devedorSelecionado) return;
+    
+    const devedorInfo = devedores.find(d => d.id === devedorSelecionado);
+    const valorPago = Number(valor);
+    const valorDivida = Number(devedorInfo?.amount || 0);
+    
+    try {
+      if (valorPago >= valorDivida) {
+        // Paga toda a dívida
+        await supabase.from("debts").update({
+          status: "paid",
+          paid_at: new Date().toISOString(),
+        }).eq("id", devedorSelecionado);
+        toast.success(`Dívida de ${devedorInfo.client_name} quitada!`);
+      } else {
+        // Abate parcial
+        const novoValor = valorDivida - valorPago;
+        await supabase.from("debts").update({
+          amount: novoValor,
+          description: `${devedorInfo.description || "Fiado"} (abatido R$ ${valorPago.toFixed(2)})`,
+        }).eq("id", devedorSelecionado);
+        toast.success(`Abatido R$ ${valorPago.toFixed(2)} da dívida de ${devedorInfo.client_name}. Restante: R$ ${novoValor.toFixed(2)}`);
+      }
+      
+      // Reset
+      setPixData(null);
+      setValor("");
+      setDescricao("");
+      setVincularDevedor(false);
+      setDevedorSelecionado("");
+      setOpen(false);
+    } catch {
+      toast.error("Erro ao atualizar dívida.");
+    }
+  };
+
   if (!open) {
     return (
       <Button variant="gold" size="lg" className="w-full sm:w-auto" onClick={() => setOpen(true)}>
@@ -642,6 +703,10 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
       </Button>
     );
   }
+
+  const devedorInfo = vincularDevedor && devedorSelecionado 
+    ? devedores.find(d => d.id === devedorSelecionado) 
+    : null;
 
   return (
     <Card className="border-primary/30 bg-primary/5">
@@ -655,6 +720,46 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
       <CardContent className="space-y-4">
         {!pixData ? (
           <>
+            {/* Opção de vincular a devedor */}
+            <div className="p-3 bg-muted rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm">Vincular a cliente devedor?</p>
+                  <p className="text-xs text-muted-foreground">Se vinculado, o valor será descontado da dívida</p>
+                </div>
+                <Switch checked={vincularDevedor} onCheckedChange={setVincularDevedor} />
+              </div>
+              
+              {vincularDevedor && (
+                <div>
+                  <Label className="text-xs">Selecionar Devedor</Label>
+                  <select 
+                    className="w-full mt-1 p-2 border rounded-md bg-background text-sm"
+                    value={devedorSelecionado}
+                    onChange={e => {
+                      setDevedorSelecionado(e.target.value);
+                      // Preencher valor automaticamente
+                      const devedor = devedores.find(d => d.id === e.target.value);
+                      if (devedor) {
+                        setValor(String(devedor.amount));
+                        setDescricao(`Pagamento dívida: ${devedor.client_name}`);
+                      }
+                    }}
+                  >
+                    <option value="">-- Selecione um devedor --</option>
+                    {devedores.map(d => (
+                      <option key={d.id} value={d.id}>
+                        {d.client_name} - R$ {Number(d.amount).toFixed(2)}
+                      </option>
+                    ))}
+                  </select>
+                  {devedores.length === 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">Nenhum devedor pendente.</p>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label>Valor (R$) *</Label>
@@ -668,6 +773,11 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
                   step="0.01"
                   autoFocus
                 />
+                {devedorInfo && Number(valor) < Number(devedorInfo.amount) && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    Pagamento parcial: restará R$ {(Number(devedorInfo.amount) - Number(valor)).toFixed(2)}
+                  </p>
+                )}
               </div>
               <div>
                 <Label>Descrição (opcional)</Label>
@@ -683,6 +793,11 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
               <div className="p-3 bg-muted rounded-lg text-center">
                 <p className="text-sm text-muted-foreground">Valor a receber</p>
                 <p className="text-3xl font-bold text-gradient-gold">R$ {Number(valor).toFixed(2)}</p>
+                {devedorInfo && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Vinculado a: <span className="font-medium">{devedorInfo.client_name}</span>
+                  </p>
+                )}
               </div>
             )}
             <div className="flex gap-2">
@@ -690,7 +805,7 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <QrCode className="w-4 h-4 mr-2" />}
                 {loading ? "Gerando..." : "Gerar PIX"}
               </Button>
-              <Button variant="outline" onClick={() => { setOpen(false); setValor(""); setDescricao(""); }}>Cancelar</Button>
+              <Button variant="outline" onClick={() => { setOpen(false); setValor(""); setDescricao(""); setVincularDevedor(false); setDevedorSelecionado(""); }}>Cancelar</Button>
             </div>
           </>
         ) : (
@@ -698,6 +813,11 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
             <div className="p-4 bg-muted rounded-lg text-center">
               <p className="text-sm text-muted-foreground mb-1">Cobrança gerada</p>
               <p className="text-3xl font-bold text-gradient-gold">R$ {Number(valor).toFixed(2)}</p>
+              {devedorInfo && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Vinculado a: <span className="font-medium">{devedorInfo.client_name}</span>
+                </p>
+              )}
             </div>
 
             {pixData.qr_code && (
@@ -749,7 +869,19 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
               </Button>
             </div>
 
-            <Button variant="ghost" className="w-full" onClick={() => { setOpen(false); setPixData(null); setValor(""); setDescricao(""); }}>
+            {/* Botão para marcar como pago e abater da dívida */}
+            {vincularDevedor && devedorSelecionado && (
+              <Button 
+                variant="default" 
+                className="w-full bg-green-600 hover:bg-green-700" 
+                onClick={handleMarcarPago}
+              >
+                <Check className="w-4 h-4 mr-2" />
+                Confirmar Pagamento e Abater da Dívida
+              </Button>
+            )}
+
+            <Button variant="ghost" className="w-full" onClick={() => { setOpen(false); setPixData(null); setValor(""); setDescricao(""); setVincularDevedor(false); setDevedorSelecionado(""); }}>
               Fechar
             </Button>
           </div>
