@@ -42,6 +42,7 @@ const DonoDashboard = () => {
     { name: "Serviços", href: `${basePath}/servicos`, icon: Scissors },
     { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
     { name: "Receber Dívida", href: `${basePath}/dividas`, icon: Wallet },
+    { name: "Afiliados", href: `${basePath}/afiliados`, icon: UserCheck },
     { name: "Estoque", href: `${basePath}/estoque`, icon: Package },
     { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
     { name: "Ação entre Amigos", href: `${basePath}/acao-entre-amigos`, icon: Gift },
