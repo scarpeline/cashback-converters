@@ -27,6 +27,7 @@ const AfiliadoDashboard = () => {
     { name: "Meus Indicados", href: `${basePath}/indicados`, icon: Users },
     { name: "Comissões", href: `${basePath}/comissoes`, icon: DollarSign },
     { name: "Conta Bancária", href: `${basePath}/conta-bancaria`, icon: CreditCard },
+    { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: FileText },
     { name: "Histórico", href: `${basePath}/historico`, icon: History },
     { name: "Meu Link", href: `${basePath}/link`, icon: LinkIcon },
     { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
