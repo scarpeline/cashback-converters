@@ -78,6 +78,7 @@ const AfiliadoDashboard = () => {
             <Route path="indicados" element={<IndicadosPage />} />
             <Route path="comissoes" element={<ComissoesPage />} />
             <Route path="conta-bancaria" element={<ContaBancariaPage />} />
+            <Route path="servicos-contabeis" element={<SolicitarServicoFiscalPage />} />
             <Route path="historico" element={<HistoricoPage />} />
             <Route path="link" element={<LinkPage />} />
             <Route path="perfil" element={<PerfilPage />} />
