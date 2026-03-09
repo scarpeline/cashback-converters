@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { formatWhatsAppBR } from "@/lib/input-masks";
 import ContaBancariaPage from "@/components/profissional/ContaBancariaPage";
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
+import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 
 const ProfissionalDashboard = () => {
   const { profile, signOut } = useAuth();
