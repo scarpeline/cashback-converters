@@ -118,6 +118,7 @@ const DonoDashboard = () => {
             <Route path="cashback" element={<CashbackPage />} />
             <Route path="acao-entre-amigos" element={<AcaoEntreAmigosPage />} />
             <Route path="rifas" element={<AcaoEntreAmigosPage />} />
+            <Route path="prova-social" element={<SocialProofManager barbershopId={mainBarbershop?.id} />} />
             <Route path="automacao" element={<NotificacoesDonoPage />} />
             <Route path="notificacoes" element={<NotificacoesDonoPage />} />
             <Route path="pixels" element={<PixelsPage />} />
@@ -126,6 +127,7 @@ const DonoDashboard = () => {
             <Route path="suporte" element={<SuportePage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
           </Routes>
+          <SocialProofPopup currentPage="painel-dono" />
         </main>
       </div>
     </div>

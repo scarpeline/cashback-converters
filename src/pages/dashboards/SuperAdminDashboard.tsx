@@ -96,6 +96,7 @@ const SuperAdminDashboard = () => {
             <Route path="afiliados" element={<AfiliadosPage />} />
             <Route path="contadores" element={<ContadoresPage />} />
             <Route path="financeiro" element={<FinanceiroPage />} />
+            <Route path="prova-social" element={<SocialProofManager showPageSelector />} />
             <Route path="integracoes" element={<Suspense fallback={<PageFallback />}><IntegrationSettingsPage /></Suspense>} />
             <Route path="pixels" element={<PixelsPage />} />
             <Route path="mensagens-sistema" element={<MensagensSistemaPage />} />
