@@ -39,6 +39,7 @@ const SuperAdminDashboard = () => {
     { name: "Afiliados", href: `${basePath}/afiliados`, icon: Users },
     { name: "Contadores", href: `${basePath}/contadores`, icon: Calculator },
     { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
+    { name: "Prova Social", href: `${basePath}/prova-social`, icon: Activity },
     { name: "Integrações", href: `${basePath}/integracoes`, icon: Plug },
     { name: "Pixels Globais", href: `${basePath}/pixels`, icon: Image },
     { name: "Mensagens Sistema", href: `${basePath}/mensagens-sistema`, icon: MessageCircle },
