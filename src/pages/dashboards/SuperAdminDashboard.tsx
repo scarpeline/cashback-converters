@@ -122,7 +122,7 @@ const testAccounts = [
   { role: "Profissional", icon: Users, color: "bg-purple-500", login: "profissional.teste@salao.app", password: "Teste@123", dashboard: "/painel-profissional" },
   { role: "Afiliado SaaS", icon: TrendingUp, color: "bg-green-500", login: "afiliado.teste@salao.app", password: "Teste@123", dashboard: "/afiliado-saas" },
   { role: "Contador", icon: Calculator, color: "bg-orange-500", login: "contador.teste@salao.app", password: "Teste@123", dashboard: "/contador2026" },
-  { role: "Super Admin", icon: Shield, color: "bg-destructive", login: "escarpelineparticular@gmail.com", password: "Admin@2026", dashboard: "/admin" },
+  { role: "Super Admin", icon: Shield, color: "bg-destructive", login: "***@***.com", password: "••••••••", dashboard: "/admin" },
 ];
 
 const DashboardHome = () => {
