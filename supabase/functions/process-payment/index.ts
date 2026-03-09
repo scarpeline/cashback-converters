@@ -84,14 +84,28 @@ async function getOrCreateCustomer(supabaseAdmin: any, userId: string): Promise<
 
   if (!profile) throw new Error("Perfil do usuário não encontrado.");
 
+  // Validate or use test CPF for sandbox
+  const { environment } = getAsaasConfig();
+  let cpfCnpj = profile.cpf_cnpj;
+  
+  // If no valid CPF/CNPJ and we're in sandbox, use test CPF
+  if (!cpfCnpj || cpfCnpj.replace(/\D/g, '').length < 11) {
+    if (environment === 'sandbox') {
+      // ASAAS sandbox accepts any valid format CPF
+      cpfCnpj = '24971563792'; // CPF válido para testes
+    } else {
+      throw new Error("CPF/CNPJ não cadastrado. Atualize seu perfil antes de receber pagamentos.");
+    }
+  }
+
   // Create customer in ASAAS
   const customerData = await asaasFetch("/customers", {
     method: "POST",
     body: JSON.stringify({
       name: profile.name || "Cliente",
       email: profile.email,
-      phone: profile.whatsapp,
-      cpfCnpj: profile.cpf_cnpj,
+      phone: profile.whatsapp?.replace(/\D/g, '') || undefined,
+      cpfCnpj: cpfCnpj.replace(/\D/g, ''),
       externalReference: userId,
     }),
   });
