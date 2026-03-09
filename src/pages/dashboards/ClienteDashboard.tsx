@@ -35,6 +35,7 @@ const ClienteDashboard = () => {
     { name: "Ação entre Amigos", href: `${basePath}/acao-entre-amigos`, icon: Gift },
     { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
+    { name: "Seja Afiliado", href: `${basePath}/seja-afiliado`, icon: Share2 },
     { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
   ];
 
