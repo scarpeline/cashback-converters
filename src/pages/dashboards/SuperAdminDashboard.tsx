@@ -863,6 +863,73 @@ const MensagensSistemaPage = () => {
   );
 };
 
+// ============ CALCULADORA DE CUSTOS MENSAGENS ============
+const MessagingCostCalculator = () => {
+  const [qtyPerShop, setQtyPerShop] = useState(15);
+  const [totalShops, setTotalShops] = useState(10);
+  // Twilio costs (approx BRL): SMS to Brazil ~R$0.21, WhatsApp utility ~R$0.15
+  const SMS_COST_BRL = 0.21;
+  const WA_COST_BRL = 0.15;
+
+  const smsCostTotal = qtyPerShop * totalShops * SMS_COST_BRL;
+  const waCostTotal = qtyPerShop * totalShops * WA_COST_BRL;
+  const totalCost = smsCostTotal + waCostTotal;
+
+  // Suggested resale with margins
+  const smsResaleUnit = SMS_COST_BRL * 3; // 200% margin
+  const waResaleUnit = WA_COST_BRL * 3;
+  const smsResaleTotal = qtyPerShop * totalShops * smsResaleUnit;
+  const waResaleTotal = qtyPerShop * totalShops * waResaleUnit;
+  const totalResale = smsResaleTotal + waResaleTotal;
+  const profit = totalResale - totalCost;
+
+  const fmt = (v: number) => `R$ ${v.toFixed(2)}`;
+
+  return (
+    <Card className="border-primary/20">
+      <CardHeader>
+        <CardTitle><Calculator className="w-5 h-5 inline mr-2" />Calculadora de Custo × Revenda</CardTitle>
+        <CardDescription>Estime custo via API (Twilio) e lucro na revenda de pacotes</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label>Msgs por barbearia</Label><Input type="number" min={1} value={qtyPerShop} onChange={e => setQtyPerShop(+e.target.value || 1)} className="mt-1" /></div>
+          <div><Label>Total de barbearias</Label><Input type="number" min={1} value={totalShops} onChange={e => setTotalShops(+e.target.value || 1)} className="mt-1" /></div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+            <p className="text-xs font-medium text-destructive uppercase mb-2">Custo API (Twilio)</p>
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between"><span>SMS ({qtyPerShop}×{totalShops})</span><span className="font-mono">{fmt(smsCostTotal)}</span></div>
+              <div className="flex justify-between"><span>WhatsApp ({qtyPerShop}×{totalShops})</span><span className="font-mono">{fmt(waCostTotal)}</span></div>
+              <div className="flex justify-between font-bold border-t border-destructive/20 pt-1"><span>Total Custo</span><span className="font-mono">{fmt(totalCost)}</span></div>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-2">SMS: {fmt(SMS_COST_BRL)}/un • WhatsApp: {fmt(WA_COST_BRL)}/un</p>
+          </div>
+
+          <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+            <p className="text-xs font-medium text-primary uppercase mb-2">Revenda Sugerida (3×)</p>
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between"><span>SMS ({qtyPerShop}×{totalShops})</span><span className="font-mono">{fmt(smsResaleTotal)}</span></div>
+              <div className="flex justify-between"><span>WhatsApp ({qtyPerShop}×{totalShops})</span><span className="font-mono">{fmt(waResaleTotal)}</span></div>
+              <div className="flex justify-between font-bold border-t border-primary/20 pt-1"><span>Total Revenda</span><span className="font-mono">{fmt(totalResale)}</span></div>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-2">SMS: {fmt(smsResaleUnit)}/un • WhatsApp: {fmt(waResaleUnit)}/un</p>
+          </div>
+
+          <div className="p-3 rounded-lg bg-success/5 border border-success/20">
+            <p className="text-xs font-medium text-success uppercase mb-2">Lucro Estimado</p>
+            <p className="text-2xl font-bold text-success">{fmt(profit)}</p>
+            <p className="text-sm text-muted-foreground mt-1">Margem: {totalCost > 0 ? ((profit / totalCost) * 100).toFixed(0) : 0}%</p>
+            <p className="text-[10px] text-muted-foreground mt-2">Lucro por barbearia: {fmt(profit / totalShops)}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 // ============ CONFIGURAÇÕES (planos + pacotes SMS/WhatsApp + taxa SaaS) ============
 const ConfiguracoesPage = () => {
   const [supportPhone, setSupportPhone] = useState("");
