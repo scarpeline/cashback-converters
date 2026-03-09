@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 import DadosBancariosPage from "@/components/shared/DadosBancariosPage";
+import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 import { SocialProofManager } from "@/components/social-proof/SocialProofManager";
 import { SocialProofPopup } from "@/components/social-proof/SocialProofPopup";
 import { DonoOnboarding } from "@/components/onboarding/DonoOnboarding";
@@ -56,6 +57,7 @@ const DonoDashboard = () => {
     { name: "Pixels & Marketing", href: `${basePath}/pixels`, icon: Image },
     { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: Scissors },
     { name: "Dados Bancários", href: `${basePath}/dados-bancarios`, icon: CreditCard },
+    { name: "Seja Afiliado", href: `${basePath}/seja-afiliado`, icon: Share2 },
     { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
     { name: "Configurações", href: `${basePath}/configuracoes`, icon: Settings },
   ];
@@ -126,6 +128,7 @@ const DonoDashboard = () => {
             <Route path="servicos-contabeis" element={<SolicitarServicoFiscalPage />} />
             <Route path="dados-bancarios" element={<DadosBancariosPage />} />
             <Route path="suporte" element={<SuportePage />} />
+            <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
           </Routes>
           <SocialProofPopup currentPage="painel-dono" />

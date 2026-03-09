@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { formatWhatsAppBR } from "@/lib/input-masks";
 import ContaBancariaPage from "@/components/profissional/ContaBancariaPage";
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
+import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 
 const ProfissionalDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -29,6 +30,7 @@ const ProfissionalDashboard = () => {
     { name: "Meus Ganhos", href: `${basePath}/ganhos`, icon: DollarSign },
     { name: "Conta Bancária", href: `${basePath}/conta-bancaria`, icon: CreditCard },
     { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: FileText },
+    { name: "Seja Afiliado", href: `${basePath}/seja-afiliado`, icon: Share2 },
     { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
   ];
 
@@ -81,6 +83,7 @@ const ProfissionalDashboard = () => {
             <Route path="ganhos" element={<GanhosPage />} />
             <Route path="conta-bancaria" element={<ContaBancariaPage />} />
             <Route path="servicos-contabeis" element={<SolicitarServicoFiscalPage />} />
+            <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Routes>
         </main>

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Calendar, Gift, History, Bell, User, LogOut, Menu, X, QrCode,
-  Users, Clock, Search, MapPin, Star, ChevronRight, Phone, Wallet, MessageCircle, FileText, Loader2, ClipboardList
+  Users, Clock, Search, MapPin, Star, ChevronRight, Phone, Wallet, MessageCircle, FileText, Loader2, ClipboardList, Share2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { formatWhatsAppBR } from "@/lib/input-masks";
+import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 
 const ClienteDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -34,6 +35,7 @@ const ClienteDashboard = () => {
     { name: "Ação entre Amigos", href: `${basePath}/acao-entre-amigos`, icon: Gift },
     { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
+    { name: "Seja Afiliado", href: `${basePath}/seja-afiliado`, icon: Share2 },
     { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
   ];
 
@@ -93,6 +95,7 @@ const ClienteDashboard = () => {
             <Route path="rifas" element={<AcaoEntreAmigosPage />} />
             <Route path="suporte" element={<SuporteClientePage />} />
             <Route path="notificacoes" element={<NotificacoesPage />} />
+            <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Routes>
         </main>
