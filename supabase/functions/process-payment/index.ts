@@ -22,18 +22,21 @@ interface ChargeBody {
 }
 
 function getAsaasConfig() {
-  const env = Deno.env.get("APP_ENVIRONMENT") || "sandbox";
-  const isSandbox = env === "sandbox";
+  // Check if we have sandbox key - if yes, use sandbox
+  const sandboxKey = Deno.env.get("ASAAS_API_KEY_SANDBOX");
+  const prodKey = Deno.env.get("ASAAS_API_KEY_PRODUCTION");
   
-  const apiKey = isSandbox
-    ? Deno.env.get("ASAAS_API_KEY_SANDBOX")
-    : Deno.env.get("ASAAS_API_KEY_PRODUCTION");
+  // Prefer sandbox if available, unless explicitly set to production
+  const explicitEnv = Deno.env.get("APP_ENVIRONMENT");
+  const isSandbox = explicitEnv === "production" ? false : !!sandboxKey;
+  
+  const apiKey = isSandbox ? sandboxKey : prodKey;
   
   const baseUrl = isSandbox
     ? "https://sandbox.asaas.com/api/v3"
     : "https://api.asaas.com/api/v3";
 
-  return { apiKey, baseUrl, environment: env };
+  return { apiKey, baseUrl, environment: isSandbox ? "sandbox" : "production" };
 }
 
 async function asaasFetch(path: string, options: RequestInit = {}) {
