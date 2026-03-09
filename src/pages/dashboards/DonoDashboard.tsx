@@ -128,6 +128,7 @@ const DonoDashboard = () => {
             <Route path="servicos-contabeis" element={<SolicitarServicoFiscalPage />} />
             <Route path="dados-bancarios" element={<DadosBancariosPage />} />
             <Route path="suporte" element={<SuportePage />} />
+            <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
           </Routes>
           <SocialProofPopup currentPage="painel-dono" />
