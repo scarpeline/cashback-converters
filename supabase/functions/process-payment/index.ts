@@ -172,6 +172,9 @@ async function getOrCreateCustomer(supabaseAdmin: any, userId: string): Promise<
 }
 
 async function handleCharge(body: ChargeBody, customerId: string) {
+  const amount = Number(body.amount);
+  if (!amount || amount <= 0) throw new Error("Valor inválido.");
+
   const dueDate = body.due_date || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
   const chargePayload: Record<string, unknown> = {
