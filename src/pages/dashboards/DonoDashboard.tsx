@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
   LayoutDashboard, Calendar, Users, Scissors, DollarSign, Package, Gift, Settings,
-  Bell, LogOut, Menu, X, TrendingUp, MessageCircle, Image, Plus, CheckCircle,
+  Bell, LogOut, Menu, X, TrendingUp, MessageCircle, Image, Plus, CheckCircle, Check,
   Clock, ChevronRight, Phone, Send, Share2, QrCode, CreditCard, Edit, Eye,
   Wallet, Link as LinkIcon, UserCheck, AlertCircle, Repeat, Smartphone
 } from "lucide-react";
