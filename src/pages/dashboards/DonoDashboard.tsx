@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 import DadosBancariosPage from "@/components/shared/DadosBancariosPage";
+import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 import { SocialProofManager } from "@/components/social-proof/SocialProofManager";
 import { SocialProofPopup } from "@/components/social-proof/SocialProofPopup";
 import { DonoOnboarding } from "@/components/onboarding/DonoOnboarding";
