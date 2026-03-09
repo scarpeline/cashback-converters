@@ -61,11 +61,57 @@ async function asaasFetch(path: string, options: RequestInit = {}) {
   return data;
 }
 
-async function handleCharge(body: ChargeBody) {
+async function getOrCreateCustomer(supabaseAdmin: any, userId: string): Promise<string> {
+  // Try to get barbershop's asaas_customer_id first
+  const { data: barbershop } = await supabaseAdmin
+    .from("barbershops")
+    .select("asaas_customer_id, name, phone")
+    .eq("owner_user_id", userId)
+    .limit(1)
+    .single();
+
+  if (barbershop?.asaas_customer_id) {
+    return barbershop.asaas_customer_id;
+  }
+
+  // Get profile info to create customer
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("name, email, whatsapp, cpf_cnpj")
+    .eq("user_id", userId)
+    .limit(1)
+    .single();
+
+  if (!profile) throw new Error("Perfil do usuário não encontrado.");
+
+  // Create customer in ASAAS
+  const customerData = await asaasFetch("/customers", {
+    method: "POST",
+    body: JSON.stringify({
+      name: profile.name || "Cliente",
+      email: profile.email,
+      phone: profile.whatsapp,
+      cpfCnpj: profile.cpf_cnpj,
+      externalReference: userId,
+    }),
+  });
+
+  // Save asaas_customer_id back to barbershop
+  if (barbershop) {
+    await supabaseAdmin
+      .from("barbershops")
+      .update({ asaas_customer_id: customerData.id })
+      .eq("owner_user_id", userId);
+  }
+
+  return customerData.id;
+}
+
+async function handleCharge(body: ChargeBody, customerId: string) {
   const dueDate = body.due_date || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
   const chargePayload: Record<string, unknown> = {
-    customer: body.customer_id,
+    customer: customerId,
     billingType: body.billing_type || "PIX",
     value: body.amount,
     dueDate,
@@ -151,16 +197,17 @@ serve(async (req) => {
     global: { headers: { Authorization: authHeader } },
   });
 
-  const { data: claims, error: claimsError } = await supabase.auth.getClaims(
-    authHeader.replace("Bearer ", "")
-  );
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
   
-  if (claimsError || !claims?.claims?.sub) {
+  if (userError || !user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  const userId = user.id;
+  const serviceRoleClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   try {
     const body: ChargeBody = await req.json();
@@ -169,7 +216,9 @@ serve(async (req) => {
     let result;
     switch (body.action) {
       case "charge":
-        result = await handleCharge(body);
+        // Auto-resolve customer_id if not provided
+        const customerId = body.customer_id || await getOrCreateCustomer(serviceRoleClient, userId);
+        result = await handleCharge(body, customerId);
         break;
       case "get":
         if (!body.payment_id) throw new Error("payment_id required");
@@ -184,7 +233,6 @@ serve(async (req) => {
     }
 
     // Log integration
-    const serviceRoleClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     await serviceRoleClient.from("integration_logs").insert({
       service: "asaas",
       environment,
