@@ -154,8 +154,8 @@ async function getOrCreateCustomer(supabaseAdmin: any, userId: string): Promise<
     body: JSON.stringify({
       name: profile.name || "Cliente",
       email: profile.email,
-      phone: profile.whatsapp?.replace(/\D/g, '') || undefined,
-      cpfCnpj: cpfCnpj.replace(/\D/g, ''),
+      phone: onlyDigits(profile.whatsapp) || undefined,
+      cpfCnpj: cpfCnpjDigits,
       externalReference: userId,
     }),
   });
