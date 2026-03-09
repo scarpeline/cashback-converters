@@ -134,16 +134,18 @@ async function getOrCreateCustomer(supabaseAdmin: any, userId: string): Promise<
 
   // Validate or use test CPF for sandbox
   const { environment } = getAsaasConfig();
-  let cpfCnpj = profile.cpf_cnpj;
-  
-  // If no valid CPF/CNPJ and we're in sandbox, use test CPF
-  if (!cpfCnpj || cpfCnpj.replace(/\D/g, '').length < 11) {
-    if (environment === 'sandbox') {
-      // CPF válido matematicamente para sandbox ASAAS
-      cpfCnpj = '53409043085';
-    } else {
-      throw new Error("CPF/CNPJ não cadastrado. Atualize seu perfil antes de receber pagamentos.");
-    }
+  const docDigits = onlyDigits(profile.cpf_cnpj);
+
+  // ASAAS requires a valid CPF/CNPJ.
+  // In sandbox, we allow running with a built-in valid test CPF when profile is invalid.
+  const sandboxTestCPF = "11144477735";
+
+  const cpfCnpjDigits = isValidCpfCnpj(docDigits)
+    ? docDigits
+    : (environment === "sandbox" ? sandboxTestCPF : "");
+
+  if (!cpfCnpjDigits) {
+    throw new Error("CPF/CNPJ inválido. Atualize seu perfil antes de receber pagamentos.");
   }
 
   // Create customer in ASAAS
