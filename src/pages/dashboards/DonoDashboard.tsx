@@ -1704,7 +1704,36 @@ const NotificacoesDonoPage = () => {
       {/* ============ ABA PACOTES ============ */}
       {tab === "pacotes" && (
         <Card>
-          <CardHeader><CardTitle>Pacotes de Mensagens</CardTitle><CardDescription>Compre créditos de SMS/WhatsApp para enviar notificações</CardDescription></CardHeader>
+          <CardHeader><CardTitle>💬 Por que investir em SMS & WhatsApp?</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="p-4 bg-primary/5 rounded-lg border border-primary/10 text-center">
+                <p className="text-3xl font-bold text-primary">98%</p>
+                <p className="text-sm text-muted-foreground mt-1">Taxa de abertura de SMS — contra 20% do email</p>
+              </div>
+              <div className="p-4 bg-primary/5 rounded-lg border border-primary/10 text-center">
+                <p className="text-3xl font-bold text-primary">3x</p>
+                <p className="text-sm text-muted-foreground mt-1">Mais agendamentos com lembretes automáticos</p>
+              </div>
+              <div className="p-4 bg-primary/5 rounded-lg border border-primary/10 text-center">
+                <p className="text-3xl font-bold text-primary">-40%</p>
+                <p className="text-sm text-muted-foreground mt-1">Redução de faltas com lembretes 24h antes</p>
+              </div>
+            </div>
+            <div className="p-4 border rounded-lg bg-muted/10 space-y-2">
+              <p className="font-bold text-sm">🔥 Donos que usam mensagens automáticas faturam mais:</p>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>✅ Clientes inativos voltam com promoções por WhatsApp</li>
+                <li>✅ Lembretes reduzem faltas e horários vagos</li>
+                <li>✅ Pós-atendimento gera avaliações e fidelização</li>
+                <li>✅ Cada R$ investido em SMS retorna até R$ 8 em serviços</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Pacotes de Mensagens</CardTitle><CardDescription>Escolha o pacote ideal para o tamanho do seu negócio</CardDescription></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="p-3 border rounded-lg text-center">
@@ -1717,21 +1746,24 @@ const NotificacoesDonoPage = () => {
               </div>
             </div>
             {packages.length === 0 ? (
-              <div className="text-center py-6"><CreditCard className="w-8 h-8 text-muted-foreground mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum pacote disponível. Pacotes serão configurados pelo administrador.</p></div>
+              <div className="text-center py-6"><CreditCard className="w-8 h-8 text-muted-foreground mx-auto mb-2" /><p className="text-sm text-muted-foreground">Pacotes sendo configurados. Volte em breve!</p></div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {packages.map(p => (
-                  <Card key={p.id} className="border-primary/20">
+                {packages.map((p, idx) => (
+                  <Card key={p.id} className={`border-primary/20 relative ${idx === 0 ? "ring-2 ring-primary/30" : ""}`}>
+                    {idx === 0 && <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-3 py-1 rounded-full font-bold">⭐ MAIS POPULAR</div>}
                     <CardContent className="p-4">
                       <p className="font-bold text-lg">{p.name}</p>
                       <p className="text-sm text-muted-foreground">{p.quantity} {p.channel === 'sms' ? 'SMS' : 'WhatsApp'}</p>
+                      <p className="text-xs text-muted-foreground mt-1">≈ R$ {(Number(p.price) / p.quantity).toFixed(2)} por mensagem</p>
                       <p className="text-xl font-bold text-gradient-gold mt-2">R$ {Number(p.price).toFixed(2)}</p>
-                      <Button variant="gold" className="w-full mt-3" onClick={() => toast.info("Compra de pacote via PIX em breve!")}><CreditCard className="w-4 h-4 mr-2" />Comprar</Button>
+                      <Button variant="gold" className="w-full mt-3" onClick={() => toast.info("Compra de pacote via PIX em breve!")}><CreditCard className="w-4 h-4 mr-2" />Comprar Agora</Button>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             )}
+            <p className="text-xs text-center text-muted-foreground">💡 Dica: Ative a automação e deixe o sistema trabalhar por você 24/7</p>
           </CardContent>
         </Card>
       )}
