@@ -1392,29 +1392,49 @@ const NotificacoesDonoPage = () => {
     const bookingLink = barbershop?.slug ? `\n\n📅 Agende: ${window.location.origin}/agendar/${barbershop.slug}` : "";
     const finalMsg = includeBookingLink ? message + bookingLink : message;
 
-    const notifications = userIds.map(uid => ({ user_id: uid, title, message: finalMsg, type: "info", priority: "normal" }));
-    const { error } = await supabase.from("notifications").insert(notifications);
-
     if (channel === "sms" || channel === "whatsapp") {
       if ((channel === "sms" && credits.sms < userIds.length) || (channel === "whatsapp" && credits.whatsapp < userIds.length)) {
         toast.error(`Créditos insuficientes! Você tem ${channel === "sms" ? credits.sms : credits.whatsapp} créditos de ${channel.toUpperCase()}.`);
         setSending(false);
         return;
       }
-      const { data: profiles } = await supabase.from("profiles").select("whatsapp").in("user_id", userIds);
-      const phones = profiles?.map(p => p.whatsapp).filter(Boolean) || [];
-      let sent = 0;
-      for (const phone of phones) {
-        try {
-          await supabase.functions.invoke("send-sms", { body: { action: channel === "whatsapp" ? "whatsapp" : "sms", to: phone, body: `${title}: ${finalMsg}` } });
-          sent++;
-        } catch {}
-      }
-      toast.success(`✅ ${sent} ${channel.toUpperCase()} + ${userIds.length} notificações enviadas!`);
-    } else {
-      if (error) toast.error("Erro: " + error.message);
-      else toast.success(`✅ Notificação para ${userIds.length} usuário(s)!`);
     }
+
+    // Enfileirar jobs em vez de enviar diretamente (evita timeout com muitos destinatários)
+    const jobs: any[] = [];
+
+    // Notificação in-app para todos
+    for (const uid of userIds) {
+      jobs.push({ job_type: "process_notification", payload: { user_id: uid, title, message: finalMsg, type: "info", priority: "normal" }, status: "pending", priority: 0 });
+    }
+
+    // SMS/WhatsApp via fila
+    if (channel === "sms" || channel === "whatsapp") {
+      const { data: profiles } = await supabase.from("profiles").select("user_id, whatsapp").in("user_id", userIds);
+      const phonesMap = profiles?.filter(p => p.whatsapp) || [];
+      for (const p of phonesMap) {
+        jobs.push({
+          job_type: channel === "sms" ? "send_sms" : "send_whatsapp",
+          payload: { to: p.whatsapp, body: `${title}: ${finalMsg}` },
+          status: "pending",
+          priority: 1,
+        });
+      }
+    }
+
+    // Inserir jobs em lotes de 50 para não sobrecarregar
+    const BATCH_SIZE = 50;
+    let inserted = 0;
+    for (let i = 0; i < jobs.length; i += BATCH_SIZE) {
+      const batch = jobs.slice(i, i + BATCH_SIZE);
+      const { error } = await supabase.from("job_queue").insert(batch);
+      if (!error) inserted += batch.length;
+    }
+
+    // Disparar o worker assincronamente (fire-and-forget)
+    supabase.functions.invoke("queue-worker", { body: { batch_size: Math.min(jobs.length, 50) } }).catch(() => {});
+
+    toast.success(`✅ ${inserted} mensagens enfileiradas para envio! O sistema processará automaticamente.`);
     setSending(false); setTitle(""); setMessage(""); setSelectedTemplate("custom");
   };
 
