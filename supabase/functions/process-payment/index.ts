@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 interface ChargeBody {
-  action: "charge" | "get" | "refund";
+  action: "charge" | "get" | "refund" | "create-professional-account";
   // charge fields
   customer_id?: string;
   amount?: number;
@@ -19,6 +19,12 @@ interface ChargeBody {
   split?: Array<{ wallet_id: string; fixed_value?: number; percentage_value?: number }>;
   // get/refund fields
   payment_id?: string;
+  // create-professional-account fields
+  professional_id?: string;
+  cpf_cnpj?: string;
+  name?: string;
+  email?: string;
+  pix_key?: string;
 }
 
 function getAsaasConfig() {
