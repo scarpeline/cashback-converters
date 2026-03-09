@@ -1028,6 +1028,8 @@ const ConfiguracoesPage = () => {
         </CardContent>
       </Card>
 
+      <GatewayManager />
+
       {/* Cost Calculator */}
       <MessagingCostCalculator />
 
