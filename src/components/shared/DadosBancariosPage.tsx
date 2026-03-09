@@ -78,8 +78,8 @@ const DadosBancariosPage = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <InfoField label="CPF/CNPJ" value={profile?.cpf_cnpj} />
-            <InfoField label="Chave PIX" value={profile?.pix_key} />
+            <InfoField label="CPF/CNPJ" value={profileData?.cpf_cnpj} />
+            <InfoField label="Chave PIX" value={profileData?.pix_key} />
             <InfoField label="Banco" value={bankInfo?.bank_name} />
             <InfoField label="Agência" value={bankInfo?.agency} />
             <InfoField label="Conta" value={bankInfo?.account ? `${bankInfo.account} (${bankInfo.account_type || "corrente"})` : undefined} />
