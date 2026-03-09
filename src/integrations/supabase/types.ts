@@ -1648,6 +1648,7 @@ export type Database = {
         Returns: boolean
       }
       is_authorized_admin_email: { Args: { _email: string }; Returns: boolean }
+      is_authorized_contador: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       owns_barbershop: {
         Args: { _barbershop_id: string; _user_id: string }
