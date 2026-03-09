@@ -589,6 +589,174 @@ const FinanceiroPage = () => {
   );
 };
 
+// ============ RECEBER PAGAMENTO RÁPIDO ============
+
+const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
+  const [open, setOpen] = useState(false);
+  const [valor, setValor] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [pixData, setPixData] = useState<{ qr_code?: string; copy_paste?: string; payment_link?: string } | null>(null);
+
+  const handleGerar = async () => {
+    const amount = Number(valor);
+    if (!amount || amount <= 0) { toast.error("Informe um valor válido."); return; }
+    setLoading(true);
+    setPixData(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("process-payment", {
+        body: {
+          action: "charge",
+          amount,
+          description: descricao || "Recebimento rápido",
+          billing_type: "PIX",
+          external_reference: `quick-${barbershopId}-${Date.now()}`,
+        },
+      });
+      if (error) throw error;
+      setPixData({
+        qr_code: data?.pix_qr_code || data?.qrCode,
+        copy_paste: data?.pix_copy_paste || data?.copyPaste,
+        payment_link: data?.payment_link || data?.invoiceUrl,
+      });
+      toast.success("Cobrança gerada com sucesso!");
+    } catch {
+      toast.error("Erro ao gerar cobrança. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard?.writeText(text);
+    toast.success("Copiado para a área de transferência!");
+  };
+
+  if (!open) {
+    return (
+      <Button variant="gold" size="lg" className="w-full sm:w-auto" onClick={() => setOpen(true)}>
+        <DollarSign className="w-5 h-5 mr-2" />
+        Receber Pagamento
+      </Button>
+    );
+  }
+
+  return (
+    <Card className="border-primary/30 bg-primary/5">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <DollarSign className="w-5 h-5 text-primary" />
+          Receber Pagamento Rápido
+        </CardTitle>
+        <CardDescription>Gere uma cobrança PIX instantânea para receber na hora</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {!pixData ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Valor (R$) *</Label>
+                <Input
+                  type="number"
+                  placeholder="50.00"
+                  value={valor}
+                  onChange={e => setValor(e.target.value)}
+                  className="mt-1 text-lg font-bold"
+                  min="1"
+                  step="0.01"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <Label>Descrição (opcional)</Label>
+                <Input
+                  placeholder="Ex: Corte + Barba"
+                  value={descricao}
+                  onChange={e => setDescricao(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            {valor && Number(valor) > 0 && (
+              <div className="p-3 bg-muted rounded-lg text-center">
+                <p className="text-sm text-muted-foreground">Valor a receber</p>
+                <p className="text-3xl font-bold text-gradient-gold">R$ {Number(valor).toFixed(2)}</p>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button variant="gold" onClick={handleGerar} disabled={loading} className="flex-1">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <QrCode className="w-4 h-4 mr-2" />}
+                {loading ? "Gerando..." : "Gerar PIX"}
+              </Button>
+              <Button variant="outline" onClick={() => { setOpen(false); setValor(""); setDescricao(""); }}>Cancelar</Button>
+            </div>
+          </>
+        ) : (
+          <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg text-center">
+              <p className="text-sm text-muted-foreground mb-1">Cobrança gerada</p>
+              <p className="text-3xl font-bold text-gradient-gold">R$ {Number(valor).toFixed(2)}</p>
+            </div>
+
+            {pixData.qr_code && (
+              <div className="flex justify-center">
+                <img src={`data:image/png;base64,${pixData.qr_code}`} alt="QR Code PIX" className="w-48 h-48 rounded-lg border" />
+              </div>
+            )}
+
+            {pixData.copy_paste && (
+              <div>
+                <Label className="text-xs">PIX Copia e Cola</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input value={pixData.copy_paste} readOnly className="text-xs font-mono" />
+                  <Button variant="outline" size="sm" onClick={() => handleCopy(pixData.copy_paste!)}>
+                    Copiar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {pixData.payment_link && (
+              <div>
+                <Label className="text-xs">Link de Pagamento</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input value={pixData.payment_link} readOnly className="text-xs" />
+                  <Button variant="outline" size="sm" onClick={() => handleCopy(pixData.payment_link!)}>
+                    Copiar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => {
+                const shareText = pixData.copy_paste
+                  ? `Pagamento de R$ ${Number(valor).toFixed(2)}\n\nPIX Copia e Cola:\n${pixData.copy_paste}`
+                  : `Pagamento de R$ ${Number(valor).toFixed(2)}\n\nLink: ${pixData.payment_link}`;
+                if (navigator.share) {
+                  navigator.share({ title: "Pagamento", text: shareText });
+                } else {
+                  navigator.clipboard?.writeText(shareText);
+                  toast.success("Dados de pagamento copiados!");
+                }
+              }}>
+                <Share2 className="w-4 h-4 mr-2" />Compartilhar
+              </Button>
+              <Button variant="gold" className="flex-1" onClick={() => { setPixData(null); setValor(""); setDescricao(""); }}>
+                <Plus className="w-4 h-4 mr-2" />Nova Cobrança
+              </Button>
+            </div>
+
+            <Button variant="ghost" className="w-full" onClick={() => { setOpen(false); setPixData(null); setValor(""); setDescricao(""); }}>
+              Fechar
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 // ============ RECEBER DÍVIDA ============
 
 const DividasPage = () => {
@@ -597,7 +765,6 @@ const DividasPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ client_name: "", client_whatsapp: "", amount: "", description: "" });
-
   useEffect(() => {
     if (!barbershop?.id) return;
     supabase.from("debts").select("*").eq("barbershop_id", barbershop.id).order("created_at", { ascending: false }).then(({ data }) => setDebts(data || []));
