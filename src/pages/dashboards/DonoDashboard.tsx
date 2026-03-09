@@ -1252,10 +1252,28 @@ const CashbackPage = () => {
 
 // ============ NOTIFICAÇÕES + AUTOMAÇÃO (unificados) ============
 
+const TEMPLATE_PRESETS = [
+  { id: "welcome", label: "🎉 Boas-vindas", title: "Bem-vindo!", message: "Obrigado por nos visitar! Estamos felizes em tê-lo como cliente." },
+  { id: "promo", label: "🔥 Promoção", title: "Promoção Especial!", message: "Aproveite nossa promoção especial! Agende agora e ganhe desconto." },
+  { id: "comeback", label: "💈 Volte aqui", title: "Sentimos sua falta!", message: "Faz tempo que não nos visita! Venha conferir as novidades." },
+  { id: "birthday", label: "🎂 Aniversário", title: "Feliz Aniversário!", message: "Parabéns pelo seu dia! Venha comemorar com um corte especial." },
+  { id: "reminder", label: "⏰ Lembrete", title: "Lembrete de Agendamento", message: "Não esqueça do seu agendamento. Estamos te esperando!" },
+  { id: "custom", label: "✏️ Personalizado", title: "", message: "" },
+];
+
+const AUTOMATION_EVENTS = [
+  { id: "no_visit_7d", label: "Sem visita há 7 dias", icon: "📅", description: "Cliente não agendou nos últimos 7 dias" },
+  { id: "no_visit_15d", label: "Sem visita há 15 dias", icon: "📆", description: "Cliente inativo por 15 dias" },
+  { id: "no_visit_30d", label: "Sem visita há 30 dias", icon: "🗓️", description: "Cliente inativo por 30 dias" },
+  { id: "post_service", label: "Pós-atendimento (2h)", icon: "✅", description: "Enviar agradecimento 2h após o atendimento" },
+  { id: "booking_reminder", label: "Lembrete 24h antes", icon: "⏰", description: "Lembrar cliente 24h antes do agendamento" },
+  { id: "birthday", label: "Aniversário do cliente", icon: "🎂", description: "Parabéns automático no dia do aniversário" },
+];
+
 const NotificacoesDonoPage = () => {
   const { barbershop, refetch: refetchBarbershop } = useBarbershop();
   const { professionals } = useProfessionals(barbershop?.id);
-  const [tab, setTab] = useState<"enviar" | "automacao" | "pacotes">("enviar");
+  const [tab, setTab] = useState<"enviar" | "automacao" | "historico" | "pacotes">("enviar");
   const [target, setTarget] = useState<string>("all");
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -1268,7 +1286,14 @@ const NotificacoesDonoPage = () => {
   const [schedule, setSchedule] = useState<any[]>([]);
   const [scheduleMessage, setScheduleMessage] = useState("Olá! Aproveite nossos serviços hoje!");
   const [scheduleRepeat, setScheduleRepeat] = useState(true);
+  const [scheduleChannel, setScheduleChannel] = useState<"sms" | "whatsapp">("whatsapp");
+  const [scheduleTime, setScheduleTime] = useState("09:00");
   const [packages, setPackages] = useState<any[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState("custom");
+  const [sentNotifications, setSentNotifications] = useState<any[]>([]);
+  const [automationFlows, setAutomationFlows] = useState<any[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [credits, setCredits] = useState<{ sms: number; whatsapp: number }>({ sms: 0, whatsapp: 0 });
 
   useEffect(() => {
     if (!barbershop?.id) return;
@@ -1289,18 +1314,36 @@ const NotificacoesDonoPage = () => {
     });
 
     if (barbershop.automation_schedule) {
-      setSchedule(Array.isArray(barbershop.automation_schedule) ? barbershop.automation_schedule : []);
+      const parsed = Array.isArray(barbershop.automation_schedule) ? barbershop.automation_schedule : [];
+      setSchedule(parsed);
+      // Load automation flows from schedule
+      const flows = parsed.filter((s: any) => s.event_type);
+      setAutomationFlows(flows);
     }
 
     supabase.from("messaging_packages").select("*").eq("is_active", true).then(({ data }) => setPackages(data || []));
+    supabase.from("messaging_credits").select("*").eq("barbershop_id", barbershop.id).then(({ data }) => {
+      const smsCredits = data?.find((c: any) => c.channel === "sms");
+      const waCredits = data?.find((c: any) => c.channel === "whatsapp");
+      setCredits({ sms: smsCredits?.remaining || 0, whatsapp: waCredits?.remaining || 0 });
+    });
+    supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(50).then(({ data }) => setSentNotifications(data || []));
   }, [barbershop?.id]);
+
+  const applyTemplate = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    const tpl = TEMPLATE_PRESETS.find(t => t.id === templateId);
+    if (tpl && templateId !== "custom") {
+      setTitle(tpl.title);
+      setMessage(tpl.message);
+    }
+  };
 
   const loadContacts = async () => {
     if (!barbershop?.id) return;
     let userIds: string[] = [];
     if (target === "professionals") {
-      const proIds = professionals.filter(p => p.user_id).map(p => p.user_id);
-      userIds = proIds;
+      userIds = professionals.filter(p => p.user_id).map(p => p.user_id!);
     } else {
       let days = 60;
       if (target === "clients_15") days = 15;
@@ -1309,7 +1352,7 @@ const NotificacoesDonoPage = () => {
       const { data } = await supabase.from("appointments").select("client_user_id").eq("barbershop_id", barbershop.id).gte("scheduled_at", since).not("client_user_id", "is", null);
       const clientIds = [...new Set(data?.map(a => a.client_user_id).filter(Boolean) as string[])];
       if (target === "all") {
-        const proIds = professionals.filter(p => p.user_id).map(p => p.user_id);
+        const proIds = professionals.filter(p => p.user_id).map(p => p.user_id!);
         userIds = [...new Set([...proIds, ...clientIds])];
       } else {
         userIds = clientIds;
@@ -1325,7 +1368,7 @@ const NotificacoesDonoPage = () => {
     if (!barbershop?.id) return [];
     let userIds: string[] = [];
     if (target === "professionals" || target === "all") {
-      const proUserIds = professionals.filter(p => p.user_id).map(p => p.user_id);
+      const proUserIds = professionals.filter(p => p.user_id).map(p => p.user_id!);
       userIds = [...userIds, ...proUserIds];
     }
     if (target === "all" || target.startsWith("clients_")) {
@@ -1344,7 +1387,7 @@ const NotificacoesDonoPage = () => {
     if (!title || !message) { toast.error("Preencha título e mensagem."); return; }
     setSending(true);
     const userIds = await getTargetUserIds();
-    if (userIds.length === 0) { toast.error("Nenhum destinatário."); setSending(false); return; }
+    if (userIds.length === 0) { toast.error("Nenhum destinatário encontrado."); setSending(false); return; }
 
     const bookingLink = barbershop?.slug ? `\n\n📅 Agende: ${window.location.origin}/agendar/${barbershop.slug}` : "";
     const finalMsg = includeBookingLink ? message + bookingLink : message;
@@ -1353,6 +1396,11 @@ const NotificacoesDonoPage = () => {
     const { error } = await supabase.from("notifications").insert(notifications);
 
     if (channel === "sms" || channel === "whatsapp") {
+      if ((channel === "sms" && credits.sms < userIds.length) || (channel === "whatsapp" && credits.whatsapp < userIds.length)) {
+        toast.error(`Créditos insuficientes! Você tem ${channel === "sms" ? credits.sms : credits.whatsapp} créditos de ${channel.toUpperCase()}.`);
+        setSending(false);
+        return;
+      }
       const { data: profiles } = await supabase.from("profiles").select("whatsapp").in("user_id", userIds);
       const phones = profiles?.map(p => p.whatsapp).filter(Boolean) || [];
       let sent = 0;
@@ -1362,127 +1410,292 @@ const NotificacoesDonoPage = () => {
           sent++;
         } catch {}
       }
-      toast.success(`${sent} ${channel.toUpperCase()} + ${userIds.length} notificações enviadas!`);
+      toast.success(`✅ ${sent} ${channel.toUpperCase()} + ${userIds.length} notificações enviadas!`);
     } else {
       if (error) toast.error("Erro: " + error.message);
-      else toast.success(`Notificação para ${userIds.length} usuário(s)!`);
+      else toast.success(`✅ Notificação para ${userIds.length} usuário(s)!`);
     }
-    setSending(false); setTitle(""); setMessage("");
+    setSending(false); setTitle(""); setMessage(""); setSelectedTemplate("custom");
   };
 
-  const daysLabels: Record<string, string> = { "0": "Domingo", "1": "Segunda", "2": "Terça", "3": "Quarta", "4": "Quinta", "5": "Sexta", "6": "Sábado" };
+  const daysLabels: Record<string, string> = { "0": "Dom", "1": "Seg", "2": "Ter", "3": "Qua", "4": "Qui", "5": "Sex", "6": "Sáb" };
 
   const toggleDay = async (day: string) => {
     let newSchedule;
-    const exists = schedule.find((s: any) => s.day === day);
+    const exists = schedule.find((s: any) => s.day === day && !s.event_type);
     if (exists) {
-      newSchedule = schedule.filter((s: any) => s.day !== day);
+      newSchedule = schedule.filter((s: any) => !(s.day === day && !s.event_type));
     } else {
-      newSchedule = [...schedule, { day, message: scheduleMessage, active: true, repeat: scheduleRepeat, include_booking_link: true }];
+      newSchedule = [...schedule, { day, message: scheduleMessage, active: true, repeat: scheduleRepeat, include_booking_link: true, channel: scheduleChannel, time: scheduleTime }];
     }
-    const { error } = await supabase.from("barbershops").update({ automation_schedule: newSchedule }).eq("id", barbershop.id);
-    if (!error) { setSchedule(newSchedule); toast.success("Automação atualizada!"); refetchBarbershop(); }
+    const { error } = await supabase.from("barbershops").update({ automation_schedule: newSchedule }).eq("id", barbershop!.id);
+    if (!error) { setSchedule(newSchedule); toast.success("Programação atualizada!"); refetchBarbershop(); }
+  };
+
+  const toggleAutomationFlow = async (eventId: string) => {
+    const currentFlows = schedule.filter((s: any) => s.event_type);
+    const exists = currentFlows.find((f: any) => f.event_type === eventId);
+    let newSchedule;
+    if (exists) {
+      newSchedule = schedule.filter((s: any) => s.event_type !== eventId);
+    } else {
+      const evt = AUTOMATION_EVENTS.find(e => e.id === eventId);
+      newSchedule = [...schedule, { event_type: eventId, message: evt?.description || "", active: true, channel: scheduleChannel, include_booking_link: true }];
+    }
+    const { error } = await supabase.from("barbershops").update({ automation_schedule: newSchedule }).eq("id", barbershop!.id);
+    if (!error) { setSchedule(newSchedule); toast.success("Fluxo de automação atualizado!"); refetchBarbershop(); }
   };
 
   const targets = [
     { key: "all", label: "Todos" },
     { key: "professionals", label: `Profissionais (${professionals.length})` },
-    { key: "clients_15", label: `Clientes 15d (${clientCounts.c15})` },
-    { key: "clients_30", label: `Clientes 30d (${clientCounts.c30})` },
-    { key: "clients_60", label: `Clientes 60d (${clientCounts.c60})` },
+    { key: "clients_15", label: `15 dias (${clientCounts.c15})` },
+    { key: "clients_30", label: `30 dias (${clientCounts.c30})` },
+    { key: "clients_60", label: `60 dias (${clientCounts.c60})` },
   ];
+
+  const activeScheduleDays = schedule.filter((s: any) => !s.event_type);
+  const activeFlows = schedule.filter((s: any) => s.event_type);
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold">Notificações & Automação</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-2xl font-bold">Notificações & Automação</h1>
+        <div className="flex gap-2 items-center">
+          <span className="text-xs bg-muted px-2 py-1 rounded-full">💬 SMS: {credits.sms}</span>
+          <span className="text-xs bg-muted px-2 py-1 rounded-full">📲 WA: {credits.whatsapp}</span>
+        </div>
+      </div>
 
-      <div className="flex gap-2">
-        {(["enviar", "automacao", "pacotes"] as const).map(t => (
+      <div className="flex gap-2 flex-wrap">
+        {(["enviar", "automacao", "historico", "pacotes"] as const).map(t => (
           <Button key={t} variant={tab === t ? "gold" : "outline"} size="sm" onClick={() => setTab(t)}>
-            {t === "enviar" ? "📤 Enviar" : t === "automacao" ? "🔁 Automação" : "💳 Pacotes"}
+            {t === "enviar" ? "📤 Enviar" : t === "automacao" ? "🤖 Automação" : t === "historico" ? "📋 Histórico" : "💳 Pacotes"}
           </Button>
         ))}
       </div>
 
+      {/* ============ ABA ENVIAR ============ */}
       {tab === "enviar" && (
-        <Card>
-          <CardHeader><CardTitle>Enviar Notificação</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Destinatários</Label>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {targets.map(t => (
-                  <Button key={t.key} variant={target === t.key ? "gold" : "outline"} size="sm" onClick={() => { setTarget(t.key); setShowContacts(false); }}>{t.label}</Button>
+        <div className="space-y-4">
+          {/* Templates */}
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-base">Template Rápido</CardTitle></CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {TEMPLATE_PRESETS.map(t => (
+                  <Button key={t.id} variant={selectedTemplate === t.id ? "gold" : "outline"} size="sm" onClick={() => applyTemplate(t.id)}>{t.label}</Button>
                 ))}
               </div>
-              <Button variant="link" size="sm" className="mt-1 p-0" onClick={loadContacts}><Eye className="w-3 h-3 mr-1" />Ver lista de contatos</Button>
-            </div>
+            </CardContent>
+          </Card>
 
-            {showContacts && (
-              <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-1">
-                {contacts.length === 0 ? <p className="text-sm text-muted-foreground text-center py-2">Nenhum contato encontrado.</p> :
-                  contacts.map(c => (
-                    <div key={c.id} className="flex justify-between items-center p-2 bg-muted/50 rounded text-sm">
-                      <span className="font-medium">{c.name}</span>
-                      <span className="text-muted-foreground">{c.whatsapp || c.email || "-"}</span>
-                    </div>
-                  ))
-                }
+          <Card>
+            <CardHeader><CardTitle>Enviar Notificação</CardTitle><CardDescription>Selecione destinatários, canal e mensagem</CardDescription></CardHeader>
+            <CardContent className="space-y-4">
+              {/* Destinatários */}
+              <div>
+                <Label className="font-semibold">Destinatários</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {targets.map(t => (
+                    <Button key={t.key} variant={target === t.key ? "gold" : "outline"} size="sm" onClick={() => { setTarget(t.key); setShowContacts(false); }}>{t.label}</Button>
+                  ))}
+                </div>
+                <Button variant="link" size="sm" className="mt-1 p-0 h-auto" onClick={loadContacts}><Eye className="w-3 h-3 mr-1" />Ver lista de contatos</Button>
               </div>
-            )}
 
-            <div>
-              <Label>Canal de Envio</Label>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {([{ key: "app" as const, label: "📱 App" }, { key: "sms" as const, label: "💬 SMS" }, { key: "whatsapp" as const, label: "📲 WhatsApp" }]).map(c => (
-                  <Button key={c.key} variant={channel === c.key ? "gold" : "outline"} size="sm" onClick={() => setChannel(c.key)}>{c.label}</Button>
-                ))}
+              {showContacts && (
+                <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-1">
+                  {contacts.length === 0 ? <p className="text-sm text-muted-foreground text-center py-2">Nenhum contato encontrado.</p> :
+                    contacts.map(c => (
+                      <div key={c.id} className="flex justify-between items-center p-2 bg-muted/50 rounded text-sm">
+                        <span className="font-medium">{c.name}</span>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          {c.whatsapp && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{c.whatsapp}</span>}
+                          {!c.whatsapp && c.email && <span>{c.email}</span>}
+                        </div>
+                      </div>
+                    ))
+                  }
+                  <p className="text-xs text-center text-muted-foreground pt-1">{contacts.length} contato(s)</p>
+                </div>
+              )}
+
+              {/* Canal */}
+              <div>
+                <Label className="font-semibold">Canal de Envio</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {([{ key: "app" as const, label: "📱 App (grátis)", cost: 0 }, { key: "sms" as const, label: `💬 SMS (${credits.sms} créditos)`, cost: 1 }, { key: "whatsapp" as const, label: `📲 WhatsApp (${credits.whatsapp} créditos)`, cost: 1 }]).map(c => (
+                    <Button key={c.key} variant={channel === c.key ? "gold" : "outline"} size="sm" onClick={() => setChannel(c.key)}>{c.label}</Button>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div><Label>Título *</Label><Input placeholder="Título" value={title} onChange={e => setTitle(e.target.value)} className="mt-1" /></div>
-            <div><Label>Mensagem *</Label><Input placeholder="Mensagem..." value={message} onChange={e => setMessage(e.target.value)} className="mt-1" /></div>
-            <div className="flex items-center gap-2">
-              <Switch checked={includeBookingLink} onCheckedChange={setIncludeBookingLink} />
-              <Label className="text-sm">Incluir link de agendamento</Label>
-            </div>
-            {channel !== "app" && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted p-2 rounded">
-                <Phone className="w-3 h-3" /><span>{channel === "sms" ? "SMS via Twilio" : "WhatsApp via Twilio API"}</span>
+
+              {/* Título e Mensagem */}
+              <div className="grid grid-cols-1 gap-3">
+                <div><Label>Título *</Label><Input placeholder="Ex: Promoção Especial!" value={title} onChange={e => setTitle(e.target.value)} className="mt-1" /></div>
+                <div>
+                  <Label>Mensagem *</Label>
+                  <textarea className="mt-1 w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="Escreva sua mensagem aqui..." value={message} onChange={e => setMessage(e.target.value)} />
+                  <p className="text-xs text-muted-foreground mt-1">{message.length}/500 caracteres</p>
+                </div>
               </div>
-            )}
-            <Button variant="gold" onClick={handleSend} disabled={sending}><Send className="w-4 h-4 mr-2" />{sending ? "Enviando..." : `Enviar via ${channel === "app" ? "App" : channel.toUpperCase()}`}</Button>
-          </CardContent>
-        </Card>
+
+              {/* Opções */}
+              <div className="flex flex-col gap-3 p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Switch checked={includeBookingLink} onCheckedChange={setIncludeBookingLink} />
+                  <Label className="text-sm">📅 Incluir link de agendamento</Label>
+                </div>
+              </div>
+
+              {/* Preview */}
+              {(title || message) && (
+                <div className="border rounded-lg p-4 bg-muted/20">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">📱 Pré-visualização</p>
+                  <div className="bg-background rounded-lg p-3 shadow-sm border">
+                    <p className="font-bold text-sm">{title || "Título..."}</p>
+                    <p className="text-sm mt-1 whitespace-pre-wrap">{message || "Mensagem..."}</p>
+                    {includeBookingLink && barbershop?.slug && (
+                      <p className="text-xs text-primary mt-2">📅 Agende: {window.location.origin}/agendar/{barbershop.slug}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {channel !== "app" && (
+                <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{channel === "sms" ? "SMS via Twilio — 1 crédito por mensagem" : "WhatsApp via Twilio API — 1 crédito por mensagem"}</span>
+                </div>
+              )}
+
+              <Button variant="gold" className="w-full" onClick={handleSend} disabled={sending || !title || !message}>
+                <Send className="w-4 h-4 mr-2" />{sending ? "Enviando..." : `Enviar via ${channel === "app" ? "App" : channel.toUpperCase()}`}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
+      {/* ============ ABA AUTOMAÇÃO ============ */}
       {tab === "automacao" && (
-        <Card>
-          <CardHeader><CardTitle>Programação Semanal</CardTitle><CardDescription>Envio automático via WhatsApp/SMS</CardDescription></CardHeader>
-          <CardContent className="space-y-4">
-            <div><Label>Mensagem padrão</Label><Input value={scheduleMessage} onChange={e => setScheduleMessage(e.target.value)} className="mt-1" /></div>
-            <div className="flex items-center gap-2">
-              <Switch checked={scheduleRepeat} onCheckedChange={setScheduleRepeat} />
-              <Label className="text-sm">Repetição infinita (ciclo semanal)</Label>
-            </div>
-            <div className="grid gap-3">
-              {Object.entries(daysLabels).map(([key, label]) => {
-                const flow = schedule.find((f: any) => f.day === key);
+        <div className="space-y-4">
+          {/* Fluxos por Evento */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Repeat className="w-5 h-5" />Fluxos Automáticos por Evento</CardTitle>
+              <CardDescription>Ative gatilhos que enviam mensagens automaticamente quando eventos acontecem</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-2 mb-3">
+                <div className="flex-1">
+                  <Label className="text-xs">Canal padrão</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Button variant={scheduleChannel === "whatsapp" ? "gold" : "outline"} size="sm" onClick={() => setScheduleChannel("whatsapp")}>📲 WhatsApp</Button>
+                    <Button variant={scheduleChannel === "sms" ? "gold" : "outline"} size="sm" onClick={() => setScheduleChannel("sms")}>💬 SMS</Button>
+                  </div>
+                </div>
+              </div>
+              {AUTOMATION_EVENTS.map(evt => {
+                const isActive = activeFlows.some((f: any) => f.event_type === evt.id);
                 return (
-                  <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div><p className="font-medium">{label}</p><p className="text-xs text-muted-foreground">{flow ? "✅ " + (flow.message || scheduleMessage) : "Desativado"}</p></div>
-                    <Button variant={flow ? "gold" : "outline"} size="sm" onClick={() => toggleDay(key)}>{flow ? "Desativar" : "Ativar"}</Button>
+                  <div key={evt.id} className={`flex items-center justify-between p-4 border rounded-lg transition-all ${isActive ? "border-primary/40 bg-primary/5" : "border-border"}`}>
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{evt.icon}</span>
+                      <div>
+                        <p className="font-medium text-sm">{evt.label}</p>
+                        <p className="text-xs text-muted-foreground">{evt.description}</p>
+                      </div>
+                    </div>
+                    <Switch checked={isActive} onCheckedChange={() => toggleAutomationFlow(evt.id)} />
                   </div>
                 );
               })}
-            </div>
+            </CardContent>
+          </Card>
+
+          {/* Programação Semanal */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Clock className="w-5 h-5" />Programação Semanal</CardTitle>
+              <CardDescription>Envio automático recorrente nos dias selecionados</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div><Label>Mensagem padrão</Label><Input value={scheduleMessage} onChange={e => setScheduleMessage(e.target.value)} className="mt-1" /></div>
+                <div><Label>Horário de envio</Label><Input type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} className="mt-1" /></div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={scheduleRepeat} onCheckedChange={setScheduleRepeat} />
+                <Label className="text-sm">🔁 Repetir toda semana</Label>
+              </div>
+              <div className="grid grid-cols-7 gap-2">
+                {Object.entries(daysLabels).map(([key, label]) => {
+                  const flow = activeScheduleDays.find((f: any) => f.day === key);
+                  return (
+                    <button key={key} onClick={() => toggleDay(key)}
+                      className={`p-3 rounded-lg text-center text-sm font-medium transition-all border ${flow ? "bg-primary text-primary-foreground border-primary shadow-md" : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted/50"}`}>
+                      <p className="font-bold">{label}</p>
+                      <p className="text-[10px] mt-1">{flow ? "✅" : "—"}</p>
+                    </button>
+                  );
+                })}
+              </div>
+              {activeScheduleDays.length > 0 && (
+                <div className="p-3 bg-muted/20 rounded-lg text-sm">
+                  <p className="font-medium">📊 Resumo: {activeScheduleDays.length} dia(s) ativo(s)</p>
+                  <p className="text-xs text-muted-foreground mt-1">Canal: {scheduleChannel.toUpperCase()} • Horário: {scheduleTime} • {scheduleRepeat ? "Repetição semanal" : "Envio único"}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ============ ABA HISTÓRICO ============ */}
+      {tab === "historico" && (
+        <Card>
+          <CardHeader><CardTitle>Histórico de Notificações</CardTitle><CardDescription>Últimas 50 notificações enviadas</CardDescription></CardHeader>
+          <CardContent>
+            {sentNotifications.length === 0 ? (
+              <div className="text-center py-8"><Bell className="w-10 h-10 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground">Nenhuma notificação enviada ainda.</p></div>
+            ) : (
+              <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                {sentNotifications.map(n => (
+                  <div key={n.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/20 transition-colors">
+                    <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${n.is_read ? "bg-muted-foreground/30" : "bg-primary"}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{n.title}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{n.message}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString("pt-BR")}</p>
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${n.priority === "critical" ? "bg-destructive/10 text-destructive" : n.priority === "high" ? "bg-amber-100 text-amber-700" : "bg-muted text-muted-foreground"}`}>
+                      {n.priority}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
+      {/* ============ ABA PACOTES ============ */}
       {tab === "pacotes" && (
         <Card>
           <CardHeader><CardTitle>Pacotes de Mensagens</CardTitle><CardDescription>Compre créditos de SMS/WhatsApp para enviar notificações</CardDescription></CardHeader>
           <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="p-3 border rounded-lg text-center">
+                <p className="text-2xl font-bold text-gradient-gold">{credits.sms}</p>
+                <p className="text-xs text-muted-foreground">Créditos SMS</p>
+              </div>
+              <div className="p-3 border rounded-lg text-center">
+                <p className="text-2xl font-bold text-gradient-gold">{credits.whatsapp}</p>
+                <p className="text-xs text-muted-foreground">Créditos WhatsApp</p>
+              </div>
+            </div>
             {packages.length === 0 ? (
               <div className="text-center py-6"><CreditCard className="w-8 h-8 text-muted-foreground mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum pacote disponível. Pacotes serão configurados pelo administrador.</p></div>
             ) : (
