@@ -930,6 +930,131 @@ const MessagingCostCalculator = () => {
   );
 };
 
+// ============ GATEWAY MANAGER ============
+const GATEWAY_OPTIONS = [
+  { id: "asaas", label: "ASAAS", desc: "Gateway brasileiro – PIX, boleto, cartão, split automático", color: "text-success" },
+  { id: "stripe", label: "Stripe", desc: "Gateway internacional – cartão, Apple Pay, Google Pay", color: "text-primary" },
+  { id: "mercadopago", label: "Mercado Pago", desc: "Gateway latam – PIX, boleto, cartão, QR Code", color: "text-muted-foreground" },
+];
+
+interface GatewaySlot { provider: string; is_active: boolean; api_key_configured: boolean; }
+
+const GatewayManager = () => {
+  const [slots, setSlots] = useState<{ primary: GatewaySlot; secondary: GatewaySlot; tertiary: GatewaySlot }>({
+    primary: { provider: "asaas", is_active: true, api_key_configured: false },
+    secondary: { provider: "stripe", is_active: false, api_key_configured: false },
+    tertiary: { provider: "", is_active: false, api_key_configured: false },
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      const keys = ["gateway_primary", "gateway_secondary", "gateway_tertiary"];
+      const { data } = await supabase.from("integration_settings").select("*").in("service_name", keys);
+      if (data && data.length > 0) {
+        const map: Record<string, any> = {};
+        data.forEach(d => { map[d.service_name] = d; });
+        setSlots({
+          primary: { provider: map.gateway_primary?.base_url || "asaas", is_active: map.gateway_primary?.is_active ?? true, api_key_configured: !!map.gateway_primary?.api_key_hash },
+          secondary: { provider: map.gateway_secondary?.base_url || "stripe", is_active: map.gateway_secondary?.is_active ?? false, api_key_configured: !!map.gateway_secondary?.api_key_hash },
+          tertiary: { provider: map.gateway_tertiary?.base_url || "", is_active: map.gateway_tertiary?.is_active ?? false, api_key_configured: !!map.gateway_tertiary?.api_key_hash },
+        });
+      }
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  const saveSlots = async () => {
+    setSaving(true);
+    const entries = [
+      { service_name: "gateway_primary", environment: "production", base_url: slots.primary.provider, is_active: slots.primary.is_active },
+      { service_name: "gateway_secondary", environment: "production", base_url: slots.secondary.provider, is_active: slots.secondary.is_active },
+      { service_name: "gateway_tertiary", environment: "production", base_url: slots.tertiary.provider, is_active: slots.tertiary.is_active },
+    ];
+    for (const entry of entries) {
+      await supabase.from("integration_settings").upsert(entry, { onConflict: "service_name,environment" });
+    }
+    setSaving(false);
+    toast.success("Gateways salvos!");
+  };
+
+  const updateSlot = (slot: "primary" | "secondary" | "tertiary", field: Partial<GatewaySlot>) => {
+    setSlots(prev => ({ ...prev, [slot]: { ...prev[slot], ...field } }));
+  };
+
+  const slotLabels = [
+    { key: "primary" as const, label: "🥇 Primário", desc: "Gateway principal para todas as transações" },
+    { key: "secondary" as const, label: "🥈 Secundário (Fallback)", desc: "Ativado quando o primário falhar" },
+    { key: "tertiary" as const, label: "🥉 Terciário (Fallback 2)", desc: "Última opção de fallback" },
+  ];
+
+  if (loading) return <Card><CardContent className="py-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin" /></CardContent></Card>;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle><Wallet className="w-5 h-5 inline mr-2" />Gateways de Pagamento</CardTitle>
+        <CardDescription>Configure até 3 gateways com fallback automático</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {slotLabels.map(({ key, label, desc }) => {
+          const slot = slots[key];
+          const gwInfo = GATEWAY_OPTIONS.find(g => g.id === slot.provider);
+          return (
+            <div key={key} className={`p-4 rounded-lg border ${slot.is_active ? "border-primary/30 bg-primary/5" : "border-border bg-muted/20"}`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-sm">{label}</span>
+                    {slot.api_key_configured && <span className="text-[10px] px-2 py-0.5 rounded-full bg-success/10 text-success">API Key ✓</span>}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{desc}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={slot.is_active} onCheckedChange={v => updateSlot(key, { is_active: v })} />
+                  <Label className="text-xs">{slot.is_active ? "Ativo" : "Inativo"}</Label>
+                </div>
+              </div>
+              <div className="mt-3">
+                <Label className="text-xs">Provedor</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1"
+                  value={slot.provider}
+                  onChange={e => updateSlot(key, { provider: e.target.value })}
+                >
+                  <option value="">— Nenhum —</option>
+                  {GATEWAY_OPTIONS.map(g => (
+                    <option key={g.id} value={g.id}>{g.label} – {g.desc}</option>
+                  ))}
+                </select>
+              </div>
+              {gwInfo && (
+                <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                  <CheckCircle className={`w-3 h-3 ${gwInfo.color}`} />
+                  <span>{gwInfo.desc}</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        <div className="p-3 rounded-lg bg-muted/30 border border-border">
+          <p className="text-xs text-muted-foreground">
+            <strong>Como funciona o fallback:</strong> Se o gateway primário retornar erro ou timeout, o sistema tenta automaticamente o secundário. Se também falhar, tenta o terciário (se configurado).
+          </p>
+        </div>
+
+        <Button variant="gold" onClick={saveSlots} disabled={saving} className="w-full sm:w-auto">
+          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Wallet className="w-4 h-4 mr-2" />}
+          {saving ? "Salvando..." : "Salvar Gateways"}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+
 // ============ CONFIGURAÇÕES (planos + pacotes SMS/WhatsApp + taxa SaaS) ============
 const ConfiguracoesPage = () => {
   const [supportPhone, setSupportPhone] = useState("");
