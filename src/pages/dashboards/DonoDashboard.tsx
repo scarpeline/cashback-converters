@@ -1266,7 +1266,9 @@ const AUTOMATION_EVENTS = [
   { id: "no_visit_15d", label: "Sem visita há 15 dias", icon: "📆", description: "Cliente inativo por 15 dias" },
   { id: "no_visit_30d", label: "Sem visita há 30 dias", icon: "🗓️", description: "Cliente inativo por 30 dias" },
   { id: "post_service", label: "Pós-atendimento (2h)", icon: "✅", description: "Enviar agradecimento 2h após o atendimento" },
-  { id: "booking_reminder", label: "Lembrete 24h antes", icon: "⏰", description: "Lembrar cliente 24h antes do agendamento" },
+  { id: "reminder_12h", label: "Lembrete 12h antes", icon: "⏰", description: "Lembrar cliente 12h antes do agendamento" },
+  { id: "reminder_5h", label: "Lembrete 5h antes", icon: "🔔", description: "Lembrar cliente 5h antes do agendamento" },
+  { id: "reminder_1h", label: "Lembrete 1h antes", icon: "🚨", description: "Alerta urgente 1h antes do agendamento" },
   { id: "birthday", label: "Aniversário do cliente", icon: "🎂", description: "Parabéns automático no dia do aniversário" },
 ];
 
