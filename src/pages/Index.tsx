@@ -3,6 +3,7 @@ import Hero from "@/components/landing/Hero";
 import PaymentMethodsSection from "@/components/landing/PaymentMethodsSection";
 import IntegrationBlocks from "@/components/landing/IntegrationBlocks";
 import Features from "@/components/landing/Features";
+import AllFeatures from "@/components/landing/AllFeatures";
 import Pricing from "@/components/landing/Pricing";
 import CTA from "@/components/landing/CTA";
 import Footer from "@/components/landing/Footer";
@@ -17,6 +18,7 @@ const Index = () => {
         <PaymentMethodsSection />
         <IntegrationBlocks />
         <Features />
+        <AllFeatures />
         <Pricing />
         <CTA />
       </main>
