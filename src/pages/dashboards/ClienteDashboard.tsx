@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Calendar, Gift, History, Bell, User, LogOut, Menu, X, QrCode,
-  Users, Clock, Search, MapPin, Star, ChevronRight, Phone, Wallet, MessageCircle, FileText, Loader2, ClipboardList
+  Users, Clock, Search, MapPin, Star, ChevronRight, Phone, Wallet, MessageCircle, FileText, Loader2, ClipboardList, Share2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { formatWhatsAppBR } from "@/lib/input-masks";
+import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 
 const ClienteDashboard = () => {
   const { profile, signOut } = useAuth();
