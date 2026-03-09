@@ -57,6 +57,7 @@ const DonoDashboard = () => {
     { name: "Pixels & Marketing", href: `${basePath}/pixels`, icon: Image },
     { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: Scissors },
     { name: "Dados Bancários", href: `${basePath}/dados-bancarios`, icon: CreditCard },
+    { name: "Seja Afiliado", href: `${basePath}/seja-afiliado`, icon: Share2 },
     { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
     { name: "Configurações", href: `${basePath}/configuracoes`, icon: Settings },
   ];
