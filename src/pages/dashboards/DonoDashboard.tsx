@@ -106,6 +106,7 @@ const DonoDashboard = () => {
             <Route path="servicos" element={<ServicosPage />} />
             <Route path="financeiro" element={<FinanceiroPage />} />
             <Route path="dividas" element={<DividasPage />} />
+            <Route path="afiliados" element={<AfiliadosBarbeariaPage />} />
             <Route path="estoque" element={<EstoquePage />} />
             <Route path="cashback" element={<CashbackPage />} />
             <Route path="acao-entre-amigos" element={<AcaoEntreAmigosPage />} />
