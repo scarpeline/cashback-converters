@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
-import { formatWhatsAppBR, formatCpfCnpjBR } from "@/lib/input-masks";
+import { formatWhatsAppBR } from "@/lib/input-masks";
+import ContaBancariaPage from "@/components/profissional/ContaBancariaPage";
 
 const ProfissionalDashboard = () => {
   const { profile, signOut } = useAuth();
