@@ -814,13 +814,44 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
                 )}
               </div>
             )}
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button variant="gold" onClick={handleGerar} disabled={loading} className="flex-1">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <QrCode className="w-4 h-4 mr-2" />}
                 {loading ? "Gerando..." : "Gerar PIX"}
               </Button>
+              {nfcSupported && (
+                <Button
+                  variant="default"
+                  className="flex-1 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white"
+                  disabled={nfcLoading || !valor || Number(valor) <= 0}
+                  onClick={async () => {
+                    const amount = Number(valor);
+                    if (!amount || amount <= 0) { toast.error("Informe um valor válido."); return; }
+                    setNfcLoading(true);
+                    const result = await processNfcPayment({
+                      amount,
+                      description: descricao || "Pagamento por aproximação",
+                      barbershop_id: barbershopId,
+                    });
+                    setNfcLoading(false);
+                    if (result.success) {
+                      toast.success("Pagamento NFC recebido!");
+                    } else {
+                      toast.error(result.error || "Falha no pagamento NFC");
+                    }
+                  }}
+                >
+                  {nfcLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Smartphone className="w-4 h-4 mr-2" />}
+                  {nfcLoading ? "Aguardando..." : "Pagar por NFC"}
+                </Button>
+              )}
               <Button variant="outline" onClick={() => { setOpen(false); setValor(""); setDescricao(""); setVincularDevedor(false); setDevedorSelecionado(""); }}>Cancelar</Button>
             </div>
+            {!nfcSupported && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Smartphone className="w-3 h-3" /> Pagamento por NFC não disponível neste dispositivo
+              </p>
+            )}
           </>
         ) : (
           <div className="space-y-4">
