@@ -95,6 +95,7 @@ const ClienteDashboard = () => {
             <Route path="rifas" element={<AcaoEntreAmigosPage />} />
             <Route path="suporte" element={<SuporteClientePage />} />
             <Route path="notificacoes" element={<NotificacoesPage />} />
+            <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Routes>
         </main>

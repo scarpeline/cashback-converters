@@ -83,6 +83,7 @@ const ProfissionalDashboard = () => {
             <Route path="ganhos" element={<GanhosPage />} />
             <Route path="conta-bancaria" element={<ContaBancariaPage />} />
             <Route path="servicos-contabeis" element={<SolicitarServicoFiscalPage />} />
+            <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Routes>
         </main>
