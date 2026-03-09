@@ -50,6 +50,7 @@ const DonoDashboard = () => {
     { name: "Estoque", href: `${basePath}/estoque`, icon: Package },
     { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
     { name: "Ação entre Amigos", href: `${basePath}/acao-entre-amigos`, icon: Gift },
+    { name: "Prova Social", href: `${basePath}/prova-social`, icon: TrendingUp },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
     { name: "Pixels & Marketing", href: `${basePath}/pixels`, icon: Image },
     { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: Scissors },
