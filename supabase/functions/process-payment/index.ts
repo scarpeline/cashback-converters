@@ -22,18 +22,21 @@ interface ChargeBody {
 }
 
 function getAsaasConfig() {
-  const env = Deno.env.get("APP_ENVIRONMENT") || "sandbox";
-  const isSandbox = env === "sandbox";
+  // Check if we have sandbox key - if yes, use sandbox
+  const sandboxKey = Deno.env.get("ASAAS_API_KEY_SANDBOX");
+  const prodKey = Deno.env.get("ASAAS_API_KEY_PRODUCTION");
   
-  const apiKey = isSandbox
-    ? Deno.env.get("ASAAS_API_KEY_SANDBOX")
-    : Deno.env.get("ASAAS_API_KEY_PRODUCTION");
+  // Prefer sandbox if available, unless explicitly set to production
+  const explicitEnv = Deno.env.get("APP_ENVIRONMENT");
+  const isSandbox = explicitEnv === "production" ? false : !!sandboxKey;
+  
+  const apiKey = isSandbox ? sandboxKey : prodKey;
   
   const baseUrl = isSandbox
     ? "https://sandbox.asaas.com/api/v3"
     : "https://api.asaas.com/api/v3";
 
-  return { apiKey, baseUrl, environment: env };
+  return { apiKey, baseUrl, environment: isSandbox ? "sandbox" : "production" };
 }
 
 async function asaasFetch(path: string, options: RequestInit = {}) {
@@ -91,8 +94,8 @@ async function getOrCreateCustomer(supabaseAdmin: any, userId: string): Promise<
   // If no valid CPF/CNPJ and we're in sandbox, use test CPF
   if (!cpfCnpj || cpfCnpj.replace(/\D/g, '').length < 11) {
     if (environment === 'sandbox') {
-      // ASAAS sandbox accepts any valid format CPF
-      cpfCnpj = '24971563792'; // CPF válido para testes
+      // CPF válido matematicamente para sandbox ASAAS
+      cpfCnpj = '53409043085';
     } else {
       throw new Error("CPF/CNPJ não cadastrado. Atualize seu perfil antes de receber pagamentos.");
     }
