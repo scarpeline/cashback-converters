@@ -9,22 +9,21 @@ import { CreditCard, Loader2, CheckCircle2, Building2 } from "lucide-react";
  * Lê de: barbershops (asaas_customer_id, asaas_wallet_id) + profiles (cpf_cnpj, pix_key, bank_info)
  */
 const DadosBancariosPage = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [barbershop, setBarbershop] = useState<any>(null);
+  const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("barbershops")
-      .select("name, asaas_customer_id, asaas_wallet_id")
-      .eq("owner_user_id", user.id)
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
-        setBarbershop(data);
-        setLoading(false);
-      });
+    Promise.all([
+      supabase.from("barbershops").select("name, asaas_customer_id, asaas_wallet_id").eq("owner_user_id", user.id).limit(1).maybeSingle(),
+      supabase.from("profiles").select("cpf_cnpj, pix_key, bank_info").eq("user_id", user.id).maybeSingle(),
+    ]).then(([shop, prof]) => {
+      setBarbershop(shop.data);
+      setProfileData(prof.data);
+      setLoading(false);
+    });
   }, [user]);
 
   if (loading) {
