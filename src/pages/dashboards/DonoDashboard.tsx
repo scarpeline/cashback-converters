@@ -1767,6 +1767,7 @@ const NotificacoesDonoPage = () => {
             <p className="text-xs text-center text-muted-foreground">💡 Dica: Ative a automação e deixe o sistema trabalhar por você 24/7</p>
           </CardContent>
         </Card>
+        </div>
       )}
     </div>
   );
