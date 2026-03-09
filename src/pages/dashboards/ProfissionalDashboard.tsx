@@ -80,6 +80,7 @@ const ProfissionalDashboard = () => {
             <Route path="agenda" element={<AgendaPage />} />
             <Route path="ganhos" element={<GanhosPage />} />
             <Route path="conta-bancaria" element={<ContaBancariaPage />} />
+            <Route path="servicos-contabeis" element={<SolicitarServicoFiscalPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Routes>
         </main>
