@@ -38,13 +38,9 @@ const AdminLoginPage = () => {
 
   const checkAuthorization = useCallback(async (emailToCheck: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase
-        .from("authorized_super_admins")
-        .select("email, is_active")
-        .eq("email", emailToCheck)
-        .eq("is_active", true)
-        .maybeSingle();
-      
+      const { data, error } = await supabase.rpc("is_authorized_admin_email", {
+        _email: emailToCheck,
+      });
       if (error) return false;
       return !!data;
     } catch {
