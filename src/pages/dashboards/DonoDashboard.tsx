@@ -7,6 +7,8 @@ import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
+import DadosBancariosPage from "@/components/shared/DadosBancariosPage";
 import { DonoOnboarding } from "@/components/onboarding/DonoOnboarding";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
