@@ -46,6 +46,7 @@ function AppRoutes() {
         <Route path="/" element={<Index />} />
         <Route path="/404" element={<NotFoundPage />} />
         <Route path="/simulacao-pagamento" element={<PaymentSimulationPage />} />
+        <Route path="/install" element={<InstallPage />} />
 
         {/* ========== LOGIN (AuthGuard: se logado, vai pro dashboard) ========== */}
         <Route path="/login" element={<PublicLoginPage />} />
