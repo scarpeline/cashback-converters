@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { 
   TrendingUp, 
   Users, 
@@ -139,7 +138,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                     {/* Barbershops Input */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="flex items-center gap-2">
+                        <span className="text-sm font-medium leading-none flex items-center gap-2">
                           <Building2 className="w-4 h-4 text-muted-foreground" />
                           Barbearias ativas indicadas
                           <Tooltip>
@@ -150,7 +149,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                               <p className="max-w-xs">Este valor é apenas uma simulação para ajudar no planejamento.</p>
                             </TooltipContent>
                           </Tooltip>
-                        </Label>
+                        </span>
                         <Input
                           type="number"
                           value={barbershops}
@@ -169,7 +168,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                     {/* Ticket Médio */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="flex items-center gap-2">
+                        <span className="text-sm font-medium leading-none flex items-center gap-2">
                           Ticket médio mensal (R$)
                           <Tooltip>
                             <TooltipTrigger>
@@ -179,7 +178,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                               <p className="max-w-xs">Valor médio mensal por barbearia ativa.</p>
                             </TooltipContent>
                           </Tooltip>
-                        </Label>
+                        </span>
                         <span className="font-semibold text-primary">{formatCurrency(ticketMedio)}</span>
                       </div>
                       <Slider
@@ -194,10 +193,10 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                     {/* Adesão */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="flex items-center gap-2">
+                        <span className="text-sm font-medium leading-none flex items-center gap-2">
                           <Percent className="w-4 h-4 text-muted-foreground" />
                           Percentual estimado de adesão
-                        </Label>
+                        </span>
                         <span className="font-semibold text-primary">{adesaoPercent}%</span>
                       </div>
                       <Slider
@@ -212,10 +211,10 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                     {/* Sub-afiliados */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="flex items-center gap-2">
+                        <span className="text-sm font-medium leading-none flex items-center gap-2">
                           <Users className="w-4 h-4 text-muted-foreground" />
                           Subafiliados ativos
-                        </Label>
+                        </span>
                         <Input
                           type="number"
                           value={subAfiliados}
@@ -234,7 +233,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                     {/* Produção Sub-afiliado */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label>Produção média mensal por subafiliado</Label>
+                        <span className="text-sm font-medium leading-none">Produção média mensal por subafiliado</span>
                         <span className="font-semibold text-primary">{formatCurrency(producaoSubAfiliado)}</span>
                       </div>
                       <Slider
@@ -251,10 +250,10 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                     {/* Clientes Ativos */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="flex items-center gap-2">
+                        <span className="text-sm font-medium leading-none flex items-center gap-2">
                           <Users className="w-4 h-4 text-muted-foreground" />
                           Clientes ativos mensais
-                        </Label>
+                        </span>
                         <Input
                           type="number"
                           value={clientesAtivos}
@@ -273,7 +272,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                     {/* Ticket Serviço */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label>Ticket médio por serviço (R$)</Label>
+                        <span className="text-sm font-medium leading-none">Ticket médio por serviço (R$)</span>
                         <span className="font-semibold text-primary">{formatCurrency(ticketServico)}</span>
                       </div>
                       <Slider
@@ -288,9 +287,9 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                     {/* Indicações */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="flex items-center gap-2">
+                        <span className="text-sm font-medium leading-none flex items-center gap-2">
                           Novos clientes via indicação/mês
-                        </Label>
+                        </span>
                         <Input
                           type="number"
                           value={indicacoesMes}
@@ -309,10 +308,10 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                     {/* Cashback Rate */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="flex items-center gap-2">
+                        <span className="text-sm font-medium leading-none flex items-center gap-2">
                           <Percent className="w-4 h-4 text-muted-foreground" />
                           Taxa de cashback
-                        </Label>
+                        </span>
                         <span className="font-semibold text-primary">{cashbackRate}%</span>
                       </div>
                       <Slider
@@ -329,10 +328,10 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                 {/* Crescimento Mensal (both variants) */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label className="flex items-center gap-2">
+                    <span className="text-sm font-medium leading-none flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-muted-foreground" />
                       Crescimento mensal estimado
-                    </Label>
+                    </span>
                     <span className="font-semibold text-primary">{crescimentoMensal}%</span>
                   </div>
                   <Slider
