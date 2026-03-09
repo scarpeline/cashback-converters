@@ -611,6 +611,8 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
   const [descricao, setDescricao] = useState("");
   const [loading, setLoading] = useState(false);
   const [pixData, setPixData] = useState<{ qr_code?: string; copy_paste?: string; payment_link?: string; payment_id?: string } | null>(null);
+  const [nfcSupported] = useState(() => isPaymentRequestSupported());
+  const [nfcLoading, setNfcLoading] = useState(false);
   
   // Vincular a devedor
   const [vincularDevedor, setVincularDevedor] = useState(false);
