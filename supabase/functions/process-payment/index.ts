@@ -64,6 +64,51 @@ async function asaasFetch(path: string, options: RequestInit = {}) {
   return data;
 }
 
+function onlyDigits(value: string | null | undefined): string {
+  return (value || "").replace(/\D/g, "");
+}
+
+function isValidCPF(cpf: string): boolean {
+  if (cpf.length !== 11) return false;
+  if (/^(\d)\1+$/.test(cpf)) return false;
+
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += Number(cpf[i]) * (10 - i);
+  let check = (sum * 10) % 11;
+  if (check === 10) check = 0;
+  if (check !== Number(cpf[9])) return false;
+
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += Number(cpf[i]) * (11 - i);
+  check = (sum * 10) % 11;
+  if (check === 10) check = 0;
+  return check === Number(cpf[10]);
+}
+
+function isValidCNPJ(cnpj: string): boolean {
+  if (cnpj.length !== 14) return false;
+  if (/^(\d)\1+$/.test(cnpj)) return false;
+
+  const calc = (base: string, factors: number[]) => {
+    let sum = 0;
+    for (let i = 0; i < factors.length; i++) sum += Number(base[i]) * factors[i];
+    const mod = sum % 11;
+    return mod < 2 ? 0 : 11 - mod;
+  };
+
+  const d1 = calc(cnpj, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  if (d1 !== Number(cnpj[12])) return false;
+
+  const d2 = calc(cnpj, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return d2 === Number(cnpj[13]);
+}
+
+function isValidCpfCnpj(doc: string): boolean {
+  if (doc.length === 11) return isValidCPF(doc);
+  if (doc.length === 14) return isValidCNPJ(doc);
+  return false;
+}
+
 async function getOrCreateCustomer(supabaseAdmin: any, userId: string): Promise<string> {
   // Try to get barbershop's asaas_customer_id first
   const { data: barbershop } = await supabaseAdmin
