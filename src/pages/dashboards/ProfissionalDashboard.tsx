@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   LayoutDashboard, Calendar, DollarSign, User, Bell, LogOut, Menu, X, Clock,
-  Share2, Lock, Phone, Eye, EyeOff, CreditCard, Loader2
+  Share2, Lock, Phone, Eye, EyeOff, CreditCard, Loader2, FileText
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import { formatWhatsAppBR } from "@/lib/input-masks";
 import ContaBancariaPage from "@/components/profissional/ContaBancariaPage";
+import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 
 const ProfissionalDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -27,6 +28,7 @@ const ProfissionalDashboard = () => {
     { name: "Minha Agenda", href: `${basePath}/agenda`, icon: Calendar },
     { name: "Meus Ganhos", href: `${basePath}/ganhos`, icon: DollarSign },
     { name: "Conta Bancária", href: `${basePath}/conta-bancaria`, icon: CreditCard },
+    { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: FileText },
     { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
   ];
 
@@ -78,6 +80,7 @@ const ProfissionalDashboard = () => {
             <Route path="agenda" element={<AgendaPage />} />
             <Route path="ganhos" element={<GanhosPage />} />
             <Route path="conta-bancaria" element={<ContaBancariaPage />} />
+            <Route path="servicos-contabeis" element={<SolicitarServicoFiscalPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Routes>
         </main>

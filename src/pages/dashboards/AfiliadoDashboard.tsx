@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
   LayoutDashboard, DollarSign, Users, Link as LinkIcon, History, User, LogOut,
-  Menu, X, Copy, TrendingUp, Wallet, Loader2, CreditCard, Building2
+  Menu, X, Copy, TrendingUp, Wallet, Loader2, CreditCard, Building2, FileText
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import { formatCpfCnpjBR } from "@/lib/input-masks";
+import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 
 const AfiliadoDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -26,6 +27,7 @@ const AfiliadoDashboard = () => {
     { name: "Meus Indicados", href: `${basePath}/indicados`, icon: Users },
     { name: "Comissões", href: `${basePath}/comissoes`, icon: DollarSign },
     { name: "Conta Bancária", href: `${basePath}/conta-bancaria`, icon: CreditCard },
+    { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: FileText },
     { name: "Histórico", href: `${basePath}/historico`, icon: History },
     { name: "Meu Link", href: `${basePath}/link`, icon: LinkIcon },
     { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
@@ -76,6 +78,7 @@ const AfiliadoDashboard = () => {
             <Route path="indicados" element={<IndicadosPage />} />
             <Route path="comissoes" element={<ComissoesPage />} />
             <Route path="conta-bancaria" element={<ContaBancariaPage />} />
+            <Route path="servicos-contabeis" element={<SolicitarServicoFiscalPage />} />
             <Route path="historico" element={<HistoricoPage />} />
             <Route path="link" element={<LinkPage />} />
             <Route path="perfil" element={<PerfilPage />} />

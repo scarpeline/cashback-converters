@@ -7,6 +7,8 @@ import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
+import DadosBancariosPage from "@/components/shared/DadosBancariosPage";
 import { DonoOnboarding } from "@/components/onboarding/DonoOnboarding";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,6 +50,8 @@ const DonoDashboard = () => {
     { name: "Ação entre Amigos", href: `${basePath}/acao-entre-amigos`, icon: Gift },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
     { name: "Pixels & Marketing", href: `${basePath}/pixels`, icon: Image },
+    { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: Scissors },
+    { name: "Dados Bancários", href: `${basePath}/dados-bancarios`, icon: CreditCard },
     { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
     { name: "Configurações", href: `${basePath}/configuracoes`, icon: Settings },
   ];
@@ -114,6 +118,8 @@ const DonoDashboard = () => {
             <Route path="automacao" element={<NotificacoesDonoPage />} />
             <Route path="notificacoes" element={<NotificacoesDonoPage />} />
             <Route path="pixels" element={<PixelsPage />} />
+            <Route path="servicos-contabeis" element={<SolicitarServicoFiscalPage />} />
+            <Route path="dados-bancarios" element={<DadosBancariosPage />} />
             <Route path="suporte" element={<SuportePage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
           </Routes>
