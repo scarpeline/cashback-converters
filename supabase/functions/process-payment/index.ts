@@ -233,7 +233,6 @@ serve(async (req) => {
     }
 
     // Log integration
-    const serviceRoleClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     await serviceRoleClient.from("integration_logs").insert({
       service: "asaas",
       environment,
