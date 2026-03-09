@@ -28,6 +28,7 @@ const AfiliadoDashboard = lazy(() => import("./pages/dashboards/AfiliadoDashboar
 const ContadorDashboard = lazy(() => import("./pages/dashboards/ContadorDashboard"));
 const SuperAdminDashboard = lazy(() => import("./pages/dashboards/SuperAdminDashboard"));
 const PaymentSimulationPage = lazy(() => import("./pages/public/PaymentSimulationPage"));
+const InstallPage = lazy(() => import("./pages/public/InstallPage"));
 
 const queryClient = new QueryClient();
 
