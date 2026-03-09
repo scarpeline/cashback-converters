@@ -116,6 +116,15 @@ const SystemStatus = () => (
   </div>
 );
 
+const testAccounts = [
+  { role: "Cliente", icon: Users, color: "bg-blue-500", login: "WhatsApp: 11999990001", password: "Teste@123", dashboard: "/app" },
+  { role: "Dono de Barbearia", icon: Building2, color: "bg-primary", login: "dono.teste@salao.app", password: "Teste@123", dashboard: "/painel-dono" },
+  { role: "Profissional", icon: Users, color: "bg-purple-500", login: "profissional.teste@salao.app", password: "Teste@123", dashboard: "/painel-profissional" },
+  { role: "Afiliado SaaS", icon: TrendingUp, color: "bg-green-500", login: "afiliado.teste@salao.app", password: "Teste@123", dashboard: "/afiliado-saas" },
+  { role: "Contador", icon: Calculator, color: "bg-orange-500", login: "contador.teste@salao.app", password: "Teste@123", dashboard: "/contador2026" },
+  { role: "Super Admin", icon: Shield, color: "bg-destructive", login: "escarpelineparticular@gmail.com", password: "Admin@2026", dashboard: "/admin" },
+];
+
 const DashboardHome = () => {
   const [stats, setStats] = useState({ users: 0, barbershops: 0, affiliates: 0 });
   useEffect(() => {
@@ -126,19 +135,93 @@ const DashboardHome = () => {
     ]).then(([p, b, a]) => setStats({ users: p.count || 0, barbershops: b.count || 0, affiliates: a.count || 0 }));
   }, []);
 
+  const openDashboard = (path: string) => {
+    window.open(path, "_blank");
+  };
+
   return (
     <div className="space-y-6">
       <div><h1 className="font-display text-2xl font-bold">Painel Super Admin</h1><p className="text-muted-foreground">Visão geral do sistema</p></div>
+      
       <Card className="border-success/20 bg-success/5">
         <CardHeader><div className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-success" /><CardTitle>Sistema Operacional</CardTitle></div></CardHeader>
         <CardContent><div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">{["Auth", "ASAAS", "Split", "Mensagens"].map(s => (<div key={s} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-success" /><span>{s}</span></div>))}</div></CardContent>
       </Card>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card><CardHeader className="pb-2"><CardDescription>Total de Usuários</CardDescription><CardTitle className="text-2xl">{stats.users}</CardTitle></CardHeader></Card>
         <Card><CardHeader className="pb-2"><CardDescription>Barbearias Ativas</CardDescription><CardTitle className="text-2xl">{stats.barbershops}</CardTitle></CardHeader></Card>
         <Card><CardHeader className="pb-2"><CardDescription>Afiliados Ativos</CardDescription><CardTitle className="text-2xl">{stats.affiliates}</CardTitle></CardHeader></Card>
         <Card className="border-primary/20"><CardHeader className="pb-2"><CardDescription>Receita do Mês</CardDescription><CardTitle className="text-2xl text-gradient-gold">R$ 0,00</CardTitle></CardHeader></Card>
       </div>
+
+      {/* Acessar Painéis */}
+      <Card className="border-primary/20">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Eye className="w-5 h-5 text-primary" />
+            <CardTitle>Acessar Painéis</CardTitle>
+          </div>
+          <CardDescription>Abra qualquer painel do sistema em nova aba para verificar o funcionamento</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {testAccounts.map((acc) => (
+              <Button 
+                key={acc.role} 
+                variant="outline" 
+                className="flex flex-col items-center gap-2 h-auto py-4 hover:border-primary hover:bg-primary/5"
+                onClick={() => openDashboard(acc.dashboard)}
+              >
+                <div className={`w-10 h-10 rounded-full ${acc.color} flex items-center justify-center`}>
+                  <acc.icon className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xs font-medium text-center">{acc.role}</span>
+                <ExternalLink className="w-3 h-3 text-muted-foreground" />
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Credenciais de Teste */}
+      <Card className="border-amber-500/30 bg-amber-500/5">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-amber-500" />
+            <CardTitle className="text-amber-600">Credenciais de Teste</CardTitle>
+          </div>
+          <CardDescription>⚠️ REMOVER ANTES DE IR PARA PRODUÇÃO - Use para validar o sistema</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {testAccounts.map((acc) => (
+              <div key={acc.role} className="p-4 rounded-lg bg-background border">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-8 h-8 rounded-full ${acc.color} flex items-center justify-center`}>
+                    <acc.icon className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="font-semibold">{acc.role}</span>
+                </div>
+                <div className="space-y-1 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Login:</span>
+                    <code className="bg-muted px-2 py-0.5 rounded text-xs">{acc.login}</code>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Senha:</span>
+                    <code className="bg-muted px-2 py-0.5 rounded text-xs">{acc.password}</code>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Painel:</span>
+                    <code className="bg-muted px-2 py-0.5 rounded text-xs">{acc.dashboard}</code>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
