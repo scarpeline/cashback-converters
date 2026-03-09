@@ -961,10 +961,13 @@ const ConfiguracoesPage = () => {
         </CardContent>
       </Card>
 
+      {/* Cost Calculator */}
+      <MessagingCostCalculator />
+
       {/* Messaging Packages */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
             <div><CardTitle><Package className="w-5 h-5 inline mr-2" />Pacotes de Mensagens</CardTitle><CardDescription>Configure pacotes SMS e WhatsApp para donos assinarem</CardDescription></div>
             <Button variant="gold" size="sm" onClick={() => setShowAddPkg(true)}><CreditCard className="w-4 h-4 mr-2" />Novo Pacote</Button>
           </div>
