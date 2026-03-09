@@ -11,19 +11,21 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { user_id, new_password, service_key } = await req.json();
+    const { user_id, new_password } = await req.json();
 
-    if (!user_id || !new_password || !service_key) {
+    if (!user_id || !new_password) {
       return new Response(JSON.stringify({ error: "Missing params" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Verify auth header contains service role key
+    const authHeader = req.headers.get("authorization") || "";
+    const token = authHeader.replace("Bearer ", "");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     
-    // Verify the caller knows the service role key
-    if (service_key !== serviceRoleKey) {
+    if (token !== serviceRoleKey) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -44,7 +46,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, message: "Password updated" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
