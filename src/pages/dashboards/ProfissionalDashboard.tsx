@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   LayoutDashboard, Calendar, DollarSign, User, Bell, LogOut, Menu, X, Clock,
-  Share2, Lock, Phone, Eye, EyeOff, CreditCard, Loader2
+  Share2, Lock, Phone, Eye, EyeOff, CreditCard, Loader2, FileText
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
