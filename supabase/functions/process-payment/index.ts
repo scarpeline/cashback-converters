@@ -180,7 +180,7 @@ async function handleCharge(body: ChargeBody, customerId: string) {
   const chargePayload: Record<string, unknown> = {
     customer: customerId,
     billingType: body.billing_type || "PIX",
-    value: body.amount,
+    value: amount,
     dueDate,
     description: body.description || "Pagamento Salão Cashback",
     externalReference: body.external_reference || undefined,
