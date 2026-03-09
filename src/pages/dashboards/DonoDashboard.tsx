@@ -826,10 +826,13 @@ const DividasPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="font-display text-2xl font-bold">Receber Dívida (Fiado)</h1>
         <Button variant="gold" onClick={() => setShowForm(!showForm)}><Plus className="w-4 h-4 mr-2" />Nova Dívida</Button>
       </div>
+
+      {/* Receber Pagamento Rápido */}
+      {barbershop?.id && <ReceberPagamentoRapido barbershopId={barbershop.id} />}
 
       <Card className="bg-gradient-card border-primary/20">
         <CardContent className="p-4 flex items-center justify-between">
