@@ -71,6 +71,10 @@ const ContaBancariaPage = () => {
   }, [user, profile]);
 
   const handleSave = async () => {
+    if (!form.name.trim()) {
+      toast.error("Nome completo é obrigatório.");
+      return;
+    }
     if (!form.cpf_cnpj.replace(/\D/g, "")) {
       toast.error("CPF/CNPJ é obrigatório para criar sua conta no gateway.");
       return;
