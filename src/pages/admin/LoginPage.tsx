@@ -94,14 +94,15 @@ const AdminLoginPage = () => {
         } else if (msg.toLowerCase().includes("email not confirmed")) {
           toast.error("Confirme seu e-mail antes de entrar.");
         } else {
-          toast.error(msg || "Erro ao fazer login");
+          toast.error("Erro ao fazer login. Tente novamente.");
         }
         setLoading(false);
         return;
       }
       
       toast.success("Acesso autorizado!");
-      // Let useEffect handle redirect once roles load
+      // Failsafe: release loading after timeout if redirect doesn't happen
+      setTimeout(() => setLoading(false), 5000);
       return;
     } catch (err) {
       toast.error("Ocorreu um erro. Tente novamente.");
