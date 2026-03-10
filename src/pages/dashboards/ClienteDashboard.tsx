@@ -245,12 +245,79 @@ const HistoricoPage = () => (
 );
 
 const IndicarPage = () => {
+  const { user } = useAuth();
   const referralCode = "SCB-TESTE01";
+  const [rewardType, setRewardType] = useState<string>("cashback");
+  const [barbershopName, setBarbershopName] = useState<string>("");
+
+  // Fetch the barbershop's affiliate reward type (set by the owner)
+  useEffect(() => {
+    if (!user) return;
+    // Find the barbershop the client is associated with (via last appointment or any)
+    supabase
+      .from("barbershops")
+      .select("name, affiliate_reward_type")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setRewardType(data.affiliate_reward_type || "cashback");
+          setBarbershopName(data.name || "");
+        }
+      });
+  }, [user]);
+
+  const isCashback = rewardType === "cashback" || rewardType === "commission";
+
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Indique e Ganhe</h1>
+
+      {/* Reward type explanation */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card className={`border-2 transition-all ${isCashback ? "border-primary bg-primary/5" : "border-border"}`}>
+          <CardContent className="pt-6 text-center">
+            <Gift className="w-10 h-10 mx-auto mb-2 text-primary" />
+            <p className="font-bold text-lg">Cashback</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Ganhe créditos para usar nos seus próximos agendamentos na barbearia.
+            </p>
+            {isCashback && (
+              <span className="inline-block mt-3 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                ✅ Ativo nesta barbearia
+              </span>
+            )}
+          </CardContent>
+        </Card>
+        <Card className={`border-2 transition-all ${!isCashback ? "border-primary bg-primary/5" : "border-border"}`}>
+          <CardContent className="pt-6 text-center">
+            <Wallet className="w-10 h-10 mx-auto mb-2 text-primary" />
+            <p className="font-bold text-lg">Dinheiro Sacável</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Ganhe dinheiro real que pode ser transferido via PIX para sua conta bancária.
+            </p>
+            {!isCashback && (
+              <span className="inline-block mt-3 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                ✅ Ativo nesta barbearia
+              </span>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       <Card className="border-primary/20 bg-primary/5">
-        <CardHeader><CardTitle>Ganhe cashback indicando amigos!</CardTitle><CardDescription>Quando seu amigo fizer o primeiro agendamento, vocês dois ganham R$ 10,00 de cashback.</CardDescription></CardHeader>
+        <CardHeader>
+          <CardTitle>
+            {isCashback ? "Ganhe cashback indicando amigos!" : "Ganhe dinheiro indicando amigos!"}
+          </CardTitle>
+          <CardDescription>
+            {isCashback
+              ? "Quando seu amigo fizer o primeiro agendamento, vocês dois ganham R$ 10,00 de cashback."
+              : "Quando seu amigo fizer o primeiro agendamento, você recebe R$ 10,00 via PIX."
+            }
+          </CardDescription>
+        </CardHeader>
         <CardContent className="space-y-4">
           <div><Label className="text-xs text-muted-foreground">SEU CÓDIGO DE INDICAÇÃO</Label>
             <div className="p-4 bg-background rounded-lg flex items-center justify-between mt-1 border border-border">
@@ -267,7 +334,7 @@ const IndicarPage = () => {
       <div className="grid grid-cols-3 gap-3">
         <Card className="text-center"><CardContent className="pt-4 pb-4"><p className="text-2xl font-bold">0</p><p className="text-xs text-muted-foreground">Indicados</p></CardContent></Card>
         <Card className="text-center"><CardContent className="pt-4 pb-4"><p className="text-2xl font-bold">0</p><p className="text-xs text-muted-foreground">Convertidos</p></CardContent></Card>
-        <Card className="text-center border-primary/20"><CardContent className="pt-4 pb-4"><p className="text-2xl font-bold text-gradient-gold">R$ 0</p><p className="text-xs text-muted-foreground">Ganhos</p></CardContent></Card>
+        <Card className="text-center border-primary/20"><CardContent className="pt-4 pb-4"><p className="text-2xl font-bold text-gradient-gold">R$ 0</p><p className="text-xs text-muted-foreground">{isCashback ? "Cashback" : "Ganhos"}</p></CardContent></Card>
       </div>
     </div>
   );
