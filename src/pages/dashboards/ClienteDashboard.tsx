@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { formatWhatsAppBR } from "@/lib/input-masks";
 import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
+import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 
 const ClienteDashboard = () => {
   const { profile, signOut } = useAuth();
