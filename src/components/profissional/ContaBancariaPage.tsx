@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { formatCpfCnpjBR } from "@/lib/input-masks";
 
 interface ProfessionalBankData {
+  name: string;
   cpf_cnpj: string;
   pix_key: string;
   pix_key_type: string;
