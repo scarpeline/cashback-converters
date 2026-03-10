@@ -193,6 +193,16 @@ const ContaBancariaPage = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <Label>Nome Completo *</Label>
+              <Input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Nome completo conforme documento"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Nome que aparecerá na conta do gateway</p>
+            </div>
             <div>
               <Label>CPF/CNPJ *</Label>
               <Input
