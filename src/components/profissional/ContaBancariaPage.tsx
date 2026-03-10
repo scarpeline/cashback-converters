@@ -88,6 +88,7 @@ const ContaBancariaPage = () => {
 
     // Save to professionals table
     const updatePayload = {
+      name: form.name,
       cpf_cnpj: form.cpf_cnpj.replace(/\D/g, ""),
       pix_key: form.pix_key,
     };
