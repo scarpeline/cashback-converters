@@ -111,7 +111,7 @@ const ContaBancariaPage = () => {
           action: "create-professional-account",
           professional_id: professionalId,
           cpf_cnpj: form.cpf_cnpj.replace(/\D/g, ""),
-          name: profile?.name || "Profissional",
+          name: form.name,
           email: profile?.email,
           pix_key: form.pix_key,
         },
