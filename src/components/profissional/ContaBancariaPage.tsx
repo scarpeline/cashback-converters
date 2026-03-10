@@ -43,13 +43,14 @@ const ContaBancariaPage = () => {
     (async () => {
       const { data: prof } = await supabase
         .from("professionals")
-        .select("id, cpf_cnpj, pix_key, asaas_wallet_id")
+        .select("id, name, cpf_cnpj, pix_key, asaas_wallet_id")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (prof) {
         setProfessionalId(prof.id);
         const bankData: ProfessionalBankData = {
+          name: prof.name || "",
           cpf_cnpj: prof.cpf_cnpj || "",
           pix_key: prof.pix_key || "",
           pix_key_type: "cpf",
@@ -57,14 +58,17 @@ const ContaBancariaPage = () => {
         };
         setData(bankData);
         setForm({
+          name: prof.name || profile?.name || "",
           cpf_cnpj: prof.cpf_cnpj || "",
           pix_key: prof.pix_key || "",
           pix_key_type: "cpf",
         });
+      } else {
+        setForm(f => ({ ...f, name: profile?.name || "" }));
       }
       setLoading(false);
     })();
-  }, [user]);
+  }, [user, profile]);
 
   const handleSave = async () => {
     if (!form.cpf_cnpj.replace(/\D/g, "")) {
