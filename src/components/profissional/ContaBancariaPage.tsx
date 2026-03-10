@@ -32,6 +32,7 @@ const ContaBancariaPage = () => {
   const [professionalId, setProfessionalId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
+    name: "",
     cpf_cnpj: "",
     pix_key: "",
     pix_key_type: "cpf",
