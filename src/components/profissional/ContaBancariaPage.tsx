@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { formatCpfCnpjBR } from "@/lib/input-masks";
 
 interface ProfessionalBankData {
+  name: string;
   cpf_cnpj: string;
   pix_key: string;
   pix_key_type: string;
@@ -31,6 +32,7 @@ const ContaBancariaPage = () => {
   const [professionalId, setProfessionalId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
+    name: "",
     cpf_cnpj: "",
     pix_key: "",
     pix_key_type: "cpf",
@@ -41,13 +43,14 @@ const ContaBancariaPage = () => {
     (async () => {
       const { data: prof } = await supabase
         .from("professionals")
-        .select("id, cpf_cnpj, pix_key, asaas_wallet_id")
+        .select("id, name, cpf_cnpj, pix_key, asaas_wallet_id")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (prof) {
         setProfessionalId(prof.id);
         const bankData: ProfessionalBankData = {
+          name: prof.name || "",
           cpf_cnpj: prof.cpf_cnpj || "",
           pix_key: prof.pix_key || "",
           pix_key_type: "cpf",
@@ -55,16 +58,23 @@ const ContaBancariaPage = () => {
         };
         setData(bankData);
         setForm({
+          name: prof.name || profile?.name || "",
           cpf_cnpj: prof.cpf_cnpj || "",
           pix_key: prof.pix_key || "",
           pix_key_type: "cpf",
         });
+      } else {
+        setForm(f => ({ ...f, name: profile?.name || "" }));
       }
       setLoading(false);
     })();
-  }, [user]);
+  }, [user, profile]);
 
   const handleSave = async () => {
+    if (!form.name.trim()) {
+      toast.error("Nome completo é obrigatório.");
+      return;
+    }
     if (!form.cpf_cnpj.replace(/\D/g, "")) {
       toast.error("CPF/CNPJ é obrigatório para criar sua conta no gateway.");
       return;
@@ -78,6 +88,7 @@ const ContaBancariaPage = () => {
 
     // Save to professionals table
     const updatePayload = {
+      name: form.name,
       cpf_cnpj: form.cpf_cnpj.replace(/\D/g, ""),
       pix_key: form.pix_key,
     };
@@ -100,7 +111,7 @@ const ContaBancariaPage = () => {
           action: "create-professional-account",
           professional_id: professionalId,
           cpf_cnpj: form.cpf_cnpj.replace(/\D/g, ""),
-          name: profile?.name || "Profissional",
+          name: form.name,
           email: profile?.email,
           pix_key: form.pix_key,
         },
@@ -182,6 +193,16 @@ const ContaBancariaPage = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <Label>Nome Completo *</Label>
+              <Input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Nome completo conforme documento"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Nome que aparecerá na conta do gateway</p>
+            </div>
             <div>
               <Label>CPF/CNPJ *</Label>
               <Input
