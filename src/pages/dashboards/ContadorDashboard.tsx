@@ -449,10 +449,23 @@ const PedidosServicoPage = () => {
 
   const updateRequest = async (id: string, status: string) => {
     if (!accountantId) return;
-    const { error } = await (supabase as any).from("fiscal_service_requests").update({ status, accountant_id: accountantId }).eq("id", id);
+
+    const current = requests.find(r => r.id === id);
+    if (!current) return;
+
+    const shouldClaim = (status === "accepted") && (!current.accountant_id);
+    const updatePayload: any = shouldClaim ? { status, accountant_id: accountantId } : { status };
+
+    let query = (supabase as any).from("fiscal_service_requests").update(updatePayload).eq("id", id);
+    if (shouldClaim) {
+      query = query.is("accountant_id", null);
+    }
+
+    const { error } = await query;
     if (error) { toast.error(error.message); return; }
+
     toast.success(`Pedido ${status === 'accepted' ? 'aceito' : status === 'in_progress' ? 'em andamento' : status === 'completed' ? 'concluído' : 'atualizado'}!`);
-    setRequests(requests.map(r => r.id === id ? { ...r, status, accountant_id: accountantId } : r));
+    setRequests(requests.map(r => r.id === id ? { ...r, status, accountant_id: shouldClaim ? accountantId : r.accountant_id } : r));
   };
 
   const serviceLabels: Record<string, string> = {

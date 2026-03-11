@@ -128,7 +128,7 @@ function parseRequiredFields(rf: any[]): DynamicField[] {
 }
 
 export default function SolicitarServicoFiscalPage() {
-  const { user } = useAuth();
+  const { user, getPrimaryRole } = useAuth();
   const [requests, setRequests] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,6 +137,9 @@ export default function SolicitarServicoFiscalPage() {
   const [serviceType, setServiceType] = useState("cnpj_opening");
   const [fields, setFields] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
+  const [requestAsCompany, setRequestAsCompany] = useState(false);
+  const [barbershopId, setBarbershopId] = useState<string | null>(null);
+  const [allowMatching, setAllowMatching] = useState(true);
 
   useEffect(() => {
     supabase.from("fiscal_service_types").select("service_type, label, price, required_fields").eq("status", "approved").eq("is_active", true).then(({ data }) => {
@@ -172,10 +175,34 @@ export default function SolicitarServicoFiscalPage() {
 
   useEffect(() => { fetchRequests(); }, [user]);
 
+  const primaryRole = getPrimaryRole();
+  const canRequestAsCompany = primaryRole === "dono";
+
+  useEffect(() => {
+    if (!user) return;
+    if (!canRequestAsCompany) {
+      setRequestAsCompany(false);
+      setBarbershopId(null);
+      return;
+    }
+
+    supabase
+      .from("barbershops")
+      .select("id")
+      .eq("owner_user_id", user.id)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        setBarbershopId(data?.id || null);
+      });
+  }, [user, canRequestAsCompany]);
+
   const openForm = (type: string) => {
     setServiceType(type);
     setFields({});
     setNotes("");
+    setAllowMatching(true);
     setShowForm(true);
   };
 
@@ -208,17 +235,36 @@ export default function SolicitarServicoFiscalPage() {
 
     const description = descriptionParts.join("\n");
 
+    const requestedByRole = (primaryRole || "cliente");
+
+    if (requestAsCompany) {
+      if (!canRequestAsCompany) {
+        toast.error("Apenas o dono pode solicitar serviços em nome da empresa.");
+        return;
+      }
+      if (!barbershopId) {
+        toast.error("Nenhuma barbearia encontrada para sua conta. Conclua o cadastro da barbearia.");
+        return;
+      }
+    }
+
     const { error } = await supabase.from("fiscal_service_requests").insert({
       client_user_id: user.id,
+      requested_by_user_id: user.id,
+      requested_by_role: requestedByRole,
+      is_company_request: requestAsCompany,
+      barbershop_id: requestAsCompany ? barbershopId : null,
+      allow_accountant_matching: allowMatching,
       service_type: serviceType,
       description,
-    });
+    } as any);
     setSaving(false);
     if (error) { toast.error("Erro: " + error.message); return; }
     toast.success("Pedido enviado ao contador com todos os dados!");
     setShowForm(false);
     setFields({});
     setNotes("");
+    setRequestAsCompany(false);
     fetchRequests();
   };
 
@@ -243,6 +289,42 @@ export default function SolicitarServicoFiscalPage() {
             <CardDescription>Preencha os dados para o contador processar seu pedido</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {canRequestAsCompany && (
+              <div className="p-3 rounded-lg bg-background border border-border">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">Pedido em nome da empresa</p>
+                    <p className="text-xs text-muted-foreground">
+                      Marque para enviar este pedido como barbearia (dono). O contador só terá acesso aos dados da empresa com autorização.
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="h-5 w-5"
+                    checked={requestAsCompany}
+                    onChange={(e) => setRequestAsCompany(e.target.checked)}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="p-3 rounded-lg bg-background border border-border">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">Permitir que um contador aceite seu pedido</p>
+                  <p className="text-xs text-muted-foreground">
+                    Se desmarcar, o pedido só será visível para o contador após atribuição (por você ou Super Admin).
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  className="h-5 w-5"
+                  checked={allowMatching}
+                  onChange={(e) => setAllowMatching(e.target.checked)}
+                />
+              </div>
+            </div>
+
             {/* Service type selector */}
             <div>
               <Label>Tipo de Serviço</Label>
