@@ -1496,7 +1496,7 @@ const LandingVisibilidadePage = () => {
       .eq("service_name", "landing_visibility")
       .eq("environment", "production")
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data }: any) => {
         if (data?.config) {
           setVisibility(data.config as Record<string, boolean>);
         } else {

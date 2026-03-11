@@ -146,7 +146,7 @@ const ReceberDividaProfPage = () => {
   const handleCreate = async () => {
     if (!form.client_name || !form.amount || !user) { toast.error("Preencha nome e valor."); return; }
     setSaving(true);
-    const { error } = await supabase.from("debts").insert({
+    const { error } = await (supabase as any).from("debts").insert({
       professional_user_id: user.id,
       client_name: form.client_name,
       client_whatsapp: form.client_whatsapp || null,

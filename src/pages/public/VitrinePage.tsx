@@ -173,13 +173,9 @@ export default function VitrinePage() {
               {raffles.map(r => (
                 <Card key={r.id} className="overflow-hidden hover:shadow-md transition-shadow">
                   <div className="h-32 bg-muted overflow-hidden">
-                    {r.image_url ? (
-                      <img src={r.image_url} alt={r.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Gift className="w-12 h-12 text-muted-foreground" />
-                      </div>
-                    )}
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Gift className="w-12 h-12 text-muted-foreground" />
+                    </div>
                   </div>
                   <CardContent className="p-4">
                     <h3 className="font-bold">{r.name}</h3>

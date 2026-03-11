@@ -200,8 +200,7 @@ serve(async (req) => {
 
   const { data, error } = await supabase.storage
     .from(bucket)
-    // @ts-expect-error Supabase types in Deno may lag behind runtime
-    .createSignedUploadUrl(path);
+      .createSignedUploadUrl(path);
 
   if (error) return json({ error: error.message }, 400);
 

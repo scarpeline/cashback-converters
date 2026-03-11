@@ -252,7 +252,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
 
   const calcularFaturamento = async () => {
     setLoading(true);
-    const { error } = await supabase.rpc("calculate_monthly_revenue", {
+    const { error } = await db.rpc("calculate_monthly_revenue", {
       _barbershop_id: barbershopId,
       _year_month: yearMonth,
     });
@@ -264,7 +264,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
 
   const calcularImpostos = async () => {
     setLoading(true);
-    const { error } = await supabase.rpc("calculate_monthly_taxes", {
+    const { error } = await db.rpc("calculate_monthly_taxes", {
       _barbershop_id: barbershopId,
       _year_month: yearMonth,
     });
@@ -276,7 +276,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
 
   const gerarChecklist = async () => {
     setLoading(true);
-    const { error } = await supabase.rpc("generate_fiscal_checklist", {
+    const { error } = await db.rpc("generate_fiscal_checklist", {
       _barbershop_id: barbershopId,
       _year_month: yearMonth,
     });
@@ -288,7 +288,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
 
   const calcularScore = async () => {
     setLoading(true);
-    const { error } = await supabase.rpc("calculate_fiscal_score", {
+    const { error } = await db.rpc("calculate_fiscal_score", {
       _barbershop_id: barbershopId,
       _year_month: yearMonth,
     });
@@ -299,7 +299,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   };
 
   const marcarImpostoPago = async (taxId: string) => {
-    const { error } = await supabase
+    const { error } = await db
       .from("taxes")
       .update({ status: "paid", paid_at: new Date().toISOString() })
       .eq("id", taxId);
@@ -308,7 +308,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   };
 
   const toggleChecklistItem = async (item: FiscalChecklistItem) => {
-    const { error } = await supabase
+    const { error } = await db
       .from("fiscal_checklist_items")
       .update({
         is_completed: !item.is_completed,
@@ -321,13 +321,13 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   };
 
   const dismissAlert = async (alertId: string) => {
-    await supabase.from("fiscal_alerts").update({ is_dismissed: true }).eq("id", alertId);
+    await db.from("fiscal_alerts").update({ is_dismissed: true }).eq("id", alertId);
     fetchAlerts();
   };
 
   const simularRegime = async () => {
     setSimLoading(true);
-    const { data, error } = await supabase.rpc("simulate_tax_regime", {
+    const { data, error } = await db.rpc("simulate_tax_regime", {
       _barbershop_id: barbershopId,
       _year_month: yearMonth,
       _target_regime: simRegime,
