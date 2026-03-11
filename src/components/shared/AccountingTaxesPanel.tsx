@@ -112,7 +112,7 @@ export function AccountingTaxesPanel({
       return;
     }
 
-    const { data: linkRows, error: linksErr } = await supabase
+    const { data: linkRows, error: linksErr } = await (supabase as any)
       .from("accountant_barbershop_links")
       .select("barbershop_id, barbershops(name)")
       .eq("accountant_id", accountantId)
