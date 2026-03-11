@@ -160,7 +160,7 @@ const DashboardHome = () => {
       const accId = acc.data.id;
       const [companies, requests, fiscal] = await Promise.all([
         supabase.from("fiscal_records").select("entity_user_id").eq("accountant_id", accId),
-        (supabase as any).from("fiscal_service_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("fiscal_service_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("fiscal_records").select("amount").eq("accountant_id", accId).eq("status", "completed"),
       ]);
       const uniqueCompanies = new Set(companies.data?.map((c: any) => c.entity_user_id) || []).size;
@@ -219,7 +219,7 @@ const ServicosContabeisPage = () => {
   const [saving, setSaving] = useState(false);
 
   const fetchServices = async () => {
-    const { data } = await (supabase as any).from("fiscal_service_types").select("*").order("service_type");
+    const { data } = await supabase.from("fiscal_service_types").select("*").order("service_type");
     setServices((data || []) as unknown as FiscalServiceType[]);
     setLoading(false);
   };
@@ -239,7 +239,7 @@ const ServicosContabeisPage = () => {
       return;
     }
     setSaving(true);
-    const { error } = await (supabase as any).from("fiscal_service_types").update({
+    const { error } = await supabase.from("fiscal_service_types").update({
       status: "pending",
       proposed_price: Number(editing.price),
       proposed_required_fields: parsedRf,
@@ -294,7 +294,7 @@ const ServicosContabeisPage = () => {
       proposed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    const { error } = await (supabase as any).from("fiscal_service_types").insert(payload as never);
+    const { error } = await supabase.from("fiscal_service_types").insert(payload as never);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Novo serviço enviado para aprovação do Super Admin.");
@@ -452,7 +452,7 @@ const PedidosServicoPage = () => {
     supabase.from("accountants").select("id").eq("user_id", user.id).maybeSingle().then(async ({ data }) => {
       if (!data?.id) { setLoading(false); return; }
       setAccountantId(data.id);
-      const { data: reqs } = await (supabase as any).from("fiscal_service_requests")
+      const { data: reqs } = await supabase.from("fiscal_service_requests")
         .select("*, profiles:client_user_id(name, email, whatsapp)")
         .order("created_at", { ascending: false });
       setRequests(reqs || []);
@@ -469,7 +469,7 @@ const PedidosServicoPage = () => {
     const shouldClaim = (status === "accepted") && (!current.accountant_id);
     const updatePayload: any = shouldClaim ? { status, accountant_id: accountantId } : { status };
 
-    let query = (supabase as any).from("fiscal_service_requests").update(updatePayload).eq("id", id);
+    let query = supabase.from("fiscal_service_requests").update(updatePayload).eq("id", id);
     if (shouldClaim) {
       query = query.is("accountant_id", null);
     }
@@ -695,7 +695,7 @@ const AutomacaoFiscalContadorPage = () => {
     (async () => {
       const { data: acc } = await supabase.from("accountants").select("id").eq("user_id", user.id).maybeSingle();
       if (!acc?.id) { setLoading(false); return; }
-      const { data: links } = await (supabase as any)
+      const { data: links } = await supabase
         .from("accountant_barbershop_links")
         .select("barbershop_id, barbershops(name)")
         .eq("accountant_id", acc.id)

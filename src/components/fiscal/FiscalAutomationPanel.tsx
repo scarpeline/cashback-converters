@@ -166,7 +166,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   // ===== FETCH DATA =====
 
   const fetchRevenue = useCallback(async () => {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("monthly_revenue")
       .select("*")
       .eq("barbershop_id", barbershopId)
@@ -176,7 +176,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   }, [barbershopId, yearMonth]);
 
   const fetchTaxes = useCallback(async () => {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("taxes")
       .select("*")
       .eq("barbershop_id", barbershopId)
@@ -186,7 +186,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   }, [barbershopId, yearMonth]);
 
   const fetchAlerts = useCallback(async () => {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("fiscal_alerts")
       .select("*")
       .eq("barbershop_id", barbershopId)
@@ -197,7 +197,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   }, [barbershopId]);
 
   const fetchChecklist = useCallback(async () => {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("fiscal_checklist_items")
       .select("*")
       .eq("barbershop_id", barbershopId)
@@ -207,7 +207,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   }, [barbershopId, yearMonth]);
 
   const fetchScore = useCallback(async () => {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("fiscal_scores")
       .select("*")
       .eq("barbershop_id", barbershopId)
@@ -217,7 +217,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   }, [barbershopId, yearMonth]);
 
   const fetchCalendar = useCallback(async () => {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("fiscal_calendar")
       .select("*")
       .eq("is_active", true)
@@ -231,7 +231,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
       .select("tax_regime")
       .eq("id", barbershopId)
       .maybeSingle();
-    setBarbershopRegime((data as any)?.tax_regime || "mei");
+    setBarbershopRegime(data?.tax_regime || "mei");
   }, [barbershopId]);
 
   const fetchAll = useCallback(async () => {
@@ -250,7 +250,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
 
   const calcularFaturamento = async () => {
     setLoading(true);
-    const { error } = await (supabase as any).rpc("calculate_monthly_revenue", {
+    const { error } = await supabase.rpc("calculate_monthly_revenue", {
       _barbershop_id: barbershopId,
       _year_month: yearMonth,
     });
@@ -262,7 +262,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
 
   const calcularImpostos = async () => {
     setLoading(true);
-    const { error } = await (supabase as any).rpc("calculate_monthly_taxes", {
+    const { error } = await supabase.rpc("calculate_monthly_taxes", {
       _barbershop_id: barbershopId,
       _year_month: yearMonth,
     });
@@ -274,7 +274,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
 
   const gerarChecklist = async () => {
     setLoading(true);
-    const { error } = await (supabase as any).rpc("generate_fiscal_checklist", {
+    const { error } = await supabase.rpc("generate_fiscal_checklist", {
       _barbershop_id: barbershopId,
       _year_month: yearMonth,
     });
@@ -286,7 +286,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
 
   const calcularScore = async () => {
     setLoading(true);
-    const { error } = await (supabase as any).rpc("calculate_fiscal_score", {
+    const { error } = await supabase.rpc("calculate_fiscal_score", {
       _barbershop_id: barbershopId,
       _year_month: yearMonth,
     });
@@ -297,7 +297,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   };
 
   const marcarImpostoPago = async (taxId: string) => {
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("taxes")
       .update({ status: "paid", paid_at: new Date().toISOString() })
       .eq("id", taxId);
@@ -306,7 +306,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   };
 
   const toggleChecklistItem = async (item: FiscalChecklistItem) => {
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("fiscal_checklist_items")
       .update({
         is_completed: !item.is_completed,
@@ -319,13 +319,13 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   };
 
   const dismissAlert = async (alertId: string) => {
-    await (supabase as any).from("fiscal_alerts").update({ is_dismissed: true }).eq("id", alertId);
+    await supabase.from("fiscal_alerts").update({ is_dismissed: true }).eq("id", alertId);
     fetchAlerts();
   };
 
   const simularRegime = async () => {
     setSimLoading(true);
-    const { data, error } = await (supabase as any).rpc("simulate_tax_regime", {
+    const { data, error } = await supabase.rpc("simulate_tax_regime", {
       _barbershop_id: barbershopId,
       _year_month: yearMonth,
       _target_regime: simRegime,

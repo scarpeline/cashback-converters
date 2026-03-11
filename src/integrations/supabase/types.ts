@@ -65,6 +65,270 @@ export type Database = {
         }
         Relationships: []
       }
+      accountant_barbershop_links: {
+        Row: {
+          id: string
+          barbershop_id: string
+          accountant_id: string
+          status: string
+          requested_by_user_id: string
+          requested_at: string
+          accepted_at: string | null
+          revoked_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          barbershop_id: string
+          accountant_id: string
+          status?: string
+          requested_by_user_id: string
+          requested_at?: string
+          accepted_at?: string | null
+          revoked_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          barbershop_id?: string
+          accountant_id?: string
+          status?: string
+          requested_by_user_id?: string
+          requested_at?: string
+          accepted_at?: string | null
+          revoked_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      accounting_audit_logs: {
+        Row: {
+          id: string
+          barbershop_id: string | null
+          actor_user_id: string
+          actor_role: string | null
+          action: string
+          entity_table: string | null
+          entity_id: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          barbershop_id?: string | null
+          actor_user_id: string
+          actor_role?: string | null
+          action: string
+          entity_table?: string | null
+          entity_id?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          barbershop_id?: string | null
+          actor_user_id?: string
+          actor_role?: string | null
+          action?: string
+          entity_table?: string | null
+          entity_id?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      accounting_documents: {
+        Row: {
+          id: string
+          barbershop_id: string | null
+          owner_user_id: string
+          accountant_id: string | null
+          fiscal_service_request_id: string | null
+          title: string
+          doc_type: string
+          storage_bucket: string
+          storage_path: string
+          mime_type: string | null
+          file_size_bytes: number | null
+          is_company_document: boolean
+          status: string
+          uploaded_by_user_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          barbershop_id?: string | null
+          owner_user_id: string
+          accountant_id?: string | null
+          fiscal_service_request_id?: string | null
+          title: string
+          doc_type?: string
+          storage_bucket?: string
+          storage_path: string
+          mime_type?: string | null
+          file_size_bytes?: number | null
+          is_company_document?: boolean
+          status?: string
+          uploaded_by_user_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          barbershop_id?: string | null
+          owner_user_id?: string
+          accountant_id?: string | null
+          fiscal_service_request_id?: string | null
+          title?: string
+          doc_type?: string
+          storage_bucket?: string
+          storage_path?: string
+          mime_type?: string | null
+          file_size_bytes?: number | null
+          is_company_document?: boolean
+          status?: string
+          uploaded_by_user_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      accounting_messages: {
+        Row: {
+          id: string
+          barbershop_id: string | null
+          accountant_id: string | null
+          sender_user_id: string
+          sender_role: string | null
+          body: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          barbershop_id?: string | null
+          accountant_id?: string | null
+          sender_user_id: string
+          sender_role?: string | null
+          body: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          barbershop_id?: string | null
+          accountant_id?: string | null
+          sender_user_id?: string
+          sender_role?: string | null
+          body?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      accounting_tax_guides: {
+        Row: {
+          id: string
+          barbershop_id: string
+          accountant_id: string | null
+          tax_type: string
+          reference_period: string | null
+          due_date: string | null
+          amount: number | null
+          status: string
+          guide_document_id: string | null
+          notes: string | null
+          created_by_user_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          barbershop_id: string
+          accountant_id?: string | null
+          tax_type?: string
+          reference_period?: string | null
+          due_date?: string | null
+          amount?: number | null
+          status?: string
+          guide_document_id?: string | null
+          notes?: string | null
+          created_by_user_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          barbershop_id?: string
+          accountant_id?: string | null
+          tax_type?: string
+          reference_period?: string | null
+          due_date?: string | null
+          amount?: number | null
+          status?: string
+          guide_document_id?: string | null
+          notes?: string | null
+          created_by_user_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fiscal_service_types: {
+        Row: {
+          id: string
+          service_type: string
+          label: string
+          price: number
+          required_fields: Json
+          is_active: boolean | null
+          status: string
+          proposed_price: number | null
+          proposed_required_fields: Json | null
+          proposed_by: string | null
+          proposed_at: string | null
+          approved_by: string | null
+          approved_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          service_type: string
+          label: string
+          price?: number
+          required_fields?: Json
+          is_active?: boolean | null
+          status?: string
+          proposed_price?: number | null
+          proposed_required_fields?: Json | null
+          proposed_by?: string | null
+          proposed_at?: string | null
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          service_type?: string
+          label?: string
+          price?: number
+          required_fields?: Json
+          is_active?: boolean | null
+          status?: string
+          proposed_price?: number | null
+          proposed_required_fields?: Json | null
+          proposed_by?: string | null
+          proposed_at?: string | null
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       affiliate_commissions: {
         Row: {
           affiliate_id: string
@@ -1950,6 +2214,42 @@ export type Database = {
       owns_barbershop: {
         Args: { _barbershop_id: string; _user_id: string }
         Returns: boolean
+      }
+      get_accountant_id_by_email: {
+        Args: { _email: string }
+        Returns: string
+      }
+      has_active_accountant_link: {
+        Args: { _user_id: string; _barbershop_id: string }
+        Returns: boolean
+      }
+      calculate_monthly_revenue: {
+        Args: { _barbershop_id: string; _year_month: string }
+        Returns: string
+      }
+      calculate_monthly_taxes: {
+        Args: { _barbershop_id: string; _year_month: string }
+        Returns: undefined
+      }
+      generate_fiscal_checklist: {
+        Args: { _barbershop_id: string; _year_month: string }
+        Returns: undefined
+      }
+      calculate_fiscal_score: {
+        Args: { _barbershop_id: string; _year_month: string }
+        Returns: number
+      }
+      mark_overdue_taxes: {
+        Args: Record<string, never>
+        Returns: undefined
+      }
+      simulate_tax_regime: {
+        Args: { _barbershop_id: string; _year_month: string; _target_regime: string }
+        Returns: {
+          tax_type: string
+          tax_rate: number
+          tax_amount: number
+        }[]
       }
     }
     Enums: {

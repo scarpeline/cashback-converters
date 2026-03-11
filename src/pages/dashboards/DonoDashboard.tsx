@@ -1275,7 +1275,7 @@ const VitrinePage = () => {
 
   useEffect(() => {
     if (!barbershop?.id) return;
-    (supabase as any).from("stock_items").select("*").eq("barbershop_id", barbershop.id).eq("show_in_vitrine", true).eq("is_active", true).order("name").then(({ data }: any) => setProducts(data || []));
+    supabase.from("stock_items").select("*").eq("barbershop_id", barbershop.id).eq("show_in_vitrine", true).eq("is_active", true).order("name").then(({ data }: any) => setProducts(data || []));
     supabase.from("raffles").select("*").eq("barbershop_id", barbershop.id).eq("status", "open").order("created_at", { ascending: false }).then(({ data }) => setRaffles(data || []));
   }, [barbershop?.id]);
 
@@ -1817,7 +1817,7 @@ const NotificacoesDonoPage = () => {
               <Input placeholder="https://..." value={bookingLink} onChange={e => setBookingLink(e.target.value)} />
               <Button size="sm" variant="gold" disabled={savingBookingLink} onClick={async () => {
                 setSavingBookingLink(true);
-                const { error } = await (supabase as any).from("barbershops").update({ booking_link: bookingLink || null }).eq("id", barbershop!.id);
+                const { error } = await supabase.from("barbershops").update({ booking_link: bookingLink || null }).eq("id", barbershop!.id);
                 setSavingBookingLink(false);
                 if (!error) { toast.success("Link salvo!"); refetchBarbershop(); }
                 else toast.error("Erro ao salvar.");
