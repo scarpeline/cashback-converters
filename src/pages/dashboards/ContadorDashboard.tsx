@@ -240,7 +240,7 @@ const ServicosContabeisPage = () => {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("fiscal_service_types").update({
+    const { error } = await db.from("fiscal_service_types").update({
       status: "pending",
       proposed_price: Number(editing.price),
       proposed_required_fields: parsedRf,
