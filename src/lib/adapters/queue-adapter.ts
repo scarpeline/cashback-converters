@@ -91,3 +91,6 @@ class PostgresQueueAdapter implements QueueAdapter {
 }
 
 export const queueAdapter: QueueAdapter = new PostgresQueueAdapter();
+
+// Exportar função enqueue para facilitar uso
+export const enqueue = queueAdapter.enqueue.bind(queueAdapter);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+const db = supabase as any;
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -142,7 +143,7 @@ export default function SolicitarServicoFiscalPage() {
   const [allowMatching, setAllowMatching] = useState(true);
 
   useEffect(() => {
-    supabase.from("fiscal_service_types").select("service_type, label, price, required_fields").eq("status", "approved").eq("is_active", true).then(({ data }: any) => {
+    db.from("fiscal_service_types").select("service_type, label, price, required_fields").eq("status", "approved").eq("is_active", true).then(({ data }: any) => {
       setServices(data || []);
     });
   }, []);

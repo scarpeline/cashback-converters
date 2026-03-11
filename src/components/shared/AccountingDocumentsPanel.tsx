@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+const db = supabase as any;
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,7 +47,7 @@ export function AccountingDocumentsPanel({
 
   const fetchDocs = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("accounting_documents")
       .select("id,title,doc_type,status,created_at,is_company_document,barbershop_id")
       .order("created_at", { ascending: false });

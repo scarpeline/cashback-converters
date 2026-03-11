@@ -14,6 +14,8 @@ import { AccountingTaxesPanel } from "@/components/shared/AccountingTaxesPanel";
 import { AccountingMessagesPanel } from "@/components/shared/AccountingMessagesPanel";
 import { FiscalAutomationPanel } from "@/components/fiscal/FiscalAutomationPanel";
 import { AutomationSettingsPanel } from "@/components/automation/AutomationSettingsPanel";
+import { AgendaIntelligencePanel } from "@/components/waitlist/AgendaIntelligencePanel";
+import InteligenciaAgendaPage from "@/pages/dashboards/InteligenciaAgendaPage";
 import { ContadorBuscaPanel } from "@/components/contabilidade/ContadorBuscaPanel";
 import { ChatContadorPanel } from "@/components/contabilidade/ChatContadorPanel";
 import { PedidoContabilPanel } from "@/components/contabilidade/PedidoContabilPanel";
@@ -68,6 +70,7 @@ const DonoDashboard = () => {
     { name: "Ação entre Amigos", href: `${basePath}/acao-entre-amigos`, icon: Gift },
     { name: "Prova Social", href: `${basePath}/prova-social`, icon: TrendingUp },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
+    { name: "Inteligência de Agenda", href: `${basePath}/inteligencia-agenda`, icon: Settings },
     { name: "Pixels & Marketing", href: `${basePath}/pixels`, icon: Image },
     { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: Calculator },
     { name: "Dados Bancários", href: `${basePath}/dados-bancarios`, icon: CreditCard },
@@ -139,6 +142,7 @@ const DonoDashboard = () => {
             <Route path="prova-social" element={<SocialProofManager barbershopId={mainBarbershop?.id} />} />
             <Route path="automacao" element={<NotificacoesDonoPage />} />
             <Route path="notificacoes" element={<NotificacoesDonoPage />} />
+            <Route path="inteligencia-agenda" element={<InteligenciaAgendaPage />} />
             <Route path="pixels" element={<PixelsPage />} />
             <Route path="servicos-contabeis/*" element={<ServicosContabeisHubPage barbershopId={mainBarbershop?.id} />} />
             <Route path="dados-bancarios" element={<DadosBancariosPage />} />

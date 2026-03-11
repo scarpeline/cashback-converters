@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+const db = supabase as any;
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -76,7 +77,7 @@ export function AccountingMessagesPanel({
       return;
     }
 
-    const { data: linkRows, error: linksErr } = await supabase
+    const { data: linkRows, error: linksErr } = await db
       .from("accountant_barbershop_links")
       .select("barbershop_id, barbershops(name)")
       .eq("accountant_id", accountantId)
@@ -109,7 +110,7 @@ export function AccountingMessagesPanel({
       return;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("accounting_messages")
       .select("id,barbershop_id,accountant_id,sender_user_id,sender_role,body,created_at")
       .eq("barbershop_id", effectiveBarbershopId)
@@ -185,7 +186,7 @@ export function AccountingMessagesPanel({
       created_at: new Date().toISOString(),
     };
 
-    const { error } = await supabase.from("accounting_messages").insert(payload as never);
+    const { error } = await db.from("accounting_messages").insert(payload as never);
 
     setSending(false);
 
