@@ -166,7 +166,7 @@ const ContaBancariaPage = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("bank_info, pix_key, cpf_cnpj").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+    supabase.from("profiles").select("bank_info, pix_key, cpf_cnpj, whatsapp, email").eq("user_id", user.id).maybeSingle().then(({ data }) => {
       if (data?.bank_info) {
         setBankInfo(data.bank_info);
         setForm({ ...(data.bank_info as any), pix_key: data.pix_key || "", cpf_cnpj: data.cpf_cnpj || "" });
@@ -189,10 +189,20 @@ const ContaBancariaPage = () => {
 
     if (error) { toast.error("Erro: " + error.message); setSaving(false); return; }
 
-    // Try to register on gateway
+    // Try to register on gateway with all required fields
     try {
+      const phoneDigits = (profile?.whatsapp || "").replace(/\D/g, "");
+      const cleanCpfCnpj = form.cpf_cnpj.replace(/\D/g, "");
       await supabase.functions.invoke("process-payment", {
-        body: { action: "create-wallet", user_id: user!.id, cpf_cnpj: form.cpf_cnpj, name: profile?.name, pix_key: form.pix_key },
+        body: {
+          action: "create-wallet",
+          user_id: user!.id,
+          cpf_cnpj: cleanCpfCnpj,
+          name: profile?.name,
+          email: profile?.email,
+          mobile_phone: phoneDigits.length >= 10 ? phoneDigits : undefined,
+          pix_key: form.pix_key,
+        },
       });
       toast.success("Conta bancária salva e carteira criada no gateway!");
     } catch {

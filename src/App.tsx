@@ -30,6 +30,7 @@ const SuperAdminDashboard = lazy(() => import("./pages/dashboards/SuperAdminDash
 const PaymentSimulationPage = lazy(() => import("./pages/public/PaymentSimulationPage"));
 const InstallPage = lazy(() => import("./pages/public/InstallPage"));
 const CostAnalysisPage = lazy(() => import("./pages/public/CostAnalysisPage"));
+const VitrinePage = lazy(() => import("./pages/public/VitrinePage"));
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ function AppRoutes() {
         <Route path="/simulacao-pagamento" element={<PaymentSimulationPage />} />
         <Route path="/install" element={<InstallPage />} />
         <Route path="/analise-custos" element={<CostAnalysisPage />} />
+        <Route path="/v/:barbershopId" element={<VitrinePage />} />
 
         {/* ========== LOGIN (AuthGuard: se logado, vai pro dashboard) ========== */}
         <Route path="/login" element={<PublicLoginPage />} />

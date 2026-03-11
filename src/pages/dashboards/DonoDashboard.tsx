@@ -985,6 +985,12 @@ const DividasPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ client_name: "", client_whatsapp: "", amount: "", description: "" });
+  const [nfcLoadingId, setNfcLoadingId] = useState<string | null>(null);
+  const nfcSupported = isPaymentRequestSupported();
+  const reloadDebts = () => {
+    if (!barbershop?.id) return;
+    supabase.from("debts").select("*").eq("barbershop_id", barbershop.id).order("created_at", { ascending: false }).then(({ data }) => setDebts(data || []));
+  };
   useEffect(() => {
     if (!barbershop?.id) return;
     supabase.from("debts").select("*").eq("barbershop_id", barbershop.id).order("created_at", { ascending: false }).then(({ data }) => setDebts(data || []));
@@ -1089,13 +1095,36 @@ const DividasPage = () => {
                 </div>
               </div>
               {d.status === 'pending' && (
-                <div className="flex gap-2 mt-3">
+                <div className="flex flex-wrap gap-2 mt-3">
                   <Button size="sm" variant="gold" onClick={() => handleReceive(d)}><QrCode className="w-4 h-4 mr-1" />PIX/QR</Button>
+                  {nfcSupported && (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="bg-violet-600 hover:bg-violet-700 text-white"
+                      disabled={nfcLoadingId === d.id}
+                      onClick={async () => {
+                        setNfcLoadingId(d.id);
+                        const result = await processNfcPayment({ amount: Number(d.amount), description: `Dívida: ${d.client_name}` });
+                        setNfcLoadingId(null);
+                        if (result.success) {
+                          await supabase.from("debts").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", d.id);
+                          toast.success("Pagamento NFC recebido e dívida quitada!");
+                          reloadDebts();
+                        } else {
+                          toast.error(result.error || "Falha no pagamento NFC");
+                        }
+                      }}
+                    >
+                      {nfcLoadingId === d.id ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Smartphone className="w-4 h-4 mr-1" />}
+                      NFC
+                    </Button>
+                  )}
                   <Button size="sm" variant="outline" onClick={() => handleShareLink(d)}><Share2 className="w-4 h-4 mr-1" />Link</Button>
                   <Button size="sm" variant="outline" onClick={() => {
                     supabase.from("debts").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", d.id).then(() => {
                       toast.success("Dívida marcada como paga!");
-                      supabase.from("debts").select("*").eq("barbershop_id", barbershop.id).order("created_at", { ascending: false }).then(({ data }) => setDebts(data || []));
+                      reloadDebts();
                     });
                   }}><CheckCircle className="w-4 h-4 mr-1" />Pago</Button>
                 </div>
@@ -1451,6 +1480,8 @@ const NotificacoesDonoPage = () => {
   const [selectedTemplate, setSelectedTemplate] = useState("custom");
   const [sentNotifications, setSentNotifications] = useState<any[]>([]);
   const [automationFlows, setAutomationFlows] = useState<any[]>([]);
+  const [editingFlowMsg, setEditingFlowMsg] = useState<Record<string, string>>({});
+  const [savingFlowMsg, setSavingFlowMsg] = useState<Record<string, boolean>>({});
   const [showPreview, setShowPreview] = useState(false);
   const [credits, setCredits] = useState<{ sms: number; whatsapp: number }>({ sms: 0, whatsapp: 0 });
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
@@ -1481,6 +1512,10 @@ const NotificacoesDonoPage = () => {
       // Load automation flows from schedule
       const flows = parsed.filter((s: any) => s.event_type);
       setAutomationFlows(flows);
+      // Initialize message editing state from saved flows
+      const flowMsgs: Record<string, string> = {};
+      flows.forEach((f: any) => { if (f.event_type && f.message) flowMsgs[f.event_type] = f.message; });
+      setEditingFlowMsg(flowMsgs);
     }
 
     setBookingLink(barbershop.booking_link || "");
@@ -1624,10 +1659,25 @@ const NotificacoesDonoPage = () => {
       newSchedule = schedule.filter((s: any) => s.event_type !== eventId);
     } else {
       const evt = AUTOMATION_EVENTS.find(e => e.id === eventId);
-      newSchedule = [...schedule, { event_type: eventId, message: evt?.description || "", active: true, channel: scheduleChannel, include_booking_link: true }];
+      const defaultMsg = `Olá {nome}! ${evt?.description || ""}`;
+      newSchedule = [...schedule, { event_type: eventId, message: defaultMsg, active: true, channel: scheduleChannel, include_booking_link: true }];
+      setEditingFlowMsg(prev => ({ ...prev, [eventId]: defaultMsg }));
     }
     const { error } = await supabase.from("barbershops").update({ automation_schedule: newSchedule }).eq("id", barbershop!.id);
     if (!error) { setSchedule(newSchedule); toast.success("Fluxo de automação atualizado!"); refetchBarbershop(); }
+  };
+
+  const saveFlowMessage = async (eventId: string) => {
+    const newMsg = editingFlowMsg[eventId];
+    if (!newMsg?.trim() || !barbershop?.id) return;
+    setSavingFlowMsg(prev => ({ ...prev, [eventId]: true }));
+    const newSchedule = schedule.map((s: any) =>
+      s.event_type === eventId ? { ...s, message: newMsg } : s
+    );
+    const { error } = await supabase.from("barbershops").update({ automation_schedule: newSchedule }).eq("id", barbershop!.id);
+    setSavingFlowMsg(prev => ({ ...prev, [eventId]: false }));
+    if (!error) { setSchedule(newSchedule); toast.success("Mensagem do fluxo salva!"); refetchBarbershop(); }
+    else toast.error("Erro ao salvar mensagem.");
   };
 
   const targets = [
@@ -1817,16 +1867,40 @@ const NotificacoesDonoPage = () => {
               </div>
               {AUTOMATION_EVENTS.map(evt => {
                 const isActive = activeFlows.some((f: any) => f.event_type === evt.id);
+                const currentMsg = editingFlowMsg[evt.id] || "";
                 return (
-                  <div key={evt.id} className={`flex items-center justify-between p-4 border rounded-lg transition-all ${isActive ? "border-primary/40 bg-primary/5" : "border-border"}`}>
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{evt.icon}</span>
-                      <div>
-                        <p className="font-medium text-sm">{evt.label}</p>
-                        <p className="text-xs text-muted-foreground">{evt.description}</p>
+                  <div key={evt.id} className={`border rounded-lg transition-all ${isActive ? "border-primary/40 bg-primary/5" : "border-border"}`}>
+                    <div className="flex items-center justify-between p-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{evt.icon}</span>
+                        <div>
+                          <p className="font-medium text-sm">{evt.label}</p>
+                          <p className="text-xs text-muted-foreground">{evt.description}</p>
+                        </div>
                       </div>
+                      <Switch checked={isActive} onCheckedChange={() => toggleAutomationFlow(evt.id)} />
                     </div>
-                    <Switch checked={isActive} onCheckedChange={() => toggleAutomationFlow(evt.id)} />
+                    {isActive && (
+                      <div className="px-4 pb-4 space-y-2 border-t border-primary/20 pt-3">
+                        <Label className="text-xs text-muted-foreground">Mensagem do fluxo <span className="text-primary">(use {"{nome}"} para nome do cliente)</span></Label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={currentMsg}
+                            onChange={e => setEditingFlowMsg(prev => ({ ...prev, [evt.id]: e.target.value }))}
+                            placeholder={`Ex: Olá {nome}! ${evt.description}`}
+                            className="flex-1 text-sm"
+                          />
+                          <Button
+                            size="sm"
+                            variant="gold"
+                            disabled={savingFlowMsg[evt.id]}
+                            onClick={() => saveFlowMessage(evt.id)}
+                          >
+                            {savingFlowMsg[evt.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : "Salvar"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

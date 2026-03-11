@@ -46,6 +46,7 @@ const SuperAdminDashboard = () => {
     { name: "Mensagens Sistema", href: `${basePath}/mensagens-sistema`, icon: MessageCircle },
     { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
+    { name: "Visibilidade Landing", href: `${basePath}/visibilidade`, icon: Eye },
     { name: "Configurações", href: `${basePath}/configuracoes`, icon: Settings },
   ];
 
@@ -104,6 +105,7 @@ const SuperAdminDashboard = () => {
             <Route path="mensagens-sistema" element={<MensagensSistemaPage />} />
             <Route path="suporte" element={<SuporteAdminPage />} />
             <Route path="notificacoes" element={<NotificacoesAdminPage />} />
+            <Route path="visibilidade" element={<LandingVisibilidadePage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
           </Routes>
         </main>
@@ -1465,6 +1467,137 @@ const ConfiguracoesPage = () => {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+};
+
+// ============ VISIBILIDADE DA LANDING PAGE ============
+const LANDING_SECTIONS = [
+  { key: "hero", label: "🏠 Hero / Banner Principal", desc: "Seção inicial com CTA e imagem" },
+  { key: "seja_afiliado", label: "🤝 Seja Afiliado", desc: "Seção de convite para afiliados na landing" },
+  { key: "painel_afiliados", label: "📊 Painel de Afiliados", desc: "Preview do painel afiliado" },
+  { key: "painel_clientes", label: "👥 Painel de Clientes", desc: "Preview do painel cliente" },
+  { key: "prova_social", label: "⭐ Prova Social (Popups)", desc: "Popups de prova social na landing" },
+  { key: "planos", label: "💳 Planos e Preços", desc: "Seção de planos de assinatura" },
+  { key: "faq", label: "❓ FAQ", desc: "Perguntas frequentes" },
+  { key: "depoimentos", label: "💬 Depoimentos", desc: "Seção de depoimentos de clientes" },
+  { key: "contato", label: "📞 Contato / WhatsApp", desc: "Botão e seção de contato" },
+];
+
+const LandingVisibilidadePage = () => {
+  const [visibility, setVisibility] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    supabase
+      .from("integration_settings")
+      .select("*")
+      .eq("service_name", "landing_visibility")
+      .eq("environment", "production")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.config) {
+          setVisibility(data.config as Record<string, boolean>);
+        } else {
+          const defaults: Record<string, boolean> = {};
+          LANDING_SECTIONS.forEach(s => { defaults[s.key] = true; });
+          setVisibility(defaults);
+        }
+        setLoading(false);
+      });
+  }, []);
+
+  const toggle = (key: string) => {
+    setVisibility(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("integration_settings")
+      .upsert(
+        { service_name: "landing_visibility", environment: "production", config: visibility, is_active: true },
+        { onConflict: "service_name,environment" }
+      );
+    setSaving(false);
+    if (error) { toast.error("Erro ao salvar: " + error.message); return; }
+    toast.success("Visibilidade da landing page salva!");
+  };
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+
+  const activeCount = Object.values(visibility).filter(Boolean).length;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Visibilidade da Landing Page</h1>
+          <p className="text-muted-foreground text-sm">Controle quais seções aparecem para afiliados, painéis e visitantes</p>
+        </div>
+        <Button variant="gold" onClick={handleSave} disabled={saving}>
+          {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+          {saving ? "Salvando..." : "Salvar Configuração"}
+        </Button>
+      </div>
+
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="py-3 flex items-center gap-3">
+          <Activity className="w-5 h-5 text-primary" />
+          <p className="text-sm">{activeCount} de {LANDING_SECTIONS.length} seções visíveis na landing page</p>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-3">
+        {LANDING_SECTIONS.map(section => (
+          <Card key={section.key} className={`transition-all ${visibility[section.key] ? "border-primary/30" : "border-border opacity-60"}`}>
+            <CardContent className="p-4 flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className="font-medium">{section.label}</p>
+                <p className="text-xs text-muted-foreground">{section.desc}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`text-xs px-2 py-0.5 rounded-full ${visibility[section.key] ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>
+                  {visibility[section.key] ? "Visível" : "Oculto"}
+                </span>
+                <Switch
+                  checked={!!visibility[section.key]}
+                  onCheckedChange={() => toggle(section.key)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Links Rápidos — Seções de Painel</CardTitle>
+          <CardDescription>Configure quais CTAs aparecem para cada tipo de usuário</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {[
+            { key: "cta_afiliado", label: "Botão \"Seja Afiliado\" no header" },
+            { key: "cta_dono", label: "Botão \"Abrir Barbearia\" no hero" },
+            { key: "cta_cliente", label: "Botão \"Agendar Agora\" para clientes" },
+            { key: "banner_vitrine", label: "Banner de vitrine dos produtos" },
+          ].map(item => (
+            <div key={item.key} className="flex items-center justify-between p-3 border rounded-lg">
+              <p className="text-sm">{item.label}</p>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs px-2 py-0.5 rounded-full ${visibility[item.key] !== false ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>
+                  {visibility[item.key] !== false ? "Ativo" : "Inativo"}
+                </span>
+                <Switch
+                  checked={visibility[item.key] !== false}
+                  onCheckedChange={() => toggle(item.key)}
+                />
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 };
