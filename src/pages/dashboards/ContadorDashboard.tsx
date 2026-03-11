@@ -295,7 +295,7 @@ const ServicosContabeisPage = () => {
       proposed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    const { error } = await supabase.from("fiscal_service_types").insert(payload as never);
+    const { error } = await db.from("fiscal_service_types").insert(payload as never);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Novo serviço enviado para aprovação do Super Admin.");
