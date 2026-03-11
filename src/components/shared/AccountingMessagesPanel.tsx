@@ -110,7 +110,7 @@ export function AccountingMessagesPanel({
       return;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("accounting_messages")
       .select("id,barbershop_id,accountant_id,sender_user_id,sender_role,body,created_at")
       .eq("barbershop_id", effectiveBarbershopId)
