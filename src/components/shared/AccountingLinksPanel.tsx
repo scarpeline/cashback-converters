@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+const db = supabase as any;
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +48,7 @@ export function AccountingLinksPanel({
   const fetchLinks = async () => {
     setLoading(true);
 
-    let query = supabase
+    let query = db
       .from("accountant_barbershop_links")
       .select("id, barbershop_id, accountant_id, status, requested_at, accepted_at, revoked_at")
       .order("requested_at", { ascending: false });
@@ -90,7 +91,7 @@ export function AccountingLinksPanel({
       return;
     }
 
-    const { data: accountantId, error: accErr } = await supabase.rpc("get_accountant_id_by_email", {
+    const { data: accountantId, error: accErr } = await db.rpc("get_accountant_id_by_email", {
       _email: accountantEmail.trim(),
     });
 
@@ -106,7 +107,7 @@ export function AccountingLinksPanel({
       return;
     }
 
-    const { error: insErr } = await supabase.from("accountant_barbershop_links").insert({
+    const { error: insErr } = await db.from("accountant_barbershop_links").insert({
       barbershop_id: barbershopId,
       accountant_id: accountantId,
       status: "pending",
@@ -127,7 +128,7 @@ export function AccountingLinksPanel({
   };
 
   const acceptLink = async (linkId: string) => {
-    const { error } = await supabase
+    const { error } = await db
       .from("accountant_barbershop_links")
       .update({ status: "active", accepted_at: new Date().toISOString() })
       .eq("id", linkId)
@@ -143,7 +144,7 @@ export function AccountingLinksPanel({
   };
 
   const revokeLink = async (linkId: string) => {
-    const { error } = await supabase
+    const { error } = await db
       .from("accountant_barbershop_links")
       .update({ status: "revoked", revoked_at: new Date().toISOString() })
       .eq("id", linkId);

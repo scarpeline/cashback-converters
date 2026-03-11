@@ -18,14 +18,12 @@ type Barbershop = {
   address: string | null;
   phone: string | null;
   description: string | null;
-  booking_link: string | null;
 };
 
 type Product = {
   id: string;
   name: string;
   sell_price: number;
-  image_url: string | null;
   quantity: number;
 };
 
@@ -35,7 +33,6 @@ type Raffle = {
   description: string | null;
   ticket_price: number;
   credit_award: number;
-  image_url: string | null;
   status: string;
 };
 
@@ -52,7 +49,7 @@ export default function VitrinePage() {
     (async () => {
       const { data: shop } = await supabase
         .from("barbershops")
-        .select("id, name, address, phone, description, booking_link")
+        .select("id, name, address, phone, description")
         .eq("id", barbershopId)
         .maybeSingle();
 
@@ -60,8 +57,8 @@ export default function VitrinePage() {
       setBarbershop(shop as Barbershop);
 
       const [prodsRes, rafflesRes] = await Promise.all([
-        supabase.from("stock_items").select("id, name, sell_price, image_url, quantity").eq("barbershop_id", barbershopId).eq("show_in_vitrine", true).eq("is_active", true).order("name"),
-        supabase.from("raffles").select("id, name, description, ticket_price, credit_award, image_url, status").eq("barbershop_id", barbershopId).eq("status", "open").order("created_at", { ascending: false }),
+        supabase.from("stock_items").select("id, name, sell_price, quantity").eq("barbershop_id", barbershopId).eq("is_active", true).order("name"),
+        supabase.from("raffles").select("id, name, description, ticket_price, credit_award, status").eq("barbershop_id", barbershopId).eq("status", "open").order("created_at", { ascending: false }),
       ]);
 
       setProducts((prodsRes.data || []) as Product[]);
@@ -88,7 +85,7 @@ export default function VitrinePage() {
     );
   }
 
-  const bookingUrl = barbershop.booking_link || `/app`;
+  const bookingUrl = `/app`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -150,11 +147,7 @@ export default function VitrinePage() {
               {products.map(p => (
                 <Card key={p.id} className="overflow-hidden hover:shadow-md transition-shadow">
                   <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
-                    {p.image_url ? (
-                      <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <Package className="w-10 h-10 text-muted-foreground" />
-                    )}
+                    <Package className="w-10 h-10 text-muted-foreground" />
                   </div>
                   <CardContent className="p-3">
                     <p className="font-semibold text-sm leading-tight">{p.name}</p>
@@ -180,13 +173,9 @@ export default function VitrinePage() {
               {raffles.map(r => (
                 <Card key={r.id} className="overflow-hidden hover:shadow-md transition-shadow">
                   <div className="h-32 bg-muted overflow-hidden">
-                    {r.image_url ? (
-                      <img src={r.image_url} alt={r.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Gift className="w-12 h-12 text-muted-foreground" />
-                      </div>
-                    )}
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Gift className="w-12 h-12 text-muted-foreground" />
+                    </div>
                   </div>
                   <CardContent className="p-4">
                     <h3 className="font-bold">{r.name}</h3>

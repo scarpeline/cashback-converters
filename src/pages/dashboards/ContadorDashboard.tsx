@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+const db = supabase as any;
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -219,7 +220,7 @@ const ServicosContabeisPage = () => {
   const [saving, setSaving] = useState(false);
 
   const fetchServices = async () => {
-    const { data } = await supabase.from("fiscal_service_types").select("*").order("service_type");
+    const { data } = await db.from("fiscal_service_types").select("*").order("service_type");
     setServices((data || []) as unknown as FiscalServiceType[]);
     setLoading(false);
   };
@@ -239,7 +240,7 @@ const ServicosContabeisPage = () => {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("fiscal_service_types").update({
+    const { error } = await db.from("fiscal_service_types").update({
       status: "pending",
       proposed_price: Number(editing.price),
       proposed_required_fields: parsedRf,
@@ -294,7 +295,7 @@ const ServicosContabeisPage = () => {
       proposed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    const { error } = await supabase.from("fiscal_service_types").insert(payload as never);
+    const { error } = await db.from("fiscal_service_types").insert(payload as never);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Novo serviço enviado para aprovação do Super Admin.");
@@ -695,7 +696,7 @@ const AutomacaoFiscalContadorPage = () => {
     (async () => {
       const { data: acc } = await supabase.from("accountants").select("id").eq("user_id", user.id).maybeSingle();
       if (!acc?.id) { setLoading(false); return; }
-      const { data: links } = await supabase
+      const { data: links } = await db
         .from("accountant_barbershop_links")
         .select("barbershop_id, barbershops(name)")
         .eq("accountant_id", acc.id)
