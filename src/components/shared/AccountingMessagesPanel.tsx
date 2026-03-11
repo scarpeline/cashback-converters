@@ -186,7 +186,7 @@ export function AccountingMessagesPanel({
       created_at: new Date().toISOString(),
     };
 
-    const { error } = await supabase.from("accounting_messages").insert(payload as never);
+    const { error } = await db.from("accounting_messages").insert(payload as never);
 
     setSending(false);
 

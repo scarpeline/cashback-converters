@@ -696,7 +696,7 @@ const AutomacaoFiscalContadorPage = () => {
     (async () => {
       const { data: acc } = await supabase.from("accountants").select("id").eq("user_id", user.id).maybeSingle();
       if (!acc?.id) { setLoading(false); return; }
-      const { data: links } = await supabase
+      const { data: links } = await db
         .from("accountant_barbershop_links")
         .select("barbershop_id, barbershops(name)")
         .eq("accountant_id", acc.id)

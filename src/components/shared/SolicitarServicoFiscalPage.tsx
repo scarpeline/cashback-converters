@@ -143,7 +143,7 @@ export default function SolicitarServicoFiscalPage() {
   const [allowMatching, setAllowMatching] = useState(true);
 
   useEffect(() => {
-    supabase.from("fiscal_service_types").select("service_type, label, price, required_fields").eq("status", "approved").eq("is_active", true).then(({ data }: any) => {
+    db.from("fiscal_service_types").select("service_type, label, price, required_fields").eq("status", "approved").eq("is_active", true).then(({ data }: any) => {
       setServices(data || []);
     });
   }, []);
