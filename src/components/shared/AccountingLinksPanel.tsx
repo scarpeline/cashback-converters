@@ -127,7 +127,7 @@ export function AccountingLinksPanel({
   };
 
   const acceptLink = async (linkId: string) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("accountant_barbershop_links")
       .update({ status: "active", accepted_at: new Date().toISOString() })
       .eq("id", linkId)
