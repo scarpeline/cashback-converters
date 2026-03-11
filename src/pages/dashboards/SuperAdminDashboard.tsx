@@ -729,7 +729,7 @@ const ServicosContabeisAdminPage = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchServices = () => {
-    supabase.from("fiscal_service_types").select("*").order("service_type").then(({ data }) => {
+    (supabase as any).from("fiscal_service_types").select("*").order("service_type").then(({ data }: any) => {
       setServices((data || []) as unknown as FiscalServiceType[]);
       setLoading(false);
     });
