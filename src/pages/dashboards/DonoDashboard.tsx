@@ -12,6 +12,7 @@ import { AccountingDocumentsPanel } from "@/components/shared/AccountingDocument
 import { AccountingLinksPanel } from "@/components/shared/AccountingLinksPanel";
 import { AccountingTaxesPanel } from "@/components/shared/AccountingTaxesPanel";
 import { AccountingMessagesPanel } from "@/components/shared/AccountingMessagesPanel";
+import { FiscalAutomationPanel } from "@/components/fiscal/FiscalAutomationPanel";
 import DadosBancariosPage from "@/components/shared/DadosBancariosPage";
 import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 import { SocialProofManager } from "@/components/social-proof/SocialProofManager";
@@ -26,7 +27,7 @@ import {
   LayoutDashboard, Calendar, Users, Scissors, DollarSign, Package, Gift, Settings,
   Bell, LogOut, Menu, X, TrendingUp, MessageCircle, Image, Plus, CheckCircle, Check,
   Clock, ChevronRight, Phone, Send, Share2, QrCode, CreditCard, Edit, Eye,
-  Wallet, Link as LinkIcon, UserCheck, AlertCircle, Repeat, Smartphone, FileText
+  Wallet, Link as LinkIcon, UserCheck, AlertCircle, Repeat, Smartphone, FileText, Calculator
 } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
@@ -63,11 +64,7 @@ const DonoDashboard = () => {
     { name: "Prova Social", href: `${basePath}/prova-social`, icon: TrendingUp },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
     { name: "Pixels & Marketing", href: `${basePath}/pixels`, icon: Image },
-    { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: Scissors },
-    { name: "Documentos Contábeis", href: `${basePath}/documentos-contabeis`, icon: FileText },
-    { name: "Meu Contador", href: `${basePath}/meu-contador`, icon: UserCheck },
-    { name: "Impostos & Guias", href: `${basePath}/impostos-guias`, icon: FileText },
-    { name: "Mensagens Contábeis", href: `${basePath}/mensagens-contabeis`, icon: MessageCircle },
+    { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: Calculator },
     { name: "Dados Bancários", href: `${basePath}/dados-bancarios`, icon: CreditCard },
     { name: "Seja Afiliado", href: `${basePath}/seja-afiliado`, icon: Share2 },
     { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
@@ -138,11 +135,7 @@ const DonoDashboard = () => {
             <Route path="automacao" element={<NotificacoesDonoPage />} />
             <Route path="notificacoes" element={<NotificacoesDonoPage />} />
             <Route path="pixels" element={<PixelsPage />} />
-            <Route path="servicos-contabeis" element={<SolicitarServicoFiscalPage />} />
-            <Route path="documentos-contabeis" element={<AccountingDocumentsPanel mode="owner" barbershopId={mainBarbershop?.id} />} />
-            <Route path="meu-contador" element={<AccountingLinksPanel mode="owner" barbershopId={mainBarbershop?.id} />} />
-            <Route path="impostos-guias" element={<AccountingTaxesPanel mode="owner" barbershopId={mainBarbershop?.id} />} />
-            <Route path="mensagens-contabeis" element={<AccountingMessagesPanel mode="owner" barbershopId={mainBarbershop?.id} />} />
+            <Route path="servicos-contabeis/*" element={<ServicosContabeisHubPage barbershopId={mainBarbershop?.id} />} />
             <Route path="dados-bancarios" element={<DadosBancariosPage />} />
             <Route path="suporte" element={<SuportePage />} />
             <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
@@ -2070,6 +2063,48 @@ const NotificacoesDonoPage = () => {
         </Card>
         </div>
       )}
+    </div>
+  );
+};
+
+// ============ SERVIÇOS CONTÁBEIS HUB ============
+
+const CONTABEIS_TABS = [
+  { key: "automacao", label: "Automação Fiscal", icon: "🤖" },
+  { key: "solicitar", label: "Solicitar Serviço", icon: "📋" },
+  { key: "documentos", label: "Documentos", icon: "📄" },
+  { key: "meu-contador", label: "Meu Contador", icon: "🤝" },
+  { key: "impostos", label: "Impostos & Guias", icon: "💰" },
+  { key: "mensagens", label: "Mensagens", icon: "💬" },
+];
+
+const ServicosContabeisHubPage = ({ barbershopId }: { barbershopId?: string }) => {
+  const [tab, setTab] = useState("automacao");
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+        <Calculator className="w-6 h-6" /> Serviços Contábeis
+      </h1>
+      <div className="flex flex-wrap gap-2 border-b border-border pb-2">
+        {CONTABEIS_TABS.map(t => (
+          <Button
+            key={t.key}
+            variant={tab === t.key ? "gold" : "outline"}
+            size="sm"
+            onClick={() => setTab(t.key)}
+          >
+            <span className="mr-1">{t.icon}</span>{t.label}
+          </Button>
+        ))}
+      </div>
+      {tab === "automacao" && barbershopId && <FiscalAutomationPanel barbershopId={barbershopId} mode="owner" />}
+      {tab === "automacao" && !barbershopId && <p className="text-muted-foreground py-8 text-center">Carregando barbearia...</p>}
+      {tab === "solicitar" && <SolicitarServicoFiscalPage />}
+      {tab === "documentos" && <AccountingDocumentsPanel mode="owner" barbershopId={barbershopId} />}
+      {tab === "meu-contador" && <AccountingLinksPanel mode="owner" barbershopId={barbershopId} />}
+      {tab === "impostos" && <AccountingTaxesPanel mode="owner" barbershopId={barbershopId} />}
+      {tab === "mensagens" && <AccountingMessagesPanel mode="owner" barbershopId={barbershopId} />}
     </div>
   );
 };

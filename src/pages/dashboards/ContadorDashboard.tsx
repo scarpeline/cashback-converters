@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   LayoutDashboard, Building2, FileText, DollarSign, User, LogOut, Menu, X, Calculator,
-  Loader2, CreditCard, ClipboardList, CheckCircle, Clock, AlertCircle
+  Loader2, CreditCard, ClipboardList, CheckCircle, Clock, AlertCircle, BarChart3
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import { AccountingDocumentsPanel } from "@/components/shared/AccountingDocument
 import { AccountingLinksPanel } from "@/components/shared/AccountingLinksPanel";
 import { AccountingTaxesPanel } from "@/components/shared/AccountingTaxesPanel";
 import { AccountingMessagesPanel } from "@/components/shared/AccountingMessagesPanel";
+import { FiscalAutomationPanel } from "@/components/fiscal/FiscalAutomationPanel";
 
 const ContadorDashboard = () => {
   const { profile, user, signOut, roles } = useAuth();
@@ -74,6 +75,7 @@ const ContadorDashboard = () => {
     { name: "Dashboard", href: basePath, icon: LayoutDashboard },
     { name: "Serviços e Valores", href: `${basePath}/servicos`, icon: DollarSign },
     { name: "Pedidos de Serviço", href: `${basePath}/pedidos`, icon: ClipboardList },
+    { name: "Automação Fiscal", href: `${basePath}/automacao-fiscal`, icon: BarChart3 },
     { name: "Empresas", href: `${basePath}/empresas`, icon: Building2 },
     { name: "Vínculos", href: `${basePath}/vinculos`, icon: Building2 },
     { name: "Impostos & Guias", href: `${basePath}/impostos-guias`, icon: FileText },
@@ -128,6 +130,7 @@ const ContadorDashboard = () => {
             <Route index element={<DashboardHome />} />
             <Route path="servicos" element={<ServicosContabeisPage />} />
             <Route path="pedidos" element={<PedidosServicoPage />} />
+            <Route path="automacao-fiscal" element={<AutomacaoFiscalContadorPage />} />
             <Route path="empresas" element={<EmpresasPage />} />
             <Route path="vinculos" element={<AccountingLinksPanel mode="accountant" />} />
             <Route path="impostos-guias" element={<AccountingTaxesPanel mode="accountant" />} />
@@ -675,6 +678,66 @@ const PerfilPage = () => {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+};
+
+// ============ AUTOMAÇÃO FISCAL (CONTADOR) ============
+
+const AutomacaoFiscalContadorPage = () => {
+  const { user } = useAuth();
+  const [linkedBarbershops, setLinkedBarbershops] = useState<{ id: string; name: string | null }[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: acc } = await supabase.from("accountants").select("id").eq("user_id", user.id).maybeSingle();
+      if (!acc?.id) { setLoading(false); return; }
+      const { data: links } = await (supabase as any)
+        .from("accountant_barbershop_links")
+        .select("barbershop_id, barbershops(name)")
+        .eq("accountant_id", acc.id)
+        .eq("status", "active");
+      const mapped = (links || []).map((r: any) => ({ id: r.barbershop_id, name: r.barbershops?.name || null }));
+      setLinkedBarbershops(mapped);
+      if (mapped[0]?.id) setSelectedId(mapped[0].id);
+      setLoading(false);
+    })();
+  }, [user]);
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><BarChart3 className="w-5 h-5" /> Automação Fiscal</CardTitle>
+          <CardDescription>Selecione uma empresa vinculada para acessar a automação fiscal completa.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {linkedBarbershops.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Nenhuma empresa vinculada. Crie vínculos primeiro.</p>
+          ) : (
+            <div className="space-y-2">
+              <Label>Empresa</Label>
+              <select
+                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                value={selectedId || ""}
+                onChange={e => setSelectedId(e.target.value || null)}
+              >
+                <option value="">Selecione...</option>
+                {linkedBarbershops.map(b => (
+                  <option key={b.id} value={b.id}>{b.name || b.id}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {selectedId && <FiscalAutomationPanel barbershopId={selectedId} mode="accountant" />}
     </div>
   );
 };

@@ -57,6 +57,7 @@ export function SocialProofManager({ barbershopId, showPageSelector = false }: S
 
   const openEdit = (p: any) => {
     setEditingId(p.id);
+    setShowForm(true);
     setForm({
       message: p.message,
       type: (p.type === "real" ? "real" : "fake") as "fake" | "real",
@@ -85,18 +86,19 @@ export function SocialProofManager({ barbershopId, showPageSelector = false }: S
       show_in_vitrine: form.show_in_vitrine,
       booking_link: form.booking_link || null,
     };
-    if (!editingId) payload.created_by = user?.id;
     if (barbershopId) payload.barbershop_id = barbershopId;
 
     if (editingId) {
       const { error } = await supabase.from("social_proofs").update(payload).eq("id", editingId);
       setSaving(false);
-      if (error) { toast.error("Erro: " + error.message); return; }
+      if (error) { console.error("Social proof update error:", error); toast.error("Erro ao atualizar: " + error.message); return; }
       toast.success("Prova social atualizada!");
     } else {
+      payload.created_by = user?.id;
+      payload.is_active = true;
       const { error } = await supabase.from("social_proofs").insert(payload);
       setSaving(false);
-      if (error) { toast.error("Erro: " + error.message); return; }
+      if (error) { console.error("Social proof insert error:", error); toast.error("Erro ao criar: " + error.message); return; }
       toast.success("Prova social criada!");
     }
     setShowForm(false);

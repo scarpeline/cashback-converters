@@ -393,6 +393,8 @@ export type Database = {
           asaas_wallet_id: string | null
           automation_schedule: Json | null
           cashback_percentage: number | null
+          cnpj: string | null
+          company_name: string | null
           created_at: string
           description: string | null
           id: string
@@ -404,6 +406,7 @@ export type Database = {
           slug: string | null
           subscription_ends_at: string | null
           subscription_status: string | null
+          tax_regime: string | null
           updated_at: string
         }
         Insert: {
@@ -415,6 +418,8 @@ export type Database = {
           asaas_wallet_id?: string | null
           automation_schedule?: Json | null
           cashback_percentage?: number | null
+          cnpj?: string | null
+          company_name?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -426,6 +431,7 @@ export type Database = {
           slug?: string | null
           subscription_ends_at?: string | null
           subscription_status?: string | null
+          tax_regime?: string | null
           updated_at?: string
         }
         Update: {
@@ -437,6 +443,8 @@ export type Database = {
           asaas_wallet_id?: string | null
           automation_schedule?: Json | null
           cashback_percentage?: number | null
+          cnpj?: string | null
+          company_name?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -448,6 +456,295 @@ export type Database = {
           slug?: string | null
           subscription_ends_at?: string | null
           subscription_status?: string | null
+          tax_regime?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fiscal_alerts: {
+        Row: {
+          id: string
+          barbershop_id: string
+          alert_type: string
+          title: string
+          message: string
+          severity: string
+          related_entity_table: string | null
+          related_entity_id: string | null
+          is_read: boolean
+          is_dismissed: boolean
+          target_roles: string[]
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          barbershop_id: string
+          alert_type: string
+          title: string
+          message: string
+          severity?: string
+          related_entity_table?: string | null
+          related_entity_id?: string | null
+          is_read?: boolean
+          is_dismissed?: boolean
+          target_roles?: string[]
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          barbershop_id?: string
+          alert_type?: string
+          title?: string
+          message?: string
+          severity?: string
+          related_entity_table?: string | null
+          related_entity_id?: string | null
+          is_read?: boolean
+          is_dismissed?: boolean
+          target_roles?: string[]
+          created_at?: string
+        }
+        Relationships: []
+      }
+      fiscal_calendar: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          event_type: string
+          due_day: number | null
+          due_month: number | null
+          tax_regimes: string[]
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          event_type: string
+          due_day?: number | null
+          due_month?: number | null
+          tax_regimes?: string[]
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          event_type?: string
+          due_day?: number | null
+          due_month?: number | null
+          tax_regimes?: string[]
+          is_active?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      fiscal_checklist_items: {
+        Row: {
+          id: string
+          barbershop_id: string
+          year_month: string
+          check_type: string
+          title: string
+          is_completed: boolean
+          completed_at: string | null
+          completed_by: string | null
+          auto_checked: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          barbershop_id: string
+          year_month: string
+          check_type: string
+          title: string
+          is_completed?: boolean
+          completed_at?: string | null
+          completed_by?: string | null
+          auto_checked?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          barbershop_id?: string
+          year_month?: string
+          check_type?: string
+          title?: string
+          is_completed?: boolean
+          completed_at?: string | null
+          completed_by?: string | null
+          auto_checked?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      fiscal_reports: {
+        Row: {
+          id: string
+          barbershop_id: string
+          report_type: string
+          period_start: string
+          period_end: string
+          data: Json
+          generated_by_user_id: string | null
+          storage_path: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          barbershop_id: string
+          report_type: string
+          period_start: string
+          period_end: string
+          data?: Json
+          generated_by_user_id?: string | null
+          storage_path?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          barbershop_id?: string
+          report_type?: string
+          period_start?: string
+          period_end?: string
+          data?: Json
+          generated_by_user_id?: string | null
+          storage_path?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      fiscal_scores: {
+        Row: {
+          id: string
+          barbershop_id: string
+          year_month: string
+          score: number
+          breakdown: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          barbershop_id: string
+          year_month: string
+          score?: number
+          breakdown?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          barbershop_id?: string
+          year_month?: string
+          score?: number
+          breakdown?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      monthly_revenue: {
+        Row: {
+          id: string
+          barbershop_id: string
+          year_month: string
+          services_revenue: number
+          products_revenue: number
+          other_revenue: number
+          gross_revenue: number
+          services_count: number
+          payments_count: number
+          calculated_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          barbershop_id: string
+          year_month: string
+          services_revenue?: number
+          products_revenue?: number
+          other_revenue?: number
+          gross_revenue?: number
+          services_count?: number
+          payments_count?: number
+          calculated_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          barbershop_id?: string
+          year_month?: string
+          services_revenue?: number
+          products_revenue?: number
+          other_revenue?: number
+          gross_revenue?: number
+          services_count?: number
+          payments_count?: number
+          calculated_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      taxes: {
+        Row: {
+          id: string
+          barbershop_id: string
+          year_month: string
+          revenue_id: string | null
+          tax_regime: string
+          gross_revenue: number
+          tax_type: string
+          tax_rate: number
+          tax_amount: number
+          due_date: string
+          status: string
+          paid_at: string | null
+          guide_url: string | null
+          notes: string | null
+          auto_calculated: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          barbershop_id: string
+          year_month: string
+          revenue_id?: string | null
+          tax_regime?: string
+          gross_revenue?: number
+          tax_type: string
+          tax_rate?: number
+          tax_amount?: number
+          due_date: string
+          status?: string
+          paid_at?: string | null
+          guide_url?: string | null
+          notes?: string | null
+          auto_calculated?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          barbershop_id?: string
+          year_month?: string
+          revenue_id?: string | null
+          tax_regime?: string
+          gross_revenue?: number
+          tax_type?: string
+          tax_rate?: number
+          tax_amount?: number
+          due_date?: string
+          status?: string
+          paid_at?: string | null
+          guide_url?: string | null
+          notes?: string | null
+          auto_calculated?: boolean
+          created_at?: string
           updated_at?: string
         }
         Relationships: []
