@@ -208,7 +208,7 @@ export function AccountingTaxesPanel({
       updated_at: new Date().toISOString(),
     };
 
-    const { error } = await supabase.from("accounting_tax_guides").insert(payload as never);
+    const { error } = await db.from("accounting_tax_guides").insert(payload as never);
 
     setSaving(false);
 
