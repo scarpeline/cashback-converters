@@ -1774,7 +1774,7 @@ const NotificacoesDonoPage = () => {
               <Input placeholder="https://..." value={bookingLink} onChange={e => setBookingLink(e.target.value)} />
               <Button size="sm" variant="gold" disabled={savingBookingLink} onClick={async () => {
                 setSavingBookingLink(true);
-                const { error } = await supabase.from("barbershops").update({ booking_link: bookingLink || null }).eq("id", barbershop!.id);
+                const { error } = await (supabase as any).from("barbershops").update({ booking_link: bookingLink || null }).eq("id", barbershop!.id);
                 setSavingBookingLink(false);
                 if (!error) { toast.success("Link salvo!"); refetchBarbershop(); }
                 else toast.error("Erro ao salvar.");

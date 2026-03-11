@@ -301,6 +301,7 @@ const PerfilPage = () => {
   const [form, setForm] = useState({ name: "", whatsapp: "", cpf_cnpj: "", pix_key: "" });
   const [saving, setSaving] = useState(false);
   const [bankInfo, setBankInfo] = useState<any>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) setForm({ name: profile.name || "", whatsapp: profile.whatsapp || "", cpf_cnpj: profile.cpf_cnpj || "", pix_key: profile.pix_key || "" });

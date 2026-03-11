@@ -334,7 +334,7 @@ export default function SolicitarServicoFiscalPage() {
                 onChange={(e) => { setServiceType(e.target.value); setFields({}); }}
               >
                 {Object.entries(SERVICE_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
+                  <option key={k} value={k}>{String(v)}</option>
                 ))}
               </select>
             </div>

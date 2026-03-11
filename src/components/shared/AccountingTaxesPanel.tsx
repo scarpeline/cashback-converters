@@ -228,7 +228,7 @@ export function AccountingTaxesPanel({
   const updateGuideStatus = async (id: string, next: TaxGuideStatus) => {
     setSaving(true);
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("accounting_tax_guides")
       .update({ status: next, updated_at: new Date().toISOString() })
       .eq("id", id);
