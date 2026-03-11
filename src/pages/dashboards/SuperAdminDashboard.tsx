@@ -11,11 +11,16 @@ import { Switch } from "@/components/ui/switch";
 import {
   LayoutDashboard, Users, Building2, DollarSign, Settings, Shield, Image, MessageCircle,
   Bell, Calculator, LogOut, Menu, X, Activity, CheckCircle, TrendingUp, Plug, Loader2, Send, Phone,
-  LinkIcon, Edit, Calendar, UserPlus, Copy, ExternalLink, Package, CreditCard, Eye, Wallet, FileText
+  LinkIcon, Edit, Calendar, UserPlus, Copy, ExternalLink, Package, CreditCard, Eye, Wallet, FileText, TestTube, Trash2, EyeOff, Globe
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import { lazy, Suspense } from "react";
+import { CadastroContadorPanel } from "@/components/contabilidade/CadastroContadorPanel";
+import { ConfigComissoesPanel } from "@/components/contabilidade/ConfigComissoesPanel";
+import { WebhookManagementPanel } from "@/components/admin/WebhookManagementPanel";
+import { IntegrationTestsPanel } from "@/components/admin/IntegrationTestsPanel";
+import { RealTimeMetricsPanel } from "@/components/admin/RealTimeMetricsPanel";
 
 const IntegrationSettingsPage = lazy(() => import("@/pages/admin/IntegrationSettingsPage"));
 
@@ -38,7 +43,10 @@ const SuperAdminDashboard = () => {
     { name: "Barbearias", href: `${basePath}/barbearias`, icon: Building2 },
     { name: "Afiliados", href: `${basePath}/afiliados`, icon: Users },
     { name: "Contadores", href: `${basePath}/contadores`, icon: Calculator },
+    { name: "Comissões Contábeis", href: `${basePath}/comissoes-contabeis`, icon: TrendingUp },
     { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: FileText },
+    { name: "Webhooks", href: `${basePath}/webhooks`, icon: LinkIcon },
+    { name: "Testes API", href: `${basePath}/testes-api`, icon: TestTube },
     { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
     { name: "Prova Social", href: `${basePath}/prova-social`, icon: Activity },
     { name: "Integrações", href: `${basePath}/integracoes`, icon: Plug },
@@ -97,7 +105,10 @@ const SuperAdminDashboard = () => {
             <Route path="barbearias" element={<BarbeariasPage />} />
             <Route path="afiliados" element={<AfiliadosPage />} />
             <Route path="contadores" element={<ContadoresPage />} />
+            <Route path="comissoes-contabeis" element={<ComissoesContabeisPage />} />
             <Route path="servicos-contabeis" element={<ServicosContabeisAdminPage />} />
+            <Route path="webhooks" element={<WebhooksPage />} />
+            <Route path="testes-api" element={<TestesAPIPage />} />
             <Route path="financeiro" element={<FinanceiroPage />} />
             <Route path="prova-social" element={<SocialProofManager showPageSelector />} />
             <Route path="integracoes" element={<Suspense fallback={<PageFallback />}><IntegrationSettingsPage /></Suspense>} />
@@ -158,6 +169,8 @@ const DashboardHome = () => {
         <Card><CardHeader className="pb-2"><CardDescription>Afiliados Ativos</CardDescription><CardTitle className="text-2xl">{stats.affiliates}</CardTitle></CardHeader></Card>
         <Card className="border-primary/20"><CardHeader className="pb-2"><CardDescription>Receita do Mês</CardDescription><CardTitle className="text-2xl text-gradient-gold">R$ 0,00</CardTitle></CardHeader></Card>
       </div>
+
+      <RealTimeMetricsPanel />
 
       {/* Acessar Painéis */}
       <Card className="border-primary/20">
@@ -645,16 +658,19 @@ const AfiliadosPage = () => {
   );
 };
 
+// ============ COMISSÕES CONTÁBEIS ============
+const ComissoesContabeisPage = () => (
+  <div className="space-y-6">
+    <h1 className="font-display text-2xl font-bold">Comissões Contábeis</h1>
+    <ConfigComissoesPanel />
+  </div>
+);
+
 // ============ CONTADORES ============
 const ContadoresPage = () => {
-  const [accountants, setAccountants] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "", whatsapp: "", cpf_cnpj: "" });
   const [creating, setCreating] = useState(false);
-
-  const loadAccountants = () => { supabase.from("accountants").select("*").then(({ data }) => { setAccountants(data || []); setLoading(false); }); };
-  useEffect(() => { loadAccountants(); }, []);
 
   const handleCreate = async () => {
     if (!form.name || !form.email || !form.password) { toast.error("Preencha nome, e-mail e senha."); return; }
@@ -665,16 +681,16 @@ const ContadoresPage = () => {
     });
     setCreating(false);
     if (error || data?.error) { toast.error(data?.error || error?.message || "Erro ao criar contador"); return; }
-    toast.success("Contador criado com sucesso!");
-    setShowCreate(false); setForm({ name: "", email: "", password: "", whatsapp: "", cpf_cnpj: "" });
-    loadAccountants();
+    toast.success("Contador criado! Agora complete o perfil abaixo.");
+    setShowCreate(false);
+    setForm({ name: "", email: "", password: "", whatsapp: "", cpf_cnpj: "" });
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="font-display text-2xl font-bold">Contadores</h1>
-        <Button variant="gold" onClick={() => setShowCreate(true)}><UserPlus className="w-4 h-4 mr-2" />Criar Contador</Button>
+        <Button variant="gold" onClick={() => setShowCreate(!showCreate)}><UserPlus className="w-4 h-4 mr-2" />Criar Contador</Button>
       </div>
 
       {showCreate && (
@@ -696,21 +712,24 @@ const ContadoresPage = () => {
         </Card>
       )}
 
-      {loading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : accountants.length === 0 ? (
-        <Card><CardContent className="py-12 text-center"><Calculator className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum contador.</p></CardContent></Card>
-      ) : accountants.map(a => (
-        <Card key={a.id}><CardContent className="p-4 flex items-center gap-4">
-          <Calculator className="w-5 h-5 text-primary" />
-          <div className="flex-1">
-            <p className="font-semibold">{a.name}</p>
-            <p className="text-sm text-muted-foreground">{a.email} {a.whatsapp ? `• ${a.whatsapp}` : ""}</p>
-          </div>
-          <span className={`text-xs px-2 py-1 rounded-full ${a.is_active ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>{a.is_active ? "Ativo" : "Inativo"}</span>
-        </CardContent></Card>
-      ))}
+      <CadastroContadorPanel />
     </div>
   );
 };
+
+// ============ WEBHOOKS ============
+const WebhooksPage = () => (
+  <div className="space-y-6">
+    <WebhookManagementPanel />
+  </div>
+);
+
+// ============ TESTES DE API ============
+const TestesAPIPage = () => (
+  <div className="space-y-6">
+    <IntegrationTestsPanel />
+  </div>
+);
 
 // ============ SERVIÇOS CONTÁBEIS (aprovar alterações do contador) ============
 const ServicosContabeisAdminPage = () => {
@@ -731,7 +750,7 @@ const ServicosContabeisAdminPage = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchServices = () => {
-    (supabase as any).from("fiscal_service_types").select("*").order("service_type").then(({ data }: any) => {
+    supabase.from("fiscal_service_types").select("*").order("service_type").then(({ data }) => {
       setServices((data || []) as unknown as FiscalServiceType[]);
       setLoading(false);
     });
@@ -758,7 +777,7 @@ const ServicosContabeisAdminPage = () => {
         updated_at: new Date().toISOString()
       }
       : { status: "rejected", proposed_price: null, proposed_required_fields: null, proposed_by: null, proposed_at: null, updated_at: new Date().toISOString() };
-    const { error } = await (supabase as any).from("fiscal_service_types").update(update as never).eq("id", id);
+    const { error } = await supabase.from("fiscal_service_types").update(update as any).eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success(approved ? "Alteração aprovada e disponível para usuários." : "Alteração rejeitada.");
     fetchServices();
@@ -1012,12 +1031,12 @@ const MensagensSistemaPage = () => {
   const [role, setRole] = useState("all");
 
   useEffect(() => {
-    (supabase as any).from("internal_system_messages").select("*").order("created_at", { ascending: false }).then(({ data }: any) => { setMessages(data || []); setLoading(false); });
+    supabase.from("internal_system_messages" as any).select("*").order("created_at", { ascending: false }).then(({ data }: any) => { setMessages(data || []); setLoading(false); });
   }, []);
 
   const handlePost = async () => {
     if (!title || !body) return toast.error("Preencha tudo");
-    const { data, error } = await (supabase as any).from("internal_system_messages").insert([{ title, body, target_role: role === "all" ? null : role }]).select();
+    const { data, error } = await supabase.from("internal_system_messages" as any).insert([{ title, body, target_role: role === "all" ? null : role }]).select();
     if (error) toast.error(error.message);
     else { setMessages([...(data || []), ...messages]); setShowAdd(false); setTitle(""); setBody(""); toast.success("Comunicado enviado!"); }
   };
@@ -1265,7 +1284,7 @@ const ConfiguracoesPage = () => {
     supabase.from("integration_settings").select("base_url").eq("service_name", "saas_fee").maybeSingle().then(({ data }) => {
       if (data?.base_url) setSaasFee(data.base_url);
     });
-    (supabase as any).from("subscription_plans").select("*").order("sort_order", { ascending: true }).then(({ data }: any) => {
+    supabase.from("subscription_plans" as any).select("*").order("sort_order", { ascending: true }).then(({ data }: any) => {
       setPlans(data || []); setLoadingPlans(false);
     });
     supabase.from("messaging_packages").select("*").order("created_at", { ascending: true }).then(({ data }) => setPackages(data || []));
@@ -1291,7 +1310,7 @@ const ConfiguracoesPage = () => {
 
   const savePlan = async () => {
     if (!editingPlan) return;
-    const { error } = await (supabase as any).from("subscription_plans").update({
+    const { error } = await supabase.from("subscription_plans" as any).update({
       name: editingPlan.name, price: editingPlan.price, duration_months: editingPlan.duration_months,
       asaas_checkout_id: editingPlan.asaas_checkout_id, is_active: editingPlan.is_active,
     }).eq("id", editingPlan.id);
@@ -1319,6 +1338,29 @@ const ConfiguracoesPage = () => {
     }).eq("id", editPkg.id);
     if (error) toast.error(error.message);
     else { toast.success("Pacote atualizado!"); setPackages(packages.map(p => p.id === editPkg.id ? editPkg : p)); setEditPkg(null); }
+  };
+
+  const deletePackage = async (pkgId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este pacote? Esta ação não pode ser desfeita.")) return;
+    
+    const { error } = await supabase.from("messaging_packages").delete().eq("id", pkgId);
+    if (error) toast.error(error.message);
+    else { 
+      toast.success("Pacote excluído!"); 
+      setPackages(packages.filter(p => p.id !== pkgId)); 
+    }
+  };
+
+  const togglePlanVisibility = async (planId: string, showOnLanding: boolean) => {
+    const { error } = await supabase.from("subscription_plans" as any).update({
+      show_on_landing: showOnLanding
+    }).eq("id", planId);
+    
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`Plano ${showOnLanding ? 'visível' : 'oculto'} na landing page!`);
+      setPlans(plans.map(p => p.id === planId ? { ...p, show_on_landing: showOnLanding } : p));
+    }
   };
 
   return (
@@ -1415,7 +1457,10 @@ const ConfiguracoesPage = () => {
                 <p className="text-sm text-muted-foreground">{p.quantity} {p.channel === 'sms' ? 'SMS' : 'WhatsApp'} • R$ {Number(p.price).toFixed(2)}</p>
               </div>
               <span className={`text-xs px-2 py-1 rounded-full ${p.is_active ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>{p.is_active ? "Ativo" : "Inativo"}</span>
-              <Button variant="outline" size="sm" onClick={() => setEditPkg({ ...p })}><Edit className="w-4 h-4" /></Button>
+              <div className="flex gap-1">
+                <Button variant="outline" size="sm" onClick={() => setEditPkg({ ...p })}><Edit className="w-4 h-4" /></Button>
+                <Button variant="outline" size="sm" onClick={() => deletePackage(p.id)} className="text-destructive hover:bg-destructive/10"><Trash2 className="w-4 h-4" /></Button>
+              </div>
             </div>
           ))}
         </CardContent>
@@ -1437,8 +1482,23 @@ const ConfiguracoesPage = () => {
                 <p className="text-sm text-muted-foreground">{p.duration_months === 0 ? "Grátis" : `${p.duration_months} mês(es)`} • R$ {Number(p.price).toFixed(2)}</p>
                 {p.asaas_checkout_id && <p className="text-xs text-muted-foreground">Checkout: {p.asaas_checkout_id}</p>}
               </div>
-              <span className={`text-xs px-2 py-1 rounded-full ${p.is_active ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>{p.is_active ? "Ativo" : "Inativo"}</span>
-              <Button variant="outline" size="sm" onClick={() => setEditingPlan({ ...p })}><Edit className="w-4 h-4" /></Button>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs px-2 py-1 rounded-full ${p.is_active ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>{p.is_active ? "Ativo" : "Inativo"}</span>
+                <span className={`text-xs px-2 py-1 rounded-full ${p.show_on_landing ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"}`}>
+                  {p.show_on_landing ? <><Globe className="w-3 h-3 inline mr-1" />Landing</> : <><EyeOff className="w-3 h-3 inline mr-1" />Oculto</>}
+                </span>
+              </div>
+              <div className="flex gap-1">
+                <Button variant="outline" size="sm" onClick={() => setEditingPlan({ ...p })}><Edit className="w-4 h-4" /></Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => togglePlanVisibility(p.id, !p.show_on_landing)}
+                  className={p.show_on_landing ? "text-orange-600 hover:bg-orange-50" : "text-blue-600 hover:bg-blue-50"}
+                >
+                  {p.show_on_landing ? <EyeOff className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+                </Button>
+              </div>
             </div>
           ))}
         </CardContent>
@@ -1458,6 +1518,10 @@ const ConfiguracoesPage = () => {
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input type="checkbox" checked={editingPlan.is_active} onChange={e => setEditingPlan({ ...editingPlan, is_active: e.target.checked })} className="rounded" />
                 Plano Ativo
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" checked={editingPlan.show_on_landing || false} onChange={e => setEditingPlan({ ...editingPlan, show_on_landing: e.target.checked })} className="rounded" />
+                Mostrar na Landing Page
               </label>
             </div>
             <div className="flex gap-2">

@@ -18,12 +18,26 @@ import { ProfilePhotoUpload } from "@/components/shared/ProfilePhotoUpload";
 import ContaBancariaPage from "@/components/profissional/ContaBancariaPage";
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
+import { ContadorBuscaPanel } from "@/components/contabilidade/ContadorBuscaPanel";
+import { ChatContadorPanel } from "@/components/contabilidade/ChatContadorPanel";
+import { PedidoContabilPanel } from "@/components/contabilidade/PedidoContabilPanel";
+import { AssinaturaContabilPanel } from "@/components/contabilidade/AssinaturaContabilPanel";
 import { isPaymentRequestSupported, processNfcPayment } from "@/lib/nfc/payment";
+import { AgendaProfissional } from "@/components/profissional/AgendaProfissional";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { PostAppointmentNotificationsService } from "@/services/notifications/PostAppointmentNotifications";
 
 const ProfissionalDashboard = () => {
   const { profile, signOut } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Iniciar serviço de notificações pós-atendimento
+  useEffect(() => {
+    if (profile) {
+      PostAppointmentNotificationsService.startNotificationChecker();
+    }
+  }, [profile]);
 
   const basePath = "/painel-profissional";
 
@@ -78,7 +92,9 @@ const ProfissionalDashboard = () => {
         <header className="h-16 border-b border-border flex items-center justify-between px-4 lg:px-6 bg-card">
           <button className="lg:hidden text-foreground" onClick={() => setSidebarOpen(true)}><Menu className="w-6 h-6" /></button>
           <div className="flex-1 lg:flex-none" />
-          <div className="flex items-center gap-4"><Button variant="ghost" size="icon"><Bell className="w-5 h-5" /></Button></div>
+          <div className="flex items-center gap-4">
+            <NotificationBell />
+          </div>
         </header>
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <Routes>
@@ -87,7 +103,7 @@ const ProfissionalDashboard = () => {
             <Route path="ganhos" element={<GanhosPage />} />
             <Route path="receber-divida" element={<ReceberDividaProfPage />} />
             <Route path="conta-bancaria" element={<ContaBancariaPage />} />
-            <Route path="servicos-contabeis" element={<SolicitarServicoFiscalPage />} />
+            <Route path="servicos-contabeis/*" element={<ContabeisHubProfPage />} />
             <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Routes>
@@ -251,12 +267,54 @@ const ReceberDividaProfPage = () => {
   );
 };
 
-const AgendaPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Minha Agenda</h1>
-    <Card><CardContent className="py-12 text-center"><Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum agendamento.</p></CardContent></Card>
-  </div>
-);
+const TABS_PROF_CONT = [
+  { key: "solicitar", label: "Solicitar Serviço", icon: "📋" },
+  { key: "buscar", label: "Buscar Contador", icon: "🔍" },
+  { key: "pedidos", label: "Pedidos Antecipados", icon: "🛒" },
+  { key: "assinatura", label: "Assinatura Mensal", icon: "🔄" },
+  { key: "chat", label: "Chat Contador", icon: "💬" },
+];
+
+const ContabeisHubProfPage = () => {
+  const { user } = useAuth();
+  const [tab, setTab] = useState("solicitar");
+  const [chatContadorId, setChatContadorId] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+        <FileText className="w-6 h-6" /> Serviços Contábeis
+      </h1>
+      <div className="flex flex-wrap gap-2 border-b border-border pb-2">
+        {TABS_PROF_CONT.map(t => (
+          <Button key={t.key} variant={tab === t.key ? "gold" : "outline"} size="sm" onClick={() => setTab(t.key)}>
+            <span className="mr-1">{t.icon}</span>{t.label}
+          </Button>
+        ))}
+      </div>
+      {tab === "solicitar" && <SolicitarServicoFiscalPage />}
+      {tab === "buscar" && <ContadorBuscaPanel onAbrirChat={(cid) => { setChatContadorId(cid); setTab("chat"); }} />}
+      {tab === "pedidos" && <PedidoContabilPanel />}
+      {tab === "assinatura" && <AssinaturaContabilPanel />}
+      {tab === "chat" && chatContadorId && user && <ChatContadorPanel contadorId={chatContadorId} modo="usuario" />}
+      {tab === "chat" && !chatContadorId && (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Busque um contador e clique em Chat.</p>
+          <Button variant="outline" className="mt-4" onClick={() => setTab("buscar")}>🔍 Buscar Contador</Button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const AgendaPage = () => {
+  const { user } = useAuth();
+  return (
+    <div className="space-y-6">
+      <AgendaProfissional />
+    </div>
+  );
+};
 
 const GanhosPage = () => (
   <div className="space-y-6">

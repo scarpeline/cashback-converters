@@ -15,6 +15,10 @@ import { toast } from "sonner";
 import { formatCpfCnpjBR } from "@/lib/input-masks";
 import { ProfilePhotoUpload } from "@/components/shared/ProfilePhotoUpload";
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
+import { ContadorBuscaPanel } from "@/components/contabilidade/ContadorBuscaPanel";
+import { ChatContadorPanel } from "@/components/contabilidade/ChatContadorPanel";
+import { PedidoContabilPanel } from "@/components/contabilidade/PedidoContabilPanel";
+import { AssinaturaContabilPanel } from "@/components/contabilidade/AssinaturaContabilPanel";
 
 const AfiliadoDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -79,13 +83,59 @@ const AfiliadoDashboard = () => {
             <Route path="indicados" element={<IndicadosPage />} />
             <Route path="comissoes" element={<ComissoesPage />} />
             <Route path="conta-bancaria" element={<ContaBancariaPage />} />
-            <Route path="servicos-contabeis" element={<SolicitarServicoFiscalPage />} />
+            <Route path="servicos-contabeis/*" element={<ContabeisHubAfiliadoPage />} />
             <Route path="historico" element={<HistoricoPage />} />
             <Route path="link" element={<LinkPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Routes>
         </main>
       </div>
+    </div>
+  );
+};
+
+const TABS_AFILIADO = [
+  { key: "solicitar", label: "Solicitar Serviço", icon: "📋" },
+  { key: "buscar", label: "Buscar Contador", icon: "🔍" },
+  { key: "pedidos", label: "Pedidos Antecipados", icon: "🛒" },
+  { key: "assinatura", label: "Assinatura Mensal", icon: "🔄" },
+  { key: "chat", label: "Chat Contador", icon: "💬" },
+];
+
+const ContabeisHubAfiliadoPage = () => {
+  const { user } = useAuth();
+  const [tab, setTab] = useState("solicitar");
+  const [chatContadorId, setChatContadorId] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+        <FileText className="w-6 h-6" /> Serviços Contábeis
+      </h1>
+      <div className="flex flex-wrap gap-2 border-b border-border pb-2">
+        {TABS_AFILIADO.map(t => (
+          <Button key={t.key} variant={tab === t.key ? "gold" : "outline"} size="sm" onClick={() => setTab(t.key)}>
+            <span className="mr-1">{t.icon}</span>{t.label}
+          </Button>
+        ))}
+      </div>
+      {tab === "solicitar" && <SolicitarServicoFiscalPage />}
+      {tab === "buscar" && (
+        <ContadorBuscaPanel
+          onAbrirChat={(cid) => { setChatContadorId(cid); setTab("chat"); }}
+        />
+      )}
+      {tab === "pedidos" && <PedidoContabilPanel />}
+      {tab === "assinatura" && <AssinaturaContabilPanel />}
+      {tab === "chat" && chatContadorId && user && (
+        <ChatContadorPanel contadorId={chatContadorId} modo="usuario" />
+      )}
+      {tab === "chat" && !chatContadorId && (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Busque um contador e clique em Chat para iniciar conversa.</p>
+          <Button variant="outline" className="mt-4" onClick={() => setTab("buscar")}>🔍 Buscar Contador</Button>
+        </div>
+      )}
     </div>
   );
 };
