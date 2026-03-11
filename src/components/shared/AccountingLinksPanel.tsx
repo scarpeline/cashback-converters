@@ -48,7 +48,7 @@ export function AccountingLinksPanel({
   const fetchLinks = async () => {
     setLoading(true);
 
-    let query = supabase
+    let query = db
       .from("accountant_barbershop_links")
       .select("id, barbershop_id, accountant_id, status, requested_at, accepted_at, revoked_at")
       .order("requested_at", { ascending: false });
