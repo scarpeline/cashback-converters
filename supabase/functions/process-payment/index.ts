@@ -122,9 +122,10 @@ function isValidCpfCnpj(doc: string): boolean {
   return false;
 }
 
-async function getOrCreateCustomer(supabaseAdmin: any, userId: string): Promise<string> {
+async function getOrCreateCustomer(supabaseAdmin: unknown, userId: string): Promise<string> {
+  const db = supabaseAdmin as { from: (table: string) => any };
   // Try to get barbershop's asaas_customer_id first
-  const { data: barbershop } = await supabaseAdmin
+  const { data: barbershop } = await db
     .from("barbershops")
     .select("asaas_customer_id, name, phone")
     .eq("owner_user_id", userId)
@@ -136,7 +137,7 @@ async function getOrCreateCustomer(supabaseAdmin: any, userId: string): Promise<
   }
 
   // Get profile info to create customer
-  const { data: profile } = await supabaseAdmin
+  const { data: profile } = await db
     .from("profiles")
     .select("name, email, whatsapp, cpf_cnpj")
     .eq("user_id", userId)
@@ -175,7 +176,7 @@ async function getOrCreateCustomer(supabaseAdmin: any, userId: string): Promise<
 
   // Save asaas_customer_id back to barbershop
   if (barbershop) {
-    await supabaseAdmin
+    await db
       .from("barbershops")
       .update({ asaas_customer_id: customerData.id })
       .eq("owner_user_id", userId);
@@ -295,11 +296,12 @@ serve(async (req) => {
 
     let result;
     switch (body.action) {
-      case "charge":
+      case "charge": {
         // Auto-resolve customer_id if not provided
         const customerId = body.customer_id || await getOrCreateCustomer(serviceRoleClient, userId);
         result = await handleCharge(body, customerId);
         break;
+      }
       case "get":
         if (!body.payment_id) throw new Error("payment_id required");
         result = await handleGet(body.payment_id);
@@ -427,7 +429,7 @@ serve(async (req) => {
       event_type: "API_CALL",
       status: "success",
       request_data: { action: body.action, billing_type: body.billing_type },
-      response_data: { payment_id: (result as any).payment_id },
+      response_data: { payment_id: (result as { payment_id?: string } | null)?.payment_id },
     });
 
     return new Response(JSON.stringify(result), {

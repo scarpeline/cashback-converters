@@ -713,12 +713,24 @@ const ContadoresPage = () => {
 // ============ SERVIÇOS CONTÁBEIS (aprovar alterações do contador) ============
 const ServicosContabeisAdminPage = () => {
   const { user } = useAuth();
-  const [services, setServices] = useState<any[]>([]);
+  type FiscalServiceType = {
+    id: string;
+    service_type: string;
+    label: string;
+    description: string | null;
+    price: number;
+    required_fields: unknown;
+    status: "pending" | "approved" | "rejected";
+    proposed_price: number | null;
+    proposed_required_fields: unknown;
+    proposed_description: string | null;
+  };
+  const [services, setServices] = useState<FiscalServiceType[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchServices = () => {
-    (supabase as any).from("fiscal_service_types").select("*").order("service_type").then(({ data }: any) => {
-      setServices(data || []);
+    supabase.from("fiscal_service_types").select("*").order("service_type").then(({ data }) => {
+      setServices((data || []) as unknown as FiscalServiceType[]);
       setLoading(false);
     });
   };
@@ -729,9 +741,22 @@ const ServicosContabeisAdminPage = () => {
     const s = services.find(x => x.id === id);
     if (!s || s.status !== "pending") return;
     const update = approved
-      ? { status: "approved", price: s.proposed_price, required_fields: s.proposed_required_fields || s.required_fields, approved_by: user?.id, approved_at: new Date().toISOString(), proposed_price: null, proposed_required_fields: null, proposed_by: null, proposed_at: null, updated_at: new Date().toISOString() }
+      ? {
+        status: "approved",
+        price: s.proposed_price,
+        required_fields: s.proposed_required_fields || s.required_fields,
+        description: s.proposed_description ?? s.description ?? null,
+        approved_by: user?.id,
+        approved_at: new Date().toISOString(),
+        proposed_price: null,
+        proposed_required_fields: null,
+        proposed_description: null,
+        proposed_by: null,
+        proposed_at: null,
+        updated_at: new Date().toISOString()
+      }
       : { status: "rejected", proposed_price: null, proposed_required_fields: null, proposed_by: null, proposed_at: null, updated_at: new Date().toISOString() };
-    const { error } = await (supabase as any).from("fiscal_service_types").update(update).eq("id", id);
+    const { error } = await supabase.from("fiscal_service_types").update(update as never).eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success(approved ? "Alteração aprovada e disponível para usuários." : "Alteração rejeitada.");
     fetchServices();
@@ -752,7 +777,11 @@ const ServicosContabeisAdminPage = () => {
               <div key={s.id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border rounded-lg bg-background">
                 <div>
                   <p className="font-semibold">{s.label}</p>
-                  <p className="text-sm text-muted-foreground">Preço atual: R$ {Number(s.price).toFixed(2)} → Proposto: R$ {Number(s.proposed_price).toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground">Código: {s.service_type}</p>
+                  {(s.proposed_description || s.description) && (
+                    <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line line-clamp-3">{s.proposed_description || s.description}</p>
+                  )}
+                  <p className="text-sm text-muted-foreground mt-1">Preço atual: R$ {Number(s.price).toFixed(2)} → Proposto: R$ {Number(s.proposed_price).toFixed(2)}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="gold" onClick={() => approveOrReject(s.id, true)}>Aprovar</Button>

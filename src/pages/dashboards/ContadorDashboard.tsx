@@ -175,16 +175,39 @@ const DashboardHome = () => {
 };
 
 // ============ SERVIÇOS E VALORES ============
+type FiscalServiceTypeStatus = "pending" | "approved" | "rejected";
+type FiscalServiceRequiredField = {
+  key: string;
+  label?: string;
+  required?: boolean;
+  placeholder?: string;
+  type?: "text" | "select" | "textarea";
+  options?: Array<{ value: string; label: string }>;
+};
+type FiscalServiceType = {
+  id: string;
+  service_type: string;
+  label: string;
+  description: string | null;
+  price: number;
+  required_fields: FiscalServiceRequiredField[] | null;
+  status: FiscalServiceTypeStatus;
+  proposed_price: number | null;
+  proposed_required_fields: FiscalServiceRequiredField[] | null;
+  proposed_description: string | null;
+};
+
 const ServicosContabeisPage = () => {
   const { user } = useAuth();
-  const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<FiscalServiceType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<any>(null);
+  const [editing, setEditing] = useState<null | (Partial<FiscalServiceType> & { required_fields?: string | FiscalServiceRequiredField[] })>(null);
+  const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const fetchServices = async () => {
-    const { data } = await (supabase as any).from("fiscal_service_types").select("*").order("service_type");
-    setServices(data || []);
+    const { data } = await supabase.from("fiscal_service_types").select("*").order("service_type");
+    setServices((data || []) as unknown as FiscalServiceType[]);
     setLoading(false);
   };
 
@@ -203,14 +226,15 @@ const ServicosContabeisPage = () => {
       return;
     }
     setSaving(true);
-    const { error } = await (supabase as any).from("fiscal_service_types").update({
+    const { error } = await supabase.from("fiscal_service_types").update({
       status: "pending",
       proposed_price: Number(editing.price),
       proposed_required_fields: parsedRf,
+      proposed_description: (editing.description || "").trim() || null,
       proposed_by: user.id,
       proposed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    }).eq("id", editing.id);
+    }).eq("id", String(editing.id));
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Alteração enviada para aprovação do Super Admin.");
@@ -228,10 +252,120 @@ const ServicosContabeisPage = () => {
     other: "Outro",
   };
 
+  const createService = async () => {
+    if (!user) return;
+    if (!editing?.service_type?.trim()) { toast.error("Informe o código do serviço (service_type)."); return; }
+    if (!editing?.label?.trim()) { toast.error("Informe o nome do serviço (label)."); return; }
+    let parsedRf: any[] = [];
+    try {
+      parsedRf = typeof editing.required_fields === "string"
+        ? JSON.parse(editing.required_fields || "[]")
+        : (editing.required_fields || []);
+      if (!Array.isArray(parsedRf)) parsedRf = [];
+    } catch {
+      toast.error("Campos requerentes: JSON inválido.");
+      return;
+    }
+    setSaving(true);
+    const payload = {
+      service_type: String(editing.service_type).trim(),
+      label: String(editing.label).trim(),
+      price: 0,
+      required_fields: [],
+      description: null,
+      status: "pending",
+      proposed_price: Number(editing.price || 0),
+      proposed_required_fields: parsedRf,
+      proposed_description: (editing.description || "").trim() || null,
+      proposed_by: user.id,
+      proposed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = await supabase.from("fiscal_service_types").insert(payload as never);
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Novo serviço enviado para aprovação do Super Admin.");
+    setCreating(false);
+    setEditing(null);
+    fetchServices();
+  };
+
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold">Serviços e Valores</h1>
-      <p className="text-muted-foreground text-sm">Configure preço e dados requerentes. Alterações exigem aprovação do Super Admin.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Serviços e Valores</h1>
+          <p className="text-muted-foreground text-sm">Configure preço e dados requerentes. Alterações exigem aprovação do Super Admin.</p>
+        </div>
+        <Button
+          variant="gold"
+          onClick={() => {
+            setCreating(true);
+            setEditing({ service_type: "", label: "", price: 0, required_fields: "[]", description: "" });
+          }}
+          className="w-full sm:w-auto"
+        >
+          Adicionar Serviço
+        </Button>
+      </div>
+
+      {creating && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader>
+            <CardTitle>Novo Serviço (pendente de aprovação)</CardTitle>
+            <CardDescription>Será exibido para usuários/contador somente após aprovação do Super Admin.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Código (service_type) *</Label>
+                <Input
+                  value={editing?.service_type || ""}
+                  onChange={(e) => setEditing({ ...editing, service_type: e.target.value.replace(/\s/g, "_").toLowerCase() })}
+                  placeholder="ex: abertura_cnpj"
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Sem espaços. Use letras, números e underline.</p>
+              </div>
+              <div>
+                <Label>Nome do serviço (label) *</Label>
+                <Input
+                  value={editing?.label || ""}
+                  onChange={(e) => setEditing({ ...editing, label: e.target.value })}
+                  placeholder="ex: Abertura de CNPJ (MEI/ME)"
+                  className="mt-1"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label>Descrição</Label>
+                <Textarea
+                  className="mt-1"
+                  placeholder="Explique o que esse serviço cobre e o que o cliente deve ter em mãos..."
+                  value={editing?.description || ""}
+                  onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Preço proposto (R$)</Label>
+                <Input type="number" step="0.01" min="0" value={editing?.price ?? 0} onChange={e => setEditing({ ...editing, price: e.target.value })} className="mt-1" />
+              </div>
+              <div className="md:col-span-2">
+                <Label>Dados requerentes (JSON)</Label>
+                <Textarea
+                  className="mt-1 font-mono text-xs min-h-[100px]"
+                  placeholder='[{"key":"cpf","label":"CPF","required":true}]'
+                  value={typeof editing?.required_fields === "string" ? editing.required_fields : JSON.stringify(editing?.required_fields || [], null, 2)}
+                  onChange={(e) => setEditing({ ...editing, required_fields: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="gold" onClick={createService} disabled={saving}>{saving ? "Enviando..." : "Enviar para Aprovação"}</Button>
+              <Button variant="outline" onClick={() => { setCreating(false); setEditing(null); }}>Cancelar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       {loading ? (
         <Loader2 className="w-8 h-8 animate-spin mx-auto" />
       ) : services.length === 0 ? (
@@ -254,6 +388,15 @@ const ServicosContabeisPage = () => {
                         <div className="flex items-center gap-2">
                           <Label className="text-xs shrink-0">Preço (R$)</Label>
                           <Input type="number" step="0.01" min="0" value={editing.price} onChange={e => setEditing({ ...editing, price: e.target.value })} className="w-24" />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Descrição</Label>
+                          <Textarea
+                            className="mt-1"
+                            placeholder="Descrição do serviço (opcional)"
+                            value={editing.description || ""}
+                            onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+                          />
                         </div>
                         <div>
                           <Label className="text-xs">Dados requerentes (JSON)</Label>
