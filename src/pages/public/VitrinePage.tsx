@@ -147,11 +147,7 @@ export default function VitrinePage() {
               {products.map(p => (
                 <Card key={p.id} className="overflow-hidden hover:shadow-md transition-shadow">
                   <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
-                    {p.image_url ? (
-                      <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <Package className="w-10 h-10 text-muted-foreground" />
-                    )}
+                    <Package className="w-10 h-10 text-muted-foreground" />
                   </div>
                   <CardContent className="p-3">
                     <p className="font-semibold text-sm leading-tight">{p.name}</p>
