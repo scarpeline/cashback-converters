@@ -107,7 +107,7 @@ export function AccountingLinksPanel({
       return;
     }
 
-    const { error: insErr } = await supabase.from("accountant_barbershop_links").insert({
+    const { error: insErr } = await db.from("accountant_barbershop_links").insert({
       barbershop_id: barbershopId,
       accountant_id: accountantId,
       status: "pending",
