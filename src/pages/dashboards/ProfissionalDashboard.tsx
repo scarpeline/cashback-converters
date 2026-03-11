@@ -138,7 +138,7 @@ const ReceberDividaProfPage = () => {
 
   const reload = () => {
     if (!user) return;
-    supabase.from("debts").select("*").eq("professional_user_id", user.id).order("created_at", { ascending: false }).then(({ data }) => setDebts(data || []));
+    (supabase as any).from("debts").select("*").eq("professional_user_id", user.id).order("created_at", { ascending: false }).then(({ data }: any) => setDebts(data || []));
   };
 
   useEffect(() => { reload(); }, [user?.id]);
