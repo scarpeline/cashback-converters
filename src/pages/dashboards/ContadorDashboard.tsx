@@ -216,7 +216,7 @@ const ServicosContabeisPage = () => {
   const [saving, setSaving] = useState(false);
 
   const fetchServices = async () => {
-    const { data } = await supabase.from("fiscal_service_types").select("*").order("service_type");
+    const { data } = await (supabase as any).from("fiscal_service_types").select("*").order("service_type");
     setServices((data || []) as unknown as FiscalServiceType[]);
     setLoading(false);
   };
