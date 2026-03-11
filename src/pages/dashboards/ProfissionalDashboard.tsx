@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import {
   LayoutDashboard, Calendar, DollarSign, User, Bell, LogOut, Menu, X, Clock,
   Share2, Lock, Phone, Eye, EyeOff, CreditCard, Loader2, FileText, Wallet,
-  Plus, QrCode, CheckCircle, Smartphone
+  Plus, QrCode, CheckCircle, Smartphone, Video
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -22,10 +22,12 @@ import { ContadorBuscaPanel } from "@/components/contabilidade/ContadorBuscaPane
 import { ChatContadorPanel } from "@/components/contabilidade/ChatContadorPanel";
 import { PedidoContabilPanel } from "@/components/contabilidade/PedidoContabilPanel";
 import { AssinaturaContabilPanel } from "@/components/contabilidade/AssinaturaContabilPanel";
+import UniversalChatPanel from "@/components/shared/UniversalChatPanel";
 import { isPaymentRequestSupported, processNfcPayment } from "@/lib/nfc/payment";
 import { AgendaProfissional } from "@/components/profissional/AgendaProfissional";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { PostAppointmentNotificationsService } from "@/services/notifications/PostAppointmentNotifications";
+import MarketingEmpresarial from "@/components/marketing/MarketingEmpresarial";
 
 const ProfissionalDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -47,6 +49,7 @@ const ProfissionalDashboard = () => {
     { name: "Meus Ganhos", href: `${basePath}/ganhos`, icon: DollarSign },
     { name: "Receber Dívida", href: `${basePath}/receber-divida`, icon: Wallet },
     { name: "Conta Bancária", href: `${basePath}/conta-bancaria`, icon: CreditCard },
+    { name: "Marketing Empresarial", href: `${basePath}/marketing-empresarial`, icon: Video },
     { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: FileText },
     { name: "Seja Afiliado", href: `${basePath}/seja-afiliado`, icon: Share2 },
     { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
@@ -103,6 +106,11 @@ const ProfissionalDashboard = () => {
             <Route path="ganhos" element={<GanhosPage />} />
             <Route path="receber-divida" element={<ReceberDividaProfPage />} />
             <Route path="conta-bancaria" element={<ContaBancariaPage />} />
+            <Route path="marketing-empresarial" element={
+              <div className="p-6">
+                <MarketingEmpresarial isOwner={false} />
+              </div>
+            } />
             <Route path="servicos-contabeis/*" element={<ContabeisHubProfPage />} />
             <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
             <Route path="perfil" element={<PerfilPage />} />
@@ -296,7 +304,7 @@ const ContabeisHubProfPage = () => {
       {tab === "buscar" && <ContadorBuscaPanel onAbrirChat={(cid) => { setChatContadorId(cid); setTab("chat"); }} />}
       {tab === "pedidos" && <PedidoContabilPanel />}
       {tab === "assinatura" && <AssinaturaContabilPanel />}
-      {tab === "chat" && chatContadorId && user && <ChatContadorPanel contadorId={chatContadorId} modo="usuario" />}
+      {tab === "chat" && chatContadorId && user && <UniversalChatPanel mode="usuario" contadorId={chatContadorId} userType="profissional" />}
       {tab === "chat" && !chatContadorId && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">Busque um contador e clique em Chat.</p>

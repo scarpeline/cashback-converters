@@ -25,7 +25,7 @@ const featureCategories = [
     features: [
       { icon: QrCode, title: "PIX Instantâneo", description: "Gere QR Code na hora. O dinheiro cai em segundos na sua conta." },
       { icon: CreditCard, title: "Cartão de Crédito", description: "Parcele em até 12x. Aumente o ticket médio sem esforço." },
-      { icon: Wifi, title: "NFC / Aproximação", description: "Aceite pagamentos por aproximação. Moderno e rápido." },
+      { icon: CreditCard, title: "Cartão de Débito", description: "Receba na hora. Seguro e prático para seus clientes." },
       { icon: RefreshCw, title: "Split Automático", description: "A comissão do barbeiro vai direto para a conta dele. Zero trabalho manual." },
       { icon: Receipt, title: "Gestão de Fiados", description: "Controle clientes com dívidas. O sistema cobra automaticamente." },
       { icon: BarChart3, title: "Dashboard Financeiro", description: "Veja em tempo real: entradas, saídas, comissões e lucro líquido." },

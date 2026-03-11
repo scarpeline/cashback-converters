@@ -10,7 +10,7 @@ const integrations = [
 ];
 
 const apiBlocks = [
-  { icon: CreditCard, title: "Pagamentos", description: "Gateway integrado para PIX, cartão e NFC", placeholder: "API de Pagamentos (ASAAS)", status: "ready" },
+  { icon: CreditCard, title: "Pagamentos", description: "Gateway integrado para PIX, crédito e débito", placeholder: "API de Pagamentos (ASAAS)", status: "ready" },
   { icon: MessageSquare, title: "WhatsApp", description: "Automação de mensagens, lembretes e confirmações", placeholder: "API WhatsApp Business", status: "ready" },
   { icon: BarChart3, title: "Analytics", description: "Pixels e tracking para Meta, Google e TikTok Ads", placeholder: "Pixels & Conversões", status: "ready" },
   { icon: Shield, title: "Fiscal", description: "Emissão de notas fiscais e compliance tributário", placeholder: "Integração Contábil", status: "coming" },

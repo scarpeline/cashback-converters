@@ -5,11 +5,11 @@ import { Check, Sparkles, CreditCard, Smartphone, Wifi } from "lucide-react";
 const ASAAS_FEES = {
   pix: { gateway: 0.99, app: 0.5, total: 1.49 },
   card: { gateway: 2.99, extra: "R$0,49/tx", app: 0.5, total: 3.49 },
-  nfc: { gateway: 1.99, app: 0.5, total: 2.49 },
+  debit: { gateway: 1.99, app: 0.5, total: 2.49 },
 };
 
 const allFeatures = [
-  "7 dias grátis para testar", "Agendamentos ilimitados", "Pagamentos PIX, Cartão e NFC",
+  "7 dias grátis para testar", "Agendamentos ilimitados", "Pagamentos PIX, Crédito e Débito",
   "Split automático de comissões", "Cashback configurável", "WhatsApp automático",
   "Dashboard financeiro completo", "Relatórios e métricas", "Múltiplos profissionais",
   "Sistema de afiliados", "Gestão de estoque e produtos", "Exportação de dados", "Suporte via chat",
@@ -121,7 +121,7 @@ const Pricing = () => {
               {[
                 { icon: Smartphone, label: "PIX", fee: ASAAS_FEES.pix },
                 { icon: CreditCard, label: "Cartão de Crédito", fee: ASAAS_FEES.card },
-                { icon: Wifi, label: "NFC / Débito", fee: ASAAS_FEES.nfc },
+                { icon: CreditCard, label: "Cartão de Débito", fee: ASAAS_FEES.debit },
               ].map(({ icon: Icon, label, fee }) => (
                 <div key={label} className="rounded-xl p-4 text-center" style={{ background: "hsl(222 47% 6% / 0.5)", border: "1px solid hsl(222 20% 20%)" }}>
                   <div className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "hsl(217 91% 50% / 0.1)" }}>

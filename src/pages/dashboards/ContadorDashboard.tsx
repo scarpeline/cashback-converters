@@ -19,6 +19,7 @@ import { AccountingDocumentsPanel } from "@/components/shared/AccountingDocument
 import { AccountingLinksPanel } from "@/components/shared/AccountingLinksPanel";
 import { AccountingTaxesPanel } from "@/components/shared/AccountingTaxesPanel";
 import { AccountingMessagesPanel } from "@/components/shared/AccountingMessagesPanel";
+import UniversalChatPanel from "@/components/shared/UniversalChatPanel";
 import { FiscalAutomationPanel } from "@/components/fiscal/FiscalAutomationPanel";
 
 const ContadorDashboard = () => {
@@ -135,7 +136,7 @@ const ContadorDashboard = () => {
             <Route path="empresas" element={<EmpresasPage />} />
             <Route path="vinculos" element={<AccountingLinksPanel mode="accountant" />} />
             <Route path="impostos-guias" element={<AccountingTaxesPanel mode="accountant" />} />
-            <Route path="mensagens" element={<AccountingMessagesPanel mode="accountant" />} />
+            <Route path="mensagens" element={<UniversalChatPanel mode="contador" />} />
             <Route path="declaracoes" element={<DeclaracoesPage />} />
             <Route path="ganhos" element={<GanhosPage />} />
             <Route path="conta-bancaria" element={<ContaBancariaPage />} />

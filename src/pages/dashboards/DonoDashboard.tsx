@@ -16,10 +16,13 @@ import { FiscalAutomationPanel } from "@/components/fiscal/FiscalAutomationPanel
 import { AutomationSettingsPanel } from "@/components/automation/AutomationSettingsPanel";
 import { AgendaIntelligencePanel } from "@/components/waitlist/AgendaIntelligencePanel";
 import InteligenciaAgendaPage from "@/pages/dashboards/InteligenciaAgendaPage";
+import MarketingEmpresarial from "@/components/marketing/MarketingEmpresarial";
+import { RecurringAppointmentPanel } from "@/components/recurring/RecurringAppointmentPanel";
 import { ContadorBuscaPanel } from "@/components/contabilidade/ContadorBuscaPanel";
 import { ChatContadorPanel } from "@/components/contabilidade/ChatContadorPanel";
 import { PedidoContabilPanel } from "@/components/contabilidade/PedidoContabilPanel";
 import { AssinaturaContabilPanel } from "@/components/contabilidade/AssinaturaContabilPanel";
+import { ServicosContabeisHubPage } from "@/components/contabilidade/ServicosContabeisHubPage";
 import DadosBancariosPage from "@/components/shared/DadosBancariosPage";
 import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 import { SocialProofManager } from "@/components/social-proof/SocialProofManager";
@@ -34,7 +37,8 @@ import {
   LayoutDashboard, Calendar, Users, Scissors, DollarSign, Package, Gift, Settings,
   Bell, LogOut, Menu, X, TrendingUp, MessageCircle, Image, Plus, CheckCircle, Check,
   Clock, ChevronRight, Phone, Send, Share2, QrCode, CreditCard, Edit, Eye,
-  Wallet, Link as LinkIcon, UserCheck, AlertCircle, Repeat, Smartphone, FileText, Calculator
+  Wallet, Link as LinkIcon, UserCheck, AlertCircle, Repeat, Smartphone, FileText, Calculator,
+  Video
 } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
@@ -59,6 +63,7 @@ const DonoDashboard = () => {
   const navigation = [
     { name: "Dashboard", href: basePath, icon: LayoutDashboard },
     { name: "Agendamentos", href: `${basePath}/agendamentos`, icon: Calendar },
+    { name: "Agendamentos Fixos", href: `${basePath}/agendamentos-recorrentes`, icon: Repeat },
     { name: "Profissionais", href: `${basePath}/profissionais`, icon: Users },
     { name: "Serviços", href: `${basePath}/servicos`, icon: Scissors },
     { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
@@ -71,6 +76,7 @@ const DonoDashboard = () => {
     { name: "Prova Social", href: `${basePath}/prova-social`, icon: TrendingUp },
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
     { name: "Inteligência de Agenda", href: `${basePath}/inteligencia-agenda`, icon: Settings },
+    { name: "Marketing Empresarial", href: `${basePath}/marketing-empresarial`, icon: Video },
     { name: "Pixels & Marketing", href: `${basePath}/pixels`, icon: Image },
     { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: Calculator },
     { name: "Dados Bancários", href: `${basePath}/dados-bancarios`, icon: CreditCard },
@@ -129,6 +135,7 @@ const DonoDashboard = () => {
           <Routes>
             <Route index element={<DashboardHome />} />
             <Route path="agendamentos" element={<AgendamentosPage />} />
+            <Route path="agendamentos-recorrentes" element={<RecurringAppointmentPanel barbershopId={mainBarbershop?.id || ''} />} />
             <Route path="profissionais" element={<ProfissionaisPage />} />
             <Route path="servicos" element={<ServicosPage />} />
             <Route path="financeiro" element={<FinanceiroPage />} />
@@ -142,7 +149,12 @@ const DonoDashboard = () => {
             <Route path="prova-social" element={<SocialProofManager barbershopId={mainBarbershop?.id} />} />
             <Route path="automacao" element={<NotificacoesDonoPage />} />
             <Route path="notificacoes" element={<NotificacoesDonoPage />} />
-            <Route path="inteligencia-agenda" element={<InteligenciaAgendaPage />} />
+            <Route path={`${basePath}/inteligencia-agenda`} element={<InteligenciaAgendaPage />} />
+            <Route path={`${basePath}/marketing-empresarial`} element={
+              <div className="p-6">
+                <MarketingEmpresarial isOwner={true} />
+              </div>
+            } />
             <Route path="pixels" element={<PixelsPage />} />
             <Route path="servicos-contabeis/*" element={<ServicosContabeisHubPage barbershopId={mainBarbershop?.id} />} />
             <Route path="dados-bancarios" element={<DadosBancariosPage />} />

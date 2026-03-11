@@ -19,6 +19,7 @@ import { ContadorBuscaPanel } from "@/components/contabilidade/ContadorBuscaPane
 import { ChatContadorPanel } from "@/components/contabilidade/ChatContadorPanel";
 import { PedidoContabilPanel } from "@/components/contabilidade/PedidoContabilPanel";
 import { AssinaturaContabilPanel } from "@/components/contabilidade/AssinaturaContabilPanel";
+import UniversalChatPanel from "@/components/shared/UniversalChatPanel";
 
 const AfiliadoDashboard = () => {
   const { profile, signOut } = useAuth();
