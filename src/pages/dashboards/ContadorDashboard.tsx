@@ -14,6 +14,7 @@ import {
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import { formatCpfCnpjBR } from "@/lib/input-masks";
+import { AccountingDocumentsPanel } from "@/components/shared/AccountingDocumentsPanel";
 
 const ContadorDashboard = () => {
   const { profile, user, signOut, roles } = useAuth();
@@ -536,12 +537,7 @@ const EmpresasPage = () => (
   </div>
 );
 
-const DeclaracoesPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Declarações</h1>
-    <Card><CardContent className="py-12 text-center"><FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhuma declaração pendente.</p></CardContent></Card>
-  </div>
-);
+const DeclaracoesPage = () => <AccountingDocumentsPanel mode="accountant" />;
 
 const GanhosPage = () => (
   <div className="space-y-6">

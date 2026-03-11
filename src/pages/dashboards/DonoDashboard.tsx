@@ -6,8 +6,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
+import { useBarbershop } from "@/hooks/useBarbershop";
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
+import { AccountingDocumentsPanel } from "@/components/shared/AccountingDocumentsPanel";
 import DadosBancariosPage from "@/components/shared/DadosBancariosPage";
 import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 import { SocialProofManager } from "@/components/social-proof/SocialProofManager";
@@ -21,7 +22,7 @@ import {
   LayoutDashboard, Calendar, Users, Scissors, DollarSign, Package, Gift, Settings,
   Bell, LogOut, Menu, X, TrendingUp, MessageCircle, Image, Plus, CheckCircle, Check,
   Clock, ChevronRight, Phone, Send, Share2, QrCode, CreditCard, Edit, Eye,
-  Wallet, Link as LinkIcon, UserCheck, AlertCircle, Repeat, Smartphone
+  Wallet, Link as LinkIcon, UserCheck, AlertCircle, Repeat, Smartphone, FileText
 } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
@@ -59,6 +60,7 @@ const DonoDashboard = () => {
     { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
     { name: "Pixels & Marketing", href: `${basePath}/pixels`, icon: Image },
     { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: Scissors },
+    { name: "Documentos Contábeis", href: `${basePath}/documentos-contabeis`, icon: FileText },
     { name: "Dados Bancários", href: `${basePath}/dados-bancarios`, icon: CreditCard },
     { name: "Seja Afiliado", href: `${basePath}/seja-afiliado`, icon: Share2 },
     { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
@@ -130,6 +132,7 @@ const DonoDashboard = () => {
             <Route path="notificacoes" element={<NotificacoesDonoPage />} />
             <Route path="pixels" element={<PixelsPage />} />
             <Route path="servicos-contabeis" element={<SolicitarServicoFiscalPage />} />
+            <Route path="documentos-contabeis" element={<AccountingDocumentsPanel mode="owner" barbershopId={mainBarbershop?.id} />} />
             <Route path="dados-bancarios" element={<DadosBancariosPage />} />
             <Route path="suporte" element={<SuportePage />} />
             <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
