@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileText, ClipboardList, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-const SERVICE_LABELS: Record<string, string> = {
+// Fallback labels when DB services not loaded
+const SERVICE_LABELS_FALLBACK: Record<string, string> = {
   cnpj_opening: "Abertura de CNPJ (MEI/ME)",
   mei_declaration: "Declaração Anual MEI (DASN-SIMEI)",
   me_declaration: "Declaração ME / Simples Nacional",
@@ -37,7 +38,8 @@ interface DynamicField {
   required?: boolean;
 }
 
-const SERVICE_FIELDS: Record<string, DynamicField[]> = {
+// Fallback fields when DB services not loaded
+const SERVICE_FIELDS_FALLBACK: Record<string, DynamicField[]> = {
   cnpj_opening: [
     { key: "full_name", label: "Nome Completo", placeholder: "Nome conforme RG/CNH", required: true },
     { key: "cpf", label: "CPF", placeholder: "000.000.000-00", required: true },
@@ -113,15 +115,49 @@ const SERVICE_FIELDS: Record<string, DynamicField[]> = {
   ],
 };
 
+function parseRequiredFields(rf: any[]): DynamicField[] {
+  if (!Array.isArray(rf)) return [];
+  return rf.map((f: any) => ({
+    key: f.key || "",
+    label: f.label || f.key || "",
+    placeholder: f.placeholder || "",
+    type: (f.type || "text") as "text" | "select" | "textarea",
+    options: f.options,
+    required: !!f.required,
+  })).filter(f => f.key);
+}
+
 export default function SolicitarServicoFiscalPage() {
   const { user } = useAuth();
   const [requests, setRequests] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [serviceType, setServiceType] = useState("cnpj_opening");
   const [fields, setFields] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    supabase.from("fiscal_service_types").select("service_type, label, price, required_fields").eq("status", "approved").eq("is_active", true).then(({ data }) => {
+      setServices(data || []);
+    });
+  }, []);
+
+  const serviceMap = Object.fromEntries((services || []).map(s => [s.service_type, s]));
+  const SERVICE_LABELS = Object.fromEntries(services.length ? services.map(s => [s.service_type, s.label]) : Object.entries(SERVICE_LABELS_FALLBACK));
+  const getFieldsForType = (type: string) => {
+    const s = serviceMap[type];
+    if (s?.required_fields) {
+      const parsed = parseRequiredFields(s.required_fields);
+      if (parsed.length) return parsed;
+    }
+    return SERVICE_FIELDS_FALLBACK[type] || [];
+  };
+  const getPriceForType = (type: string) => {
+    const s = serviceMap[type];
+    return s ? Number(s.price) : 0;
+  };
 
   const fetchRequests = async () => {
     if (!user) return;
@@ -147,7 +183,7 @@ export default function SolicitarServicoFiscalPage() {
     if (!user) return;
 
     // Validate required fields
-    const requiredFields = (SERVICE_FIELDS[serviceType] || []).filter(f => f.required);
+    const requiredFields = getFieldsForType(serviceType).filter(f => f.required);
     const missing = requiredFields.filter(f => !fields[f.key]?.trim());
     if (missing.length > 0) {
       toast.error(`Preencha: ${missing.map(f => f.label).join(", ")}`);
@@ -157,7 +193,7 @@ export default function SolicitarServicoFiscalPage() {
     setSaving(true);
 
     // Build description with all fields for the accountant
-    const dynamicFields = SERVICE_FIELDS[serviceType] || [];
+    const dynamicFields = getFieldsForType(serviceType);
     const descriptionParts = dynamicFields
       .filter(f => fields[f.key]?.trim())
       .map(f => {
@@ -186,7 +222,7 @@ export default function SolicitarServicoFiscalPage() {
     fetchRequests();
   };
 
-  const currentFields = SERVICE_FIELDS[serviceType] || [];
+  const currentFields = getFieldsForType(serviceType);
 
   return (
     <div className="space-y-6">
@@ -203,7 +239,7 @@ export default function SolicitarServicoFiscalPage() {
       {showForm && (
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
-            <CardTitle className="text-lg">Novo Pedido — {SERVICE_LABELS[serviceType]}</CardTitle>
+            <CardTitle className="text-lg">Novo Pedido — {SERVICE_LABELS[serviceType] || SERVICE_LABELS_FALLBACK[serviceType]}</CardTitle>
             <CardDescription>Preencha os dados para o contador processar seu pedido</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -300,8 +336,9 @@ export default function SolicitarServicoFiscalPage() {
             className="p-3 rounded-xl border border-border bg-card text-center hover:border-primary/50 hover:bg-primary/5 transition-colors active:scale-95"
           >
             <span className="text-2xl block mb-1">{s.icon}</span>
-            <p className="text-xs font-medium leading-tight">{SERVICE_LABELS[s.key]}</p>
+            <p className="text-xs font-medium leading-tight">{SERVICE_LABELS[s.key] || SERVICE_LABELS_FALLBACK[s.key]}</p>
             <p className="text-[10px] text-muted-foreground mt-0.5">{s.desc}</p>
+            {getPriceForType(s.key) > 0 && <p className="text-xs font-bold text-primary mt-1">R$ {getPriceForType(s.key).toFixed(2)}</p>}
           </button>
         ))}
       </div>

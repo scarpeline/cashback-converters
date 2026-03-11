@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   LayoutDashboard, Building2, FileText, DollarSign, User, LogOut, Menu, X, Calculator,
   Loader2, CreditCard, ClipboardList, CheckCircle, Clock, AlertCircle
@@ -67,6 +68,7 @@ const ContadorDashboard = () => {
   
   const navigation = [
     { name: "Dashboard", href: basePath, icon: LayoutDashboard },
+    { name: "Serviços e Valores", href: `${basePath}/servicos`, icon: DollarSign },
     { name: "Pedidos de Serviço", href: `${basePath}/pedidos`, icon: ClipboardList },
     { name: "Empresas", href: `${basePath}/empresas`, icon: Building2 },
     { name: "Declarações", href: `${basePath}/declaracoes`, icon: FileText },
@@ -117,6 +119,7 @@ const ContadorDashboard = () => {
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <Routes>
             <Route index element={<DashboardHome />} />
+            <Route path="servicos" element={<ServicosContabeisPage />} />
             <Route path="pedidos" element={<PedidosServicoPage />} />
             <Route path="empresas" element={<EmpresasPage />} />
             <Route path="declaracoes" element={<DeclaracoesPage />} />
@@ -167,6 +170,116 @@ const DashboardHome = () => {
       <Card><CardHeader><CardTitle>Atividades Recentes</CardTitle></CardHeader>
         <CardContent className="text-center py-8"><FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhuma atividade recente.</p></CardContent>
       </Card>
+    </div>
+  );
+};
+
+// ============ SERVIÇOS E VALORES ============
+const ServicosContabeisPage = () => {
+  const { user } = useAuth();
+  const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
+
+  const fetchServices = async () => {
+    const { data } = await (supabase as any).from("fiscal_service_types").select("*").order("service_type");
+    setServices(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchServices(); }, []);
+
+  const proposeChange = async () => {
+    if (!editing || !user) return;
+    let parsedRf: any[] = [];
+    try {
+      parsedRf = typeof editing.required_fields === "string" 
+        ? JSON.parse(editing.required_fields || "[]") 
+        : (editing.required_fields || []);
+      if (!Array.isArray(parsedRf)) parsedRf = [];
+    } catch {
+      toast.error("Campos requerentes: JSON inválido.");
+      return;
+    }
+    setSaving(true);
+    const { error } = await (supabase as any).from("fiscal_service_types").update({
+      status: "pending",
+      proposed_price: Number(editing.price),
+      proposed_required_fields: parsedRf,
+      proposed_by: user.id,
+      proposed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }).eq("id", editing.id);
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Alteração enviada para aprovação do Super Admin.");
+    setEditing(null);
+    fetchServices();
+  };
+
+  const serviceLabels: Record<string, string> = {
+    cnpj_opening: "Abertura de CNPJ",
+    mei_declaration: "Declaração MEI",
+    me_declaration: "Declaração ME",
+    income_tax: "Imposto de Renda",
+    cnpj_migration: "Migração CPF→CNPJ",
+    cnpj_closing: "Encerramento de CNPJ",
+    other: "Outro",
+  };
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Serviços e Valores</h1>
+      <p className="text-muted-foreground text-sm">Configure preço e dados requerentes. Alterações exigem aprovação do Super Admin.</p>
+      {loading ? (
+        <Loader2 className="w-8 h-8 animate-spin mx-auto" />
+      ) : services.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground">Nenhum serviço cadastrado.</CardContent></Card>
+      ) : (
+        <div className="space-y-3">
+          {services.map(s => {
+            const isPending = s.status === "pending";
+            const isEditing = editing?.id === s.id;
+            return (
+              <Card key={s.id} className={isPending ? "border-amber-500/50 bg-amber-500/5" : ""}>
+                <CardContent className="p-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <p className="font-semibold">{serviceLabels[s.service_type] || s.label}</p>
+                      <p className="text-sm text-muted-foreground">R$ {Number(s.price).toFixed(2)} {isPending && <span className="text-amber-600">(pendente aprovação)</span>}</p>
+                    </div>
+                    {isEditing ? (
+                      <div className="flex flex-col gap-3 w-full md:max-w-md">
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs shrink-0">Preço (R$)</Label>
+                          <Input type="number" step="0.01" min="0" value={editing.price} onChange={e => setEditing({ ...editing, price: e.target.value })} className="w-24" />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Dados requerentes (JSON)</Label>
+                          <Textarea
+                            className="mt-1 font-mono text-xs min-h-[80px]"
+                            placeholder='[{"key":"full_name","label":"Nome Completo","required":true},...]'
+                            value={typeof editing.required_fields === "string" ? editing.required_fields : JSON.stringify(editing.required_fields || [], null, 2)}
+                            onChange={e => setEditing({ ...editing, required_fields: e.target.value })}
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-0.5">Array de {`{key, label, required}`}. Use type, placeholder, options se necessário.</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="gold" onClick={proposeChange} disabled={saving}>{saving ? "Enviando..." : "Enviar para Aprovação"}</Button>
+                          <Button size="sm" variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button size="sm" variant="outline" onClick={() => setEditing({ ...s })} disabled={isPending}>Editar</Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

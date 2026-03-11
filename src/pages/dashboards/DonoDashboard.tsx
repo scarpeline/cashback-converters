@@ -2,7 +2,7 @@
  * DonoDashboard - Painel completo do Dono de Barbearia
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +28,8 @@ import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import { formatWhatsAppBR, onlyDigits } from "@/lib/input-masks";
 import { isPaymentRequestSupported, processNfcPayment } from "@/lib/nfc/payment";
+import { uploadImage } from "@/lib/upload-image";
+import { ProfilePhotoUpload } from "@/components/shared/ProfilePhotoUpload";
 
 const DonoDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -50,6 +52,7 @@ const DonoDashboard = () => {
     { name: "Receber Dívida", href: `${basePath}/dividas`, icon: Wallet },
     { name: "Afiliados", href: `${basePath}/afiliados`, icon: UserCheck },
     { name: "Estoque", href: `${basePath}/estoque`, icon: Package },
+    { name: "Vitrine", href: `${basePath}/vitrine`, icon: Image },
     { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
     { name: "Ação entre Amigos", href: `${basePath}/acao-entre-amigos`, icon: Gift },
     { name: "Prova Social", href: `${basePath}/prova-social`, icon: TrendingUp },
@@ -118,6 +121,7 @@ const DonoDashboard = () => {
             <Route path="dividas" element={<DividasPage />} />
             <Route path="afiliados" element={<AfiliadosBarbeariaPage />} />
             <Route path="estoque" element={<EstoquePage />} />
+            <Route path="vitrine" element={<VitrinePage />} />
             <Route path="cashback" element={<CashbackPage />} />
             <Route path="acao-entre-amigos" element={<AcaoEntreAmigosPage />} />
             <Route path="rifas" element={<AcaoEntreAmigosPage />} />
@@ -423,27 +427,45 @@ const ServicosPage = () => {
   const { barbershop } = useBarbershop();
   const { services, refetch } = useServices(barbershop?.id);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name: "", price: "", duration: "30", description: "" });
 
-  const handleAdd = async () => {
+  const openEdit = (s: any) => {
+    setEditingId(s.id);
+    setForm({ name: s.name, price: String(s.price), duration: String(s.duration_minutes || 30), description: s.description || "" });
+  };
+
+  const handleSave = async () => {
     if (!form.name || !form.price || !barbershop) { toast.error("Preencha nome e preço."); return; }
     setSaving(true);
-    const { error } = await supabase.from("services").insert({ barbershop_id: barbershop.id, name: form.name, price: Number(form.price), duration_minutes: Number(form.duration) || 30, description: form.description || null });
-    setSaving(false);
-    if (error) { toast.error("Erro: " + error.message); return; }
-    toast.success(`"${form.name}" criado!`); setShowForm(false);
-    setForm({ name: "", price: "", duration: "30", description: "" }); refetch();
+    if (editingId) {
+      const { error } = await supabase.from("services").update({
+        name: form.name, price: Number(form.price), duration_minutes: Number(form.duration) || 30, description: form.description || null,
+      }).eq("id", editingId);
+      setSaving(false);
+      if (error) { toast.error("Erro: " + error.message); return; }
+      toast.success(`"${form.name}" atualizado!`);
+      setEditingId(null);
+    } else {
+      const { error } = await supabase.from("services").insert({ barbershop_id: barbershop.id, name: form.name, price: Number(form.price), duration_minutes: Number(form.duration) || 30, description: form.description || null });
+      setSaving(false);
+      if (error) { toast.error("Erro: " + error.message); return; }
+      toast.success(`"${form.name}" criado!`);
+      setShowForm(false);
+    }
+    setForm({ name: "", price: "", duration: "30", description: "" });
+    refetch();
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">Serviços</h1>
-        <Button variant="gold" onClick={() => setShowForm(!showForm)}><Plus className="w-4 h-4 mr-2" />Criar Serviço</Button>
+        <Button variant="gold" onClick={() => { setShowForm(true); setEditingId(null); setForm({ name: "", price: "", duration: "30", description: "" }); }}><Plus className="w-4 h-4 mr-2" />Criar Serviço</Button>
       </div>
-      {showForm && (
-        <Card className="border-primary/30"><CardHeader><CardTitle>Novo Serviço</CardTitle></CardHeader>
+      {(showForm || editingId) && (
+        <Card className="border-primary/30"><CardHeader><CardTitle>{editingId ? "Editar Serviço" : "Novo Serviço"}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div><Label>Nome *</Label><Input placeholder="Ex: Corte Masculino" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
@@ -451,7 +473,10 @@ const ServicosPage = () => {
               <div><Label>Duração (min)</Label><Input type="number" placeholder="30" value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} className="mt-1" /></div>
               <div><Label>Descrição</Label><Input placeholder="Descrição" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1" /></div>
             </div>
-            <div className="flex gap-2"><Button variant="gold" onClick={handleAdd} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button><Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button></div>
+            <div className="flex gap-2">
+              <Button variant="gold" onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+              <Button variant="outline" onClick={() => { setShowForm(false); setEditingId(null); setForm({ name: "", price: "", duration: "30", description: "" }); }}>Cancelar</Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -462,6 +487,7 @@ const ServicosPage = () => {
           <Card key={s.id}><CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Scissors className="w-5 h-5 text-primary" /></div>
             <div className="flex-1"><p className="font-semibold">{s.name}</p><p className="text-sm text-muted-foreground">R$ {Number(s.price).toFixed(2)} • <Clock className="w-3 h-3 inline" /> {s.duration_minutes} min</p></div>
+            <Button variant="outline" size="sm" onClick={() => openEdit(s)}><Edit className="w-4 h-4 mr-1" />Editar</Button>
           </CardContent></Card>
         ))
       )}
@@ -1069,14 +1095,17 @@ const DividasPage = () => {
   );
 };
 
-// ============ ESTOQUE (com preço compra/venda e lucro) ============
+// ============ ESTOQUE (com preço compra/venda, lucro, imagem, vitrine) ============
 
 const EstoquePage = () => {
   const { barbershop } = useBarbershop();
   const [items, setItems] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", buy_price: "", sell_price: "", quantity: "" });
+  const [form, setForm] = useState({ name: "", buy_price: "", sell_price: "", quantity: "", show_in_vitrine: false, image_url: "" });
+  const [uploadingImg, setUploadingImg] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchItems = async () => {
     if (!barbershop?.id) return;
@@ -1086,19 +1115,39 @@ const EstoquePage = () => {
 
   useEffect(() => { fetchItems(); }, [barbershop?.id]);
 
-  const handleAdd = async () => {
+  const openEdit = (i: any) => {
+    setEditingId(i.id);
+    setForm({ name: i.name, buy_price: String(i.buy_price ?? ""), sell_price: String(i.sell_price ?? ""), quantity: String(i.quantity ?? ""), show_in_vitrine: !!i.show_in_vitrine, image_url: i.image_url || "" });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImg(true);
+    const url = await uploadImage(file, "stock", barbershop?.id?.slice(0, 8));
+    setUploadingImg(false);
+    if (url) setForm(f => ({ ...f, image_url: url })); else toast.error("Erro ao enviar imagem.");
+  };
+
+  const handleSave = async () => {
     if (!form.name || !barbershop) { toast.error("Preencha o nome."); return; }
     setSaving(true);
-    const { error } = await supabase.from("stock_items").insert({
-      barbershop_id: barbershop.id, name: form.name,
-      buy_price: Number(form.buy_price) || 0,
-      sell_price: Number(form.sell_price) || 0,
-      quantity: Number(form.quantity) || 0,
-    });
-    setSaving(false);
-    if (error) { toast.error("Erro: " + error.message); return; }
-    toast.success(`"${form.name}" adicionado!`);
-    setShowForm(false); setForm({ name: "", buy_price: "", sell_price: "", quantity: "" }); fetchItems();
+    const payload = { name: form.name, buy_price: Number(form.buy_price) || 0, sell_price: Number(form.sell_price) || 0, quantity: Number(form.quantity) || 0, show_in_vitrine: form.show_in_vitrine, image_url: form.image_url || null };
+    if (editingId) {
+      const { error } = await supabase.from("stock_items").update(payload).eq("id", editingId);
+      setSaving(false);
+      if (error) { toast.error("Erro: " + error.message); return; }
+      toast.success(`"${form.name}" atualizado!`);
+      setEditingId(null);
+    } else {
+      const { error } = await supabase.from("stock_items").insert({ barbershop_id: barbershop.id, ...payload });
+      setSaving(false);
+      if (error) { toast.error("Erro: " + error.message); return; }
+      toast.success(`"${form.name}" adicionado!`);
+      setShowForm(false);
+    }
+    setForm({ name: "", buy_price: "", sell_price: "", quantity: "", show_in_vitrine: false, image_url: "" });
+    fetchItems();
   };
 
   const totalCost = items.reduce((s, i) => s + Number(i.buy_price) * i.quantity, 0);
@@ -1109,7 +1158,10 @@ const EstoquePage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">Estoque</h1>
-        <Button variant="gold" onClick={() => setShowForm(!showForm)}><Plus className="w-4 h-4 mr-2" />Adicionar</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" asChild><Link to="/painel-dono/vitrine">Ver Vitrine</Link></Button>
+          <Button variant="gold" onClick={() => { setShowForm(true); setEditingId(null); setForm({ name: "", buy_price: "", sell_price: "", quantity: "", show_in_vitrine: false, image_url: "" }); }}><Plus className="w-4 h-4 mr-2" />Adicionar</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1118,16 +1170,34 @@ const EstoquePage = () => {
         <Card className="bg-gradient-card border-primary/20"><CardHeader className="pb-2"><CardDescription>Lucro Líquido</CardDescription><CardTitle className="text-xl text-gradient-gold">R$ {totalProfit.toFixed(2)}</CardTitle></CardHeader></Card>
       </div>
 
-      {showForm && (
-        <Card className="border-primary/30"><CardHeader><CardTitle>Novo Produto</CardTitle></CardHeader>
+      {(showForm || editingId) && (
+        <Card className="border-primary/30"><CardHeader><CardTitle>{editingId ? "Editar Produto" : "Novo Produto"}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><Label>Nome *</Label><Input placeholder="Ex: Pomada" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
-              <div><Label>Qtd</Label><Input type="number" placeholder="10" value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} className="mt-1" /></div>
-              <div><Label>Preço de Compra (R$)</Label><Input type="number" placeholder="15.00" value={form.buy_price} onChange={e => setForm({ ...form, buy_price: e.target.value })} className="mt-1" /></div>
-              <div><Label>Preço de Venda (R$)</Label><Input type="number" placeholder="35.00" value={form.sell_price} onChange={e => setForm({ ...form, sell_price: e.target.value })} className="mt-1" /></div>
+            <div className="flex items-start gap-4">
+              <div className="shrink-0">
+                {form.image_url ? (
+                  <div className="relative"><img src={form.image_url} alt="" className="w-20 h-20 rounded-lg object-cover border" />
+                    <Button type="button" variant="destructive" size="icon" className="absolute -top-1 -right-1 h-6 w-6" onClick={() => setForm(f => ({ ...f, image_url: "" }))}><X className="w-3 h-3" /></Button>
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/50">
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                    <Button type="button" variant="ghost" size="sm" disabled={uploadingImg} onClick={() => fileInputRef.current?.click()}>{uploadingImg ? "..." : "+ Foto"}</Button>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><Label>Nome *</Label><Input placeholder="Ex: Pomada" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
+                <div><Label>Qtd</Label><Input type="number" placeholder="10" value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} className="mt-1" /></div>
+                <div><Label>Preço de Compra (R$)</Label><Input type="number" placeholder="15.00" value={form.buy_price} onChange={e => setForm({ ...form, buy_price: e.target.value })} className="mt-1" /></div>
+                <div><Label>Preço de Venda (R$)</Label><Input type="number" placeholder="35.00" value={form.sell_price} onChange={e => setForm({ ...form, sell_price: e.target.value })} className="mt-1" /></div>
+                <div className="md:col-span-2 flex items-center gap-2">
+                  <Switch checked={form.show_in_vitrine} onCheckedChange={v => setForm(f => ({ ...f, show_in_vitrine: v }))} />
+                  <Label>Exibir na Vitrine</Label>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-2"><Button variant="gold" onClick={handleAdd} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button><Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button></div>
+            <div className="flex gap-2"><Button variant="gold" onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button><Button variant="outline" onClick={() => { setShowForm(false); setEditingId(null); }}>Cancelar</Button></div>
           </CardContent>
         </Card>
       )}
@@ -1140,24 +1210,86 @@ const EstoquePage = () => {
             const profit = (Number(i.sell_price) - Number(i.buy_price)) * i.quantity;
             return (
               <Card key={i.id}><CardContent className="p-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Package className="w-5 h-5 text-primary" /></div>
-                <div className="flex-1">
-                  <p className="font-semibold">{i.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Compra: R$ {Number(i.buy_price).toFixed(2)} • Venda: R$ {Number(i.sell_price).toFixed(2)} • Qtd: {i.quantity}
-                  </p>
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+                  {i.image_url ? <img src={i.image_url} alt="" className="w-full h-full object-cover" /> : <Package className="w-6 h-6 text-primary" />}
                 </div>
-                <div className="text-right">
-                  <p className={`font-bold ${profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>
-                    {profit >= 0 ? '+' : ''}R$ {profit.toFixed(2)}
-                  </p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold">{i.name}{i.show_in_vitrine && <span className="ml-1 text-[10px] bg-primary/20 text-primary px-1 rounded">Vitrine</span>}</p>
+                  <p className="text-sm text-muted-foreground">Compra: R$ {Number(i.buy_price).toFixed(2)} • Venda: R$ {Number(i.sell_price).toFixed(2)} • Qtd: {i.quantity}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className={`font-bold ${profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{profit >= 0 ? '+' : ''}R$ {profit.toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground">lucro</p>
+                  <Button variant="outline" size="sm" className="mt-2" onClick={() => openEdit(i)}><Edit className="w-3 h-3 mr-1" />Editar</Button>
                 </div>
               </CardContent></Card>
             );
           })}
         </div>
       )}
+    </div>
+  );
+};
+
+// ============ VITRINE (produtos + ação entre amigos visíveis) ============
+
+const VitrinePage = () => {
+  const { barbershop } = useBarbershop();
+  const [products, setProducts] = useState<any[]>([]);
+  const [raffles, setRaffles] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!barbershop?.id) return;
+    supabase.from("stock_items").select("*").eq("barbershop_id", barbershop.id).eq("show_in_vitrine", true).eq("is_active", true).order("name").then(({ data }) => setProducts(data || []));
+    supabase.from("raffles").select("*").eq("barbershop_id", barbershop.id).eq("status", "open").order("created_at", { ascending: false }).then(({ data }) => setRaffles(data || []));
+  }, [barbershop?.id]);
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Vitrine da Barbearia</h1>
+      <p className="text-muted-foreground text-sm">Produtos e Ação entre Amigos visíveis para clientes</p>
+      <div className="grid gap-6 md:grid-cols-2">
+        <div>
+          <h2 className="font-semibold mb-3">Produtos em Destaque</h2>
+          {products.length === 0 ? (
+            <Card><CardContent className="py-8 text-center text-muted-foreground">Nenhum produto na vitrine. Ative &quot;Exibir na Vitrine&quot; em Estoque.</CardContent></Card>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {products.map(p => (
+                <Card key={p.id}><CardContent className="p-4 flex gap-3">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted shrink-0">
+                    {p.image_url ? <img src={p.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Package className="w-8 h-8 text-muted-foreground" /></div>}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold truncate">{p.name}</p>
+                    <p className="text-sm text-primary">R$ {Number(p.sell_price).toFixed(2)}</p>
+                  </div>
+                </CardContent></Card>
+              ))}
+            </div>
+          )}
+        </div>
+        <div>
+          <h2 className="font-semibold mb-3">Ação entre Amigos</h2>
+          {raffles.length === 0 ? (
+            <Card><CardContent className="py-8 text-center text-muted-foreground">Nenhuma ação ativa.</CardContent></Card>
+          ) : (
+            <div className="space-y-3">
+              {raffles.map(r => (
+                <Card key={r.id}><CardContent className="p-4 flex gap-3">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted shrink-0">
+                    {r.image_url ? <img src={r.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Gift className="w-8 h-8 text-muted-foreground" /></div>}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold">{r.name}</p>
+                    <p className="text-sm text-muted-foreground">R$ {Number(r.ticket_price).toFixed(2)}/bilhete • Prêmio: R$ {Number(r.credit_award).toFixed(2)}</p>
+                  </div>
+                </CardContent></Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -1269,10 +1401,19 @@ const AUTOMATION_EVENTS = [
   { id: "no_visit_15d", label: "Sem visita há 15 dias", icon: "📆", description: "Cliente inativo por 15 dias" },
   { id: "no_visit_30d", label: "Sem visita há 30 dias", icon: "🗓️", description: "Cliente inativo por 30 dias" },
   { id: "post_service", label: "Pós-atendimento (2h)", icon: "✅", description: "Enviar agradecimento 2h após o atendimento" },
-  { id: "reminder_12h", label: "Lembrete 12h antes", icon: "⏰", description: "Lembrar cliente 12h antes do agendamento" },
-  { id: "reminder_5h", label: "Lembrete 5h antes", icon: "🔔", description: "Lembrar cliente 5h antes do agendamento" },
-  { id: "reminder_1h", label: "Lembrete 1h antes", icon: "🚨", description: "Alerta urgente 1h antes do agendamento" },
+  { id: "reminder_24h", label: "Lembrete 24h antes", icon: "⏰", description: "Lembrar cliente 24h antes" },
+  { id: "reminder_12h", label: "Lembrete 12h antes", icon: "⏰", description: "Lembrar cliente 12h antes" },
+  { id: "reminder_7h", label: "Lembrete 7h antes", icon: "🔔", description: "Lembrar cliente 7h antes" },
+  { id: "reminder_5h", label: "Lembrete 5h antes", icon: "🔔", description: "Lembrar cliente 5h antes" },
+  { id: "reminder_2h", label: "Lembrete 2h antes", icon: "🚨", description: "Lembrar cliente 2h antes" },
+  { id: "reminder_1h", label: "Lembrete 1h antes", icon: "🚨", description: "Alerta urgente 1h antes" },
   { id: "birthday", label: "Aniversário do cliente", icon: "🎂", description: "Parabéns automático no dia do aniversário" },
+];
+
+const AUTOMATION_READONLY = [
+  { id: "reminder_push_24h", label: "Lembrete via Push/App 24h antes", icon: "📱", description: "Automático — via notificação in-app" },
+  { id: "reminder_push_7h", label: "Lembrete via Push/App 7h antes", icon: "📱", description: "Automático — via notificação in-app" },
+  { id: "reminder_push_2h", label: "Lembrete via Push/App 2h antes", icon: "📱", description: "Automático — via notificação in-app" },
 ];
 
 const NotificacoesDonoPage = () => {
@@ -1299,6 +1440,9 @@ const NotificacoesDonoPage = () => {
   const [automationFlows, setAutomationFlows] = useState<any[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [credits, setCredits] = useState<{ sms: number; whatsapp: number }>({ sms: 0, whatsapp: 0 });
+  const [purchasingId, setPurchasingId] = useState<string | null>(null);
+  const [bookingLink, setBookingLink] = useState(barbershop?.booking_link || "");
+  const [savingBookingLink, setSavingBookingLink] = useState(false);
 
   useEffect(() => {
     if (!barbershop?.id) return;
@@ -1326,10 +1470,11 @@ const NotificacoesDonoPage = () => {
       setAutomationFlows(flows);
     }
 
+    setBookingLink(barbershop.booking_link || "");
     supabase.from("messaging_packages").select("*").eq("is_active", true).then(({ data }) => setPackages(data || []));
-    supabase.from("messaging_credits").select("*").eq("barbershop_id", barbershop.id).then(({ data }) => {
-      const smsCredits = data?.find((c: any) => c.channel === "sms");
-      const waCredits = data?.find((c: any) => c.channel === "whatsapp");
+    supabase.from("messaging_credits").select("*").eq("barbershop_id", barbershop.id).then(({ data: credData }) => {
+      const smsCredits = credData?.find((c: any) => c.channel === "sms");
+      const waCredits = credData?.find((c: any) => c.channel === "whatsapp");
       setCredits({ sms: smsCredits?.remaining || 0, whatsapp: waCredits?.remaining || 0 });
     });
     supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(50).then(({ data }) => setSentNotifications(data || []));
@@ -1394,8 +1539,9 @@ const NotificacoesDonoPage = () => {
     const userIds = await getTargetUserIds();
     if (userIds.length === 0) { toast.error("Nenhum destinatário encontrado."); setSending(false); return; }
 
-    const bookingLink = barbershop?.slug ? `\n\n📅 Agende: ${window.location.origin}/agendar/${barbershop.slug}` : "";
-    const finalMsg = includeBookingLink ? message + bookingLink : message;
+    const link = barbershop?.booking_link || (barbershop?.slug ? `${window.location.origin}/agendar/${barbershop.slug}` : "");
+    const bookingLinkAppend = link ? `\n\n📅 Agende: ${link}` : "";
+    const finalMsg = includeBookingLink && link ? message + bookingLinkAppend : message;
 
     if (channel === "sms" || channel === "whatsapp") {
       if ((channel === "sms" && credits.sms < userIds.length) || (channel === "whatsapp" && credits.whatsapp < userIds.length)) {
@@ -1581,8 +1727,8 @@ const NotificacoesDonoPage = () => {
                   <div className="bg-background rounded-lg p-3 shadow-sm border">
                     <p className="font-bold text-sm">{title || "Título..."}</p>
                     <p className="text-sm mt-1 whitespace-pre-wrap">{message || "Mensagem..."}</p>
-                    {includeBookingLink && barbershop?.slug && (
-                      <p className="text-xs text-primary mt-2">📅 Agende: {window.location.origin}/agendar/{barbershop.slug}</p>
+                    {includeBookingLink && (barbershop?.booking_link || barbershop?.slug) && (
+                      <p className="text-xs text-primary mt-2">📅 Agende: {barbershop?.booking_link || `${window.location.origin}/agendar/${barbershop?.slug}`}</p>
                     )}
                   </div>
                 </div>
@@ -1606,11 +1752,45 @@ const NotificacoesDonoPage = () => {
       {/* ============ ABA AUTOMAÇÃO ============ */}
       {tab === "automacao" && (
         <div className="space-y-4">
+          {/* Link de Agendamento */}
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5" />Link de Agendamento</CardTitle>
+              <CardDescription>Inclua nas mensagens automáticas. Deixe vazio para usar o link padrão.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Input placeholder="https://..." value={bookingLink} onChange={e => setBookingLink(e.target.value)} />
+              <Button size="sm" variant="gold" disabled={savingBookingLink} onClick={async () => {
+                setSavingBookingLink(true);
+                const { error } = await supabase.from("barbershops").update({ booking_link: bookingLink || null }).eq("id", barbershop!.id);
+                setSavingBookingLink(false);
+                if (!error) { toast.success("Link salvo!"); refetchBarbershop(); }
+                else toast.error("Erro ao salvar.");
+              }}>{savingBookingLink ? "Salvando..." : "Salvar Link"}</Button>
+            </CardContent>
+          </Card>
+
+          {/* Lembretes Push/App (somente leitura) */}
+          <Card>
+            <CardHeader><CardTitle>📱 Lembretes via Push/App</CardTitle>
+              <CardDescription>Enviados automaticamente 24h, 7h e 2h antes do atendimento. Ativado sempre.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {AUTOMATION_READONLY.map(evt => (
+                <div key={evt.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/30 opacity-90">
+                  <div className="flex items-center gap-3"><span className="text-xl">{evt.icon}</span>
+                    <div><p className="font-medium text-sm">{evt.label}</p><p className="text-xs text-muted-foreground">{evt.description}</p></div>
+                  </div>
+                  <span className="text-xs text-green-600 font-medium">Ativo</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
           {/* Fluxos por Evento */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Repeat className="w-5 h-5" />Fluxos Automáticos por Evento</CardTitle>
-              <CardDescription>Ative gatilhos que enviam mensagens automaticamente quando eventos acontecem</CardDescription>
+              <CardDescription>Ative cada gatilho separadamente — cada mensagem é disparada por sua ação específica</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex gap-2 mb-3">
@@ -1763,7 +1943,36 @@ const NotificacoesDonoPage = () => {
                       <p className="text-sm text-muted-foreground">{p.quantity} {p.channel === 'sms' ? 'SMS' : 'WhatsApp'}</p>
                       <p className="text-xs text-muted-foreground mt-1">≈ R$ {(Number(p.price) / p.quantity).toFixed(2)} por mensagem</p>
                       <p className="text-xl font-bold text-gradient-gold mt-2">R$ {Number(p.price).toFixed(2)}</p>
-                      <Button variant="gold" className="w-full mt-3" onClick={() => toast.info("Compra de pacote via PIX em breve!")}><CreditCard className="w-4 h-4 mr-2" />Comprar Agora</Button>
+                      <div className="flex flex-col gap-2 mt-3">
+                        <Button variant="gold" className="w-full" disabled={purchasingId === p.id} onClick={async () => {
+                          if (!barbershop?.id) return;
+                          setPurchasingId(p.id);
+                          try {
+                            const { data, error } = await supabase.functions.invoke("process-payment", {
+                              body: { action: "charge-messaging-package", package_id: p.id, barbershop_id: barbershop.id, recurring: false },
+                            });
+                            if (error) throw new Error(error.message || "Erro ao processar");
+                            const url = (data as any)?.invoice_url || (data as any)?.payment_link;
+                            if (url) window.open(url, "_blank"); else toast.success("Solicitação enviada!");
+                          } catch (e: any) { toast.error(e.message || "Erro ao iniciar compra."); }
+                          setPurchasingId(null);
+                        }}><CreditCard className="w-4 h-4 mr-2" />{purchasingId === p.id ? "Abrindo PIX..." : "Comprar Agora"}</Button>
+                        {p.allow_recurring && (
+                          <Button variant="outline" size="sm" className="w-full" disabled={purchasingId === `rec-${p.id}`} onClick={async () => {
+                            if (!barbershop?.id) return;
+                            setPurchasingId(`rec-${p.id}`);
+                            try {
+                              const { data, error } = await supabase.functions.invoke("process-payment", {
+                                body: { action: "charge-messaging-package", package_id: p.id, barbershop_id: barbershop.id, recurring: true },
+                              });
+                              if (error) throw new Error(error.message || "Erro ao processar");
+                              const url = (data as any)?.invoice_url || (data as any)?.payment_link;
+                              if (url) window.open(url, "_blank"); else toast.success("Assinatura recorrente solicitada!");
+                            } catch (e: any) { toast.error(e.message || "Erro."); }
+                            setPurchasingId(null);
+                          }}><Repeat className="w-4 h-4 mr-2" />Adicionar à cobrança mensal recorrente</Button>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -1785,7 +1994,9 @@ const AcaoEntreAmigosPage = () => {
   const [raffles, setRaffles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ name: "", description: "", ticket_price: "10", credit_award: "50", max_tickets: "100" });
+  const [form, setForm] = useState({ name: "", description: "", ticket_price: "10", credit_award: "50", max_tickets: "100", image_url: "" });
+  const [uploadingImg, setUploadingImg] = useState(false);
+  const raffleFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (barbershop?.id) {
@@ -1795,14 +2006,24 @@ const AcaoEntreAmigosPage = () => {
     }
   }, [barbershop?.id]);
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImg(true);
+    const url = await uploadImage(file, "raffles", barbershop?.id?.slice(0, 8));
+    setUploadingImg(false);
+    if (url) setForm(f => ({ ...f, image_url: url })); else toast.error("Erro ao enviar imagem.");
+  };
+
   const handleCreate = async () => {
     if (!form.name || !barbershop?.id) return toast.error("Preencha o nome");
     const { data, error } = await supabase.from("raffles").insert([{
       barbershop_id: barbershop.id, name: form.name, description: form.description,
-      ticket_price: Number(form.ticket_price), credit_award: Number(form.credit_award), max_tickets: Number(form.max_tickets)
+      ticket_price: Number(form.ticket_price), credit_award: Number(form.credit_award), max_tickets: Number(form.max_tickets),
+      image_url: form.image_url || null,
     }]).select();
     if (error) toast.error(error.message);
-    else { setRaffles([...(data as any[]), ...raffles]); setShowAdd(false); toast.success("Ação entre Amigos criada!"); }
+    else { setRaffles([...(data as any[]), ...raffles]); setShowAdd(false); setForm({ ...form, image_url: "" }); toast.success("Ação entre Amigos criada!"); }
   };
 
   return (
@@ -1815,13 +2036,27 @@ const AcaoEntreAmigosPage = () => {
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader><CardTitle>Novo Sorteio</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Nome</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ex: Sorteio de Natal" /></div>
-              <div className="space-y-2"><Label>Preço por Bilhete (R$)</Label><Input type="number" value={form.ticket_price} onChange={e => setForm({ ...form, ticket_price: e.target.value })} /></div>
-              <div className="space-y-2"><Label>Prêmio em Créditos (R$)</Label><Input type="number" value={form.credit_award} onChange={e => setForm({ ...form, credit_award: e.target.value })} /></div>
-              <div className="space-y-2"><Label>Máx. Bilhetes</Label><Input type="number" value={form.max_tickets} onChange={e => setForm({ ...form, max_tickets: e.target.value })} /></div>
+            <div className="flex items-start gap-4">
+              <div className="shrink-0">
+                {form.image_url ? (
+                  <div className="relative"><img src={form.image_url} alt="" className="w-20 h-20 rounded-lg object-cover border" />
+                    <Button type="button" variant="destructive" size="icon" className="absolute -top-1 -right-1 h-6 w-6" onClick={() => setForm(f => ({ ...f, image_url: "" }))}><X className="w-3 h-3" /></Button>
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/50">
+                    <input ref={raffleFileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                    <Button type="button" variant="ghost" size="sm" disabled={uploadingImg} onClick={() => raffleFileRef.current?.click()}>{uploadingImg ? "..." : "+ Imagem"}</Button>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 md:col-span-2"><Label>Nome</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ex: Sorteio de Natal" /></div>
+                <div className="space-y-2"><Label>Preço por Bilhete (R$)</Label><Input type="number" value={form.ticket_price} onChange={e => setForm({ ...form, ticket_price: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Prêmio em Créditos (R$)</Label><Input type="number" value={form.credit_award} onChange={e => setForm({ ...form, credit_award: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Máx. Bilhetes</Label><Input type="number" value={form.max_tickets} onChange={e => setForm({ ...form, max_tickets: e.target.value })} /></div>
+                <div className="space-y-2 md:col-span-2"><Label>Descrição</Label><Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Detalhes..." /></div>
+              </div>
             </div>
-            <div className="space-y-2"><Label>Descrição</Label><Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Detalhes..." /></div>
             <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setShowAdd(false)}>Cancelar</Button><Button variant="gold" onClick={handleCreate}>Salvar</Button></div>
           </CardContent>
         </Card>
@@ -1830,8 +2065,11 @@ const AcaoEntreAmigosPage = () => {
         <Card><CardContent className="py-12 text-center text-muted-foreground">Nenhuma ação criada.</CardContent></Card>
       ) : (
         <div className="grid gap-4">{raffles.map(r => (
-          <Card key={r.id}><CardContent className="p-4 flex justify-between items-center">
-            <div>
+          <Card key={r.id}><CardContent className="p-4 flex gap-4 items-center">
+            <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted shrink-0">
+              {r.image_url ? <img src={r.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Gift className="w-8 h-8 text-muted-foreground" /></div>}
+            </div>
+            <div className="flex-1 min-w-0">
               <h3 className="font-bold">{r.name}</h3>
               <p className="text-sm text-muted-foreground">Preço: R$ {Number(r.ticket_price).toFixed(2)} • Prêmio: R$ {Number(r.credit_award).toFixed(2)}</p>
               <p className="text-[10px] text-muted-foreground">Status: <span className="capitalize">{r.status}</span></p>
@@ -2030,6 +2268,7 @@ const SuportePage = () => {
 const ConfiguracoesPage = () => {
   const { barbershop, refetch } = useBarbershop();
   const { profile, user } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(profile?.avatar_url ?? null);
   const [rewardType, setRewardType] = useState("commission");
   const [editingShop, setEditingShop] = useState(false);
   const [savingShop, setSavingShop] = useState(false);
@@ -2084,6 +2323,17 @@ const ConfiguracoesPage = () => {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Configurações</h1>
+
+      {/* Foto de Perfil */}
+      <Card>
+        <CardHeader><CardTitle>Meu Perfil</CardTitle><CardDescription>Foto exibida no app</CardDescription></CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <ProfilePhotoUpload userId={user!.id} avatarUrl={avatarUrl ?? profile?.avatar_url ?? null} onUpdate={setAvatarUrl} size="lg" />
+            <div><p className="font-semibold">{profile?.name || "Dono"}</p><p className="text-sm text-muted-foreground">Passe o mouse e clique na câmera para alterar a foto</p></div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Phone/WhatsApp */}
       <Card>

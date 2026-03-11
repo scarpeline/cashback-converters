@@ -27,10 +27,13 @@ interface Appointment {
   status: string;
 }
 
-// Janelas de lembrete em horas
+// Janelas de lembrete em horas (push/app)
 const REMINDER_WINDOWS = [
+  { hours: 24, label: "24h", key: "reminder_24h" },
   { hours: 12, label: "12h", key: "reminder_12h" },
+  { hours: 7, label: "7h", key: "reminder_7h" },
   { hours: 5, label: "5h", key: "reminder_5h" },
+  { hours: 2, label: "2h", key: "reminder_2h" },
   { hours: 1, label: "1h", key: "reminder_1h" },
 ];
 
@@ -47,8 +50,8 @@ serve(async (req) => {
   const results: Array<{ appointment_id: string; reminder: string; status: string }> = [];
 
   try {
-    // Buscar agendamentos nas próximas 13 horas (cobre a janela de 12h + margem)
-    const maxWindow = new Date(now.getTime() + 13 * 60 * 60 * 1000).toISOString();
+    // Buscar agendamentos nas próximas 25 horas (cobre janela 24h + margem)
+    const maxWindow = new Date(now.getTime() + 25 * 60 * 60 * 1000).toISOString();
 
     const { data: appointments, error: fetchError } = await supabase
       .from("appointments")

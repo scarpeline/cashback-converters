@@ -17,6 +17,7 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { formatWhatsAppBR } from "@/lib/input-masks";
 import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
+import { ProfilePhotoUpload } from "@/components/shared/ProfilePhotoUpload";
 
 const ClienteDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -455,6 +456,7 @@ const PerfilPage = () => {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: "", whatsapp: "" });
   const [saving, setSaving] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(profile?.avatar_url ?? null);
 
   const startEdit = () => {
     setForm({ name: profile?.name || "", whatsapp: profile?.whatsapp || "" });
@@ -476,8 +478,8 @@ const PerfilPage = () => {
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center"><User className="w-8 h-8 text-primary" /></div>
-            <div><p className="font-bold text-lg">{profile?.name || "Cliente"}</p><p className="text-sm text-muted-foreground">Perfil Ativo</p></div>
+            <ProfilePhotoUpload userId={user!.id} avatarUrl={avatarUrl ?? profile?.avatar_url ?? null} onUpdate={setAvatarUrl} size="lg" />
+            <div><p className="font-bold text-lg">{profile?.name || "Cliente"}</p><p className="text-sm text-muted-foreground">Perfil Ativo</p><p className="text-xs text-muted-foreground">Passe o mouse e clique para alterar a foto</p></div>
           </div>
           {editing ? (
             <>

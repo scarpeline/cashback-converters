@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 interface ChargeBody {
-  action: "charge" | "get" | "refund" | "create-professional-account";
+  action: "charge" | "get" | "refund" | "create-professional-account" | "create-barbershop-account" | "charge-messaging-package";
   // charge fields
   customer_id?: string;
   amount?: number;
@@ -21,10 +21,17 @@ interface ChargeBody {
   payment_id?: string;
   // create-professional-account fields
   professional_id?: string;
+  // create-barbershop-account fields
+  barbershop_id?: string;
   cpf_cnpj?: string;
   name?: string;
   email?: string;
+  mobile_phone?: string;
   pix_key?: string;
+  // charge-messaging-package fields
+  package_id?: string;
+  barbershop_id?: string;
+  recurring?: boolean;
 }
 
 function getAsaasConfig() {
@@ -301,6 +308,42 @@ serve(async (req) => {
         if (!body.payment_id) throw new Error("payment_id required");
         result = await handleRefund(body.payment_id, body.amount);
         break;
+      case "charge-messaging-package": {
+        if (!body.package_id || !body.barbershop_id) throw new Error("package_id e barbershop_id obrigatórios.");
+        const { data: pkg } = await serviceRoleClient.from("messaging_packages").select("id, name, quantity, price, channel, allow_recurring").eq("id", body.package_id).eq("is_active", true).single();
+        if (!pkg) throw new Error("Pacote não encontrado ou inativo.");
+        const recurring = !!body.recurring && !!pkg.allow_recurring;
+        const { data: shop } = await serviceRoleClient.from("barbershops").select("id, owner_user_id").eq("id", body.barbershop_id).single();
+        if (!shop || shop.owner_user_id !== userId) throw new Error("Barbearia não encontrada ou sem permissão.");
+        const customerId = await getOrCreateCustomer(serviceRoleClient, userId);
+        const extRef = `msgpkg:${body.package_id}:${body.barbershop_id}${recurring ? ":recurring" : ""}`;
+        if (recurring) {
+          const nextDue = new Date();
+          nextDue.setMonth(nextDue.getMonth() + 1);
+          const subData = await asaasFetch("/subscriptions", {
+            method: "POST",
+            body: JSON.stringify({
+              customer: customerId,
+              billingType: "PIX",
+              value: Number(pkg.price),
+              nextDueDate: nextDue.toISOString().split("T")[0],
+              cycle: "MONTHLY",
+              description: `${pkg.name} (recorrente) - ${pkg.quantity} ${pkg.channel === "sms" ? "SMS" : "WhatsApp"}/mês`,
+              externalReference: extRef,
+            }),
+          });
+          result = { subscription_id: subData.id, payment_link: subData.paymentLink || subData.invoiceUrl, invoice_url: subData.paymentLink || subData.invoiceUrl };
+        } else {
+          result = await handleCharge({
+            customer_id: customerId,
+            amount: Number(pkg.price),
+            description: `${pkg.name} - ${pkg.quantity} ${pkg.channel === "sms" ? "SMS" : "WhatsApp"}`,
+            billing_type: "PIX",
+            external_reference: extRef,
+          }, customerId);
+        }
+        break;
+      }
       case "create-professional-account": {
         const doc = onlyDigits(body.cpf_cnpj);
         const { environment } = getAsaasConfig();
@@ -308,26 +351,66 @@ serve(async (req) => {
         const validDoc = isValidCpfCnpj(doc) ? doc : (environment === "sandbox" ? sandboxTestCPF : "");
         if (!validDoc) throw new Error("CPF/CNPJ inválido. Atualize antes de continuar.");
 
-        // Create sub-account on ASAAS
+        const phoneDigits = onlyDigits(body.mobile_phone || "");
+        const mobilePhone = phoneDigits.length >= 10 ? `+55${phoneDigits}` : undefined;
+
+        const accountPayload: Record<string, unknown> = {
+          name: body.name || "Profissional",
+          email: body.email || `prof-${body.professional_id}@placeholder.com`,
+          cpfCnpj: validDoc,
+          companyType: validDoc.length === 11 ? "INDIVIDUAL" : "LIMITED",
+          loginEmail: body.email || `prof-${body.professional_id}@placeholder.com`,
+        };
+        if (mobilePhone) accountPayload.mobilePhone = mobilePhone;
+
         const accountData = await asaasFetch("/accounts", {
           method: "POST",
-          body: JSON.stringify({
-            name: body.name || "Profissional",
-            email: body.email || `prof-${body.professional_id}@placeholder.com`,
-            cpfCnpj: validDoc,
-            companyType: validDoc.length === 11 ? "INDIVIDUAL" : "LIMITED",
-            loginEmail: body.email || `prof-${body.professional_id}@placeholder.com`,
-          }),
+          body: JSON.stringify(accountPayload),
         });
 
         const walletId = accountData.walletId || accountData.id;
 
-        // Save wallet_id back to professionals table
         if (body.professional_id) {
           await serviceRoleClient
             .from("professionals")
             .update({ asaas_wallet_id: walletId, asaas_customer_id: accountData.id })
             .eq("id", body.professional_id);
+        }
+
+        result = { wallet_id: walletId, account_id: accountData.id };
+        break;
+      }
+      case "create-barbershop-account": {
+        const doc = onlyDigits(body.cpf_cnpj);
+        const { environment } = getAsaasConfig();
+        const sandboxTestCPF = "11144477735";
+        const validDoc = isValidCpfCnpj(doc) ? doc : (environment === "sandbox" ? sandboxTestCPF : "");
+        if (!validDoc) throw new Error("CPF/CNPJ inválido. Atualize antes de continuar.");
+
+        const phoneDigits = onlyDigits(body.mobile_phone || "");
+        const mobilePhone = phoneDigits.length >= 10 ? `+55${phoneDigits}` : undefined;
+
+        const accountPayload: Record<string, unknown> = {
+          name: body.name || "Barbearia",
+          email: body.email || `shop-${body.barbershop_id}@placeholder.com`,
+          cpfCnpj: validDoc,
+          companyType: validDoc.length === 11 ? "INDIVIDUAL" : "LIMITED",
+          loginEmail: body.email || `shop-${body.barbershop_id}@placeholder.com`,
+        };
+        if (mobilePhone) accountPayload.mobilePhone = mobilePhone;
+
+        const accountData = await asaasFetch("/accounts", {
+          method: "POST",
+          body: JSON.stringify(accountPayload),
+        });
+
+        const walletId = accountData.walletId || accountData.id;
+
+        if (body.barbershop_id) {
+          await serviceRoleClient
+            .from("barbershops")
+            .update({ asaas_wallet_id: walletId, asaas_customer_id: accountData.id })
+            .eq("id", body.barbershop_id);
         }
 
         result = { wallet_id: walletId, account_id: accountData.id };

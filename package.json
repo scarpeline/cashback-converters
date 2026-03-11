@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "pwa-icons": "node -e \"const fs=require('fs');const p='src/assets/logo.png';if(fs.existsSync(p)){fs.copyFileSync(p,'public/pwa-icon-192.png');fs.copyFileSync(p,'public/pwa-icon-512.png');console.log('PWA icons atualizados com logo.');}else console.warn('Logo não encontrado.');\"",
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",

@@ -25,6 +25,7 @@ const DadosBancariosPage = () => {
   const [form, setForm] = useState({
     name: "",
     cpf_cnpj: "",
+    mobile_phone: "",
     pix_key: "",
     pix_key_type: "cpf",
   });
@@ -33,12 +34,14 @@ const DadosBancariosPage = () => {
     if (!user) return;
     Promise.all([
       supabase.from("barbershops").select("id, name, asaas_customer_id, asaas_wallet_id").eq("owner_user_id", user.id).limit(1).maybeSingle(),
-      supabase.from("profiles").select("name, cpf_cnpj, pix_key, bank_info").eq("user_id", user.id).maybeSingle(),
+      supabase.from("profiles").select("name, cpf_cnpj, whatsapp, pix_key, bank_info").eq("user_id", user.id).maybeSingle(),
     ]).then(([shop, prof]) => {
       setBarbershop(shop.data);
+      const w = (prof.data as any)?.whatsapp || "";
       setForm({
         name: prof.data?.name || profile?.name || "",
         cpf_cnpj: prof.data?.cpf_cnpj || "",
+        mobile_phone: typeof w === "string" ? w.replace(/\D/g, "") : "",
         pix_key: prof.data?.pix_key || "",
         pix_key_type: "cpf",
       });
@@ -59,6 +62,11 @@ const DadosBancariosPage = () => {
       toast.error("Chave PIX é obrigatória para receber pagamentos.");
       return;
     }
+    const phoneDigits = form.mobile_phone.replace(/\D/g, "");
+    if (phoneDigits.length < 10) {
+      toast.error("Telefone/WhatsApp é obrigatório para criar conta no gateway (formato: 11999990000).");
+      return;
+    }
 
     setSaving(true);
 
@@ -70,6 +78,7 @@ const DadosBancariosPage = () => {
       .update({
         name: form.name,
         cpf_cnpj: cleanCpfCnpj,
+        whatsapp: phoneDigits ? `+55${phoneDigits}` : null,
         pix_key: form.pix_key,
       })
       .eq("user_id", user!.id);
@@ -85,11 +94,12 @@ const DadosBancariosPage = () => {
       try {
         const { data: result, error: fnError } = await supabase.functions.invoke("process-payment", {
           body: {
-            action: "create-professional-account",
-            professional_id: barbershop.id,
+            action: "create-barbershop-account",
+            barbershop_id: barbershop.id,
             cpf_cnpj: cleanCpfCnpj,
             name: form.name,
             email: profile?.email,
+            mobile_phone: phoneDigits,
             pix_key: form.pix_key,
           },
         });
@@ -170,6 +180,16 @@ const DadosBancariosPage = () => {
                 className="mt-1"
               />
               <p className="text-xs text-muted-foreground mt-1">Nome que aparecerá na conta do gateway</p>
+            </div>
+            <div>
+              <Label>Telefone / WhatsApp *</Label>
+              <Input
+                value={form.mobile_phone}
+                onChange={(e) => setForm({ ...form, mobile_phone: e.target.value.replace(/\D/g, "").slice(0, 11) })}
+                placeholder="11999990000"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Obrigatório para API gateway. DDD + número.</p>
             </div>
             <div>
               <Label>CPF ou CNPJ *</Label>

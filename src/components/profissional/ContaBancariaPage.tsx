@@ -12,6 +12,7 @@ import { formatCpfCnpjBR } from "@/lib/input-masks";
 interface ProfessionalBankData {
   name: string;
   cpf_cnpj: string;
+  mobile_phone: string;
   pix_key: string;
   pix_key_type: string;
   asaas_wallet_id: string | null;
@@ -34,6 +35,7 @@ const ContaBancariaPage = () => {
   const [form, setForm] = useState({
     name: "",
     cpf_cnpj: "",
+    mobile_phone: "",
     pix_key: "",
     pix_key_type: "cpf",
   });
@@ -43,15 +45,17 @@ const ContaBancariaPage = () => {
     (async () => {
       const { data: prof } = await supabase
         .from("professionals")
-        .select("id, name, cpf_cnpj, pix_key, asaas_wallet_id")
+        .select("id, name, cpf_cnpj, whatsapp, pix_key, asaas_wallet_id")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (prof) {
         setProfessionalId(prof.id);
+        const ph = (prof as any).whatsapp || "";
         const bankData: ProfessionalBankData = {
           name: prof.name || "",
           cpf_cnpj: prof.cpf_cnpj || "",
+          mobile_phone: typeof ph === "string" ? ph.replace(/\D/g, "") : "",
           pix_key: prof.pix_key || "",
           pix_key_type: "cpf",
           asaas_wallet_id: prof.asaas_wallet_id,
@@ -60,6 +64,7 @@ const ContaBancariaPage = () => {
         setForm({
           name: prof.name || profile?.name || "",
           cpf_cnpj: prof.cpf_cnpj || "",
+          mobile_phone: bankData.mobile_phone,
           pix_key: prof.pix_key || "",
           pix_key_type: "cpf",
         });
@@ -83,15 +88,21 @@ const ContaBancariaPage = () => {
       toast.error("Chave PIX é obrigatória para receber pagamentos.");
       return;
     }
+    const phoneDigits = form.mobile_phone.replace(/\D/g, "");
+    if (phoneDigits.length < 10) {
+      toast.error("Telefone/WhatsApp é obrigatório para criar conta no gateway (formato: 11999990000).");
+      return;
+    }
 
     setSaving(true);
 
     // Save to professionals table
-    const updatePayload = {
+    const updatePayload: Record<string, string> = {
       name: form.name,
       cpf_cnpj: form.cpf_cnpj.replace(/\D/g, ""),
       pix_key: form.pix_key,
     };
+    if (phoneDigits.length >= 10) (updatePayload as any).whatsapp = `+55${phoneDigits}`;
 
     const { error } = await supabase
       .from("professionals")
@@ -113,6 +124,7 @@ const ContaBancariaPage = () => {
           cpf_cnpj: form.cpf_cnpj.replace(/\D/g, ""),
           name: form.name,
           email: profile?.email,
+          mobile_phone: phoneDigits.length >= 10 ? phoneDigits : undefined,
           pix_key: form.pix_key,
         },
       });
@@ -202,6 +214,16 @@ const ContaBancariaPage = () => {
                 className="mt-1"
               />
               <p className="text-xs text-muted-foreground mt-1">Nome que aparecerá na conta do gateway</p>
+            </div>
+            <div>
+              <Label>Telefone / WhatsApp *</Label>
+              <Input
+                value={form.mobile_phone}
+                onChange={(e) => setForm({ ...form, mobile_phone: e.target.value.replace(/\D/g, "").slice(0, 11) })}
+                placeholder="11999990000"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Obrigatório para API gateway</p>
             </div>
             <div>
               <Label>CPF/CNPJ *</Label>

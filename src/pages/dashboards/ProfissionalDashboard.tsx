@@ -13,6 +13,7 @@ import {
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import { formatWhatsAppBR } from "@/lib/input-masks";
+import { ProfilePhotoUpload } from "@/components/shared/ProfilePhotoUpload";
 import ContaBancariaPage from "@/components/profissional/ContaBancariaPage";
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
@@ -142,6 +143,7 @@ const GanhosPage = () => (
 // ContaBancariaPage is now imported from @/components/profissional/ContaBancariaPage
 const PerfilPage = () => {
   const { profile, user } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(profile?.avatar_url ?? null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: "", whatsapp: "", pix_key: "" });
   const [saving, setSaving] = useState(false);
@@ -181,6 +183,10 @@ const PerfilPage = () => {
       <h1 className="font-display text-2xl font-bold">Meu Perfil</h1>
       <Card>
         <CardContent className="pt-6 space-y-4">
+          <div className="flex items-center gap-4 mb-4">
+            <ProfilePhotoUpload userId={user!.id} avatarUrl={avatarUrl ?? profile?.avatar_url ?? null} onUpdate={setAvatarUrl} size="lg" />
+            <div><p className="font-bold">{profile?.name || "Profissional"}</p><p className="text-xs text-muted-foreground">Passe o mouse e clique na câmera para alterar a foto</p></div>
+          </div>
           {editing ? (
             <>
               <div><Label>Nome</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>

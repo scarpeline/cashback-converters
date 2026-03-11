@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   LayoutDashboard, Users, Building2, DollarSign, Settings, Shield, Image, MessageCircle,
   Bell, Calculator, LogOut, Menu, X, Activity, CheckCircle, TrendingUp, Plug, Loader2, Send, Phone,
-  LinkIcon, Edit, Calendar, UserPlus, Copy, ExternalLink, Package, CreditCard, Eye, Wallet
+  LinkIcon, Edit, Calendar, UserPlus, Copy, ExternalLink, Package, CreditCard, Eye, Wallet, FileText
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -38,6 +38,7 @@ const SuperAdminDashboard = () => {
     { name: "Barbearias", href: `${basePath}/barbearias`, icon: Building2 },
     { name: "Afiliados", href: `${basePath}/afiliados`, icon: Users },
     { name: "Contadores", href: `${basePath}/contadores`, icon: Calculator },
+    { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: FileText },
     { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
     { name: "Prova Social", href: `${basePath}/prova-social`, icon: Activity },
     { name: "Integrações", href: `${basePath}/integracoes`, icon: Plug },
@@ -95,6 +96,7 @@ const SuperAdminDashboard = () => {
             <Route path="barbearias" element={<BarbeariasPage />} />
             <Route path="afiliados" element={<AfiliadosPage />} />
             <Route path="contadores" element={<ContadoresPage />} />
+            <Route path="servicos-contabeis" element={<ServicosContabeisAdminPage />} />
             <Route path="financeiro" element={<FinanceiroPage />} />
             <Route path="prova-social" element={<SocialProofManager showPageSelector />} />
             <Route path="integracoes" element={<Suspense fallback={<PageFallback />}><IntegrationSettingsPage /></Suspense>} />
@@ -708,6 +710,79 @@ const ContadoresPage = () => {
   );
 };
 
+// ============ SERVIÇOS CONTÁBEIS (aprovar alterações do contador) ============
+const ServicosContabeisAdminPage = () => {
+  const { user } = useAuth();
+  const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchServices = () => {
+    (supabase as any).from("fiscal_service_types").select("*").order("service_type").then(({ data }: any) => {
+      setServices(data || []);
+      setLoading(false);
+    });
+  };
+
+  useEffect(() => { fetchServices(); }, []);
+
+  const approveOrReject = async (id: string, approved: boolean) => {
+    const s = services.find(x => x.id === id);
+    if (!s || s.status !== "pending") return;
+    const update = approved
+      ? { status: "approved", price: s.proposed_price, required_fields: s.proposed_required_fields || s.required_fields, approved_by: user?.id, approved_at: new Date().toISOString(), proposed_price: null, proposed_required_fields: null, proposed_by: null, proposed_at: null, updated_at: new Date().toISOString() }
+      : { status: "rejected", proposed_price: null, proposed_required_fields: null, proposed_by: null, proposed_at: null, updated_at: new Date().toISOString() };
+    const { error } = await (supabase as any).from("fiscal_service_types").update(update).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(approved ? "Alteração aprovada e disponível para usuários." : "Alteração rejeitada.");
+    fetchServices();
+  };
+
+  const pending = services.filter(s => s.status === "pending");
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Serviços Contábeis</h1>
+      <p className="text-muted-foreground text-sm">Aprove ou rejeite alterações de preço e dados requerentes enviadas pelo contador.</p>
+
+      {pending.length > 0 && (
+        <Card className="border-amber-500/50 bg-amber-500/5">
+          <CardHeader><CardTitle>Pendentes de Aprovação</CardTitle><CardDescription>Alterações do contador aguardando sua autorização</CardDescription></CardHeader>
+          <CardContent className="space-y-3">
+            {pending.map(s => (
+              <div key={s.id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border rounded-lg bg-background">
+                <div>
+                  <p className="font-semibold">{s.label}</p>
+                  <p className="text-sm text-muted-foreground">Preço atual: R$ {Number(s.price).toFixed(2)} → Proposto: R$ {Number(s.proposed_price).toFixed(2)}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="gold" onClick={() => approveOrReject(s.id, true)}>Aprovar</Button>
+                  <Button size="sm" variant="outline" className="text-destructive" onClick={() => approveOrReject(s.id, false)}>Rejeitar</Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader><CardTitle>Serviços Aprovados</CardTitle><CardDescription>Configuração atual exibida para contador e usuários</CardDescription></CardHeader>
+        <CardContent>
+          {loading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : (
+            <div className="space-y-2">
+              {services.filter(s => s.status === "approved").map(s => (
+                <div key={s.id} className="flex justify-between items-center p-3 rounded-lg border">
+                  <span className="font-medium">{s.label}</span>
+                  <span className="text-primary font-bold">R$ {Number(s.price).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 // ============ FINANCEIRO (receitas + transações detalhadas) ============
 const FinanceiroPage = () => {
   const [payments, setPayments] = useState<any[]>([]);
@@ -1209,7 +1284,7 @@ const ConfiguracoesPage = () => {
   const savePackage = async () => {
     if (!editPkg) return;
     const { error } = await supabase.from("messaging_packages").update({
-      name: editPkg.name, quantity: editPkg.quantity, price: editPkg.price, channel: editPkg.channel, is_active: editPkg.is_active,
+      name: editPkg.name, quantity: editPkg.quantity, price: editPkg.price, channel: editPkg.channel, is_active: editPkg.is_active, allow_recurring: !!editPkg.allow_recurring,
     }).eq("id", editPkg.id);
     if (error) toast.error(error.message);
     else { toast.success("Pacote atualizado!"); setPackages(packages.map(p => p.id === editPkg.id ? editPkg : p)); setEditPkg(null); }
@@ -1282,9 +1357,15 @@ const ConfiguracoesPage = () => {
                 <div><Label>Quantidade</Label><Input type="number" value={editPkg.quantity} onChange={e => setEditPkg({ ...editPkg, quantity: +e.target.value })} className="mt-1" /></div>
                 <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={editPkg.price} onChange={e => setEditPkg({ ...editPkg, price: +e.target.value })} className="mt-1" /></div>
               </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={editPkg.is_active} onCheckedChange={v => setEditPkg({ ...editPkg, is_active: v })} />
-                <Label>Ativo</Label>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  <Switch checked={editPkg.is_active} onCheckedChange={v => setEditPkg({ ...editPkg, is_active: v })} />
+                  <Label>Ativo</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={!!editPkg.allow_recurring} onCheckedChange={v => setEditPkg({ ...editPkg, allow_recurring: v })} />
+                  <Label>Cobrança mensal recorrente</Label>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Button variant="gold" onClick={savePackage}>Salvar</Button>

@@ -16,6 +16,7 @@ interface AsaasWebhookEvent {
     status: string;
     billingType: string;
     confirmedDate?: string;
+    externalReference?: string;
   };
   subscription?: {
     id: string;
@@ -137,7 +138,34 @@ serve(async (req) => {
       case "PAYMENT_CONFIRMED":
       case "PAYMENT_RECEIVED": {
         if (event.payment) {
-          // Atualizar pagamento no banco
+          const extRef = event.payment.externalReference || "";
+          if (extRef.startsWith("msgpkg:")) {
+            const parts = extRef.split(":");
+            const packageId = parts[1];
+            const barbershopId = parts[2];
+            if (packageId && barbershopId) {
+              const { data: pkg } = await supabase.from("messaging_packages").select("quantity, channel").eq("id", packageId).single();
+              if (pkg) {
+                const { data: existing } = await supabase.from("messaging_credits").select("id, remaining, total_purchased").eq("barbershop_id", barbershopId).eq("channel", pkg.channel).maybeSingle();
+                const addQty = pkg.quantity;
+                if (existing) {
+                  await supabase.from("messaging_credits").update({
+                    remaining: (existing.remaining || 0) + addQty,
+                    total_purchased: (existing.total_purchased || 0) + addQty,
+                    updated_at: new Date().toISOString(),
+                  }).eq("id", existing.id);
+                } else {
+                  await supabase.from("messaging_credits").insert({
+                    barbershop_id: barbershopId,
+                    channel: pkg.channel,
+                    remaining: addQty,
+                    total_purchased: addQty,
+                  });
+                }
+                console.log(`[WEBHOOK] Credited ${addQty} ${pkg.channel} to barbershop ${barbershopId}`);
+              }
+            }
+          }
           const { error: updateError } = await supabase
             .from("payments")
             .update({
@@ -145,12 +173,8 @@ serve(async (req) => {
               paid_at: event.payment.confirmedDate || new Date().toISOString(),
             })
             .eq("asaas_payment_id", event.payment.id);
-
-          if (updateError) {
-            console.error("[WEBHOOK] Failed to update payment:", updateError);
-          } else {
-            console.log(`[WEBHOOK] Payment ${event.payment.id} confirmed`);
-          }
+          if (updateError) console.error("[WEBHOOK] Failed to update payment:", updateError);
+          else console.log(`[WEBHOOK] Payment ${event.payment.id} confirmed`);
         }
         break;
       }
