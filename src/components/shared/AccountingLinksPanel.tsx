@@ -91,7 +91,7 @@ export function AccountingLinksPanel({
       return;
     }
 
-    const { data: accountantId, error: accErr } = await supabase.rpc("get_accountant_id_by_email", {
+    const { data: accountantId, error: accErr } = await db.rpc("get_accountant_id_by_email", {
       _email: accountantEmail.trim(),
     });
 
