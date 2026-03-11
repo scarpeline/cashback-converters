@@ -166,13 +166,66 @@ serve(async (req) => {
               }
             }
           }
+          // Validar que o pagamento pertence a um contexto comercial válido
+          const { data: paymentRecord, error: fetchError } = await supabase
+            .from("payments")
+            .select("id, barbershop_id, client_id, amount, status")
+            .eq("asaas_payment_id", event.payment.id)
+            .single();
+          
+          if (fetchError || !paymentRecord) {
+            console.error(`[WEBHOOK] Payment ${event.payment.id} not found in database`);
+            await logWebhookEvent(
+              supabase,
+              "asaas",
+              environment,
+              "payment_not_found",
+              "error",
+              { payment_id: event.payment.id },
+              "Payment not found in database"
+            );
+            return new Response(JSON.stringify({ error: "Payment not found" }), {
+              status: 404,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          
+          // Validar valor do pagamento para evitar manipulação
+          const paymentValue = Number(event.payment.value);
+          const expectedValue = Number(paymentRecord.amount);
+          if (Math.abs(paymentValue - expectedValue) > 0.01) {
+            console.error(`[WEBHOOK] Payment value mismatch: expected ${expectedValue}, got ${paymentValue}`);
+            await logWebhookEvent(
+              supabase,
+              "asaas",
+              environment,
+              "value_mismatch",
+              "error",
+              { payment_id: event.payment.id, expected: expectedValue, received: paymentValue },
+              "Payment value mismatch"
+            );
+            return new Response(JSON.stringify({ error: "Payment value mismatch" }), {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          
+          // Validar que o pagamento não está em estado final
+          if (paymentRecord.status === "paid" || paymentRecord.status === "refunded") {
+            console.log(`[WEBHOOK] Payment ${event.payment.id} already in final state: ${paymentRecord.status}`);
+            return new Response(JSON.stringify({ already_processed: true }), {
+              status: 200,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          
           const { error: updateError } = await supabase
             .from("payments")
             .update({
               status: "paid",
               paid_at: event.payment.confirmedDate || new Date().toISOString(),
             })
-            .eq("asaas_payment_id", event.payment.id);
+            .eq("id", paymentRecord.id);
           if (updateError) console.error("[WEBHOOK] Failed to update payment:", updateError);
           else console.log(`[WEBHOOK] Payment ${event.payment.id} confirmed`);
         }
