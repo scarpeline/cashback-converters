@@ -165,8 +165,10 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
 
   // ===== FETCH DATA =====
 
+  const db = supabase as any;
+
   const fetchRevenue = useCallback(async () => {
-    const { data } = await supabase
+    const { data } = await db
       .from("monthly_revenue")
       .select("*")
       .eq("barbershop_id", barbershopId)
@@ -176,7 +178,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   }, [barbershopId, yearMonth]);
 
   const fetchTaxes = useCallback(async () => {
-    const { data } = await supabase
+    const { data } = await db
       .from("taxes")
       .select("*")
       .eq("barbershop_id", barbershopId)
@@ -186,7 +188,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   }, [barbershopId, yearMonth]);
 
   const fetchAlerts = useCallback(async () => {
-    const { data } = await supabase
+    const { data } = await db
       .from("fiscal_alerts")
       .select("*")
       .eq("barbershop_id", barbershopId)
@@ -197,7 +199,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   }, [barbershopId]);
 
   const fetchChecklist = useCallback(async () => {
-    const { data } = await supabase
+    const { data } = await db
       .from("fiscal_checklist_items")
       .select("*")
       .eq("barbershop_id", barbershopId)
@@ -207,7 +209,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   }, [barbershopId, yearMonth]);
 
   const fetchScore = useCallback(async () => {
-    const { data } = await supabase
+    const { data } = await db
       .from("fiscal_scores")
       .select("*")
       .eq("barbershop_id", barbershopId)
@@ -217,7 +219,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   }, [barbershopId, yearMonth]);
 
   const fetchCalendar = useCallback(async () => {
-    const { data } = await supabase
+    const { data } = await db
       .from("fiscal_calendar")
       .select("*")
       .eq("is_active", true)
@@ -226,7 +228,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
   }, []);
 
   const fetchBarbershopRegime = useCallback(async () => {
-    const { data } = await supabase
+    const { data } = await db
       .from("barbershops")
       .select("tax_regime")
       .eq("id", barbershopId)
