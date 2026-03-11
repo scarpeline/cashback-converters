@@ -15,6 +15,7 @@ import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import { formatCpfCnpjBR } from "@/lib/input-masks";
 import { AccountingDocumentsPanel } from "@/components/shared/AccountingDocumentsPanel";
+import { AccountingLinksPanel } from "@/components/shared/AccountingLinksPanel";
 
 const ContadorDashboard = () => {
   const { profile, user, signOut, roles } = useAuth();
@@ -72,6 +73,7 @@ const ContadorDashboard = () => {
     { name: "Serviços e Valores", href: `${basePath}/servicos`, icon: DollarSign },
     { name: "Pedidos de Serviço", href: `${basePath}/pedidos`, icon: ClipboardList },
     { name: "Empresas", href: `${basePath}/empresas`, icon: Building2 },
+    { name: "Vínculos", href: `${basePath}/vinculos`, icon: Building2 },
     { name: "Declarações", href: `${basePath}/declaracoes`, icon: FileText },
     { name: "Meus Ganhos", href: `${basePath}/ganhos`, icon: DollarSign },
     { name: "Conta Bancária", href: `${basePath}/conta-bancaria`, icon: CreditCard },
@@ -123,6 +125,7 @@ const ContadorDashboard = () => {
             <Route path="servicos" element={<ServicosContabeisPage />} />
             <Route path="pedidos" element={<PedidosServicoPage />} />
             <Route path="empresas" element={<EmpresasPage />} />
+            <Route path="vinculos" element={<AccountingLinksPanel mode="accountant" />} />
             <Route path="declaracoes" element={<DeclaracoesPage />} />
             <Route path="ganhos" element={<GanhosPage />} />
             <Route path="conta-bancaria" element={<ContaBancariaPage />} />
