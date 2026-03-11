@@ -146,7 +146,7 @@ export function AccountingTaxesPanel({
       return;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("accounting_tax_guides")
       .select("id,barbershop_id,tax_type,reference_period,due_date,amount,status,guide_document_id,notes,created_at")
       .eq("barbershop_id", effectiveBarbershopId)
