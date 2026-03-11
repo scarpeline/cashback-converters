@@ -76,7 +76,7 @@ export function AccountingMessagesPanel({
       return;
     }
 
-    const { data: linkRows, error: linksErr } = await supabase
+    const { data: linkRows, error: linksErr } = await (supabase as any)
       .from("accountant_barbershop_links")
       .select("barbershop_id, barbershops(name)")
       .eq("accountant_id", accountantId)
@@ -109,7 +109,7 @@ export function AccountingMessagesPanel({
       return;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("accounting_messages")
       .select("id,barbershop_id,accountant_id,sender_user_id,sender_role,body,created_at")
       .eq("barbershop_id", effectiveBarbershopId)
@@ -185,7 +185,7 @@ export function AccountingMessagesPanel({
       created_at: new Date().toISOString(),
     };
 
-    const { error } = await supabase.from("accounting_messages").insert(payload as never);
+    const { error } = await (supabase as any).from("accounting_messages").insert(payload as never);
 
     setSending(false);
 

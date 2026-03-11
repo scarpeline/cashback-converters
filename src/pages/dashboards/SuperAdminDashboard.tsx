@@ -729,7 +729,7 @@ const ServicosContabeisAdminPage = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchServices = () => {
-    supabase.from("fiscal_service_types").select("*").order("service_type").then(({ data }) => {
+    (supabase as any).from("fiscal_service_types").select("*").order("service_type").then(({ data }: any) => {
       setServices((data || []) as unknown as FiscalServiceType[]);
       setLoading(false);
     });
@@ -756,7 +756,7 @@ const ServicosContabeisAdminPage = () => {
         updated_at: new Date().toISOString()
       }
       : { status: "rejected", proposed_price: null, proposed_required_fields: null, proposed_by: null, proposed_at: null, updated_at: new Date().toISOString() };
-    const { error } = await supabase.from("fiscal_service_types").update(update as never).eq("id", id);
+    const { error } = await (supabase as any).from("fiscal_service_types").update(update as never).eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success(approved ? "Alteração aprovada e disponível para usuários." : "Alteração rejeitada.");
     fetchServices();

@@ -112,7 +112,7 @@ export function AccountingTaxesPanel({
       return;
     }
 
-    const { data: linkRows, error: linksErr } = await supabase
+    const { data: linkRows, error: linksErr } = await (supabase as any)
       .from("accountant_barbershop_links")
       .select("barbershop_id, barbershops(name)")
       .eq("accountant_id", accountantId)
@@ -145,7 +145,7 @@ export function AccountingTaxesPanel({
       return;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("accounting_tax_guides")
       .select("id,barbershop_id,tax_type,reference_period,due_date,amount,status,guide_document_id,notes,created_at")
       .eq("barbershop_id", effectiveBarbershopId)
@@ -207,7 +207,7 @@ export function AccountingTaxesPanel({
       updated_at: new Date().toISOString(),
     };
 
-    const { error } = await supabase.from("accounting_tax_guides").insert(payload as never);
+    const { error } = await (supabase as any).from("accounting_tax_guides").insert(payload as never);
 
     setSaving(false);
 
@@ -228,7 +228,7 @@ export function AccountingTaxesPanel({
   const updateGuideStatus = async (id: string, next: TaxGuideStatus) => {
     setSaving(true);
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("accounting_tax_guides")
       .update({ status: next, updated_at: new Date().toISOString() })
       .eq("id", id);

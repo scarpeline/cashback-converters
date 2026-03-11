@@ -47,7 +47,7 @@ export function AccountingLinksPanel({
   const fetchLinks = async () => {
     setLoading(true);
 
-    let query = supabase
+    let query = (supabase as any)
       .from("accountant_barbershop_links")
       .select("id, barbershop_id, accountant_id, status, requested_at, accepted_at, revoked_at")
       .order("requested_at", { ascending: false });
@@ -67,7 +67,7 @@ export function AccountingLinksPanel({
       return;
     }
 
-    setLinks((data || []) as LinkRow[]);
+    setLinks((data || []) as unknown as LinkRow[]);
   };
 
   useEffect(() => {
@@ -106,7 +106,7 @@ export function AccountingLinksPanel({
       return;
     }
 
-    const { error: insErr } = await supabase.from("accountant_barbershop_links").insert({
+    const { error: insErr } = await (supabase as any).from("accountant_barbershop_links").insert({
       barbershop_id: barbershopId,
       accountant_id: accountantId,
       status: "pending",
@@ -127,7 +127,7 @@ export function AccountingLinksPanel({
   };
 
   const acceptLink = async (linkId: string) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("accountant_barbershop_links")
       .update({ status: "active", accepted_at: new Date().toISOString() })
       .eq("id", linkId)
@@ -143,7 +143,7 @@ export function AccountingLinksPanel({
   };
 
   const revokeLink = async (linkId: string) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("accountant_barbershop_links")
       .update({ status: "revoked", revoked_at: new Date().toISOString() })
       .eq("id", linkId);

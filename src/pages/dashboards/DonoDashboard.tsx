@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { useBarbershop } from "@/hooks/useBarbershop";
+// useBarbershop is defined locally below
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 import { AccountingDocumentsPanel } from "@/components/shared/AccountingDocumentsPanel";
 import { AccountingLinksPanel } from "@/components/shared/AccountingLinksPanel";
@@ -18,6 +18,7 @@ import { SocialProofManager } from "@/components/social-proof/SocialProofManager
 import { SocialProofPopup } from "@/components/social-proof/SocialProofPopup";
 import { DonoOnboarding } from "@/components/onboarding/DonoOnboarding";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -1252,7 +1253,7 @@ const VitrinePage = () => {
 
   useEffect(() => {
     if (!barbershop?.id) return;
-    supabase.from("stock_items").select("*").eq("barbershop_id", barbershop.id).eq("show_in_vitrine", true).eq("is_active", true).order("name").then(({ data }) => setProducts(data || []));
+    (supabase as any).from("stock_items").select("*").eq("barbershop_id", barbershop.id).eq("show_in_vitrine", true).eq("is_active", true).order("name").then(({ data }: any) => setProducts(data || []));
     supabase.from("raffles").select("*").eq("barbershop_id", barbershop.id).eq("status", "open").order("created_at", { ascending: false }).then(({ data }) => setRaffles(data || []));
   }, [barbershop?.id]);
 
@@ -1773,7 +1774,7 @@ const NotificacoesDonoPage = () => {
               <Input placeholder="https://..." value={bookingLink} onChange={e => setBookingLink(e.target.value)} />
               <Button size="sm" variant="gold" disabled={savingBookingLink} onClick={async () => {
                 setSavingBookingLink(true);
-                const { error } = await supabase.from("barbershops").update({ booking_link: bookingLink || null }).eq("id", barbershop!.id);
+                const { error } = await (supabase as any).from("barbershops").update({ booking_link: bookingLink || null }).eq("id", barbershop!.id);
                 setSavingBookingLink(false);
                 if (!error) { toast.success("Link salvo!"); refetchBarbershop(); }
                 else toast.error("Erro ao salvar.");

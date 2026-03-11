@@ -211,12 +211,12 @@ const ServicosContabeisPage = () => {
   const { user } = useAuth();
   const [services, setServices] = useState<FiscalServiceType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<null | (Partial<FiscalServiceType> & { required_fields?: string | FiscalServiceRequiredField[] })>(null);
+  const [editing, setEditing] = useState<any>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const fetchServices = async () => {
-    const { data } = await supabase.from("fiscal_service_types").select("*").order("service_type");
+    const { data } = await (supabase as any).from("fiscal_service_types").select("*").order("service_type");
     setServices((data || []) as unknown as FiscalServiceType[]);
     setLoading(false);
   };
@@ -236,7 +236,7 @@ const ServicosContabeisPage = () => {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("fiscal_service_types").update({
+    const { error } = await (supabase as any).from("fiscal_service_types").update({
       status: "pending",
       proposed_price: Number(editing.price),
       proposed_required_fields: parsedRf,
@@ -291,7 +291,7 @@ const ServicosContabeisPage = () => {
       proposed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    const { error } = await supabase.from("fiscal_service_types").insert(payload as never);
+    const { error } = await (supabase as any).from("fiscal_service_types").insert(payload as never);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Novo serviço enviado para aprovação do Super Admin.");
