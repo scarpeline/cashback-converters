@@ -18,14 +18,12 @@ type Barbershop = {
   address: string | null;
   phone: string | null;
   description: string | null;
-  booking_link: string | null;
 };
 
 type Product = {
   id: string;
   name: string;
   sell_price: number;
-  image_url: string | null;
   quantity: number;
 };
 
@@ -35,7 +33,6 @@ type Raffle = {
   description: string | null;
   ticket_price: number;
   credit_award: number;
-  image_url: string | null;
   status: string;
 };
 
@@ -52,7 +49,7 @@ export default function VitrinePage() {
     (async () => {
       const { data: shop } = await supabase
         .from("barbershops")
-        .select("id, name, address, phone, description, booking_link")
+        .select("id, name, address, phone, description")
         .eq("id", barbershopId)
         .maybeSingle();
 
@@ -60,8 +57,8 @@ export default function VitrinePage() {
       setBarbershop(shop as Barbershop);
 
       const [prodsRes, rafflesRes] = await Promise.all([
-        supabase.from("stock_items").select("id, name, sell_price, image_url, quantity").eq("barbershop_id", barbershopId).eq("show_in_vitrine", true).eq("is_active", true).order("name"),
-        supabase.from("raffles").select("id, name, description, ticket_price, credit_award, image_url, status").eq("barbershop_id", barbershopId).eq("status", "open").order("created_at", { ascending: false }),
+        supabase.from("stock_items").select("id, name, sell_price, quantity").eq("barbershop_id", barbershopId).eq("is_active", true).order("name"),
+        supabase.from("raffles").select("id, name, description, ticket_price, credit_award, status").eq("barbershop_id", barbershopId).eq("status", "open").order("created_at", { ascending: false }),
       ]);
 
       setProducts((prodsRes.data || []) as Product[]);
