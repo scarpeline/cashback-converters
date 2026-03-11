@@ -67,7 +67,7 @@ export function AccountingLinksPanel({
       return;
     }
 
-    setLinks((data || []) as LinkRow[]);
+    setLinks((data || []) as unknown as LinkRow[]);
   };
 
   useEffect(() => {
