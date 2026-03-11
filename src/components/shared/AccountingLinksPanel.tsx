@@ -143,7 +143,7 @@ export function AccountingLinksPanel({
   };
 
   const revokeLink = async (linkId: string) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("accountant_barbershop_links")
       .update({ status: "revoked", revoked_at: new Date().toISOString() })
       .eq("id", linkId);
