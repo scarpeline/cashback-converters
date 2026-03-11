@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { useBarbershop } from "@/hooks/useBarbershop";
+// useBarbershop is defined locally below
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 import { AccountingDocumentsPanel } from "@/components/shared/AccountingDocumentsPanel";
 import { AccountingLinksPanel } from "@/components/shared/AccountingLinksPanel";
