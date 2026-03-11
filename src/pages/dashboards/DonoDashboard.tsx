@@ -1253,7 +1253,7 @@ const VitrinePage = () => {
 
   useEffect(() => {
     if (!barbershop?.id) return;
-    supabase.from("stock_items").select("*").eq("barbershop_id", barbershop.id).eq("show_in_vitrine", true).eq("is_active", true).order("name").then(({ data }) => setProducts(data || []));
+    (supabase as any).from("stock_items").select("*").eq("barbershop_id", barbershop.id).eq("show_in_vitrine", true).eq("is_active", true).order("name").then(({ data }: any) => setProducts(data || []));
     supabase.from("raffles").select("*").eq("barbershop_id", barbershop.id).eq("status", "open").order("created_at", { ascending: false }).then(({ data }) => setRaffles(data || []));
   }, [barbershop?.id]);
 
