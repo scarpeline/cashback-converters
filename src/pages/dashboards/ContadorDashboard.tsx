@@ -211,7 +211,7 @@ const ServicosContabeisPage = () => {
   const { user } = useAuth();
   const [services, setServices] = useState<FiscalServiceType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<null | (Partial<FiscalServiceType> & { required_fields?: string | FiscalServiceRequiredField[] })>(null);
+  const [editing, setEditing] = useState<any>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
 
