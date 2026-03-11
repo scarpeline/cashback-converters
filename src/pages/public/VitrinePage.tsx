@@ -85,7 +85,7 @@ export default function VitrinePage() {
     );
   }
 
-  const bookingUrl = barbershop.booking_link || `/app`;
+  const bookingUrl = `/app`;
 
   return (
     <div className="min-h-screen bg-background">
