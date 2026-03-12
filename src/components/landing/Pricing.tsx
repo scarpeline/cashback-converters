@@ -16,9 +16,9 @@ const allFeatures = [
 ];
 
 const plans = [
-  { name: "Mensal", description: "Ideal para começar", prices: [{ label: "1º mês", price: "19,90" }, { label: "A partir do 2º mês", price: "29,90" }], features: allFeatures, popular: false, planIndex: 0, showTrialButton: true },
-  { name: "Trimestral", description: "Economize 11%", price: "79,90", priceLabel: "/3 meses", monthlyEquivalent: "26,63/mês", features: allFeatures, popular: true, planIndex: 1, showTrialButton: false },
-  { name: "Anual", description: "Economize 44%", price: "199,90", priceLabel: "/ano", monthlyEquivalent: "16,65/mês", features: allFeatures, popular: false, bestValue: true, planIndex: 2, showTrialButton: false },
+  { name: "Mensal", description: "Perfeito para começar", prices: [{ label: "1º mês", price: "19,90" }, { label: "A partir do 2º mês", price: "29,90" }], features: allFeatures, popular: false, planIndex: 0, showTrialButton: true },
+  { name: "Trimestral", description: "Economia inteligente", price: "79,90", priceLabel: "/3 meses", monthlyEquivalent: "26,63/mês", features: allFeatures, popular: true, planIndex: 1, showTrialButton: false },
+  { name: "Anual", description: "Máximo de economia", price: "199,90", priceLabel: "/ano", monthlyEquivalent: "16,65/mês", features: allFeatures, popular: false, bestValue: true, planIndex: 2, showTrialButton: false },
 ];
 
 const Pricing = () => {
@@ -29,12 +29,12 @@ const Pricing = () => {
       <div className="container relative z-10 mx-auto">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="inline-block px-4 py-1 rounded-full text-sm font-medium mb-4" style={{ background: "hsl(42 100% 50% / 0.1)", color: "hsl(42 100% 55%)" }}>
-            Preços Simples
+            Preços que Cabem no seu Bolso
           </span>
           <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4" style={{ color: "hsl(0 0% 98%)" }}>
-            Comece grátis,{" "}<span className="text-gradient-gold">cresça sem limites</span>
+            Comece grátis,{" "}<span className="text-gradient-gold">fature mais</span>
           </h2>
-          <p className="text-lg" style={{ color: "hsl(220 9% 60%)" }}>7 dias grátis. Sem cartão de crédito.</p>
+          <p className="text-lg" style={{ color: "hsl(220 9% 60%)" }}>7 dias grátis. Sem cartão. Sem compromisso. Resultados imediatos.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
@@ -115,7 +115,7 @@ const Pricing = () => {
             <h3 className="text-center font-display text-lg font-bold mb-2" style={{ color: "hsl(0 0% 95%)" }}>
               Taxas por Método de Pagamento
             </h3>
-            <p className="text-center text-sm mb-6" style={{ color: "hsl(220 9% 55%)" }}>Taxas transparentas e competitivas</p>
+            <p className="text-center text-sm mb-6" style={{ color: "hsl(220 9% 55%)" }}>Taxas transparentes e competitivas</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
@@ -145,6 +145,34 @@ const Pricing = () => {
             <p className="text-center text-xs mt-6" style={{ color: "hsl(220 9% 50%)" }}>
               🔒 Pagamentos processados de forma segura via <span className="font-medium" style={{ color: "hsl(42 100% 55%)" }}>ASAAS</span>.
             </p>
+          </div>
+        </div>
+
+        {/* Partnership CTA */}
+        <div className="max-w-4xl mx-auto mt-20">
+          <div className="rounded-2xl p-8 lg:p-12 text-center" style={{ background: "linear-gradient(135deg, hsl(212 78% 31%), hsl(212 78% 51%))", border: "2px solid hsl(38 92% 50%)" }}>
+            <div className="text-4xl mb-4">🚀</div>
+            <h3 className="font-display text-2xl lg:text-3xl font-bold mb-4" style={{ color: "hsl(0 0% 100%)" }}>
+              Quer mais do que um sistema?
+            </h3>
+            <p className="text-lg mb-6 max-w-2xl mx-auto" style={{ color: "hsl(0 0% 100% / 80%)" }}>
+              Torne-se um parceiro e ganhe comissões recorrentes indicando o melhor SaaS para barbearias do Brasil.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/seja-um-franqueado">
+                <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-blue-600 font-bold">
+                  🏆 Quero Ser Franqueado
+                </Button>
+              </Link>
+              <Link to="/seja-um-franqueado">
+                <Button variant="ghost" size="lg" className="text-white/70 hover:text-white hover:bg-white/10">
+                  👥 Ver Modelos de Parceria
+                </Button>
+              </Link>
+            </div>
+            <div className="mt-6 text-sm" style={{ color: "hsl(0 0% 100% / 60%)" }}>
+              💰 Ganhe até 65% de comissão • Construa sua rede • Suporte completo
+            </div>
           </div>
         </div>
       </div>

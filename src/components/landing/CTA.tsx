@@ -15,40 +15,63 @@ const CTA = () => {
           </div>
 
           <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4" style={{ color: "hsl(0 0% 98%)" }}>
-            Pronto para{" "}<span className="text-gradient-gold">transformar</span>{" "}seu negócio?
+            Pronto para{" "}<span className="text-gradient-gold">dominar</span>{" "}o mercado?
           </h2>
           
           <p className="text-lg mb-8 max-w-2xl mx-auto" style={{ color: "hsl(220 9% 60%)" }}>
-            Junte-se a centenas de barbearias que já estão crescendo no automático.
-            Configure em 5 minutos e comece a ver resultados.
+            Junte-se a 500+ barbearias que já faturam mais usando nosso sistema.
+            Comece hoje e tenha uma agenda cheia em 7 dias.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
             <Link to="/login">
               <Button variant="hero" size="xl">
                 Começar 7 Dias Grátis
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
-            <Link to="/afiliado-saas/login">
-              <Button variant="ghost" size="lg" className="text-white/70 hover:text-white hover:bg-white/10">
-                Quero Ser Afiliado
+            <Link to="/seja-um-franqueado">
+              <Button variant="outline" size="lg" className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white">
+                Quero Ser Franqueado
               </Button>
             </Link>
           </div>
 
+          <div className="text-center mb-8">
+            <p className="text-sm" style={{ color: "hsl(220 9% 50%)" }}>
+              Ou transforme-se em um parceiro de sucesso:
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
+              <Link to="/seja-um-franqueado" className="text-sm font-medium hover:text-orange-500 transition-colors" style={{ color: "hsl(220 9% 70%)" }}>
+                🏆 Diretor Franqueado
+              </Link>
+              <Link to="/seja-um-franqueado" className="text-sm font-medium hover:text-orange-500 transition-colors" style={{ color: "hsl(220 9% 70%)" }}>
+                🏪 Franqueado
+              </Link>
+              <Link to="/seja-um-franqueado" className="text-sm font-medium hover:text-orange-500 transition-colors" style={{ color: "hsl(220 9% 70%)" }}>
+                👥 Afiliado
+              </Link>
+            </div>
+          </div>
+
           <div className="flex flex-wrap items-center justify-center gap-8 mt-12 pt-8" style={{ borderTop: "1px solid hsl(222 20% 18%)" }}>
             {[
-              { value: "100%", label: "Seguro" },
-              { value: "24/7", label: "Suporte" },
-              { value: "0", label: "Burocracia" },
-              { value: "∞", label: "Potencial" },
+              { value: "500+", label: "Barbearias Ativas" },
+              { value: "R$2M+", label: "Faturados pelos Clientes" },
+              { value: "24/7", label: "Suporte Prioritário" },
+              { value: "7 dias", label: "Teste Grátis" },
             ].map(({ value, label }) => (
               <div key={label} className="text-center">
                 <div className="text-2xl font-display font-bold text-gradient-gold">{value}</div>
                 <div className="text-xs" style={{ color: "hsl(220 9% 50%)" }}>{label}</div>
               </div>
             ))}
+          </div>
+
+          <div className="mt-8 text-center">
+            <p className="text-sm font-medium" style={{ color: "hsl(38 92% 50%)" }}>
+              ⚡ Resultados comprovados • Sem risco • Cancelamento a qualquer momento
+            </p>
           </div>
         </div>
       </div>
