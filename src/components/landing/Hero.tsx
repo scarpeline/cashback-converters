@@ -5,17 +5,17 @@ import logo from "@/assets/logo.png";
 
 const Hero = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-2 sm:px-4 py-20" style={{ background: "linear-gradient(135deg, hsl(25 95% 50%) 0%, hsl(35 85% 45%) 25%, hsl(42 100% 55%) 50%, hsl(45 90% 50%) 75%, hsl(38 95% 48%) 100%)" }}>
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-2 sm:px-4 py-20" style={{ background: "linear-gradient(135deg, hsl(212 78% 31%) 0%, hsl(212 78% 41%) 25%, hsl(212 78% 51%) 50%, hsl(212 78% 61%) 75%, hsl(212 78% 31%) 100%)" }}>
       {/* Glowing orbs */}
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, hsl(0 0% 100% / 0.15), transparent 70%)" }} />
-      <div className="absolute bottom-1/4 left-1/4 w-80 h-80 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, hsl(42 100% 60% / 0.15), transparent 70%)" }} />
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, hsl(38 92% 50% / 0.15), transparent 70%)" }} />
+      <div className="absolute bottom-1/4 left-1/4 w-80 h-80 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, hsl(0 0% 100% / 0.15), transparent 70%)" }} />
 
       <div className="container relative z-10 mx-auto px-2 sm:px-0">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 sm:px-6 py-3 rounded-full border mb-8 sm:mb-10 animate-fade-in" style={{ background: "hsl(0 0% 0% / 0.3)", borderColor: "hsl(0 0% 100% / 0.4)" }}>
-            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: "hsl(0 0% 100%)" }} />
-            <span className="text-lg sm:text-xl lg:text-2xl font-bold" style={{ color: "hsl(0 0% 100%)" }}>SaaS para Barbearias e Salões</span>
+          <div className="inline-flex items-center gap-2 px-4 sm:px-6 py-3 rounded-full border mb-8 sm:mb-10 animate-fade-in" style={{ background: "hsl(212 78% 95% / 0.9)", borderColor: "hsl(38 92% 50%)" }}>
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: "hsl(38 92% 50%)" }} />
+            <span className="text-lg sm:text-xl lg:text-2xl font-bold" style={{ color: "hsl(212 78% 31%)" }}>SaaS para Barbearias e Salões</span>
           </div>
 
           {/* Headline */}
@@ -24,7 +24,7 @@ const Hero = () => {
             <br className="sm:hidden" />
             <span className="text-4xl sm:text-5xl lg:text-7xl xl:text-8xl"> e tenha uma</span>
             <br className="sm:hidden" />
-            <span className="text-4xl sm:text-5xl lg:text-7xl xl:text-8xl font-black" style={{ color: "hsl(0 0% 0%)", textShadow: "3px 3px 6px rgba(255,255,255,0.5)" }}>agenda sempre cheia.</span>
+            <span className="text-4xl sm:text-5xl lg:text-7xl xl:text-8xl font-black" style={{ color: "hsl(38 92% 50%)", textShadow: "3px 3px 6px rgba(0,0,0,0.5)" }}>agenda sempre cheia.</span>
           </h1>
 
           {/* Logo */}
@@ -38,7 +38,7 @@ const Hero = () => {
             <span className="text-xl sm:text-2xl lg:text-3xl">Gestão completa com agendamento inteligente,</span>
             <br className="sm:hidden" />
             <span className="text-xl sm:text-2xl lg:text-3xl"> automação de{" "}</span>
-            <span className="font-black text-xl sm:text-2xl lg:text-3xl" style={{ color: "hsl(0 0% 0%)", textShadow: "2px 2px 4px rgba(255,255,255,0.5)" }}>marketing e controle financeiro.</span>
+            <span className="font-black text-xl sm:text-2xl lg:text-3xl" style={{ color: "hsl(38 92% 50%)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>marketing e controle financeiro.</span>
           </p>
 
           {/* Copy */}
@@ -46,13 +46,13 @@ const Hero = () => {
             <span className="text-lg sm:text-xl lg:text-2xl">Reduza o trabalho manual, aumente a ocupação da agenda</span>
             <br className="sm:hidden" />
             <span className="text-lg sm:text-xl lg:text-2xl"> e tenha o{" "}</span>
-            <strong className="text-lg sm:text-xl lg:text-2xl font-black" style={{ color: "hsl(0 0% 0%)", textShadow: "2px 2px 4px rgba(255,255,255,0.5)" }}>controle completo do seu negócio em um único sistema.</strong>
+            <strong className="text-lg sm:text-xl lg:text-2xl font-black" style={{ color: "hsl(0 0% 100%)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>controle completo do seu negócio em um único sistema.</strong>
           </p>
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 animate-fade-in" style={{ animationDelay: "0.4s" }}>
             <Link to="/login">
-              <Button variant="hero" size="lg" sm:size="xl" className="w-full sm:w-auto text-lg sm:text-xl lg:text-2xl px-8 py-4 font-bold" style={{ background: "hsl(0 0% 0%)", color: "hsl(42 100% 55%)", border: "2px solid hsl(42 100% 55%)" }}>
+              <Button variant="hero" size="lg" sm:size="xl" className="w-full sm:w-auto text-lg sm:text-xl lg:text-2xl px-8 py-4 font-bold" style={{ background: "hsl(38 92% 50%)", color: "hsl(0 0% 100%)", border: "2px solid hsl(38 92% 50%)" }}>
                 <span className="text-lg sm:text-xl lg:text-2xl">Testar Sistema</span>
                 <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
               </Button>
@@ -68,22 +68,22 @@ const Hero = () => {
           <div className="grid grid-cols-3 gap-4 sm:gap-8 mt-12 sm:mt-16 pt-8 sm:pt-10 animate-fade-in" style={{ animationDelay: "0.5s", borderTop: "2px solid hsl(0 0% 100% / 0.3)" }}>
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" style={{ color: "hsl(0 0% 100%)" }} />
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-black" style={{ color: "hsl(0 0% 0%)", textShadow: "2px 2px 4px rgba(255,255,255,0.5)" }}>500+</span>
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" style={{ color: "hsl(38 92% 50%)" }} />
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-black" style={{ color: "hsl(0 0% 100%)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>500+</span>
               </div>
               <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "hsl(0 0% 100%)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>Barbearias ativas</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
-                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" style={{ color: "hsl(0 0% 100%)" }} />
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-black" style={{ color: "hsl(0 0% 0%)", textShadow: "2px 2px 4px rgba(255,255,255,0.5)" }}>60%</span>
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" style={{ color: "hsl(38 92% 50%)" }} />
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-black" style={{ color: "hsl(0 0% 100%)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>60%</span>
               </div>
               <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "hsl(0 0% 100%)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>Economia de tempo</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" style={{ color: "hsl(0 0% 100%)" }} />
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-black" style={{ color: "hsl(0 0% 0%)", textShadow: "2px 2px 4px rgba(255,255,255,0.5)" }}>7 dias</span>
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" style={{ color: "hsl(38 92% 50%)" }} />
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-black" style={{ color: "hsl(0 0% 100%)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>7 dias</span>
               </div>
               <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "hsl(0 0% 100%)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>Teste grátis</p>
             </div>

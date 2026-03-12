@@ -16,6 +16,8 @@ import { Loader2 } from "lucide-react";
 
 // Lazy pages
 const Index = lazy(() => import("./pages/Index"));
+const PartnershipPage = lazy(() => import("./pages/public/PartnershipPage"));
+const DemoPage = lazy(() => import("./pages/public/DemoPage"));
 const NotFoundPage = lazy(() => import("./pages/public/NotFoundPage"));
 const PublicLoginPage = lazy(() => import("./pages/public/LoginPage"));
 const AfiliadoSaasLoginPage = lazy(() => import("./pages/afiliado-saas/LoginPage"));
@@ -46,6 +48,8 @@ function AppRoutes() {
       <Routes>
         {/* ========== PUBLIC ========== */}
         <Route path="/" element={<Index />} />
+        <Route path="/seja-um-franqueado" element={<PartnershipPage />} />
+        <Route path="/demo" element={<DemoPage />} />
         <Route path="/404" element={<NotFoundPage />} />
         <Route path="/simulacao-pagamento" element={<PaymentSimulationPage />} />
         <Route path="/install" element={<InstallPage />} />
