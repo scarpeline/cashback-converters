@@ -47,46 +47,46 @@ export function FranchiseSection() {
   ];
 
   return (
-    <section id="franchise" className="py-24 px-4 relative overflow-hidden" style={{ background: "linear-gradient(180deg, hsl(222 47% 6%) 0%, hsl(222 30% 10%) 100%)" }}>
+    <section id="franchise" className="py-24 px-4 relative overflow-hidden" style={{ background: "linear-gradient(135deg, hsl(35 85% 55%) 0%, hsl(42 100% 50%) 25%, hsl(38 95% 48%) 50%, hsl(45 90% 45%) 75%, hsl(32 88% 52%) 100%)" }}>
       <div className="container relative z-10 mx-auto">
         {/* Header */}
         <div className="text-center max-w-4xl mx-auto mb-16">
-          <Badge className="mb-4" style={{ background: "hsl(25 95% 50% / 0.2)", color: "hsl(25 95% 55%)" }}>
+          <Badge className="mb-6 px-6 py-3 text-lg font-bold" style={{ background: "hsl(0 0% 0% / 0.3)", borderColor: "hsl(0 0% 100% / 0.4)", color: "hsl(0 0% 100%)" }}>
             OPORTUNIDADES DE NEGÓCIO
           </Badge>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4" style={{ color: "hsl(0 0% 98%)" }}>
+          <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black mb-6" style={{ color: "hsl(0 0% 100%)", textShadow: "2px 2px 4px rgba(0,0,0,0.3)" }}>
             Seja um{" "}
-            <span className="text-gradient-gold">Franqueado ou Master</span>
+            <span className="font-black" style={{ color: "hsl(0 0% 0%)", textShadow: "3px 3px 6px rgba(255,255,255,0.5)" }}>Franqueado ou Master</span>
             {" "}e construa seu império
           </h2>
-          <p className="text-lg lg:text-xl" style={{ color: "hsl(220 9% 60%)" }}>
+          <p className="text-xl sm:text-2xl lg:text-3xl font-semibold" style={{ color: "hsl(0 0% 100%)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>
             Transforme-se em um empreendedor do setor de beleza com nosso sistema completo de gestão
           </p>
         </div>
 
         {/* Tabs */}
         <div className="flex justify-center mb-12">
-          <div className="inline-flex rounded-lg border border-orange-500/30 p-1" style={{ background: "hsl(222 30% 12%)" }}>
+          <div className="inline-flex rounded-lg border-2 p-1" style={{ borderColor: "hsl(0 0% 100% / 0.4)", background: "hsl(0 0% 0% / 0.2)" }}>
             <button
-              className={`px-6 py-3 rounded-md font-medium transition-all ${
+              className={`px-8 py-4 rounded-md font-bold text-lg sm:text-xl transition-all ${
                 activeTab === 'franchise'
-                  ? 'bg-orange-500 text-white'
-                  : 'text-muted-foreground hover:text-white'
+                  ? 'bg-black text-orange-500 shadow-lg'
+                  : 'text-white hover:bg-white/10'
               }`}
               onClick={() => setActiveTab('franchise')}
             >
-              <Crown className="w-4 h-4 mr-2" />
+              <Crown className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
               Franqueado
             </button>
             <button
-              className={`px-6 py-3 rounded-md font-medium transition-all ${
+              className={`px-8 py-4 rounded-md font-bold text-lg sm:text-xl transition-all ${
                 activeTab === 'master'
-                  ? 'bg-orange-500 text-white'
-                  : 'text-muted-foreground hover:text-white'
+                  ? 'bg-black text-orange-500 shadow-lg'
+                  : 'text-white hover:bg-white/10'
               }`}
               onClick={() => setActiveTab('master')}
             >
-              <Award className="w-4 h-4 mr-2" />
+              <Award className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
               Master
             </button>
           </div>
