@@ -129,7 +129,7 @@ const ContabeisHubAfiliadoPage = () => {
       {tab === "pedidos" && <PedidoContabilPanel />}
       {tab === "assinatura" && <AssinaturaContabilPanel />}
       {tab === "chat" && chatContadorId && user && (
-        <ChatContadorPanel contadorId={chatContadorId} modo="usuario" />
+        <UniversalChatPanel mode="usuario" contadorId={chatContadorId} userType="afiliado" />
       )}
       {tab === "chat" && !chatContadorId && (
         <div className="text-center py-12">

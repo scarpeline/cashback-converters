@@ -1,0 +1,154 @@
+/* ============================================
+   SISTEMA DE DESIGN GLOBAL - SALÃO CASHBACK
+   ============================================ */
+
+:root {
+  /* CORES PRINCIPAIS */
+  --primary-blue: #0A2540;
+  --secondary-blue: #1F3A5F;
+  --accent-orange: #FF7A00;
+
+  /* BACKGROUNDS */
+  --background-dark: #020617;
+  --background-light: #ffffff;
+  --background-card: linear-gradient(145deg, #0A2540, #1F3A5F);
+
+  /* TEXTOS */
+  --text-light: #F8FAFC;
+  --text-dark: #0F172A;
+  --text-muted: #64748B;
+
+  /* BORDAS E CONTORNOS */
+  --border-color: #1E293B;
+  --border-glow: 0 0 20px rgba(255, 122, 0, 0.3);
+
+  /* SOMBRA */
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.4);
+
+  /* GRADIENTES */
+  --gradient-hero: linear-gradient(135deg, #0A2540 0%, #1F3A5F 50%, #020617 100%);
+  --gradient-card: linear-gradient(145deg, #0A2540, #1F3A5F);
+  --gradient-button: linear-gradient(135deg, #FF7A00, #ff8f26);
+
+  /* ESPAÇAMENTO */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* TRANSIÇÕES */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}
+
+/* ============================================
+   CLASSES UTILITÁRIAS GLOBAIS
+   ============================================ */
+
+.card-dark {
+  background: var(--gradient-card);
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-normal);
+}
+
+.card-dark:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.button-primary {
+  background: var(--accent-orange);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 12px 24px;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+
+.button-primary:hover {
+  background: #ff8f26;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 122, 0, 0.4);
+}
+
+.text-gradient {
+  background: var(--gradient-button);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.border-glow {
+  border: 1px solid var(--accent-orange);
+  box-shadow: var(--border-glow);
+}
+
+/* ============================================
+   RESET E BASE
+   ============================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background-dark);
+  color: var(--text-light);
+}
+
+/* ============================================
+   ANIMAÇÕES GLOBAIS
+   ============================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.5s ease-out;
+}
+
+/* ============================================
+   RESPONSIVIDADE
+   ============================================ */
+
+@media (max-width: 768px) {
+  :root {
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+  }
+}

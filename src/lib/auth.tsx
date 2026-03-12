@@ -175,62 +175,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================
 
   const fetchUserData = useCallback(async (userId: string): Promise<AppRole[]> => {
+    console.log('[AUTH] Buscando dados do usuário:', userId);
     try {
-      const [profileResult, rolesResult] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", userId),
-      ]);
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-      if (profileResult.error) {
-        logAuthError("Failed to fetch profile", { error: profileResult.error.message });
-      } else if (profileResult.data) {
-        setProfile(profileResult.data as Profile);
+      if (profileError) {
+        console.error('[AUTH] Erro ao buscar profile:', profileError);
+        throw profileError;
       }
 
-      if (rolesResult.error) {
-        logAuthError("Failed to fetch roles", { error: rolesResult.error.message });
-        return [];
+      console.log('[AUTH] Profile encontrado:', !!profileData);
+      setProfile(profileData);
+
+      if (profileData) {
+        console.log('[AUTH] Buscando roles do usuário:', profileData.id);
+        const { data: roleData, error: roleError } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", profileData.id);
+
+        if (roleError) {
+          console.error('[AUTH] Erro ao buscar roles:', roleError);
+          throw roleError;
+        }
+
+        const fetchedRoles = (roleData || []).map(r => r.role as AppRole);
+        console.log('[AUTH] Roles encontradas:', fetchedRoles);
+        setRoles(fetchedRoles);
+
+        if (fetchedRoles.length > 0) {
+          logAuthRole({ role_detectado: fetchedRoles[0] });
+        }
+        return fetchedRoles;
       }
 
-      const fetchedRoles = rolesResult.data?.map(r => r.role as AppRole) || [];
-      setRoles(fetchedRoles);
-      if (fetchedRoles.length > 0) {
-        logAuthRole({ role_detectado: fetchedRoles[0] });
-      }
-      return fetchedRoles;
+      console.log('[AUTH] Nenhum profile encontrado, retornando roles vazias');
+      return [];
     } catch (error) {
+      console.error('[AUTH] Erro crítico no fetchUserData:', error);
       logCriticalError("fetchUserData", error);
       return [];
     }
   }, []);
 
   // ============================================
-  // ROLE BOOTSTRAP (via Edge Function)
+  // ROLE BOOTSTRAP (Simplificado)
   // ============================================
 
   const bootstrapRoles = useCallback(async (sessionUser: User) => {
-    if (roleBootstrapAttemptedRef.current) return;
-    roleBootstrapAttemptedRef.current = true;
-
-    try {
-      const { data, error } = await supabase.functions.invoke("bootstrap-role", {
-        body: { user_id: sessionUser.id, email: sessionUser.email },
-      });
-
-      if (error) {
-        logAuthError("Role bootstrap failed", { error: error.message });
-        logRoleBootstrap(sessionUser.id, null);
-        return;
-      }
-
-      if (data?.role_assigned) {
-        logRoleBootstrap(sessionUser.id, data.role_assigned);
-        logAuthRole({ role_detectado: data.role_assigned as AppRole });
-      }
-    } catch (error) {
-      logCriticalError("bootstrapRoles", error);
+    // Bootstrap simplificado - apenas tenta inferir role do email
+    console.log('[AUTH] Bootstrap simplificado - tentando inferir role do email');
+    
+    const inferredRole = inferRoleFromEmail(sessionUser.email);
+    if (inferredRole) {
+      console.log('[AUTH] Role inferida:', inferredRole);
+      // Tenta atribuir a role inferida
+      await ensureInitialRole(sessionUser);
     }
-  }, []);
+    
+    return;
+  }, [inferRoleFromEmail, ensureInitialRole]);
 
   // ============================================
   // FULL USER LOAD (session -> profile -> roles)
@@ -241,17 +249,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       let fetchedRoles = await fetchUserData(sessionUser.id);
 
-      // Only try bootstrap if no roles found - with 3s timeout to avoid cold-start delays
+      // Bootstrap simplificado para usuários sem roles
       if (fetchedRoles.length === 0 && !roleBootstrapAttemptedRef.current) {
         try {
-          await Promise.race([
-            bootstrapRoles(sessionUser).catch(e => console.warn("Bootstrap soft-failed:", e)),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('bootstrap timeout')), 3000)),
-          ]);
+          console.log('[AUTH] Tentando bootstrap para usuário sem roles');
+          await bootstrapRoles(sessionUser);
+          // Recarregar roles após bootstrap
+          fetchedRoles = await fetchUserData(sessionUser.id);
         } catch (e) {
-          console.warn("Bootstrap timeout/error managed:", e);
+          console.warn('[AUTH] Bootstrap falhou:', e);
         }
-        fetchedRoles = await fetchUserData(sessionUser.id);
       }
 
       if (fetchedRoles.length === 0) {
@@ -358,31 +365,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     const initializeAuth = async () => {
-      // Safety timeout (increased to reduce false-positives on slower networks)
+      console.log('[AUTH] Inicializando autenticação...');
+      
+      // Safety timeout aumentado para 15 segundos para evitar liberação prematura
       const safetyTimer = setTimeout(() => {
         if (isMounted) {
-          console.warn('[AUTH] Safety timeout reached - forcing auth resolved');
+          console.error('[AUTH] Safety timeout atingido - forçando auth resolved');
+          console.log('[AUTH] Estado atual:', {
+            loading,
+            profileLoading,
+            initialLoadComplete,
+            authResolved,
+            user: !!user,
+            roles: roles.length
+          });
           setLoading(false);
           setProfileLoading(false);
           setInitialLoadComplete(true);
           setAuthResolved(true);
         }
-      }, 10000);
+      }, 15000); // Aumentado de 5s para 15s
 
       try {
+        console.log('[AUTH] Buscando sessão existente...');
         const { data: { session: existingSession }, error } = await supabase.auth.getSession();
 
         if (error) {
+          console.error('[AUTH] Erro ao buscar sessão:', error);
           logAuthError("getSession failed", { error: error.message });
         }
         if (!isMounted) return;
 
+        console.log('[AUTH] Sessão encontrada:', !!existingSession);
         logAuthStart({ token_existe: !!existingSession?.access_token });
 
         setSession(existingSession);
         setUser(existingSession?.user ?? null);
 
         const validation = validateSession(existingSession);
+        console.log('[AUTH] Validação da sessão:', validation);
         logAuthValidate({ token_valido: validation.isValid });
 
         if (validation.isExpired) {
@@ -394,9 +415,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // WAIT for roles to load before marking auth as resolved
         if (existingSession?.user && validation.isValid) {
+          console.log('[AUTH] Sessão válida, carregando roles para usuário:', existingSession.user.id);
           currentUserId = existingSession.user.id;
           try {
+            console.log('[AUTH] Iniciando runUserLoad...');
             const fetchedRoles = await runUserLoad(existingSession.user, true);
+            console.log('[AUTH] Roles carregadas:', fetchedRoles);
             logDebugSummary('Initial Auth Complete', {
               user_id: existingSession.user.id,
               email: existingSession.user.email,
@@ -404,8 +428,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               roles: fetchedRoles,
             });
           } catch (e) {
+            console.error('[AUTH] Erro no runUserLoad durante init:', e);
             console.warn('[AUTH] runUserLoad failed during init:', e);
           }
+        } else {
+          console.log('[AUTH] Sem sessão válida, pulando carregamento de roles');
         }
       } catch (error) {
         logCriticalError("initializeAuth", error);
@@ -413,6 +440,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearTimeout(safetyTimer);
         if (isMounted) {
           const duration = Date.now() - startTime;
+          console.log(`[AUTH] Inicialização concluída em ${duration}ms`);
+          console.log('[AUTH] Estado final:', {
+            loading: false,
+            profileLoading: false,
+            initialLoadComplete: true,
+            authResolved: true,
+            user: !!user,
+            roles: roles.length
+          });
           logLoadComplete({ duration_ms: duration, status: 'liberado' });
           setLoading(false);
           setInitialLoadComplete(true);
@@ -428,7 +464,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [runUserLoad]);
+  }, []);
 
   // ============================================
   // AUTH METHODS
@@ -499,15 +535,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const normalizedWhatsApp = whatsapp.replace(/\D/g, '');
 
-      // Use SECURITY DEFINER function to bypass RLS on profiles
-      const { data: emailFromNormalized } = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: normalizedWhatsApp });
-
-      let email = emailFromNormalized;
-
-      // Try with formatted whatsapp if not found
-      if (!email && whatsapp !== normalizedWhatsApp) {
-        const { data: emailFromFormatted } = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: whatsapp });
-        email = emailFromFormatted;
+      // Tenta buscar email por WhatsApp usando RPC
+      let email = null;
+      try {
+        email = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: normalizedWhatsApp });
+      } catch (error) {
+        console.warn('[AUTH] Função RPC get_email_by_whatsapp não encontrada, tentando fallback:', error);
+        
+        // Fallback: buscar diretamente na tabela profiles (pode falhar por RLS)
+        try {
+          const { data } = await supabase
+            .from("profiles")
+            .select("email")
+            .eq("whatsapp", normalizedWhatsApp)
+            .maybeSingle();
+          
+          email = data?.email;
+        } catch (fallbackError) {
+          console.warn('[AUTH] Fallback também falhou:', fallbackError);
+        }
       }
 
       if (!email) {

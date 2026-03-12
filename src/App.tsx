@@ -13,6 +13,8 @@ import { AuthProvider } from "@/lib/auth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { Loader2 } from "lucide-react";
+import ErrorBoundary from "@/components/error/ErrorBoundary";
+import { SystemDiagnostics } from "@/hooks/useSystemHealth";
 
 // Lazy pages
 const Index = lazy(() => import("./pages/Index"));
@@ -44,77 +46,108 @@ const PageLoader = () => (
 
 function AppRoutes() {
   return (
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
-        {/* ========== PUBLIC ========== */}
-        <Route path="/" element={<Index />} />
-        <Route path="/seja-um-franqueado" element={<PartnershipPage />} />
-        <Route path="/demo" element={<DemoPage />} />
-        <Route path="/404" element={<NotFoundPage />} />
-        <Route path="/simulacao-pagamento" element={<PaymentSimulationPage />} />
-        <Route path="/install" element={<InstallPage />} />
-        <Route path="/analise-custos" element={<CostAnalysisPage />} />
-        <Route path="/v/:barbershopId" element={<VitrinePage />} />
+    <ErrorBoundary>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* ========== PUBLIC ========== */}
+          <Route path="/" element={<Index />} />
+          <Route path="/seja-um-franqueado" element={<PartnershipPage />} />
+          <Route path="/demo" element={<DemoPage />} />
+          <Route path="/404" element={<NotFoundPage />} />
+          <Route path="/simulacao-pagamento" element={<PaymentSimulationPage />} />
+          <Route path="/install" element={<InstallPage />} />
+          <Route path="/analise-custos" element={<CostAnalysisPage />} />
+          <Route path="/v/:barbershopId" element={<VitrinePage />} />
 
-        {/* ========== LOGIN (AuthGuard: se logado, vai pro dashboard) ========== */}
-        <Route path="/login" element={<PublicLoginPage />} />
-        <Route path="/afiliado-saas/login" element={<AfiliadoSaasLoginPage />} />
-        <Route path="/contador2026/login" element={<ContadorLoginPage />} />
-        <Route path="/super-admin2026ok" element={<AdminLoginPage />} />
+          {/* ========== LOGIN (AuthGuard: se logado, vai pro dashboard) ========== */}
+          <Route path="/login" element={<AuthGuard><PublicLoginPage /></AuthGuard>} />
+          <Route path="/afiliado-saas/login" element={<AuthGuard><AfiliadoSaasLoginPage /></AuthGuard>} />
+          <Route path="/contador2026/login" element={<AuthGuard><ContadorLoginPage /></AuthGuard>} />
+          <Route path="/super-admin2026ok" element={<AuthGuard><AdminLoginPage /></AuthGuard>} />
 
-        {/* ========== PROTECTED ========== */}
-        <Route path="/app/*" element={
-          <ProtectedRoute allowedRoles={['cliente', 'afiliado_barbearia']}><ClienteDashboard /></ProtectedRoute>
-        } />
-        <Route path="/painel-dono/*" element={
-          <ProtectedRoute allowedRoles={['dono']}><DonoDashboard /></ProtectedRoute>
-        } />
-        <Route path="/painel-profissional/*" element={
-          <ProtectedRoute allowedRoles={['profissional']}><ProfissionalDashboard /></ProtectedRoute>
-        } />
-        <Route path="/afiliado-saas/*" element={
-          <ProtectedRoute allowedRoles={['afiliado_saas']}><AfiliadoDashboard /></ProtectedRoute>
-        } />
-        <Route path="/contador2026/*" element={
-          <ProtectedRoute allowedRoles={['contador']}><ContadorDashboard /></ProtectedRoute>
-        } />
-        <Route path="/admin/*" element={
-          <ProtectedRoute allowedRoles={['super_admin']}><SuperAdminDashboard /></ProtectedRoute>
-        } />
+          {/* ========== PROTECTED ========== */}
+          <Route path="/app/*" element={
+            <ErrorBoundary>
+              <ProtectedRoute allowedRoles={['cliente', 'afiliado_barberia']}>
+                <ClienteDashboard />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          } />
+          <Route path="/painel-dono/*" element={
+            <ErrorBoundary>
+              <ProtectedRoute allowedRoles={['dono']}>
+                <DonoDashboard />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          } />
+          <Route path="/painel-profissional/*" element={
+            <ErrorBoundary>
+              <ProtectedRoute allowedRoles={['profissional']}>
+                <ProfissionalDashboard />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          } />
+          <Route path="/afiliado-saas/*" element={
+            <ErrorBoundary>
+              <ProtectedRoute allowedRoles={['afiliado_saas']}>
+                <AfiliadoDashboard />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          } />
+          <Route path="/contador2026/*" element={
+            <ErrorBoundary>
+              <ProtectedRoute allowedRoles={['contador']}>
+                <ContadorDashboard />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          } />
+          <Route path="/admin/*" element={
+            <ErrorBoundary>
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          } />
 
-        {/* ========== LEGACY REDIRECTS ========== */}
-        <Route path="/auth" element={<Navigate to="/login" replace />} />
-        <Route path="/public/login" element={<Navigate to="/login" replace />} />
-        <Route path="/public/404" element={<Navigate to="/404" replace />} />
-        <Route path="/app/profissional/*" element={<Navigate to="/painel-profissional" replace />} />
-        <Route path="/cliente/*" element={<Navigate to="/app" replace />} />
-        <Route path="/dono/*" element={<Navigate to="/painel-dono" replace />} />
-        <Route path="/profissional/*" element={<Navigate to="/painel-profissional" replace />} />
-        <Route path="/afiliado/*" element={<Navigate to="/afiliado-saas" replace />} />
-        <Route path="/contador/*" element={<Navigate to="/contador2026" replace />} />
-        <Route path="/super-admin/*" element={<Navigate to="/admin" replace />} />
-        <Route path="/admin/login" element={<Navigate to="/super-admin2026ok" replace />} />
-        <Route path="/notificacoes" element={<Navigate to="/painel-dono/notificacoes" replace />} />
+          {/* ========== LEGACY REDIRECTS ========== */}
+          <Route path="/auth" element={<Navigate to="/login" replace />} />
+          <Route path="/public/login" element={<Navigate to="/login" replace />} />
+          <Route path="/public/404" element={<Navigate to="/404" replace />} />
+          <Route path="/app/profissional/*" element={<Navigate to="/painel-profissional" replace />} />
+          <Route path="/cliente/*" element={<Navigate to="/app" replace />} />
+          <Route path="/dono/*" element={<Navigate to="/painel-dono" replace />} />
+          <Route path="/profissional/*" element={<Navigate to="/painel-profissional" replace />} />
+          <Route path="/afiliado/*" element={<Navigate to="/afiliado-saas" replace />} />
+          <Route path="/contador/*" element={<Navigate to="/contador2026" replace />} />
+          <Route path="/super-admin/*" element={<Navigate to="/admin" replace />} />
+          <Route path="/admin/login" element={<Navigate to="/super-admin2026ok" replace />} />
+          <Route path="/notificacoes" element={<Navigate to="/painel-dono/notificacoes" replace />} />
 
-        {/* ========== 404 ========== */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </Suspense>
+          {/* ========== 404 ========== */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
   );
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ErrorBoundary>
+            <AuthProvider>
+              <AppRoutes />
+              <SystemDiagnostics />
+            </AuthProvider>
+          </ErrorBoundary>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

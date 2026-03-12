@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { getDashboardForRole, isLoginRoute } from "@/lib/route-config";
-import { Loader2 } from "lucide-react";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 
@@ -18,21 +18,35 @@ interface AuthGuardProps {
 export function AuthGuard({ children }: AuthGuardProps) {
   const { user, authResolved, roles, getPrimaryRole } = useAuth();
   const location = useLocation();
-  // O timeout de segurança já é gerenciado 100% pelo hook useAuth
-  // Não precisamos gerenciar outro timeout condicional aqui.
+  const [redirectTimeout, setRedirectTimeout] = useState(false);
+
+  // Timeout para redirect automático se demorar muito
+  useEffect(() => {
+    if (user && roles.length > 0 && isLoginRoute(location.pathname)) {
+      const timer = setTimeout(() => setRedirectTimeout(true), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, roles, location.pathname]);
 
   if (!authResolved) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background" aria-hidden="true">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <LoadingScreen message="Preparando ambiente de autenticação..." />;
   }
 
   // Logado + tem roles + está em rota de login → vai pro dashboard
   if (user && roles.length > 0 && isLoginRoute(location.pathname)) {
     const dashboard = getDashboardForRole(getPrimaryRole());
     return <Navigate to={dashboard} replace />;
+  }
+
+  // Se está em rota de login mas demorando para redirect
+  if (redirectTimeout) {
+    return (
+      <LoadingScreen 
+        message="Redirecionando para seu dashboard..." 
+        showRetry={true}
+        onRetry={() => window.location.href = getDashboardForRole(getPrimaryRole())}
+      />
+    );
   }
 
   return <>{children}</>;

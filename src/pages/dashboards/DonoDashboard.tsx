@@ -28,6 +28,7 @@ import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 import { SocialProofManager } from "@/components/social-proof/SocialProofManager";
 import { SocialProofPopup } from "@/components/social-proof/SocialProofPopup";
 import { DonoOnboarding } from "@/components/onboarding/DonoOnboarding";
+import DividasPage from "@/pages/DonoDashboard/DividasPage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,27 +62,47 @@ const DonoDashboard = () => {
   const basePath = "/painel-dono";
 
   const navigation = [
+    // Dashboard
     { name: "Dashboard", href: basePath, icon: LayoutDashboard },
-    { name: "Agendamentos", href: `${basePath}/agendamentos`, icon: Calendar },
-    { name: "Agendamentos Fixos", href: `${basePath}/agendamentos-recorrentes`, icon: Repeat },
+    
+    // Agenda
+    { name: "Agenda", href: `${basePath}/agendamentos`, icon: Calendar },
+    { name: "Atendimentos", href: `${basePath}/atendimentos`, icon: Scissors },
+    { name: "Lista de Espera", href: `${basePath}/lista-espera`, icon: Users },
+    
+    // Clientes
+    { name: "Clientes", href: `${basePath}/clientes`, icon: Users },
+    { name: "Fidelidade", href: `${basePath}/fidelidade`, icon: Gift },
+    
+    // Profissionais
     { name: "Profissionais", href: `${basePath}/profissionais`, icon: Users },
+    
+    // Serviços
     { name: "Serviços", href: `${basePath}/servicos`, icon: Scissors },
-    { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
-    { name: "Receber Dívida", href: `${basePath}/dividas`, icon: Wallet },
-    { name: "Afiliados", href: `${basePath}/afiliados`, icon: UserCheck },
+    { name: "Pacotes", href: `${basePath}/pacotes`, icon: Package },
+    
+    // Produtos
+    { name: "Produtos", href: `${basePath}/produtos`, icon: Package },
     { name: "Estoque", href: `${basePath}/estoque`, icon: Package },
-    { name: "Vitrine", href: `${basePath}/vitrine`, icon: Image },
-    { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
-    { name: "Ação entre Amigos", href: `${basePath}/acao-entre-amigos`, icon: Gift },
-    { name: "Prova Social", href: `${basePath}/prova-social`, icon: TrendingUp },
-    { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
-    { name: "Inteligência de Agenda", href: `${basePath}/inteligencia-agenda`, icon: Settings },
-    { name: "Marketing Empresarial", href: `${basePath}/marketing-empresarial`, icon: Video },
-    { name: "Pixels & Marketing", href: `${basePath}/pixels`, icon: Image },
-    { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: Calculator },
-    { name: "Dados Bancários", href: `${basePath}/dados-bancarios`, icon: CreditCard },
-    { name: "Seja Afiliado", href: `${basePath}/seja-afiliado`, icon: Share2 },
-    { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
+    
+    // Vendas
+    { name: "Comandas", href: `${basePath}/comandas`, icon: CreditCard },
+    
+    // Financeiro
+    { name: "Fluxo de Caixa", href: `${basePath}/financeiro`, icon: DollarSign },
+    { name: "Despesas", href: `${basePath}/despesas`, icon: DollarSign },
+    { name: "Remunerações", href: `${basePath}/remuneracoes`, icon: DollarSign },
+    { name: "Notas Fiscais", href: `${basePath}/notas-fiscais`, icon: FileText },
+    { name: "Dívidas", href: `${basePath}/dividas`, icon: AlertCircle },
+    
+    // Relatórios
+    { name: "Relatórios", href: `${basePath}/relatorios`, icon: TrendingUp },
+    
+    // Marketing
+    { name: "WhatsApp", href: `${basePath}/whatsapp`, icon: MessageCircle },
+    { name: "Campanhas", href: `${basePath}/campanhas`, icon: Send },
+    
+    // Configurações
     { name: "Configurações", href: `${basePath}/configuracoes`, icon: Settings },
   ];
 
@@ -133,34 +154,73 @@ const DonoDashboard = () => {
         </header>
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <Routes>
+            {/* Dashboard */}
             <Route index element={<DashboardHome />} />
+            
+            {/* Agenda */}
             <Route path="agendamentos" element={<AgendamentosPage />} />
             <Route path="agendamentos-recorrentes" element={<RecurringAppointmentPanel barbershopId={mainBarbershop?.id || ''} />} />
+            <Route path="atendimentos" element={<AgendamentosPage />} />
+            <Route path="lista-espera" element={<NotificacoesDonoPage />} />
+            
+            {/* Clientes */}
+            <Route path="clientes" element={<AgendamentosPage />} />
+            <Route path="fidelidade" element={<CashbackPage />} />
+            
+            {/* Profissionais */}
             <Route path="profissionais" element={<ProfissionaisPage />} />
+            
+            {/* Serviços */}
             <Route path="servicos" element={<ServicosPage />} />
-            <Route path="financeiro" element={<FinanceiroPage />} />
-            <Route path="dividas" element={<DividasPage />} />
-            <Route path="afiliados" element={<AfiliadosBarbeariaPage />} />
+            <Route path="pacotes" element={<ServicosPage />} />
+            
+            {/* Produtos */}
+            <Route path="produtos" element={<EstoquePage />} />
             <Route path="estoque" element={<EstoquePage />} />
-            <Route path="vitrine" element={<VitrinePage />} />
-            <Route path="cashback" element={<CashbackPage />} />
-            <Route path="acao-entre-amigos" element={<AcaoEntreAmigosPage />} />
-            <Route path="rifas" element={<AcaoEntreAmigosPage />} />
+            
+            {/* Vendas */}
+            <Route path="comandas" element={<AgendamentosPage />} />
+            
+            {/* Financeiro */}
+            <Route path="financeiro" element={<FinanceiroPage />} />
+            <Route path="despesas" element={<FinanceiroPage />} />
+            <Route path="remuneracoes" element={<FinanceiroPage />} />
+            <Route path="notas-fiscais" element={<ServicosContabeisHubPage barbershopId={mainBarbershop?.id} />} />
+            <Route path="dividas" element={<DividasPage />} />
+            
+            {/* Relatórios */}
+            <Route path="relatorios" element={<DashboardHome />} />
+            
+            {/* Marketing */}
+            <Route path="whatsapp" element={<NotificacoesDonoPage />} />
+            <Route path="campanhas" element={<MarketingEmpresarial isOwner={true} />} />
             <Route path="prova-social" element={<SocialProofManager barbershopId={mainBarbershop?.id} />} />
-            <Route path="automacao" element={<NotificacoesDonoPage />} />
-            <Route path="notificacoes" element={<NotificacoesDonoPage />} />
-            <Route path={`${basePath}/inteligencia-agenda`} element={<InteligenciaAgendaPage />} />
-            <Route path={`${basePath}/marketing-empresarial`} element={
+            <Route path="marketing-empresarial" element={
               <div className="p-6">
                 <MarketingEmpresarial isOwner={true} />
               </div>
             } />
-            <Route path="pixels" element={<PixelsPage />} />
-            <Route path="servicos-contabeis/*" element={<ServicosContabeisHubPage barbershopId={mainBarbershop?.id} />} />
+            
+            {/* Configurações */}
+            <Route path="configuracoes" element={<ConfiguracoesPage />} />
             <Route path="dados-bancarios" element={<DadosBancariosPage />} />
+            <Route path="pixels" element={<PixelsPage />} />
+            <Route path="automacao" element={<NotificacoesDonoPage />} />
+            <Route path="inteligencia-agenda" element={<InteligenciaAgendaPage />} />
+            
+            {/* Funcionalidades Existentes - Manter compatibilidade */}
+            <Route path="vitrine" element={<VitrinePage />} />
+            <Route path="cashback" element={<CashbackPage />} />
+            <Route path="acao-entre-amigos" element={<AcaoEntreAmigosPage />} />
+            <Route path="rifas" element={<AcaoEntreAmigosPage />} />
+            <Route path="afiliados" element={<AfiliadosBarbeariaPage />} />
+            <Route path="notificacoes" element={<NotificacoesDonoPage />} />
+            <Route path="servicos-contabeis/*" element={<ServicosContabeisHubPage barbershopId={mainBarbershop?.id} />} />
             <Route path="suporte" element={<SuportePage />} />
             <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
-            <Route path="configuracoes" element={<ConfiguracoesPage />} />
+            
+            {/* Legacy redirects para compatibilidade */}
+            <Route path="*" element={<DashboardHome />} />
           </Routes>
           <SocialProofPopup currentPage="painel-dono" />
         </main>
