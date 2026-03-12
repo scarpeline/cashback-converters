@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase';
-import { Database } from '@/types/database';
+import { Database } from '@/integrations/supabase/types';
 
 type DatabaseType = Database;
 
@@ -187,28 +187,13 @@ export class ActivityService {
    */
   private async sendActivityNotification(partner: any, rule: ActivityRule, daysInactive: number): Promise<void> {
     try {
-      const notificationData = {
-        partner_id: partner.id,
-        tipo: 'atividade',
-        titulo: 'Alerta de Atividade',
-        mensagem: this.generateActivityMessage(daysInactive, rule),
-        data_criacao: new Date().toISOString(),
-        lida: false,
-        dados_adicionais: {
-          dias_inativo: daysInactive,
-          penalidade: rule.penaltyPercentage,
-          nivel: rule.level
-        }
-      };
-
-      await this.supabase
-        .from('notificacoes')
-        .insert(notificationData);
+      // Registrar notificação no log (tabela notificacoes não existe ainda)
+      await this.logActivity(partner.id, 'notificacao_atividade', `Alerta de atividade: ${rule.description}`);
 
       // Enviar email (em produção)
       await this.sendActivityEmail(partner, rule, daysInactive);
 
-      console.log(`Notificação de atividade enviada ao parceiro ${partner.id}`);
+      console.log(`Notificação de atividade registrada para o parceiro ${partner.id}`);
     } catch (error) {
       console.error('Erro ao enviar notificação de atividade:', error);
     }
@@ -360,27 +345,14 @@ export class ActivityService {
   }
 
   /**
-   * Salva notificação de renovação no banco
+   * Salva notificação de renovação no log
    */
   private async saveRenewalNotification(notification: RenewalNotification): Promise<void> {
     try {
-      await this.supabase
-        .from('notificacoes')
-        .insert({
-          partner_id: notification.partnerId,
-          tipo: 'renovacao',
-          titulo: 'Aviso de Renovação',
-          mensagem: notification.message,
-          data_criacao: new Date().toISOString(),
-          lida: false,
-          dados_adicionais: {
-            plano: notification.planType,
-            data_renovacao: notification.renewalDate,
-            dias_restantes: notification.daysUntilRenewal
-          }
-        });
+      // Registrar no log (tabela notificacoes não existe ainda)
+      await this.logActivity(notification.partnerId, 'notificacao_renovacao', notification.message);
 
-      console.log(`Notificação de renovação salva para parceiro ${notification.partnerId}`);
+      console.log(`Notificação de renovação registrada para parceiro ${notification.partnerId}`);
     } catch (error) {
       console.error('Erro ao salvar notificação de renovação:', error);
     }
@@ -473,13 +445,8 @@ export class ActivityService {
         .order('data_acao', { ascending: false })
         .limit(10);
 
-      // Buscar notificações não lidas
-      const { data: unreadNotifications } = await this.supabase
-        .from('notificacoes')
-        .select('*')
-        .eq('partner_id', partnerId)
-        .eq('lida', false)
-        .order('data_criacao', { ascending: false });
+      // Notificações não lidas não disponíveis ainda (tabela não existe)
+      const unreadNotifications = [];
 
       return {
         partner,
