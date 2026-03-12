@@ -28,13 +28,19 @@ const IntegrationBlocks = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
           {integrations.map((item) => (
-            <div key={item.title} className="group relative p-8 rounded-2xl border transition-all duration-300" style={{ background: "linear-gradient(145deg, hsl(222 30% 12%), hsl(222 30% 9%))", borderColor: "hsl(222 20% 18%)" }}>
-              <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6" style={{ background: "hsl(42 100% 50% / 0.1)" }}>
-                <item.icon className="w-7 h-7" style={{ color: "hsl(42 100% 55%)" }} />
+            <div key={item.title} className="group relative p-8 rounded-2xl border transition-all duration-300" style={{ background: "linear-gradient(145deg, hsl(25 95% 60%), hsl(25 95% 50%))", borderColor: "hsl(25 95% 40%)" }}>
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6" style={{ background: "hsl(0 0% 100% / 0.2)" }}>
+                <item.icon className="w-7 h-7" style={{ color: "hsl(0 0% 100%)" }} />
               </div>
-              <h3 className="font-display text-xl font-bold mb-3" style={{ color: "hsl(0 0% 98%)" }}>{item.title}</h3>
-              <p className="text-sm leading-relaxed mb-4" style={{ color: "hsl(220 9% 55%)" }}>{item.description}</p>
-              <p className="text-sm font-medium" style={{ color: item.accentColor }}>{item.accent}</p>
+              <h3 className="font-display text-xl font-bold mb-3" style={{ color: "hsl(0 0% 100%)" }}>
+                <span className="text-xl lg:text-2xl xl:text-3xl">{item.title}</span>
+              </h3>
+              <p className="text-sm leading-relaxed mb-4" style={{ color: "hsl(0 0% 95%)" }}>
+                <span className="text-sm lg:text-base xl:text-lg">{item.description}</span>
+              </p>
+              <p className="text-sm font-medium" style={{ color: "hsl(0 0% 100%)" }}>
+                <span className="text-sm lg:text-base xl:text-lg">{item.accent}</span>
+              </p>
             </div>
           ))}
         </div>
@@ -52,17 +58,23 @@ const IntegrationBlocks = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {apiBlocks.map((block) => (
-            <div key={block.title} className="group relative p-6 rounded-2xl border transition-all duration-300" style={{ background: "linear-gradient(145deg, hsl(222 30% 12%), hsl(222 30% 9%))", borderColor: "hsl(222 20% 18%)" }}>
-              <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full text-xs font-medium" style={block.status === 'ready' ? { background: "hsl(142 76% 36% / 0.2)", color: "hsl(142 76% 46%)" } : { background: "hsl(220 9% 20%)", color: "hsl(220 9% 55%)" }}>
+            <div key={block.title} className="group relative p-6 rounded-2xl border transition-all duration-300" style={{ background: "linear-gradient(145deg, hsl(25 95% 60%), hsl(25 95% 50%))", borderColor: "hsl(25 95% 40%)" }}>
+              <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full text-xs font-medium" style={block.status === 'ready' ? { background: "hsl(142 76% 36% / 0.2)", color: "hsl(142 76% 46%)" } : { background: "hsl(25 95% 30%)", color: "hsl(0 0% 95%)" }}>
                 {block.status === 'ready' ? 'Ativo' : 'Em breve'}
               </div>
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: "hsl(217 91% 50% / 0.1)" }}>
-                <block.icon className="w-6 h-6" style={{ color: "hsl(217 85% 60%)" }} />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: "hsl(0 0% 100% / 0.2)" }}>
+                <block.icon className="w-6 h-6" style={{ color: "hsl(0 0% 100%)" }} />
               </div>
-              <h3 className="font-display text-lg font-bold mb-2" style={{ color: "hsl(0 0% 95%)" }}>{block.title}</h3>
-              <p className="text-sm leading-relaxed mb-4" style={{ color: "hsl(220 9% 55%)" }}>{block.description}</p>
-              <div className="p-3 rounded-lg text-center" style={{ background: "hsl(222 20% 16%)", border: "1px dashed hsl(222 20% 22%)" }}>
-                <p className="text-xs" style={{ color: "hsl(220 9% 50%)" }}>{block.placeholder}</p>
+              <h3 className="font-display text-lg font-bold mb-2" style={{ color: "hsl(0 0% 100%)" }}>
+                <span className="text-lg lg:text-xl xl:text-2xl">{block.title}</span>
+              </h3>
+              <p className="text-sm leading-relaxed mb-4" style={{ color: "hsl(0 0% 95%)" }}>
+                <span className="text-sm lg:text-base xl:text-lg">{block.description}</span>
+              </p>
+              <div className="p-3 rounded-lg text-center" style={{ background: "hsl(25 95% 70% / 0.2)", border: "1px dashed hsl(25 95% 30%)" }}>
+                <p className="text-xs" style={{ color: "hsl(0 0% 95%)" }}>
+                  <span className="text-xs lg:text-sm xl:text-base">{block.placeholder}</span>
+                </p>
               </div>
             </div>
           ))}

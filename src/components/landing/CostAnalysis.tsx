@@ -319,11 +319,11 @@ const CostAnalysis = () => {
           <div className="rounded-xl p-4" style={{ background: "hsl(222 47% 6% / 0.5)", border: "1px solid hsl(222 20% 20%)" }}>
             <div className="flex items-center gap-2 mb-2">
               <CreditCard className="w-4 h-4" style={{ color: "hsl(217 85% 60%)" }} />
-              <span className="text-sm font-semibold" style={{ color: "hsl(0 0% 95%)" }}>Taxa App (0,5%)</span>
+              <span className="text-sm font-semibold" style={{ color: "hsl(0 0% 95%)" }}>Receita do Sistema</span>
             </div>
             <p className="text-2xl font-bold" style={{ color: "hsl(217 85% 60%)" }}>{formatBRL(appFeeRevenue)}</p>
             <p className="text-xs mt-1" style={{ color: "hsl(220 9% 50%)" }}>
-              0,5% sobre GMV de {formatBRL(totalGMV)}
+              Receita do sistema sobre volume de transações
             </p>
           </div>
         </div>
@@ -394,7 +394,6 @@ const CostAnalysis = () => {
                 { item: "Taxa PIX", yours: "1,49%", market: "0,99-1,99%", status: "ok", color: "hsl(142 76% 36%)" },
                 { item: "Taxa Cartão de Crédito", yours: "3,49%", market: "2,99-4,99%", status: "ok", color: "hsl(142 76% 36%)" },
                 { item: "Taxa Cartão de Débito", yours: "2,49%", market: "1,99-3,49%", status: "ok", color: "hsl(142 76% 36%)" },
-                { item: "Taxa App", yours: "0,5%", market: "1-3%", status: "barato", color: "hsl(42 100% 55%)" },
                 { item: "WhatsApp (15 msgs)", yours: "R$ 4,00", market: "R$ 5-15", status: "ok", color: "hsl(142 76% 36%)" },
                 { item: "SMS (15 msgs)", yours: "R$ 6,00", market: "R$ 8-20", status: "ok", color: "hsl(142 76% 36%)" },
                 { item: "Comissão Afiliado 1º mês", yours: "60%", market: "20-50%", status: "alto", color: "hsl(0 84% 60%)" },
@@ -443,7 +442,7 @@ const CostAnalysis = () => {
             },
             {
               level: "✅",
-              text: "Taxa app de 0,5% é conservadora mas garante receita recorrente que escala com o volume dos clientes.",
+              text: "Modelo SaaS com receita recorrente garante escalabilidade e previsibilidade financeira.",
             },
             {
               level: "💡",

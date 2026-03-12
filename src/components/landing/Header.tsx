@@ -8,6 +8,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
+    { label: "Seja Franqueado", href: "#franchise" },
     { label: "Funcionalidades", href: "#features" },
     { label: "Preços", href: "#pricing" },
   ];
@@ -36,6 +37,9 @@ const Header = () => {
             <Link to="/login">
               <Button variant="gold" size="sm">Começar Grátis</Button>
             </Link>
+            <Button variant="outline" size="sm" className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white">
+              Seja Franqueado
+            </Button>
           </div>
 
           <button className="md:hidden p-2" style={{ color: "hsl(0 0% 98%)" }} onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -58,6 +62,9 @@ const Header = () => {
                 <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                   <Button variant="gold" className="w-full justify-center">Começar Grátis</Button>
                 </Link>
+                <Button variant="outline" className="w-full justify-center border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white" onClick={() => setIsMenuOpen(false)}>
+                  Seja Franqueado
+                </Button>
               </div>
             </nav>
           </div>

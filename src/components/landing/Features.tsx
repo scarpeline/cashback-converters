@@ -37,17 +37,17 @@ const Features = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {features.map((feature, index) => (
-            <div key={feature.title} className="group relative p-4 sm:p-6 rounded-2xl border transition-all duration-300" style={{ background: "linear-gradient(145deg, hsl(0 0% 100%), hsl(0 0% 98%))", borderColor: "hsl(222 20% 18%)" }}>
-              <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: "hsl(42 100% 50% / 0.05)" }} />
+            <div key={feature.title} className="group relative p-4 sm:p-6 rounded-2xl border transition-all duration-300" style={{ background: "linear-gradient(145deg, hsl(25 95% 60%), hsl(25 95% 50%))", borderColor: "hsl(25 95% 40%)" }}>
+              <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: "hsl(25 95% 70% / 0.1)" }} />
               <div className="relative">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform" style={{ background: "hsl(42 100% 50% / 0.1)" }}>
-                  <feature.icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: "hsl(42 100% 55%)" }} />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform" style={{ background: "hsl(0 0% 100% / 0.2)" }}>
+                  <feature.icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: "hsl(0 0% 100%)" }} />
                 </div>
-                <h3 className="font-display text-lg sm:text-xl font-bold mb-2 transition-colors" style={{ color: "hsl(222 47% 6%)" }}>
-                  <span className="text-base sm:text-lg">{feature.title}</span>
+                <h3 className="font-display text-lg sm:text-xl font-bold mb-2 transition-colors" style={{ color: "hsl(0 0% 100%)" }}>
+                  <span className="text-base sm:text-lg lg:text-xl">{feature.title}</span>
                 </h3>
-                <p className="text-sm sm:text-sm leading-relaxed" style={{ color: "hsl(220 30% 25%)" }}>
-                  <span className="text-sm sm:text-sm">{feature.description}</span>
+                <p className="text-sm sm:text-sm leading-relaxed" style={{ color: "hsl(0 0% 95%)" }}>
+                  <span className="text-sm sm:text-base lg:text-lg">{feature.description}</span>
                 </p>
               </div>
             </div>

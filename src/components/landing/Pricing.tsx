@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Check, Sparkles, CreditCard, Smartphone, Wifi } from "lucide-react";
 
 const ASAAS_FEES = {
-  pix: { gateway: 0.99, app: 0.5, total: 1.49 },
-  card: { gateway: 2.99, extra: "R$0,49/tx", app: 0.5, total: 3.49 },
-  debit: { gateway: 1.99, app: 0.5, total: 2.49 },
+  pix: { gateway: 0.99, total: 0.99 },
+  card: { gateway: 2.99, extra: "R$0,49/tx", total: 3.49 },
+  debit: { gateway: 1.99, total: 1.99 },
 };
 
 const allFeatures = [
@@ -115,7 +115,7 @@ const Pricing = () => {
             <h3 className="text-center font-display text-lg font-bold mb-2" style={{ color: "hsl(0 0% 95%)" }}>
               Taxas por Método de Pagamento
             </h3>
-            <p className="text-center text-sm mb-6" style={{ color: "hsl(220 9% 55%)" }}>Taxa do app: 0,5% por transação</p>
+            <p className="text-center text-sm mb-6" style={{ color: "hsl(220 9% 55%)" }}>Taxas transparentas e competitivas</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
@@ -123,14 +123,20 @@ const Pricing = () => {
                 { icon: CreditCard, label: "Cartão de Crédito", fee: ASAAS_FEES.card },
                 { icon: CreditCard, label: "Cartão de Débito", fee: ASAAS_FEES.debit },
               ].map(({ icon: Icon, label, fee }) => (
-                <div key={label} className="rounded-xl p-4 text-center" style={{ background: "hsl(222 47% 6% / 0.5)", border: "1px solid hsl(222 20% 20%)" }}>
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "hsl(217 91% 50% / 0.1)" }}>
-                    <Icon className="w-5 h-5" style={{ color: "hsl(217 85% 60%)" }} />
+                <div key={label} className="rounded-xl p-4 text-center" style={{ background: "linear-gradient(145deg, hsl(25 95% 60%), hsl(25 95% 50%))", border: "1px solid hsl(25 95% 40%)" }}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "hsl(0 0% 100% / 0.2)" }}>
+                    <Icon className="w-5 h-5" style={{ color: "hsl(0 0% 100%)" }} />
                   </div>
-                  <p className="font-semibold text-sm mb-2" style={{ color: "hsl(0 0% 95%)" }}>{label}</p>
-                  <div className="pt-2" style={{ borderTop: "1px solid hsl(222 20% 20%)" }}>
-                    <span className="font-display text-xl font-bold text-gradient-gold">{fee.total.toFixed(2)}%</span>
-                    <p className="text-xs" style={{ color: "hsl(220 9% 50%)" }}>total por transação</p>
+                  <p className="font-semibold text-sm mb-2" style={{ color: "hsl(0 0% 100%)" }}>
+                    <span className="text-sm lg:text-base xl:text-lg">{label}</span>
+                  </p>
+                  <div className="pt-2" style={{ borderTop: "1px solid hsl(25 95% 30%)" }}>
+                    <span className="font-display text-xl font-bold" style={{ color: "hsl(0 0% 100%)" }}>
+                      <span className="text-xl lg:text-2xl xl:text-3xl">{fee.total.toFixed(2)}%</span>
+                    </span>
+                    <p className="text-xs" style={{ color: "hsl(0 0% 95%)" }}>
+                      <span className="text-xs lg:text-sm xl:text-base">total por transação</span>
+                    </p>
                   </div>
                 </div>
               ))}

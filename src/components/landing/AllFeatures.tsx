@@ -132,18 +132,18 @@ const AllFeatures = () => {
         {/* Feature Categories */}
         <div className="space-y-12">
           {featureCategories.map((category, categoryIndex) => (
-            <div key={category.title} className="rounded-3xl p-6 lg:p-8" style={{ background: "linear-gradient(145deg, hsl(222 30% 12%), hsl(222 30% 9%))", border: "1px solid hsl(222 20% 18%)" }}>
+            <div key={category.title} className="rounded-3xl p-6 lg:p-8" style={{ background: "linear-gradient(145deg, hsl(25 95% 60%), hsl(25 95% 50%))", border: "1px solid hsl(25 95% 40%)" }}>
               {/* Category Header */}
               <div className="flex items-start gap-4 mb-6">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: "hsl(42 100% 50% / 0.1)" }}>
-                  <category.icon className="w-7 h-7" style={{ color: "hsl(42 100% 55%)" }} />
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: "hsl(0 0% 100% / 0.2)" }}>
+                  <category.icon className="w-7 h-7" style={{ color: "hsl(0 0% 100%)" }} />
                 </div>
                 <div>
-                  <h3 className="font-display text-xl lg:text-2xl font-bold mb-1" style={{ color: "hsl(0 0% 95%)" }}>
-                    {category.title}
+                  <h3 className="font-display text-xl lg:text-2xl font-bold mb-1" style={{ color: "hsl(0 0% 100%)" }}>
+                    <span className="text-lg lg:text-2xl xl:text-3xl">{category.title}</span>
                   </h3>
-                  <p className="text-sm" style={{ color: "hsl(220 9% 55%)" }}>
-                    {category.description}
+                  <p className="text-sm" style={{ color: "hsl(0 0% 95%)" }}>
+                    <span className="text-sm lg:text-base xl:text-lg">{category.description}</span>
                   </p>
                 </div>
               </div>
@@ -151,17 +151,17 @@ const AllFeatures = () => {
               {/* Features Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {category.features.map((feature) => (
-                  <div key={feature.title} className="group p-4 rounded-xl transition-all duration-300 hover:translate-y-[-2px]" style={{ background: "hsl(222 47% 6% / 0.5)", border: "1px solid hsl(222 20% 20%)" }}>
+                  <div key={feature.title} className="group p-4 rounded-xl transition-all duration-300 hover:translate-y-[-2px]" style={{ background: "hsl(25 95% 70% / 0.2)", border: "1px solid hsl(25 95% 30%)" }}>
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform" style={{ background: "hsl(42 100% 50% / 0.08)" }}>
-                        <feature.icon className="w-5 h-5" style={{ color: "hsl(42 100% 55%)" }} />
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform" style={{ background: "hsl(0 0% 100% / 0.2)" }}>
+                        <feature.icon className="w-5 h-5" style={{ color: "hsl(0 0% 100%)" }} />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-sm mb-1" style={{ color: "hsl(0 0% 95%)" }}>
-                          {feature.title}
+                        <h4 className="font-semibold text-sm mb-1" style={{ color: "hsl(0 0% 100%)" }}>
+                          <span className="text-sm lg:text-base xl:text-lg">{feature.title}</span>
                         </h4>
-                        <p className="text-xs leading-relaxed" style={{ color: "hsl(220 9% 55%)" }}>
-                          {feature.description}
+                        <p className="text-xs leading-relaxed" style={{ color: "hsl(0 0% 95%)" }}>
+                          <span className="text-xs lg:text-sm xl:text-base">{feature.description}</span>
                         </p>
                       </div>
                     </div>

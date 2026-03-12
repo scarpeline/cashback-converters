@@ -80,7 +80,7 @@ const PaymentMethodsSection = () => {
             className="mt-3 text-base sm:text-sm font-medium"
             style={{ color: "hsl(220 9% 50%)" }}
           >
-            <span className="text-base sm:text-sm">Taxa do app: <span style={{ color: "hsl(42 100% 55%)" }}>0,5%</span> por transação</span>
+            <span className="text-base sm:text-sm">Taxas transparentas e sem surpresas</span>
           </p>
         </div>
 
@@ -91,43 +91,43 @@ const PaymentMethodsSection = () => {
               key={method.label}
               className="relative p-4 sm:p-7 rounded-2xl flex flex-col items-center text-center transition-all duration-300 hover:scale-[1.02]"
               style={{
-                background: "linear-gradient(145deg, hsl(222 30% 12%), hsl(222 30% 9%))",
+                background: "linear-gradient(145deg, hsl(25 95% 60%), hsl(25 95% 50%))",
                 border: `1px solid ${method.border}`,
               }}
             >
               {/* Ícone com glow */}
               <div
                 className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center mb-4 sm:mb-5"
-                style={{ background: method.bg }}
+                style={{ background: "hsl(0 0% 100% / 0.2)" }}
               >
-                <method.icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: method.color }} />
+                <method.icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: "hsl(0 0% 100%)" }} />
               </div>
 
-              <p className="text-base sm:text-sm font-medium mb-2" style={{ color: "hsl(220 9% 60%)" }}>
-                <span className="text-base sm:text-sm">{method.label}</span>
+              <p className="text-base sm:text-sm font-medium mb-2" style={{ color: "hsl(0 0% 100%)" }}>
+                <span className="text-base sm:text-lg lg:text-xl">{method.label}</span>
               </p>
 
               <p
                 className="font-display text-2xl sm:text-4xl font-bold mb-1"
-                style={{ color: method.color }}
+                style={{ color: "hsl(0 0% 100%)" }}
               >
-                <span className="text-2xl sm:text-4xl">{method.rate}</span>
+                <span className="text-2xl sm:text-4xl lg:text-5xl">{method.rate}</span>
               </p>
 
-              <p className="text-sm sm:text-xs" style={{ color: "hsl(220 9% 50%)" }}>
-                <span className="text-sm sm:text-xs">{method.detail}</span>
+              <p className="text-sm sm:text-xs" style={{ color: "hsl(0 0% 95%)" }}>
+                <span className="text-sm sm:text-base lg:text-lg">{method.detail}</span>
               </p>
             </div>
           ))}
         </div>
 
         {/* Rodapé de confiança */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-3 sm:px-6 py-3 sm:py-4 rounded-xl" style={{ background: "hsl(222 30% 11%)", border: "1px solid hsl(222 20% 18%)" }}>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-3 sm:px-6 py-3 sm:py-4 rounded-xl" style={{ background: "linear-gradient(145deg, hsl(25 95% 60%), hsl(25 95% 50%))", border: "1px solid hsl(25 95% 40%)" }}>
           <div className="flex items-center gap-2 sm:gap-3">
-            <Lock className="w-4 h-4 sm:w-4 sm:h-4 shrink-0" style={{ color: "hsl(142 76% 46%)" }} />
-            <p className="text-sm sm:text-sm" style={{ color: "hsl(220 9% 60%)" }}>
-              <span className="text-sm sm:text-sm">Pagamentos processados de forma segura via{" "}</span>
-              <span className="font-semibold text-sm sm:text-sm" style={{ color: "hsl(0 0% 90%)" }}>ASAAS</span>
+            <Lock className="w-4 h-4 sm:w-4 sm:h-4 shrink-0" style={{ color: "hsl(0 0% 100%)" }} />
+            <p className="text-sm sm:text-sm" style={{ color: "hsl(0 0% 100%)" }}>
+              <span className="text-sm sm:text-base lg:text-lg">Pagamentos processados de forma segura via{" "}</span>
+              <span className="font-semibold text-sm sm:text-base lg:text-lg" style={{ color: "hsl(0 0% 100%)" }}>ASAAS</span>
             </p>
           </div>
           <button
