@@ -47,10 +47,10 @@ function AppRoutes() {
         <Route path="/simulacao-pagamento" element={<PaymentSimulationPage />} />
 
         {/* ========== LOGIN (AuthGuard: se logado, vai pro dashboard) ========== */}
-        <Route path="/login" element={<PublicLoginPage />} />
-        <Route path="/afiliado-saas/login" element={<AfiliadoSaasLoginPage />} />
-        <Route path="/contador2026/login" element={<ContadorLoginPage />} />
-        <Route path="/super-admin2026ok" element={<AdminLoginPage />} />
+        <Route path="/login" element={<AuthGuard><PublicLoginPage /></AuthGuard>} />
+        <Route path="/afiliado-saas/login" element={<AuthGuard><AfiliadoSaasLoginPage /></AuthGuard>} />
+        <Route path="/contador2026/login" element={<AuthGuard><ContadorLoginPage /></AuthGuard>} />
+        <Route path="/super-admin2026ok" element={<AuthGuard><AdminLoginPage /></AuthGuard>} />
 
         {/* ========== PROTECTED ========== */}
         <Route path="/app/*" element={

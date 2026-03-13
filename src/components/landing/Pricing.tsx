@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, CreditCard, Smartphone, Wifi } from "lucide-react";
+import { Check, Sparkles, CreditCard, Smartphone, Wifi, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // Taxas Asaas (gateway) + taxa do app
 const ASAAS_FEES = {
@@ -67,6 +68,7 @@ const plans = [
 ];
 
 const Pricing = () => {
+  const { t } = useTranslation();
   const handleSelectPlan = (plan: typeof plans[0]) => {
     // Store selected plan for post-login redirect
     localStorage.setItem("selected_plan", JSON.stringify({
@@ -214,94 +216,68 @@ const Pricing = () => {
         </div>
 
         {/* Taxas detalhadas por método de pagamento */}
-        <div className="max-w-3xl mx-auto mt-16">
-          <div className="rounded-2xl border border-border/50 bg-gradient-card p-6 lg:p-8">
-            <h3 className="text-center font-display text-lg font-bold mb-2">
-              Taxas por Método de Pagamento
-            </h3>
-            <p className="text-center text-muted-foreground text-sm mb-6">
-              {t("app_fee_desc")}
-            </p>
+        <div className="max-w-4xl mx-auto mt-16">
+          <div className="rounded-2xl border border-border bg-white p-6 lg:p-8 shadow-sm">
+            <div className="text-center mb-8">
+              <h3 className="font-display text-xl font-bold mb-4">
+                "{t("marketing_highlight", "Enquanto outros sistemas só agendam, nós transformamos cada cliente em uma máquina de indicações")}"
+              </h3>
+              <p className="font-display text-lg font-bold text-foreground">
+                Taxas por Método de Pagamento
+              </p>
+              <p className="text-muted-foreground text-sm mt-2">
+                {t("app_fee_desc")}
+              </p>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* PIX */}
-              <div className="rounded-xl bg-background/60 border border-border/30 p-4 text-center">
+              <div className="rounded-xl bg-gray-50 border border-border/50 p-4 text-center">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
                   <Smartphone className="w-5 h-5 text-primary" />
                 </div>
-                <p className="font-semibold text-sm mb-2">PIX</p>
-                <div className="space-y-1 text-xs text-muted-foreground mb-3">
-                  <div className="flex justify-between">
-                    <span>Gateway Asaas:</span>
-                    <span>{ASAAS_FEES.pix.gateway}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Taxa do App:</span>
-                    <span>{ASAAS_FEES.pix.app}%</span>
-                  </div>
-                </div>
+                <p className="font-bold text-sm mb-2 text-foreground">PIX</p>
                 <div className="border-t border-border/30 pt-2">
-                  <span className="font-display text-xl font-bold text-gradient-gold">
-                    {ASAAS_FEES.pix.total.toFixed(2)}%
+                  <span className="font-display text-xl font-extrabold text-primary">
+                    1,49%
                   </span>
-                  <p className="text-xs text-muted-foreground">total por transação</p>
+                  <p className="text-xs text-muted-foreground font-medium">total por transação</p>
                 </div>
               </div>
 
               {/* Cartão */}
-              <div className="rounded-xl bg-background/60 border border-primary/20 p-4 text-center relative">
+              <div className="rounded-xl bg-gray-50 border border-primary/20 p-4 text-center relative">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
                   <CreditCard className="w-5 h-5 text-primary" />
                 </div>
-                <p className="font-semibold text-sm mb-2">Cartão de Crédito</p>
-                <div className="space-y-1 text-xs text-muted-foreground mb-3">
-                  <div className="flex justify-between">
-                    <span>Gateway Asaas:</span>
-                    <span>{ASAAS_FEES.card.gateway}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Taxa fixa:</span>
-                    <span>{ASAAS_FEES.card.extra}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Taxa do App:</span>
-                    <span>{ASAAS_FEES.card.app}%</span>
-                  </div>
-                </div>
+                <p className="font-bold text-sm mb-2 text-foreground">Cartão de Crédito</p>
                 <div className="border-t border-border/30 pt-2">
-                  <span className="font-display text-xl font-bold text-gradient-gold">
-                    {ASAAS_FEES.card.total.toFixed(2)}%
+                  <span className="font-display text-xl font-extrabold text-primary">
+                    3,49% + R$0,49
                   </span>
-                  <p className="text-xs text-muted-foreground">+ R$0,49 por transação</p>
+                  <p className="text-xs text-muted-foreground font-medium">por transação</p>
                 </div>
               </div>
 
               {/* NFC */}
-              <div className="rounded-xl bg-background/60 border border-border/30 p-4 text-center">
+              <div className="rounded-xl bg-gray-50 border border-border/50 p-4 text-center">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
                   <Wifi className="w-5 h-5 text-primary" />
                 </div>
-                <p className="font-semibold text-sm mb-2">NFC / Débito</p>
-                <div className="space-y-1 text-xs text-muted-foreground mb-3">
-                  <div className="flex justify-between">
-                    <span>Gateway Asaas:</span>
-                    <span>{ASAAS_FEES.nfc.gateway}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Taxa do App:</span>
-                    <span>{ASAAS_FEES.nfc.app}%</span>
-                  </div>
-                </div>
+                <p className="font-bold text-sm mb-2 text-foreground">NFC / Débito</p>
                 <div className="border-t border-border/30 pt-2">
-                  <span className="font-display text-xl font-bold text-gradient-gold">
-                    {ASAAS_FEES.nfc.total.toFixed(2)}%
+                  <span className="font-display text-xl font-extrabold text-primary">
+                    2,49%
                   </span>
-                  <p className="text-xs text-muted-foreground">total por transação</p>
+                  <p className="text-xs text-muted-foreground font-medium">total por transação</p>
                 </div>
               </div>
             </div>
 
-            <p className="text-center text-muted-foreground text-xs mt-6">
+            <p className="text-center text-muted-foreground text-[10px] mt-6 italic">
+              * Taxas totais integradas (Gateway Asaas + 0,5% App).
+            </p>
+            <p className="text-center text-muted-foreground text-xs mt-2">
               🔒 Pagamentos processados de forma segura via{" "}
               <span className="text-primary font-medium">ASAAS</span>.
               Taxas sujeitas à atualização conforme tabela oficial do gateway.

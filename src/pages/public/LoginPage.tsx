@@ -31,7 +31,11 @@ const signupSchema = z.object({
 
 const PublicLoginPage = () => {
   const navigate = useNavigate();
-  const { user, signUp, signIn, signInWithWhatsApp, getPrimaryRole, roles, loading: authLoading, authResolved } = useAuth();
+  const {
+    user, signUp, signIn, signInWithWhatsApp,
+    getPrimaryRole, roles, loading: authLoading,
+    authResolved, sendPasswordResetEmail
+  } = useAuth();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [userType, setUserType] = useState<UserType>("cliente");
@@ -456,7 +460,46 @@ const PublicLoginPage = () => {
             {/* Forgot Password (login only) */}
             {mode === "login" && (
               <div className="text-right">
-                <button type="button" className="text-sm text-primary hover:underline">
+                <button
+                  type="button"
+                  className="text-sm text-primary hover:underline"
+                  onClick={async () => {
+                    const identifier = loginType === "cliente" ? formData.whatsapp : formData.email;
+                    let targetEmail = "";
+
+                    if (loginType === "cliente") {
+                      if (!formData.whatsapp || formData.whatsapp.length < 10) {
+                        toast.error("Insira seu WhatsApp primeiro para localizarmos sua conta.");
+                        return;
+                      }
+                      setLoading(true);
+                      const norm = formData.whatsapp.replace(/\D/g, '');
+                      const { data } = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: norm });
+                      setLoading(false);
+                      if (!data) {
+                        toast.error("Conta não encontrada com este WhatsApp.");
+                        return;
+                      }
+                      targetEmail = data;
+                    } else {
+                      if (!formData.email || !formData.email.includes("@")) {
+                        toast.error("Insira seu e-mail de cadastro primeiro.");
+                        return;
+                      }
+                      targetEmail = formData.email;
+                    }
+
+                    if (targetEmail) {
+                      const { error } = await sendPasswordResetEmail(targetEmail);
+                      if (error) {
+                        toast.error("Erro ao enviar e-mail: " + error.message);
+                      } else {
+                        toast.success("E-mail de recuperação enviado! Verifique sua caixa de entrada.");
+                      }
+                    }
+                  }}
+                  disabled={loading}
+                >
                   Esqueceu a senha?
                 </button>
               </div>

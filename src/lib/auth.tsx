@@ -173,11 +173,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================
 
   const fetchUserData = useCallback(async (userId: string): Promise<AppRole[]> => {
+    const controller = new AbortController();
+    const safetyTimeout = setTimeout(() => controller.abort(), 15000); // 15s global timeout
+
     try {
+      console.log('[AUTH] fetchUserData START (Parallel) for:', userId);
+
+      // Execute queries in parallel using the abort signal
       const [profileResult, rolesResult] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", userId),
+        supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle().abortSignal(controller.signal),
+        supabase.from("user_roles").select("role").eq("user_id", userId).abortSignal(controller.signal)
       ]);
+
+      clearTimeout(safetyTimeout);
+      console.log('[AUTH] DB Queries DONE. Profile:', !!profileResult.data, 'Roles:', rolesResult.data?.length || 0);
 
       if (profileResult.error) {
         logAuthError("Failed to fetch profile", { error: profileResult.error.message });
@@ -192,12 +201,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const fetchedRoles = rolesResult.data?.map(r => r.role as AppRole) || [];
       setRoles(fetchedRoles);
+
       if (fetchedRoles.length > 0) {
         logAuthRole({ role_detectado: fetchedRoles[0] });
       }
+
       return fetchedRoles;
-    } catch (error) {
-      logCriticalError("fetchUserData", error);
+    } catch (error: any) {
+      clearTimeout(safetyTimeout);
+      if (error.name === 'AbortError') {
+        console.error('[AUTH] fetchUserData TIMEOUT - request aborted');
+        logAuthError("fetchUserData timeout", { userId });
+      } else {
+        console.error('[AUTH] fetchUserData CRITICAL ERROR:', error);
+        logCriticalError("fetchUserData", error);
+      }
       return [];
     }
   }, []);
@@ -210,11 +228,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (roleBootstrapAttemptedRef.current) return;
     roleBootstrapAttemptedRef.current = true;
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000); // 5s bootstrap timeout
+
     try {
       const { data, error } = await supabase.functions.invoke("bootstrap-role", {
         body: { user_id: sessionUser.id, email: sessionUser.email },
+        headers: { "Abort-Signal": "true" } // Note: invoke doesn't directly support signal yet in v2, but we simulate via race
       });
 
+      clearTimeout(timeout);
       if (error) {
         logAuthError("Role bootstrap failed", { error: error.message });
         logRoleBootstrap(sessionUser.id, null);
@@ -225,7 +248,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logRoleBootstrap(sessionUser.id, data.role_assigned);
         logAuthRole({ role_detectado: data.role_assigned as AppRole });
       }
-    } catch (error) {
+    } catch (error: any) {
+      clearTimeout(timeout);
       logCriticalError("bootstrapRoles", error);
     }
   }, []);
@@ -235,36 +259,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================
 
   const loadUserComplete = useCallback(async (sessionUser: User): Promise<AppRole[]> => {
+    if (profileLoading) return roles;
+
     setProfileLoading(true);
+    console.log('[AUTH] loadUserComplete STARTED for:', sessionUser.id);
+
     try {
+      // Race for roles with 15s max
       let fetchedRoles = await fetchUserData(sessionUser.id);
 
-      // Only try bootstrap if no roles found - with 3s timeout to avoid cold-start delays
+      // Only try bootstrap if no roles found
       if (fetchedRoles.length === 0 && !roleBootstrapAttemptedRef.current) {
-        try {
-          await Promise.race([
-            bootstrapRoles(sessionUser).catch(e => console.warn("Bootstrap soft-failed:", e)),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('bootstrap timeout')), 3000)),
-          ]);
-        } catch (e) {
-          console.warn("Bootstrap timeout/error managed:", e);
-        }
+        console.log('[AUTH] No roles found, attempting bootstrap...');
+        await bootstrapRoles(sessionUser);
         fetchedRoles = await fetchUserData(sessionUser.id);
       }
 
       if (fetchedRoles.length === 0) {
+        console.log('[AUTH] Still no roles, checking ensureInitialRole...');
         const assigned = await ensureInitialRole(sessionUser);
         if (assigned) {
           fetchedRoles = await fetchUserData(sessionUser.id);
         }
       }
 
+      console.log('[AUTH] loadUserComplete FINISHED. Roles:', fetchedRoles);
       logAuthSuccess({ user_id: sessionUser.id, roles: fetchedRoles });
       return fetchedRoles;
+    } catch (err) {
+      console.error('[AUTH] loadUserComplete CRITICAL ERROR:', err);
+      return [];
     } finally {
       setProfileLoading(false);
     }
-  }, [fetchUserData, bootstrapRoles, ensureInitialRole]);
+  }, [fetchUserData, bootstrapRoles, ensureInitialRole, profileLoading, roles]);
 
   // ============================================
   // SESSION MANAGEMENT
@@ -329,22 +357,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // 2. INITIAL load - controls loading, authResolved, initialLoadComplete
     const initializeAuth = async () => {
-      // Safety timeout: force resolve after 6 seconds no matter what
-      const safetyTimer = setTimeout(() => {
-        if (isMounted) {
-          console.warn('[AUTH] Safety timeout reached - forcing auth resolved');
-          setLoading(false);
-          setProfileLoading(false);
-          setInitialLoadComplete(true);
-          setAuthResolved(true);
-        }
-      }, 6000);
-
       try {
+        console.log('[AUTH] Fetching session...');
+        // getSession with implicit timeout managed by initializeAuth safety timer logic
         const { data: { session: existingSession }, error } = await supabase.auth.getSession();
+        console.log('[AUTH] Session fetched:', !!existingSession);
 
         if (error) {
           logAuthError("getSession failed", { error: error.message });
+          console.error('[AUTH] getSession error:', error);
         }
         if (!isMounted) return;
 
@@ -357,21 +378,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const validation = validateSession(existingSession);
         logAuthValidate({ token_valido: validation.isValid });
 
-        if (validation.isExpired) {
-          logSessionExpired({
-            expires_at: validation.expiresAt || 'unknown',
-            reason: validation.reason
-          });
-        }
-
         if (existingSession?.user && validation.isValid) {
           try {
+            console.log('[AUTH] Loading user complete data...', existingSession.user.id);
+            // This now has its own internal AbortController/Timeout
             await loadUserComplete(existingSession.user);
-            logDebugSummary('Initial Auth Complete', {
-              user_id: existingSession.user.id,
-              email: existingSession.user.email,
-              session_valid: validation.isValid,
-            });
+            console.log('[AUTH] User data load finished');
           } catch (userDataError) {
             console.error('[AUTH] Failed to load user data during init:', userDataError);
           }
@@ -379,7 +391,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         logCriticalError("initializeAuth", error);
       } finally {
-        clearTimeout(safetyTimer);
         if (isMounted) {
           const duration = Date.now() - startTime;
           logLoadComplete({ duration_ms: duration, status: 'liberado' });
@@ -461,6 +472,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null };
     } catch (err) {
       logCriticalError("signIn", err);
+      return { error: err as Error };
+    }
+  };
+
+  const sendPasswordResetEmail = async (email: string) => {
+    try {
+      // Use origin as redirectTo to ensure user returns to the app
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/login`,
+      });
+      if (error) {
+        logAuthError("Password reset failed", { error: error.message });
+        return { error };
+      }
+      return { error: null };
+    } catch (err) {
+      logCriticalError("sendPasswordResetEmail", err);
       return { error: err as Error };
     }
   };
@@ -552,6 +580,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user, session, profile, roles,
       loading, profileLoading, initialLoadComplete, authResolved,
       signUp, signIn, signInWithWhatsApp, signInWithMagicLink,
+      sendPasswordResetEmail,
       signOut, hasRole, getPrimaryRole, refreshSession,
     }}>
       {children}

@@ -21,7 +21,7 @@ const features = [
   {
     icon: CreditCard,
     title: "PIX, Cartão e NFC",
-    description: "Receba de qualquer forma. Split automático de pagamentos entre os profissionais."
+    description: "Receba de qualquer forma com taxas integradas (Gateway + App) a partir de 1,49%. Split automático."
   },
   {
     icon: Gift,

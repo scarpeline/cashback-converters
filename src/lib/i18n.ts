@@ -15,7 +15,8 @@ const resources = {
       "pricing": "Preços",
       "trial_days": "7 dias grátis para testar",
       "no_credit_card": "Sem cartão de crédito. Cancele quando quiser.",
-      "app_fee_desc": "Taxas do gateway ASAAS + 0,5% do app — transparência total"
+      "app_fee_desc": "Taxas integradas ASAAS + app — transparência total",
+      "marketing_highlight": "Enquanto outros sistemas só agendam, nós transformamos cada cliente em uma máquina de indicações"
     }
   },
   en: {
@@ -29,7 +30,8 @@ const resources = {
       "pricing": "Pricing",
       "trial_days": "7 days free trial",
       "no_credit_card": "No credit card required. Cancel anytime.",
-      "app_fee_desc": "ASAAS gateway fees + 0.5% app fee — total transparency"
+      "app_fee_desc": "Integrated ASAAS + app fees — total transparency",
+      "marketing_highlight": "While other systems only schedule, we transform every client into a referral machine"
     }
   },
   es: {
@@ -43,7 +45,8 @@ const resources = {
       "pricing": "Precios",
       "trial_days": "7 días gratis para probar",
       "no_credit_card": "Sin tarjeta de crédito. Cancela cuando quieras.",
-      "app_fee_desc": "Tasas del gateway ASAAS + 0,5% de la app — transparencia total"
+      "app_fee_desc": "Tasas del gateway ASAAS + 0,5% de la app — transparencia total",
+      "marketing_highlight": "Mientras outros sistemas solo programan, nosotros transformamos cada cliente en una máquina de recomendaciones"
     }
   },
   fr: {
@@ -57,7 +60,8 @@ const resources = {
       "pricing": "Tarifs",
       "trial_days": "7 jours d'essai gratuit",
       "no_credit_card": "Sans carte de crédit. Annulez quand vous voulez.",
-      "app_fee_desc": "Frais de passerelle ASAAS + 0,5% de frais d'application — transparence totale"
+      "app_fee_desc": "Frais de passerelle ASAAS + 0,5% de frais d'application — transparence totale",
+      "marketing_highlight": "Alors que d’autres systèmes ne font que planifier, nous transformons chaque client en une machine de parrainage"
     }
   }
 };

@@ -9,6 +9,8 @@ import {
   Shield
 } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
+
 const integrations = [
   {
     icon: Rocket,
@@ -72,6 +74,7 @@ const apiBlocks = [
 ];
 
 const IntegrationBlocks = () => {
+  const { t } = useTranslation();
   return (
     <section className="py-24 px-4 relative overflow-hidden">
       {/* Background */}
@@ -79,10 +82,10 @@ const IntegrationBlocks = () => {
 
       <div className="container relative z-10 mx-auto">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-6">
-          <p className="text-muted-foreground text-lg mb-4">
-            Enquanto outros sistemas só agendam, nós transformamos cada cliente em uma máquina de indicações
-          </p>
+        <div className="text-center max-w-4xl mx-auto mb-12">
+          <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground leading-tight">
+            "{t("marketing_highlight", "Enquanto outros sistemas só agendam, nós transformamos cada cliente em uma máquina de indicações")}"
+          </h2>
         </div>
 
         {/* Feature Cards - 2x2 Grid */}
@@ -90,7 +93,7 @@ const IntegrationBlocks = () => {
           {integrations.map((item, index) => (
             <div
               key={item.title}
-              className="group relative p-8 rounded-2xl bg-gradient-card border border-border/50 hover:border-primary/30 transition-all duration-300"
+              className="group relative p-8 rounded-2xl bg-white border border-border shadow-sm hover:border-primary/30 hover:shadow-md transition-all duration-300"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               {/* Icon */}
@@ -134,12 +137,12 @@ const IntegrationBlocks = () => {
           {apiBlocks.map((block, index) => (
             <div
               key={block.title}
-              className="group relative p-6 rounded-2xl bg-gradient-card border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-gold"
+              className="group relative p-6 rounded-2xl bg-white border border-border shadow-sm hover:border-primary/30 transition-all duration-300 hover:shadow-md"
             >
               {/* Status Badge */}
-              <div className={`absolute top-4 right-4 px-2 py-0.5 rounded-full text-xs font-medium ${block.status === 'ready'
-                ? 'bg-success/20 text-success'
-                : 'bg-muted text-muted-foreground'
+              <div className={`absolute top-4 right-4 px-2 py-0.5 rounded-full text-xs font-semibold ${block.status === 'ready'
+                ? 'bg-success/10 text-success'
+                : 'bg-muted/50 text-muted-foreground'
                 }`}>
                 {block.status === 'ready' ? 'Ativo' : 'Em breve'}
               </div>

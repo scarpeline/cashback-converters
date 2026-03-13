@@ -3,9 +3,9 @@ import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
+import {
   LayoutDashboard,
-  Calendar, 
+  Calendar,
   DollarSign,
   User,
   Bell,
@@ -22,7 +22,7 @@ const ProfissionalDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const basePath = "/painel-profissional";
-  
+
   const navigation = [
     { name: "Dashboard", href: basePath, icon: LayoutDashboard },
     { name: "Minha Agenda", href: `${basePath}/agenda`, icon: Calendar },
@@ -38,7 +38,7 @@ const ProfissionalDashboard = () => {
   return (
     <div className="min-h-screen bg-background flex">
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -57,7 +57,7 @@ const ProfissionalDashboard = () => {
                 Profissional
               </span>
             </Link>
-            <button 
+            <button
               className="lg:hidden text-muted-foreground"
               onClick={() => setSidebarOpen(false)}
             >
@@ -79,8 +79,8 @@ const ProfissionalDashboard = () => {
                 className={`
                   flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium
                   transition-colors
-                  ${isActive(item.href) 
-                    ? "bg-primary text-primary-foreground" 
+                  ${isActive(item.href)
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"}
                 `}
               >
@@ -91,8 +91,8 @@ const ProfissionalDashboard = () => {
           </nav>
 
           <div className="p-4 border-t border-border">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="w-full justify-start gap-3 text-muted-foreground"
               onClick={signOut}
             >
@@ -105,7 +105,7 @@ const ProfissionalDashboard = () => {
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 border-b border-border flex items-center justify-between px-4 lg:px-6 bg-card">
-          <button 
+          <button
             className="lg:hidden text-foreground"
             onClick={() => setSidebarOpen(true)}
           >
@@ -187,7 +187,7 @@ const AgendaPage = () => (
 const GanhosPage = () => (
   <div className="space-y-6">
     <h1 className="font-display text-2xl font-bold">Meus Ganhos</h1>
-    
+
     <Card className="bg-gradient-card border-primary/20">
       <CardHeader>
         <CardDescription>Ganhos do Mês</CardDescription>
@@ -200,6 +200,7 @@ const GanhosPage = () => (
         <CardHeader>
           <CardDescription>A Receber</CardDescription>
           <CardTitle className="text-xl">R$ 0,00</CardTitle>
+          <p className="text-[10px] text-muted-foreground mt-1">Taxas integradas (Gateway + App) já descontadas.</p>
         </CardHeader>
       </Card>
       <Card>
@@ -214,7 +215,7 @@ const GanhosPage = () => (
 
 const PerfilPage = () => {
   const { profile } = useAuth();
-  
+
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Meu Perfil</h1>

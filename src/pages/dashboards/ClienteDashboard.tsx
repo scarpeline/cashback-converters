@@ -479,7 +479,24 @@ const RifasClientPage = () => {
   }, []);
 
   const handleJoin = async (raffleId: string) => {
-    toast.success("Você adquiriu um bilhete! (Simulação de Crédito)");
+    if (!profile?.id) return toast.error("Faça login para participar");
+
+    // Simulação de verificação de saldo de cashback para pagar rifa
+    const { data: ticket, error } = await supabase.from("raffle_tickets").insert({
+      raffle_id: raffleId,
+      user_id: profile.id,
+      ticket_number: Math.floor(Math.random() * 1000) // Simplificado para o MVP
+    });
+
+    if (error) {
+      if (error.message.includes("unique_user_raffle")) {
+        toast.error("Você já está participando desta rifa!");
+      } else {
+        toast.error("Erro ao adquirir bilhete: " + error.message);
+      }
+    } else {
+      toast.success("Bilhete garantido com sucesso! Boa sorte!");
+    }
   };
 
   return (

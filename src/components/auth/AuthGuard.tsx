@@ -31,7 +31,9 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
   // Logado + tem roles + está em rota de login → vai pro dashboard
   if (user && roles.length > 0 && isLoginRoute(location.pathname)) {
-    const dashboard = getDashboardForRole(getPrimaryRole());
+    const role = getPrimaryRole();
+    const dashboard = getDashboardForRole(role);
+    console.log(`[AuthGuard] User already logged in with role ${role} - Redirecting to ${dashboard}`);
     return <Navigate to={dashboard} replace />;
   }
 

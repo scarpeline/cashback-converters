@@ -913,7 +913,13 @@ const FinanceiroPage = () => (
           <Button variant="gold" size="sm" className="w-full" onClick={() => toast.info("Saque via PIX em breve!")}>Sacar via PIX</Button>
         </CardContent>
       </Card>
-      <Card><CardHeader><CardDescription>A Receber</CardDescription><CardTitle className="text-2xl">R$ 0,00</CardTitle></CardHeader></Card>
+      <Card>
+        <CardHeader>
+          <CardDescription>A Receber</CardDescription>
+          <CardTitle className="text-2xl">R$ 0,00</CardTitle>
+          <p className="text-[10px] text-muted-foreground mt-1">Taxas integradas (Gateway + App) já descontadas.</p>
+        </CardHeader>
+      </Card>
       <Card><CardHeader><CardDescription>Faturamento do Mês</CardDescription><CardTitle className="text-2xl">R$ 0,00</CardTitle></CardHeader></Card>
     </div>
   </div>
@@ -1074,11 +1080,32 @@ const RifasPage = () => {
                   <p className="text-sm text-muted-foreground">
                     Preço: R$ {Number(r.ticket_price).toFixed(2)} • Prêmio: R$ {Number(r.credit_award).toFixed(2)}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">Status: <span className="capitalize">{r.status}</span></p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Status: <span className={`capitalize font-bold ${r.status === 'open' ? 'text-success' : 'text-destructive'}`}>
+                      {r.status === 'open' ? 'Aberta' : 'Finalizada'}
+                    </span>
+                  </p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => toast.info("Visualizar inscritos em breve")}>Bilhetes</Button>
-                  <Button variant="destructive" size="sm" onClick={() => toast.info("Função de sorteio em breve")}>Sortear</Button>
+                  <Button variant="outline" size="sm" onClick={async () => {
+                    const { data, error } = await supabase.from("raffle_tickets").select("*, profiles(name)").eq("raffle_id", r.id);
+                    if (error) toast.error("Erro ao buscar bilhetes");
+                    else toast.info(`${data?.length || 0} bilhetes vendidos.`);
+                  }}>Bilhetes</Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={r.status !== 'open'}
+                    onClick={async () => {
+                      if (!confirm("Deseja realizar o sorteio agora? O prêmio será creditado automaticamente.")) return;
+                      const { data, error } = await supabase.rpc("draw_raffle_winner", { _raffle_id: r.id });
+                      if (error) toast.error(error.message);
+                      else toast.success(`Sorteio realizado! Vencedor: ${data.winner_name}`);
+                      setRaffles(current => current.map(item => item.id === r.id ? { ...item, status: 'closed' } : item));
+                    }}
+                  >
+                    Sortear
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -1122,6 +1149,18 @@ const AutomacaoPage = () => {
     }
   };
 
+  const updateMessage = async (day: string, newMessage: string) => {
+    const newFlows = (flows || []).map((f: any) =>
+      f.day === day ? { ...f, message: newMessage } : f
+    );
+    const { error } = await supabase.from("barbershops").update({ marketing_flows: newFlows }).eq("id", barbershop.id);
+    if (!error) {
+      setFlows(newFlows);
+      toast.success("Mensagem atualizada!");
+      refetch();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Automação de Marketing</h1>
@@ -1131,18 +1170,41 @@ const AutomacaoPage = () => {
           <CardDescription>Envio automático de lembretes via WhatsApp/SMS</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4">
+          <div className="grid gap-6">
             {Object.entries(daysLabels).map(([key, label]) => {
               const flow = flows?.find((f: any) => f.day === key);
               return (
-                <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{label}</p>
-                    <p className="text-xs text-muted-foreground">{flow ? "Ativo: " + flow.message : "Desativado"}</p>
+                <div key={key} className="p-4 border rounded-xl space-y-3 bg-card shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold text-lg">{label}</p>
+                    <Button
+                      variant={flow ? "gold" : "outline"}
+                      size="sm"
+                      onClick={() => toggleDay(key)}
+                    >
+                      {flow ? "Desativar" : "Ativar"}
+                    </Button>
                   </div>
-                  <Button variant={flow ? "gold" : "outline"} size="sm" onClick={() => toggleDay(key)}>
-                    {flow ? "Configurado" : "Ativar"}
-                  </Button>
+
+                  {flow && (
+                    <div className="flex gap-2">
+                      <Input
+                        value={flow.message}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFlows(curr => curr.map(f => f.day === key ? { ...f, message: val } : f));
+                        }}
+                        placeholder="Mensagem personalizada..."
+                        className="flex-1"
+                      />
+                      <Button size="icon" variant="ghost" onClick={() => updateMessage(key, flow.message)}>
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                  <p className="text-[10px] text-muted-foreground italic">
+                    {flow ? "✓ Envio programado para este dia" : "✕ Clique em Ativar para programar envios"}
+                  </p>
                 </div>
               );
             })}
