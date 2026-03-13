@@ -12,6 +12,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "stability": "node scripts/stability-check.cjs",
+    "stability:check": "npm run stability",
     "security:test": "node scripts/test-security-fixes.js",
     "security:check": "npm run security:test && echo 'Verifique o relatório security-test-report.json para detalhes'"
   },

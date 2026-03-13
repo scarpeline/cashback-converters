@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-03-13T00:01:30.532Z",
+  "build": {
+    "status": "success",
+    "assets": 5,
+    "totalSize": 3335283
+  },
+  "nextSteps": [
+    "1. Fazer upload da pasta /dist para o servidor",
+    "2. Configurar o servidor para servir arquivos estáticos",
+    "3. Testar todas as funcionalidades em produção",
+    "4. Monitorar logs de erros"
+  ]
+}

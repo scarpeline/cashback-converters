@@ -3,7 +3,7 @@
  * Rotas centralizadas. Sem guards duplicados.
  */
 
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +15,8 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import { Loader2 } from "lucide-react";
 import ErrorBoundary from "@/components/error/ErrorBoundary";
 import { SystemDiagnostics } from "@/hooks/useSystemHealth";
+import { StabilityMonitorProvider } from "@/components/monitoring/StabilityMonitorProvider";
+import { startAutomationWorker } from "@/lib/automation-worker";
 
 // Lazy pages
 const Index = lazy(() => import("./pages/Index"));
@@ -31,6 +33,7 @@ const ProfissionalDashboard = lazy(() => import("./pages/dashboards/Profissional
 const AfiliadoDashboard = lazy(() => import("./pages/dashboards/AfiliadoDashboard"));
 const ContadorDashboard = lazy(() => import("./pages/dashboards/ContadorDashboard"));
 const SuperAdminDashboard = lazy(() => import("./pages/dashboards/SuperAdminDashboard"));
+const AutomationDashboard = lazy(() => import("./pages/dashboard/superadmin/AutomationDashboard"));
 const PaymentSimulationPage = lazy(() => import("./pages/public/PaymentSimulationPage"));
 const InstallPage = lazy(() => import("./pages/public/InstallPage"));
 const CostAnalysisPage = lazy(() => import("./pages/public/CostAnalysisPage"));
@@ -108,6 +111,13 @@ function AppRoutes() {
               </ProtectedRoute>
             </ErrorBoundary>
           } />
+          <Route path="/admin/automacao" element={
+            <ErrorBoundary>
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <AutomationDashboard />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          } />
 
           {/* ========== LEGACY REDIRECTS ========== */}
           <Route path="/auth" element={<Navigate to="/login" replace />} />
@@ -131,23 +141,31 @@ function AppRoutes() {
   );
 }
 
-const App = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ErrorBoundary>
-            <AuthProvider>
-              <AppRoutes />
-              <SystemDiagnostics />
-            </AuthProvider>
-          </ErrorBoundary>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </ErrorBoundary>
-);
+const App = () => {
+  // Iniciar worker de automação ao montar o app
+  useEffect(() => {
+    startAutomationWorker();
+  }, []);
+
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ErrorBoundary>
+              <AuthProvider>
+                <StabilityMonitorProvider />
+                <AppRoutes />
+                <SystemDiagnostics />
+              </AuthProvider>
+            </ErrorBoundary>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+};
 
 export default App;

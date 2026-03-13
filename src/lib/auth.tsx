@@ -11,6 +11,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useRef, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { useAutomation } from "@/hooks/useAutomation";
 import {
   logAuthStart,
   logAuthValidate,
@@ -105,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const roleBootstrapAttemptedRef = useRef(false);
   const userLoadInFlightRef = useRef<Promise<AppRole[]> | null>(null);
   const userLoadInFlightUserIdRef = useRef<string | null>(null);
+  const { updateUserTracking } = useAutomation();
 
   // ============================================
   // PENDING ROLE STORAGE
@@ -524,6 +526,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logAuthError("Login failed", { error: error.message });
         return { error };
       }
+      
+      // Atualizar tracking de inatividade após login bem-sucedido
+      if (!error) {
+        updateUserTracking().catch(err => console.warn('Erro ao atualizar tracking:', err));
+      }
+      
       return { error: null };
     } catch (err) {
       logCriticalError("signIn", err);
