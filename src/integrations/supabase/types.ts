@@ -98,7 +98,6 @@ export type Database = {
         }
         Relationships: []
       }
-<<<<<<< HEAD
       daily_metrics: {
         Row: {
           id: string
@@ -951,8 +950,6 @@ export type Database = {
         }
         Relationships: []
       }
-=======
->>>>>>> origin/main
       affiliate_commissions: {
         Row: {
           affiliate_id: string
@@ -2935,7 +2932,6 @@ export type Database = {
         Args: { _barbershop_id: string; _user_id: string }
         Returns: boolean
       }
-<<<<<<< HEAD
       search_contadores_verificados: {
         Args: { _search?: string }
         Returns: {
@@ -3076,8 +3072,6 @@ export type Database = {
           tax_amount: number
         }[]
       }
-=======
->>>>>>> origin/main
     }
     Enums: {
       app_role:

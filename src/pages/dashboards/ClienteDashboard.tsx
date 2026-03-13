@@ -13,13 +13,14 @@ import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { LanguageSelector } from "@/components/LanguageSelector";
+import { LanguageSelector } from "@/components/layout/LanguageSelector";
 import { formatWhatsAppBR } from "@/lib/input-masks";
 import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 import { ProfilePhotoUpload } from "@/components/shared/ProfilePhotoUpload";
 
 const ClienteDashboard = () => {
+  const { i18n, t } = useTranslation();
   const { profile, signOut } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -27,18 +28,18 @@ const ClienteDashboard = () => {
   const basePath = "/app";
 
   const navigation = [
-    { name: "Agendar", href: basePath, icon: Calendar },
-    { name: "Meus Agendamentos", href: `${basePath}/agendamentos`, icon: Clock },
-    { name: "Minhas Dívidas", href: `${basePath}/dividas`, icon: Wallet },
-    { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: FileText },
-    { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
-    { name: "Histórico", href: `${basePath}/historico`, icon: History },
-    { name: "Indique Amigos", href: `${basePath}/indicar`, icon: Users },
-    { name: "Ação entre Amigos", href: `${basePath}/acao-entre-amigos`, icon: Gift },
-    { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
-    { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
-    { name: "Seja Afiliado", href: `${basePath}/seja-afiliado`, icon: Share2 },
-    { name: "Meu Perfil", href: `${basePath}/perfil`, icon: User },
+    { name: t("nav.schedule"), href: basePath, icon: Calendar },
+    { name: t("nav.my_appointments"), href: `${basePath}/agendamentos`, icon: Clock },
+    { name: t("nav.my_debts"), href: `${basePath}/dividas`, icon: Wallet },
+    { name: t("nav.accounting_services"), href: `${basePath}/servicos-contabeis`, icon: FileText },
+    { name: t("nav.cashback"), href: `${basePath}/cashback`, icon: Gift },
+    { name: t("nav.history"), href: `${basePath}/historico`, icon: History },
+    { name: t("nav.refer_friends"), href: `${basePath}/indicar`, icon: Users },
+    { name: t("nav.friends_action"), href: `${basePath}/acao-entre-amigos`, icon: Gift },
+    { name: t("nav.support"), href: `${basePath}/suporte`, icon: MessageCircle },
+    { name: t("nav.notifications"), href: `${basePath}/notificacoes`, icon: Bell },
+    { name: t("nav.be_affiliate"), href: `${basePath}/seja-afiliado`, icon: Share2 },
+    { name: t("nav.my_profile"), href: `${basePath}/perfil`, icon: User },
   ];
 
   const isActive = (href: string) => {
@@ -59,7 +60,7 @@ const ClienteDashboard = () => {
             <button className="lg:hidden text-sidebar-foreground/60" onClick={() => setSidebarOpen(false)}><X className="w-5 h-5" /></button>
           </div>
           <div className="p-4 border-b border-sidebar-border">
-            <p className="font-medium truncate text-sidebar-foreground">{profile?.name || "Cliente"}</p>
+            <p className="font-medium truncate text-sidebar-foreground">{profile?.name || t("nav.client")}</p>
             <p className="text-sm text-sidebar-foreground/60 truncate">{profile?.whatsapp || profile?.email}</p>
           </div>
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -71,7 +72,7 @@ const ClienteDashboard = () => {
             ))}
           </nav>
           <div className="p-4 border-t border-sidebar-border">
-            <Button variant="ghost" className="w-full justify-start gap-3 text-sidebar-foreground/60 hover:text-sidebar-foreground" onClick={signOut}><LogOut className="w-5 h-5" />Sair</Button>
+            <Button variant="ghost" className="w-full justify-start gap-3 text-sidebar-foreground/60 hover:text-sidebar-foreground" onClick={signOut}><LogOut className="w-5 h-5" />{t("nav.logout")}</Button>
           </div>
         </div>
       </aside>
@@ -113,27 +114,28 @@ const MOCK_BARBERSHOPS = [
 ];
 
 const HomePage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const filtered = MOCK_BARBERSHOPS.filter(b => b.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="space-y-6">
-      <div><h1 className="font-display text-2xl font-bold">Olá! 👋</h1><p className="text-muted-foreground">Encontre uma barbearia e agende seu horário</p></div>
+      <div><h1 className="font-display text-2xl font-bold">{t("home.greeting")}</h1><p className="text-muted-foreground">{t("home.find_barbershop")}</p></div>
       <div className="grid grid-cols-3 gap-3">
         <button onClick={() => navigate("/app/agendamentos")} className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-center hover:bg-primary/20 transition-colors">
-          <Clock className="w-6 h-6 text-primary mx-auto mb-1" /><span className="text-xs font-medium text-primary">Meus Agendamentos</span>
+          <Clock className="w-6 h-6 text-primary mx-auto mb-1" /><span className="text-xs font-medium text-primary">{t("nav.my_appointments")}</span>
         </button>
         <button onClick={() => navigate("/app/cashback")} className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-center hover:bg-primary/20 transition-colors">
-          <Gift className="w-6 h-6 text-primary mx-auto mb-1" /><span className="text-xs font-medium text-primary">Meu Cashback</span>
+          <Gift className="w-6 h-6 text-primary mx-auto mb-1" /><span className="text-xs font-medium text-primary">{t("nav.cashback")}</span>
         </button>
         <button onClick={() => navigate("/app/dividas")} className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-center hover:bg-destructive/20 transition-colors">
-          <Wallet className="w-6 h-6 text-destructive mx-auto mb-1" /><span className="text-xs font-medium text-destructive">Dívidas</span>
+          <Wallet className="w-6 h-6 text-destructive mx-auto mb-1" /><span className="text-xs font-medium text-destructive">{t("nav.my_debts")}</span>
         </button>
       </div>
-      <div className="relative"><Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" /><Input placeholder="Buscar barbearia..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" /></div>
+      <div className="relative"><Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" /><Input placeholder={t("home.search_placeholder")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" /></div>
       <div className="space-y-3">
-        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Barbearias Disponíveis</h2>
+        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">{t("home.available_barbershops")}</h2>
         {filtered.map((shop) => (
           <Card key={shop.id} className="hover:border-primary transition-colors cursor-pointer" onClick={() => toast.success(`Abrindo ${shop.name}... (Simulação)`)}>
             <CardContent className="p-4 flex items-center gap-4">
@@ -342,15 +344,38 @@ const IndicarPage = () => {
 };
 
 const NotificacoesPage = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [raffles, setRaffles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    supabase.from("raffles").select("*").eq("status", "open").order("created_at", { ascending: false }).then(({ data }) => {
+    if (!user) return;
+
+    // Fetch notifications
+    const fetchNotifications = async () => {
+      const { data } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      setNotifications(data || []);
+    };
+
+    // Fetch raffles (as referenced in original code but not correctly used)
+    const fetchRaffles = async () => {
+      const { data } = await supabase
+        .from("raffles")
+        .select("*")
+        .eq("status", "open")
+        .order("created_at", { ascending: false });
       setRaffles(data || []);
       setLoading(false);
-    });
-  }, []);
+    };
+
+    fetchNotifications();
+    fetchRaffles();
+  }, [user]);
 
   const handleJoin = async (raffleId: string) => {
     if (!profile?.id) return toast.error("Faça login para participar");
