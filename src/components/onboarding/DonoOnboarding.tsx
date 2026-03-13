@@ -3,25 +3,30 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Store, MapPin, FileText, Loader2, CheckCircle } from "lucide-react";
+import { Store, MapPin, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { formatCpfCnpjBR, formatWhatsAppBR } from "@/lib/input-masks";
-import { z } from "zod";
 import logo from "@/assets/logo.png";
-
-const onboardingSchema = z.object({
-  name: z.string().min(2, "Nome da barbearia deve ter no mínimo 2 caracteres").max(100),
-  address: z.string().min(5, "Endereço deve ter no mínimo 5 caracteres").max(200),
-  cpf_cnpj: z.string().min(11, "CPF/CNPJ inválido"),
-  phone: z.string().min(10, "Telefone inválido").optional().or(z.literal("")),
-  description: z.string().max(500).optional().or(z.literal("")),
-});
 
 interface DonoOnboardingProps {
   onComplete: () => void;
 }
+
+const validateForm = (form: { name: string; address: string; cpf_cnpj: string }) => {
+  const errors: Record<string, string> = {};
+  if (!form.name || form.name.length < 2) {
+    errors.name = "Nome da barbearia deve ter no mínimo 2 caracteres";
+  }
+  if (!form.address || form.address.length < 5) {
+    errors.address = "Endereço deve ter no mínimo 5 caracteres";
+  }
+  const cleanCpfCnpj = form.cpf_cnpj.replace(/\D/g, "");
+  if (cleanCpfCnpj.length < 11) {
+    errors.cpf_cnpj = "CPF/CNPJ inválido";
+  }
+  return errors;
+};
 
 export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
   const { user, profile } = useAuth();
@@ -38,54 +43,85 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
 
   const validateAndSubmit = async () => {
     setErrors({});
-
-    try {
-      onboardingSchema.parse({
-        name: form.name,
-        address: form.address,
-        cpf_cnpj: form.cpf_cnpj.replace(/\D/g, ""),
-        phone: form.phone,
-        description: form.description,
-      });
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        const newErrors: Record<string, string> = {};
-        err.errors.forEach((e) => {
-          if (e.path[0]) newErrors[e.path[0] as string] = e.message;
-        });
-        setErrors(newErrors);
-        return;
-      }
+    const validationErrors = validateForm(form);
+    
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
     }
 
     if (!user) return;
 
     setSaving(true);
     try {
-      // Create barbershop
-      const slug = form.name
+      const baseSlug = form.name
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
+        .replace(/(^-|-$)/g, "") || `barbearia-${user.id.slice(0, 8)}`;
 
-      const { error } = await supabase.from("barbershops").insert({
+      const payload = {
         owner_user_id: user.id,
         name: form.name,
         address: form.address,
         phone: form.phone || null,
         description: form.description || null,
-        slug,
-      });
+      };
 
-      if (error) {
-        toast.error("Erro ao cadastrar barbearia: " + error.message);
+      const { data: existingList, error: existingError } = await supabase
+        .from("barbershops")
+        .select("id, slug")
+        .eq("owner_user_id", user.id)
+        .order("created_at", { ascending: true })
+        .limit(1);
+
+      if (existingError) {
+        toast.error("Erro ao validar cadastro existente: " + existingError.message);
         setSaving(false);
         return;
       }
 
-      // Update profile with CPF/CNPJ if provided
+      const existing = existingList?.[0];
+
+      if (existing) {
+        const { error: updateError } = await supabase
+          .from("barbershops")
+          .update({
+            ...payload,
+            slug: existing.slug || baseSlug,
+          })
+          .eq("id", existing.id);
+
+        if (updateError) {
+          toast.error("Erro ao atualizar barbearia: " + updateError.message);
+          setSaving(false);
+          return;
+        }
+      } else {
+        let slugToUse = baseSlug;
+
+        const insertOnce = async (slug: string) =>
+          supabase.from("barbershops").insert({
+            ...payload,
+            slug,
+          });
+
+        let { error: insertError } = await insertOnce(slugToUse);
+
+        if (insertError?.message?.toLowerCase().includes("barbershops_slug_key")) {
+          slugToUse = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+          const retry = await insertOnce(slugToUse);
+          insertError = retry.error;
+        }
+
+        if (insertError) {
+          toast.error("Erro ao cadastrar barbearia: " + insertError.message);
+          setSaving(false);
+          return;
+        }
+      }
+
       if (form.cpf_cnpj) {
         await supabase
           .from("profiles")
@@ -95,7 +131,7 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
 
       toast.success("Barbearia cadastrada com sucesso! 🎉");
       onComplete();
-    } catch (err) {
+    } catch {
       toast.error("Erro inesperado. Tente novamente.");
     } finally {
       setSaving(false);
@@ -150,7 +186,7 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="name">Nome da Barbearia *</Label>
+                <label htmlFor="name" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Nome da Barbearia *</label>
                 <Input
                   id="name"
                   placeholder="Ex: Barbearia do João"
@@ -162,7 +198,7 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
               </div>
 
               <div>
-                <Label htmlFor="description">Descrição (opcional)</Label>
+                <label htmlFor="description" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Descrição (opcional)</label>
                 <Input
                   id="description"
                   placeholder="Breve descrição do seu negócio"
@@ -173,7 +209,7 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
               </div>
 
               <div>
-                <Label htmlFor="phone">Telefone/WhatsApp</Label>
+                <label htmlFor="phone" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Telefone/WhatsApp</label>
                 <Input
                   id="phone"
                   placeholder="(00) 00000-0000"
@@ -212,7 +248,7 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="address">Endereço Completo *</Label>
+                <label htmlFor="address" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Endereço Completo *</label>
                 <Input
                   id="address"
                   placeholder="Rua, número, bairro, cidade - UF"
@@ -224,7 +260,7 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
               </div>
 
               <div>
-                <Label htmlFor="cpf_cnpj">CPF ou CNPJ *</Label>
+                <label htmlFor="cpf_cnpj" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">CPF ou CNPJ *</label>
                 <Input
                   id="cpf_cnpj"
                   placeholder="000.000.000-00 ou 00.000.000/0000-00"

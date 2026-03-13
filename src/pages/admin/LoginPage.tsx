@@ -28,23 +28,26 @@ const AdminLoginPage = () => {
 
   // Redirect if already logged in AND roles loaded
   useEffect(() => {
-    if (user && !authLoading && roles.length > 0) {
+    if (user && authResolved && roles.length > 0) {
       const role = getPrimaryRole();
       if (role) {
         navigate(getDashboardForRole(role), { replace: true });
       }
     }
-  }, [user, authLoading, roles, navigate, getPrimaryRole]);
+  }, [user, authResolved, roles, navigate, getPrimaryRole]);
+
+  // Failsafe: release loading state when auth resolves
+  useEffect(() => {
+    if (loading && user && authResolved && roles.length > 0) {
+      setLoading(false);
+    }
+  }, [loading, user, authResolved, roles]);
 
   const checkAuthorization = useCallback(async (emailToCheck: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase
-        .from("authorized_super_admins")
-        .select("email, is_active")
-        .eq("email", emailToCheck)
-        .eq("is_active", true)
-        .maybeSingle();
-      
+      const { data, error } = await supabase.rpc("is_authorized_admin_email", {
+        _email: emailToCheck,
+      });
       if (error) return false;
       return !!data;
     } catch {
@@ -91,14 +94,15 @@ const AdminLoginPage = () => {
         } else if (msg.toLowerCase().includes("email not confirmed")) {
           toast.error("Confirme seu e-mail antes de entrar.");
         } else {
-          toast.error(msg || "Erro ao fazer login");
+          toast.error("Erro ao fazer login. Tente novamente.");
         }
         setLoading(false);
         return;
       }
       
       toast.success("Acesso autorizado!");
-      // Let useEffect handle redirect once roles load
+      // Failsafe: release loading after timeout if redirect doesn't happen
+      setTimeout(() => setLoading(false), 5000);
       return;
     } catch (err) {
       toast.error("Ocorreu um erro. Tente novamente.");
@@ -239,12 +243,6 @@ const AdminLoginPage = () => {
                 </div>
               )}
 
-              {/* Test credentials hint */}
-              <div className="p-3 bg-muted/50 rounded-lg border border-border mb-4">
-                <p className="text-xs text-muted-foreground">
-                  🛡️ <span className="font-medium">Teste Admin:</span> escarpelineparticular@gmail.com | Admin@2026
-                </p>
-              </div>
 
               {loginMode === "password" ? (
                 <form onSubmit={handlePasswordLogin} className="space-y-4">

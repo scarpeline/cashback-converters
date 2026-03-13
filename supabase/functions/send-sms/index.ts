@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,39 @@ serve(async (req) => {
   }
 
   try {
+    // ============================================
+    // AUTHENTICATION - Require valid JWT
+    // ============================================
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub as string;
+    console.log(`[SEND_SMS] Authenticated user: ${userId}`);
+
+    // ============================================
+    // TWILIO CONFIG
+    // ============================================
     const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
     const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
     const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
@@ -33,6 +67,29 @@ serve(async (req) => {
       );
     }
 
+    // ============================================
+    // RATE LIMITING (per user, not just per phone)
+    // ============================================
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const actionType = action === "whatsapp" ? "send_whatsapp" : "send_sms";
+    // Rate limit by user ID (5 per minute)
+    const { data: allowed } = await supabase.rpc("check_rate_limit", {
+      _identifier: userId,
+      _action_type: actionType,
+      _max_requests: 5,
+      _window_seconds: 60,
+    });
+
+    if (allowed === false) {
+      console.warn(`[SEND_SMS] Rate limit exceeded for user ${userId}`);
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Normalize phone number to E.164
     let phone = to.replace(/\D/g, "");
     if (!phone.startsWith("55")) phone = "55" + phone;
@@ -51,14 +108,13 @@ serve(async (req) => {
         messageBody = `SalãoCashBack: ${otpCode} - Código de verificação (${expMin}min)`;
       }
     } else if (action === "whatsapp") {
-      // Send via WhatsApp using Twilio WhatsApp sandbox/API
       messageBody = body || "Mensagem do SalãoCashBack";
       
       const whatsappFrom = `whatsapp:${TWILIO_PHONE_NUMBER}`;
       const whatsappTo = `whatsapp:${phone}`;
 
       const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-      const authHeader = "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+      const twilioAuthHeader = "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
 
       const formData = new URLSearchParams();
       formData.append("To", whatsappTo);
@@ -68,7 +124,7 @@ serve(async (req) => {
       const response = await fetch(twilioUrl, {
         method: "POST",
         headers: {
-          Authorization: authHeader,
+          Authorization: twilioAuthHeader,
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: formData.toString(),
@@ -79,7 +135,7 @@ serve(async (req) => {
       if (!response.ok) {
         console.error("[SEND_SMS] Twilio WhatsApp error:", result);
         return new Response(
-          JSON.stringify({ error: "WhatsApp send failed", details: result }),
+          JSON.stringify({ error: "WhatsApp send failed" }),
           { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -90,13 +146,12 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     } else {
-      // Default: SMS
       messageBody = body || "Mensagem do SalãoCashBack";
     }
 
     // Send SMS via Twilio
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-    const authHeader = "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+    const twilioAuthHeader = "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
 
     const formData = new URLSearchParams();
     formData.append("To", phone);
@@ -106,7 +161,7 @@ serve(async (req) => {
     const response = await fetch(twilioUrl, {
       method: "POST",
       headers: {
-        Authorization: authHeader,
+        Authorization: twilioAuthHeader,
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: formData.toString(),
@@ -117,7 +172,7 @@ serve(async (req) => {
     if (!response.ok) {
       console.error("[SEND_SMS] Twilio error:", result);
       return new Response(
-        JSON.stringify({ error: "SMS send failed", details: result }),
+        JSON.stringify({ error: "SMS send failed" }),
         { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -130,7 +185,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("[SEND_SMS] Error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

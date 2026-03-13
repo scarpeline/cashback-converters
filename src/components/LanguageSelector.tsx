@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -9,10 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Globe } from 'lucide-react';
 
 export function LanguageSelector() {
-    const { i18n } = useTranslation();
-
     const changeLanguage = (lng: string) => {
-        i18n.changeLanguage(lng);
+        // Store language preference in localStorage and reload
+        localStorage.setItem('i18n-language', lng);
+        window.location.reload();
     };
 
     return (
@@ -24,16 +23,16 @@ export function LanguageSelector() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => changeLanguage('pt')}>
+                <DropdownMenuItem onSelect={() => changeLanguage('pt')}>
                     Português (BR)
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => changeLanguage('en')}>
+                <DropdownMenuItem onSelect={() => changeLanguage('en')}>
                     English
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => changeLanguage('es')}>
+                <DropdownMenuItem onSelect={() => changeLanguage('es')}>
                     Español
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => changeLanguage('fr')}>
+                <DropdownMenuItem onSelect={() => changeLanguage('fr')}>
                     Français
                 </DropdownMenuItem>
             </DropdownMenuContent>

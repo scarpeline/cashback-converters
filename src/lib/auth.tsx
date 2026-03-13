@@ -103,6 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authResolved, setAuthResolved] = useState(false);
 
   const roleBootstrapAttemptedRef = useRef(false);
+  const userLoadInFlightRef = useRef<Promise<AppRole[]> | null>(null);
+  const userLoadInFlightUserIdRef = useRef<string | null>(null);
 
   // ============================================
   // PENDING ROLE STORAGE
@@ -294,6 +296,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchUserData, bootstrapRoles, ensureInitialRole, profileLoading, roles]);
 
+  const runUserLoad = useCallback(async (sessionUser: User, force = false): Promise<AppRole[]> => {
+    if (
+      !force &&
+      userLoadInFlightRef.current &&
+      userLoadInFlightUserIdRef.current === sessionUser.id
+    ) {
+      return userLoadInFlightRef.current;
+    }
+
+    const runner = loadUserComplete(sessionUser)
+      .catch((error) => {
+        logCriticalError("runUserLoad", error);
+        return [] as AppRole[];
+      })
+      .finally(() => {
+        if (userLoadInFlightRef.current === runner) {
+          userLoadInFlightRef.current = null;
+          userLoadInFlightUserIdRef.current = null;
+        }
+      });
+
+    userLoadInFlightRef.current = runner;
+    userLoadInFlightUserIdRef.current = sessionUser.id;
+
+    return runner;
+  }, [loadUserComplete]);
+
   // ============================================
   // SESSION MANAGEMENT
   // ============================================
@@ -323,15 +352,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
     const startTime = Date.now();
-    // Track the current user ID to avoid reloading roles for the same user
     let currentUserId: string | null = null;
 
-    // 1. Set up listener for ONGOING changes (does NOT control loading/authResolved)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
         if (!isMounted) return;
-
-        // Skip INITIAL_SESSION - handled by initializeAuth below
         if (event === 'INITIAL_SESSION') return;
 
         setSession(currentSession);
@@ -339,23 +364,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (currentSession?.user) {
           const incomingUserId = currentSession.user.id;
-          // Only reload user data if the user ID actually changed (new login)
-          // TOKEN_REFRESHED with same user should NOT clear roles
-          if (incomingUserId !== currentUserId || event === 'SIGNED_IN') {
-            currentUserId = incomingUserId;
-            await loadUserComplete(currentSession.user);
+          const shouldReload = incomingUserId !== currentUserId || event === 'SIGNED_IN';
+          currentUserId = incomingUserId;
+
+          // Critical: never await inside onAuthStateChange callback
+          if (shouldReload) {
+            queueMicrotask(() => {
+              if (!isMounted) return;
+              void runUserLoad(currentSession.user, true);
+            });
           }
         } else if (event === 'SIGNED_OUT' || !currentSession) {
-          // Logged out - clear everything
           currentUserId = null;
           setProfile(null);
           setRoles([]);
           roleBootstrapAttemptedRef.current = false;
+          userLoadInFlightRef.current = null;
+          userLoadInFlightUserIdRef.current = null;
         }
       }
     );
 
-    // 2. INITIAL load - controls loading, authResolved, initialLoadComplete
     const initializeAuth = async () => {
       try {
         console.log('[AUTH] Fetching session...');
@@ -369,7 +398,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         if (!isMounted) return;
 
-        // LOG ONCE
         logAuthStart({ token_existe: !!existingSession?.access_token });
 
         setSession(existingSession);
@@ -379,6 +407,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logAuthValidate({ token_valido: validation.isValid });
 
         if (existingSession?.user && validation.isValid) {
+          currentUserId = existingSession.user.id;
           try {
             console.log('[AUTH] Loading user complete data...', existingSession.user.id);
             // This now has its own internal AbortController/Timeout
@@ -395,7 +424,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const duration = Date.now() - startTime;
           logLoadComplete({ duration_ms: duration, status: 'liberado' });
           setLoading(false);
-          setProfileLoading(false);
           setInitialLoadComplete(true);
           setAuthResolved(true);
         }
@@ -409,7 +437,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [runUserLoad]);
 
   // ============================================
   // AUTH METHODS

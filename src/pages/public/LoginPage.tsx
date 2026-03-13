@@ -3,11 +3,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Eye, EyeOff, Loader2, User, Scissors, Store } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Loader2, User, Scissors, Store, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole, getDashboardForRole } from "@/lib/auth";
-// AuthGuard removed - redirect handled by useEffect
-import { supabase } from "@/integrations/supabase/client";
 import { formatCpfCnpjBR, formatWhatsAppBR } from "@/lib/input-masks";
 import logo from "@/assets/logo.png";
 import { z } from "zod";
@@ -55,37 +53,37 @@ const PublicLoginPage = () => {
 
   // Redirect if already logged in AND roles loaded
   useEffect(() => {
-    if (user && !authLoading) {
-      if (roles.length > 0) {
-        const role = getPrimaryRole();
-        if (role) {
-          // Check if user selected a plan from pricing - redirect to checkout
-          const selectedPlan = localStorage.getItem("selected_plan");
-          if (selectedPlan && (role === "dono")) {
-            try {
-              const plan = JSON.parse(selectedPlan);
-              localStorage.removeItem("selected_plan");
-              if (plan.checkoutUrl) {
-                window.location.href = plan.checkoutUrl;
-                return;
-              }
-            } catch { /* ignore parse errors */ }
-          }
-          localStorage.removeItem("selected_plan");
+    if (!user || !authResolved || roles.length === 0) return;
+    
+    const role = getPrimaryRole();
+    if (!role) return;
 
-          // Navegação segura usando URL Base em vez de react-router se possível para forçar reload de layout
-          const dashboardUrl = getDashboardForRole(role);
-          if (dashboardUrl) {
-            window.location.href = dashboardUrl;
-          }
+    // Check if user selected a plan from pricing
+    const selectedPlan = localStorage.getItem("selected_plan");
+    if (selectedPlan && role === "dono") {
+      try {
+        const plan = JSON.parse(selectedPlan);
+        localStorage.removeItem("selected_plan");
+        if (plan.checkoutUrl) {
+          window.location.href = plan.checkoutUrl;
+          return;
         }
-      } else if (authResolved) {
-        // Fallback: Sessão existe mas usuário está sem perfis vinculados
-        setLoading(false);
-        toast.error("Conta sem perfil associado. Entre em contato com o suporte.");
-      }
+      } catch { /* ignore */ }
     }
-  }, [user, authLoading, roles, authResolved, getPrimaryRole]);
+    localStorage.removeItem("selected_plan");
+
+    const dashboardUrl = getDashboardForRole(role);
+    if (dashboardUrl) {
+      navigate(dashboardUrl, { replace: true });
+    }
+  }, [user, authResolved, roles, getPrimaryRole, navigate]);
+
+  // Failsafe: libera botão assim que auth/roles resolverem
+  useEffect(() => {
+    if (loading && user && authResolved && roles.length > 0) {
+      setLoading(false);
+    }
+  }, [loading, user, authResolved, roles]);
 
   const isBusinessUser = userType === "dono";
 
@@ -138,10 +136,8 @@ const PublicLoginPage = () => {
         let result;
 
         if (loginType === "cliente") {
-          // Cliente logs in with WhatsApp
           result = await signInWithWhatsApp(formData.whatsapp, formData.password);
         } else {
-          // Profissional and Dono log in with email
           result = await signIn(formData.email, formData.password);
         }
 
@@ -152,35 +148,16 @@ const PublicLoginPage = () => {
           } else if (msg.toLowerCase().includes("invalid login credentials")) {
             toast.error("Credenciais inválidas. Verifique seus dados.");
           } else {
-            toast.error(msg);
+            toast.error("Erro ao fazer login. Tente novamente.");
           }
           setLoading(false);
           return;
         }
 
         toast.success("Login realizado com sucesso!");
-
-        // Adiciona timer máximo para o botão de loading caso o redirecionamento (useEffect) falhe por ausência de roles
-        setTimeout(() => setLoading(false), 5000);
-
-        // Check for selected plan redirect (dono only)
-        const selectedPlan = localStorage.getItem("selected_plan");
-        if (selectedPlan && loginType === "dono") {
-          try {
-            const plan = JSON.parse(selectedPlan);
-            localStorage.removeItem("selected_plan");
-            if (plan.checkoutUrl) {
-              window.location.href = plan.checkoutUrl;
-              return;
-            }
-          } catch { /* ignore */ }
-        }
-        localStorage.removeItem("selected_plan");
-
-        // Let useEffect handle redirect once roles load
+        setTimeout(() => setLoading(false), 3000);
         return;
       } else {
-        // Signup - email is required for business users
         const email = isBusinessUser
           ? formData.email
           : `${formData.whatsapp.replace(/\D/g, '')}@salao.app`;
@@ -197,13 +174,12 @@ const PublicLoginPage = () => {
           if (error.message.includes("already registered")) {
             toast.error("Este e-mail já está cadastrado. Faça login.");
           } else {
-            toast.error(error.message || "Erro ao criar conta");
+            toast.error("Erro ao criar conta. Tente novamente.");
           }
           setLoading(false);
           return;
         }
 
-        // Se dono, abrir link Asaas em nova aba para criar conta de pagamentos
         if (isBusinessUser) {
           toast.success("Conta criada! Abrindo a Asaas para configurar seus pagamentos...");
           setTimeout(() => {
@@ -234,17 +210,16 @@ const PublicLoginPage = () => {
     { value: "dono", label: "Sou Dono de Barbearia", icon: Store },
   ];
 
-  // Auth Provider já segura e mostra um loader global, retirar esse pre-mount resolve dom errors
-
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
+    <div className="min-h-screen flex flex-col lg:flex-row" style={{ background: "linear-gradient(180deg, hsl(222 47% 6%) 0%, hsl(222 30% 12%) 100%)" }}>
       {/* Left Side - Form */}
       <div className="flex-1 flex flex-col justify-center px-4 py-12 lg:px-12">
         <div className="w-full max-w-md mx-auto">
           {/* Back Button */}
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8"
+            className="inline-flex items-center gap-2 transition-colors mb-8"
+            style={{ color: "hsl(220 9% 55%)" }}
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar
@@ -259,24 +234,25 @@ const PublicLoginPage = () => {
           </div>
 
           {/* Title */}
-          <h1 className="font-display text-3xl font-bold mb-2">
+          <h1 className="font-display text-3xl font-bold mb-2" style={{ color: "hsl(0 0% 98%)" }}>
             {mode === "login" ? "Bem-vindo de volta!" : "Crie sua conta"}
           </h1>
-          <p className="text-muted-foreground mb-8">
+          <p className="mb-8" style={{ color: "hsl(220 9% 60%)" }}>
             {mode === "login"
               ? "Entre para acessar sua conta"
               : "Preencha os dados para começar"}
           </p>
 
           {/* Mode Toggle */}
-          <div className="flex gap-2 p-1 rounded-lg bg-muted mb-6">
+          <div className="flex gap-2 p-1 rounded-lg mb-6" style={{ background: "hsl(222 30% 12%)", border: "1px solid hsl(222 20% 18%)" }}>
             <button
               type="button"
               onClick={() => setMode("login")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${mode === "login"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-gradient-gold shadow-sm"
+                : ""
                 }`}
+              style={mode === "login" ? { color: "hsl(222 47% 11%)" } : { color: "hsl(220 9% 55%)" }}
             >
               Entrar
             </button>
@@ -284,9 +260,10 @@ const PublicLoginPage = () => {
               type="button"
               onClick={() => setMode("signup")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${mode === "signup"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-gradient-gold shadow-sm"
+                : ""
                 }`}
+              style={mode === "signup" ? { color: "hsl(222 47% 11%)" } : { color: "hsl(220 9% 55%)" }}
             >
               Criar Conta
             </button>
@@ -295,20 +272,21 @@ const PublicLoginPage = () => {
           {/* Login Type Selection (only for login) */}
           {mode === "login" && (
             <div className="mb-6">
-              <Label className="mb-3 block">Como você quer entrar?</Label>
+              <Label className="mb-3 block" style={{ color: "hsl(220 9% 70%)" }}>Como você quer entrar?</Label>
               <div className="grid grid-cols-3 gap-2">
                 {loginTypes.map((type) => (
                   <button
                     key={type.value}
                     type="button"
                     onClick={() => setLoginType(type.value)}
-                    className={`p-3 rounded-lg border text-center transition-all ${loginType === type.value
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
-                      }`}
+                    className="p-3 rounded-lg text-center transition-all"
+                    style={{
+                      background: loginType === type.value ? "hsl(42 100% 50% / 0.1)" : "hsl(222 30% 12%)",
+                      border: loginType === type.value ? "1px solid hsl(42 100% 50% / 0.4)" : "1px solid hsl(222 20% 18%)",
+                    }}
                   >
-                    <type.icon className={`w-5 h-5 mx-auto mb-1 ${loginType === type.value ? "text-primary" : "text-muted-foreground"}`} />
-                    <span className={`text-xs font-medium block ${loginType === type.value ? "text-primary" : "text-muted-foreground"}`}>
+                    <type.icon className="w-5 h-5 mx-auto mb-1" style={{ color: loginType === type.value ? "hsl(42 100% 55%)" : "hsl(220 9% 50%)" }} />
+                    <span className="text-xs font-medium block" style={{ color: loginType === type.value ? "hsl(42 100% 55%)" : "hsl(220 9% 50%)" }}>
                       {type.label}
                     </span>
                   </button>
@@ -320,31 +298,33 @@ const PublicLoginPage = () => {
           {/* User Type Selection (only for signup) */}
           {mode === "signup" && (
             <div className="mb-6">
-              <Label className="mb-3 block">Tipo de Conta</Label>
+              <Label className="mb-3 block" style={{ color: "hsl(220 9% 70%)" }}>Tipo de Conta</Label>
               <div className="grid grid-cols-1 gap-3">
                 {userTypes.map((type) => (
                   <button
                     key={type.value}
                     type="button"
                     onClick={() => setUserType(type.value)}
-                    className={`p-4 rounded-lg border text-left transition-all flex items-center gap-3 ${userType === type.value
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
-                      }`}
+                    className="p-4 rounded-lg text-left transition-all flex items-center gap-3"
+                    style={{
+                      background: userType === type.value ? "hsl(42 100% 50% / 0.08)" : "hsl(222 30% 12%)",
+                      border: userType === type.value ? "1px solid hsl(42 100% 50% / 0.3)" : "1px solid hsl(222 20% 18%)",
+                    }}
                   >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${userType === type.value ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                      <type.icon className="w-5 h-5" />
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center"
+                      style={{ background: userType === type.value ? "hsl(42 100% 50% / 0.15)" : "hsl(222 30% 15%)" }}>
+                      <type.icon className="w-5 h-5" style={{ color: userType === type.value ? "hsl(42 100% 55%)" : "hsl(220 9% 50%)" }} />
                     </div>
                     <div>
-                      <span className={`font-medium block ${userType === type.value ? "text-primary" : ""}`}>
+                      <span className="font-medium block" style={{ color: userType === type.value ? "hsl(42 100% 55%)" : "hsl(0 0% 90%)" }}>
                         {type.label}
                       </span>
-                      <span className="text-sm text-muted-foreground">{type.description}</span>
+                      <span className="text-sm" style={{ color: "hsl(220 9% 55%)" }}>{type.description}</span>
                     </div>
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-3">
+              <p className="text-xs mt-3" style={{ color: "hsl(220 9% 50%)" }}>
                 Profissionais são cadastrados pelo dono. Afiliados têm página própria.
               </p>
             </div>
@@ -355,30 +335,34 @@ const PublicLoginPage = () => {
             {/* Name (signup only) */}
             {mode === "signup" && (
               <div>
-                <Label htmlFor="name">Nome Completo</Label>
+                <Label htmlFor="name" style={{ color: "hsl(220 9% 70%)" }}>Nome Completo</Label>
                 <Input
                   id="name"
                   type="text"
                   placeholder="Seu nome"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className={`mt-1 ${errors.name ? "border-destructive" : ""}`}
+                  className={`mt-1 bg-transparent text-white placeholder:text-white/30 ${errors.name ? "border-destructive" : ""}`}
+                  style={{ borderColor: errors.name ? undefined : "hsl(222 20% 22%)" }}
+                  autoComplete="name"
                 />
                 {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
               </div>
             )}
 
-            {/* WhatsApp - show for signup or login as cliente */}
+            {/* WhatsApp */}
             {(mode === "signup" || loginType === "cliente") && (
               <div>
-                <Label htmlFor="whatsapp">WhatsApp</Label>
+                <Label htmlFor="whatsapp" style={{ color: "hsl(220 9% 70%)" }}>WhatsApp</Label>
                 <Input
                   id="whatsapp"
                   type="tel"
                   placeholder="(00) 00000-0000"
                   value={formData.whatsapp}
                   onChange={(e) => setFormData({ ...formData, whatsapp: formatWhatsAppBR(e.target.value) })}
-                  className={`mt-1 ${errors.whatsapp || errors.identifier ? "border-destructive" : ""}`}
+                  className={`mt-1 bg-transparent text-white placeholder:text-white/30 ${errors.whatsapp || errors.identifier ? "border-destructive" : ""}`}
+                  style={{ borderColor: (errors.whatsapp || errors.identifier) ? undefined : "hsl(222 20% 22%)" }}
+                  autoComplete="tel"
                 />
                 {(errors.whatsapp || errors.identifier) && (
                   <p className="text-xs text-destructive mt-1">{errors.whatsapp || errors.identifier}</p>
@@ -386,17 +370,19 @@ const PublicLoginPage = () => {
               </div>
             )}
 
-            {/* Email - show for signup business users or login as profissional/dono */}
+            {/* Email */}
             {((mode === "signup" && isBusinessUser) || (mode === "login" && loginType !== "cliente")) && (
               <div>
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="email" style={{ color: "hsl(220 9% 70%)" }}>E-mail</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="seu@email.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className={`mt-1 ${errors.email || errors.identifier ? "border-destructive" : ""}`}
+                  className={`mt-1 bg-transparent text-white placeholder:text-white/30 ${errors.email || errors.identifier ? "border-destructive" : ""}`}
+                  style={{ borderColor: (errors.email || errors.identifier) ? undefined : "hsl(222 20% 22%)" }}
+                  autoComplete="email"
                 />
                 {(errors.email || errors.identifier) && (
                   <p className="text-xs text-destructive mt-1">{errors.email || errors.identifier}</p>
@@ -404,39 +390,43 @@ const PublicLoginPage = () => {
               </div>
             )}
 
-            {/* CPF/CNPJ (business users signup only) */}
+            {/* CPF/CNPJ */}
             {mode === "signup" && isBusinessUser && (
               <div>
-                <Label htmlFor="cpfCnpj">CPF ou CNPJ</Label>
+                <Label htmlFor="cpfCnpj" style={{ color: "hsl(220 9% 70%)" }}>CPF ou CNPJ</Label>
                 <Input
                   id="cpfCnpj"
                   type="text"
-                  placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                  placeholder="000.000.000-00"
                   value={formData.cpfCnpj}
                   onChange={(e) => setFormData({ ...formData, cpfCnpj: formatCpfCnpjBR(e.target.value) })}
-                  className="mt-1"
+                  className="mt-1 bg-transparent text-white placeholder:text-white/30"
+                  style={{ borderColor: "hsl(222 20% 22%)" }}
+                  autoComplete="off"
                 />
               </div>
             )}
 
-            {/* PIX (business users signup only) */}
+            {/* PIX */}
             {mode === "signup" && isBusinessUser && (
               <div>
-                <Label htmlFor="pix">Chave PIX</Label>
+                <Label htmlFor="pix" style={{ color: "hsl(220 9% 70%)" }}>Chave PIX</Label>
                 <Input
                   id="pix"
                   type="text"
                   placeholder="CPF, e-mail ou chave aleatória"
                   value={formData.pix}
                   onChange={(e) => setFormData({ ...formData, pix: e.target.value })}
-                  className="mt-1"
+                  className="mt-1 bg-transparent text-white placeholder:text-white/30"
+                  style={{ borderColor: "hsl(222 20% 22%)" }}
+                  autoComplete="off"
                 />
               </div>
             )}
 
             {/* Password */}
             <div>
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password" style={{ color: "hsl(220 9% 70%)" }}>Senha</Label>
               <div className="relative mt-1">
                 <Input
                   id="password"
@@ -444,12 +434,15 @@ const PublicLoginPage = () => {
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className={`pr-10 ${errors.password ? "border-destructive" : ""}`}
+                  className={`pr-10 bg-transparent text-white placeholder:text-white/30 ${errors.password ? "border-destructive" : ""}`}
+                  style={{ borderColor: errors.password ? undefined : "hsl(222 20% 22%)" }}
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "hsl(220 9% 50%)" }}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -508,9 +501,9 @@ const PublicLoginPage = () => {
             {/* Submit Button */}
             <Button
               type="submit"
-              variant="gold"
+              variant="hero"
               className="w-full"
-              size="lg"
+              size="xl"
               disabled={loading}
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
@@ -520,136 +513,81 @@ const PublicLoginPage = () => {
 
           {/* Info for business users */}
           {mode === "signup" && isBusinessUser && (
-            <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
-              <p className="text-xs text-muted-foreground text-center">
+            <div className="mt-4 p-3 rounded-lg" style={{ background: "hsl(42 100% 50% / 0.05)", border: "1px solid hsl(42 100% 50% / 0.15)" }}>
+              <p className="text-xs text-center" style={{ color: "hsl(220 9% 55%)" }}>
                 Ao criar sua conta, você será direcionado para a{" "}
                 <a
                   href="https://www.asaas.com/r/4095742a-0dd1-4fb7-b9ce-61431bb4f632"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary font-semibold underline hover:opacity-80 transition-opacity"
+                  className="font-semibold underline hover:opacity-80 transition-opacity"
+                  style={{ color: "hsl(42 100% 55%)" }}
                 >
                   Asaas
                 </a>{" "}
-                para configurar sua conta de pagamentos. É rápido e gratuito graças ao nosso link de parceiro!
+                para configurar sua conta de pagamentos.
               </p>
             </div>
           )}
 
-          {/* Test Credentials Interativas */}
-          <div className="mt-6 p-4 rounded-xl bg-muted/30 border border-primary/20 backdrop-blur-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-100 transition-opacity">
-              <span className="text-[10px] font-mono text-primary uppercase tracking-widest">Safe Test Environment</span>
-            </div>
-
-            <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              🧪 Ambiente de Testes Interativo
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { role: "cliente", label: "Cliente", id: "11999990001", type: "cliente", icon: User },
-                { role: "dono", label: "Barbearia", id: "dono.teste@salao.app", type: "dono", icon: Store },
-                { role: "profissional", label: "Profissional", id: "profissional.teste@salao.app", type: "profissional", icon: Scissors },
-                { role: "afiliado_saas", label: "Afiliado", id: "afiliado.teste@salao.app", type: "dono", icon: Scissors },
-                { role: "contador", label: "Contador", id: "contador.teste@salao.app", type: "dono", icon: User },
-                { role: "super_admin", label: "Admin", id: "admin.teste@salao.app", type: "dono", icon: Store },
-              ].map((testUser) => (
-                <Button
-                  key={testUser.role}
-                  variant="outline"
-                  size="sm"
-                  className="justify-start gap-2 h-9 text-xs border-primary/10 hover:border-primary/50 hover:bg-primary/5 transition-all"
-                  onClick={async () => {
-                    setFormData({
-                      ...formData,
-                      whatsapp: testUser.role === "cliente" ? formatWhatsAppBR(testUser.id) : "",
-                      email: testUser.role !== "cliente" ? testUser.id : "",
-                      password: "Teste@123"
-                    });
-                    setLoginType(testUser.type as LoginType);
-                    setMode("login");
-                    toast.info(`Preenchendo como ${testUser.label}... Clique em Entrar.`);
-                  }}
-                >
-                  <testUser.icon className="w-3 h-3 text-primary" />
-                  <span className="truncate">{testUser.label}</span>
-                </Button>
-              ))}
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-primary/10 flex flex-col gap-2">
-              <p className="text-[10px] text-muted-foreground leading-tight italic">
-                * Senha padrão para todos: <code className="text-primary font-bold">Teste@123</code>
-              </p>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full text-[10px] h-7 text-muted-foreground hover:text-primary"
-                onClick={async () => {
-                  setLoading(true);
-                  const users = [
-                    { email: "dono.teste@salao.app", role: "dono", name: "Dono Teste" },
-                    { email: "profissional.teste@salao.app", role: "profissional", name: "Profissional Teste" },
-                    { email: "afiliado.teste@salao.app", role: "afiliado_saas", name: "Afiliado Teste" },
-                    { email: "contador.teste@salao.app", role: "contador", name: "Contador Teste" },
-                    { email: "admin.teste@salao.app", role: "super_admin", name: "Admin Teste" },
-                    { email: "11999990001@salao.app", role: "cliente", name: "Cliente Teste", whatsapp: "11999990001" },
-                  ];
-
-                  let successCount = 0;
-                  for (const u of users) {
-                    const { error } = await signUp(u.email, "Teste@123", {
-                      name: u.name,
-                      role: u.role as AppRole,
-                      whatsapp: u.whatsapp
-                    });
-                    if (!error || error.message.includes("already registered")) {
-                      successCount++;
-                    }
-                  }
-
-                  setLoading(false);
-                  toast.success(`${successCount} contas de teste prontas para uso!`);
-                }}
-              >
-                Ativar/Criar todos os usuários de teste no banco
-              </Button>
-            </div>
-          </div>
-
           {/* Affiliate Link */}
-          <div className="mt-4 pt-4 border-t border-border text-center">
+          <div className="mt-4 pt-4 text-center" style={{ borderTop: "1px solid hsl(222 20% 18%)" }}>
             <Link
               to="/afiliado-saas/login"
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              className="text-sm transition-colors hover:opacity-80"
+              style={{ color: "hsl(220 9% 50%)" }}
             >
-              Quer ser afiliado do SaaS? <span className="underline">Clique aqui</span>
+              Quer ser afiliado do SaaS? <span className="underline" style={{ color: "hsl(42 100% 55%)" }}>Clique aqui</span>
             </Link>
           </div>
         </div>
       </div>
 
       {/* Right Side - Visual */}
-      <div className="hidden lg:flex flex-1 bg-gradient-card items-center justify-center p-12 relative overflow-hidden">
-        <div className="absolute inset-0" style={{ background: "var(--gradient-glow)" }} />
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+      <div className="hidden lg:flex flex-1 items-center justify-center p-12 relative overflow-hidden" style={{ background: "linear-gradient(145deg, hsl(222 30% 10%), hsl(222 47% 6%))" }}>
+        {/* Glowing orbs */}
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, hsl(42 100% 50% / 0.1), transparent 70%)" }} />
+        <div className="absolute bottom-1/3 left-1/3 w-72 h-72 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, hsl(217 91% 50% / 0.08), transparent 70%)" }} />
 
         <div className="relative text-center max-w-lg">
-          <img
-            src={logo}
-            alt="SalãoCashBack"
-            className="w-64 h-64 mx-auto mb-8 animate-float drop-shadow-2xl"
-          />
-          <h2 className="font-display text-3xl font-bold mb-4">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8" style={{ background: "hsl(42 100% 50% / 0.1)", border: "1px solid hsl(42 100% 50% / 0.25)" }}>
+            <Sparkles className="w-4 h-4" style={{ color: "hsl(42 100% 50%)" }} />
+            <span className="text-sm font-medium" style={{ color: "hsl(42 100% 55%)" }}>SaaS para Barbearias</span>
+          </div>
+
+          <div className="relative my-8">
+            <div className="absolute inset-0 blur-2xl scale-150" style={{ background: "radial-gradient(circle, hsl(42 100% 50% / 0.2), transparent)" }} />
+            <img
+              src={logo}
+              alt="SalãoCashBack"
+              className="relative w-56 h-56 mx-auto animate-float drop-shadow-2xl"
+            />
+          </div>
+
+          <h2 className="font-display text-3xl font-bold mb-4" style={{ color: "hsl(0 0% 98%)" }}>
             Eleve sua empresa ao{" "}
             <span className="text-gradient-gold">próximo nível</span>
           </h2>
-          <p className="text-muted-foreground">
+          <p style={{ color: "hsl(220 9% 60%)" }}>
             Automatize vendas, agendamentos e pagamentos.
-            Foque no que importa: seu cliente.
+            <br />
+            <strong style={{ color: "hsl(42 100% 55%)" }}>Enquanto você corta o cabelo, o sistema vende.</strong>
           </p>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4 mt-10 pt-8" style={{ borderTop: "1px solid hsl(222 20% 18%)" }}>
+            {[
+              { value: "500+", label: "Barbearias" },
+              { value: "40%", label: "Mais receita" },
+              { value: "7 dias", label: "Grátis" },
+            ].map(({ value, label }) => (
+              <div key={label} className="text-center">
+                <div className="text-xl font-display font-bold text-gradient-gold">{value}</div>
+                <div className="text-xs" style={{ color: "hsl(220 9% 50%)" }}>{label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

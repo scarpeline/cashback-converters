@@ -4,64 +4,74 @@ import { ArrowRight, Rocket } from "lucide-react";
 
 const CTA = () => {
   return (
-    <section className="py-24 px-4 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-dark" />
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-      <div className="absolute inset-0" style={{ background: "var(--gradient-glow)" }} />
+    <section className="py-24 px-4 relative overflow-hidden" style={{ background: "linear-gradient(180deg, hsl(222 30% 10%) 0%, hsl(222 47% 6%) 100%)" }}>
+      <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(to right, transparent, hsl(42 100% 50% / 0.3), transparent)" }} />
+      <div className="absolute inset-0" style={{ background: "radial-gradient(circle at center, hsl(42 100% 50% / 0.05), transparent 70%)" }} />
       
       <div className="container relative z-10 mx-auto">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Icon */}
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-gold shadow-gold mb-8 animate-pulse-gold">
-            <Rocket className="w-8 h-8 text-primary-foreground" />
+            <Rocket className="w-8 h-8" style={{ color: "hsl(222 47% 11%)" }} />
           </div>
 
-          {/* Content */}
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-            Pronto para{" "}
-            <span className="text-gradient-gold">transformar</span>
-            {" "}seu negócio?
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4" style={{ color: "hsl(0 0% 98%)" }}>
+            Pronto para{" "}<span className="text-gradient-gold">dominar</span>{" "}o mercado?
           </h2>
           
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Junte-se a centenas de barbearias que já estão crescendo no automático.
-            Configure em 5 minutos e comece a ver resultados.
+          <p className="text-lg mb-8 max-w-2xl mx-auto" style={{ color: "hsl(220 9% 60%)" }}>
+            Junte-se a 500+ barbearias que já faturam mais usando nosso sistema.
+            Comece hoje e tenha uma agenda cheia em 7 dias.
           </p>
 
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
             <Link to="/login">
               <Button variant="hero" size="xl">
                 Começar 7 Dias Grátis
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
-            <Link to="/afiliado-saas/login">
-              <Button variant="ghost" size="lg">
-                Quero Ser Afiliado
+            <Link to="/seja-um-franqueado">
+              <Button variant="outline" size="lg" className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white">
+                Quero Ser Franqueado
               </Button>
             </Link>
           </div>
 
-          {/* Trust Badges */}
-          <div className="flex flex-wrap items-center justify-center gap-8 mt-12 pt-8 border-t border-border/30">
-            <div className="text-center">
-              <div className="text-2xl font-display font-bold text-gradient-gold">100%</div>
-              <div className="text-xs text-muted-foreground">Seguro</div>
+          <div className="text-center mb-8">
+            <p className="text-sm" style={{ color: "hsl(220 9% 50%)" }}>
+              Ou transforme-se em um parceiro de sucesso:
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
+              <Link to="/seja-um-franqueado" className="text-sm font-medium hover:text-orange-500 transition-colors" style={{ color: "hsl(220 9% 70%)" }}>
+                🏆 Diretor Franqueado
+              </Link>
+              <Link to="/seja-um-franqueado" className="text-sm font-medium hover:text-orange-500 transition-colors" style={{ color: "hsl(220 9% 70%)" }}>
+                🏪 Franqueado
+              </Link>
+              <Link to="/seja-um-franqueado" className="text-sm font-medium hover:text-orange-500 transition-colors" style={{ color: "hsl(220 9% 70%)" }}>
+                👥 Afiliado
+              </Link>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-display font-bold text-gradient-gold">24/7</div>
-              <div className="text-xs text-muted-foreground">Suporte</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-display font-bold text-gradient-gold">0</div>
-              <div className="text-xs text-muted-foreground">Burocracia</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-display font-bold text-gradient-gold">∞</div>
-              <div className="text-xs text-muted-foreground">Potencial</div>
-            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-8 mt-12 pt-8" style={{ borderTop: "1px solid hsl(222 20% 18%)" }}>
+            {[
+              { value: "500+", label: "Barbearias Ativas" },
+              { value: "R$2M+", label: "Faturados pelos Clientes" },
+              { value: "24/7", label: "Suporte Prioritário" },
+              { value: "7 dias", label: "Teste Grátis" },
+            ].map(({ value, label }) => (
+              <div key={label} className="text-center">
+                <div className="text-2xl font-display font-bold text-gradient-gold">{value}</div>
+                <div className="text-xs" style={{ color: "hsl(220 9% 50%)" }}>{label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 text-center">
+            <p className="text-sm font-medium" style={{ color: "hsl(38 92% 50%)" }}>
+              ⚡ Resultados comprovados • Sem risco • Cancelamento a qualquer momento
+            </p>
           </div>
         </div>
       </div>

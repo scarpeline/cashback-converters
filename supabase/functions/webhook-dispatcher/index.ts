@@ -26,9 +26,6 @@ interface Endpoint {
   active: boolean;
 }
 
-/**
- * Envia POST com timeout de 5s
- */
 async function sendWebhook(
   url: string,
   method: string,
@@ -41,10 +38,7 @@ async function sendWebhook(
   try {
     const response = await fetch(url, {
       method,
-      headers: {
-        "Content-Type": "application/json",
-        ...headers,
-      },
+      headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
@@ -74,11 +68,8 @@ serve(async (req) => {
     });
   }
 
-  // Auth check
-  const authHeader = req.headers.get("Authorization");
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // Parse request
   let body: DispatchRequest;
   try {
     body = await req.json();
@@ -97,9 +88,26 @@ serve(async (req) => {
     });
   }
 
+  // ============================================
+  // RATE LIMITING: max 100 webhook dispatches per event per minute
+  // ============================================
+  const { data: allowed } = await supabase.rpc("check_rate_limit", {
+    _identifier: event,
+    _action_type: "webhook_dispatch",
+    _max_requests: 100,
+    _window_seconds: 60,
+  });
+
+  if (allowed === false) {
+    console.warn(`[WEBHOOK_DISPATCHER] Rate limit exceeded for event: ${event}`);
+    return new Response(
+      JSON.stringify({ error: "Rate limit exceeded" }),
+      { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
   console.log(`[WEBHOOK_DISPATCHER] Dispatching event: ${event}`);
 
-  // 1. Buscar webhooks ativos do evento
   const { data: endpoints, error: fetchError } = await supabase
     .from("integration_endpoints")
     .select("*")
@@ -124,7 +132,6 @@ serve(async (req) => {
 
   const results: Array<{ endpoint_id: string; success: boolean; status: number }> = [];
 
-  // 2. Disparar para cada endpoint
   for (const ep of endpoints as Endpoint[]) {
     const headers = (ep.headers_json || {}) as Record<string, string>;
     const maxAttempts = ep.retry_enabled ? (ep.retry_count || 3) + 1 : 1;
@@ -145,13 +152,11 @@ serve(async (req) => {
         break;
       }
 
-      // Wait before retry (exponential backoff: 1s, 2s, 4s)
       if (attempt < maxAttempts) {
         await new Promise((r) => setTimeout(r, Math.pow(2, attempt - 1) * 1000));
       }
     }
 
-    // 6. Salvar no webhooks_log
     await supabase.from("webhooks_log").insert({
       event,
       target_url: ep.endpoint_url,

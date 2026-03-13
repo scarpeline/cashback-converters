@@ -16,6 +16,8 @@ import { Loader2 } from "lucide-react";
 
 // Lazy pages
 const Index = lazy(() => import("./pages/Index"));
+const PartnershipPage = lazy(() => import("./pages/public/PartnershipPage"));
+const DemoPage = lazy(() => import("./pages/public/DemoPage"));
 const NotFoundPage = lazy(() => import("./pages/public/NotFoundPage"));
 const PublicLoginPage = lazy(() => import("./pages/public/LoginPage"));
 const AfiliadoSaasLoginPage = lazy(() => import("./pages/afiliado-saas/LoginPage"));
@@ -28,6 +30,9 @@ const AfiliadoDashboard = lazy(() => import("./pages/dashboards/AfiliadoDashboar
 const ContadorDashboard = lazy(() => import("./pages/dashboards/ContadorDashboard"));
 const SuperAdminDashboard = lazy(() => import("./pages/dashboards/SuperAdminDashboard"));
 const PaymentSimulationPage = lazy(() => import("./pages/public/PaymentSimulationPage"));
+const InstallPage = lazy(() => import("./pages/public/InstallPage"));
+const CostAnalysisPage = lazy(() => import("./pages/public/CostAnalysisPage"));
+const VitrinePage = lazy(() => import("./pages/public/VitrinePage"));
 
 const queryClient = new QueryClient();
 
@@ -43,8 +48,13 @@ function AppRoutes() {
       <Routes>
         {/* ========== PUBLIC ========== */}
         <Route path="/" element={<Index />} />
+        <Route path="/seja-um-franqueado" element={<PartnershipPage />} />
+        <Route path="/demo" element={<DemoPage />} />
         <Route path="/404" element={<NotFoundPage />} />
         <Route path="/simulacao-pagamento" element={<PaymentSimulationPage />} />
+        <Route path="/install" element={<InstallPage />} />
+        <Route path="/analise-custos" element={<CostAnalysisPage />} />
+        <Route path="/v/:barbershopId" element={<VitrinePage />} />
 
         {/* ========== LOGIN (AuthGuard: se logado, vai pro dashboard) ========== */}
         <Route path="/login" element={<AuthGuard><PublicLoginPage /></AuthGuard>} />
