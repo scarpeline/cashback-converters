@@ -11,6 +11,15 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // 🔒 VERIFICAÇÃO DE AUTENTICAÇÃO - Apenas Super Admin
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "Autenticação obrigatória" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -25,48 +34,86 @@ serve(async (req) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
+  // 🔒 VALIDAR SE O USUÁRIO É SUPER ADMIN
+  const token = authHeader.replace("Bearer ", "");
+  const { data: { user }, error: authError } = await admin.auth.getUser(token);
+  
+  if (authError || !user) {
+    return new Response(JSON.stringify({ error: "Token inválido" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Verificar se é super admin
+  const { data: userRole } = await admin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("role", "super_admin")
+    .maybeSingle();
+
+  if (!userRole) {
+    return new Response(JSON.stringify({ error: "Apenas super admins podem criar usuários de teste" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // 🔒 VERIFICAR SE ESTÁ EM AMBIENTE DE DESENVOLVIMENTO
+  const environment = Deno.env.get("SUPABASE_ENVIRONMENT") || "development";
+  if (environment === "production") {
+    return new Response(JSON.stringify({ error: "Criação de usuários de teste não permitida em produção" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // 🔒 GERAR SENHAS ALEATÓRIAS SEGURAS em vez de usar senhas fixas
+  const generateSecurePassword = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+    let password = "";
+    for (let i = 0; i < 16; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
   const testUsers = [
     {
       email: "cliente.teste@salao.app",
-      password: "Teste@123",
+      password: generateSecurePassword(),
       name: "Cliente Teste",
       whatsapp: "11999990001",
       role: "cliente",
     },
     {
       email: "dono.teste@salao.app",
-      password: "Teste@123",
+      password: generateSecurePassword(),
       name: "Dono Teste",
       whatsapp: "11999990002",
       role: "dono",
     },
     {
       email: "profissional.teste@salao.app",
-      password: "Teste@123",
+      password: generateSecurePassword(),
       name: "Profissional Teste",
       whatsapp: "11999990004",
       role: "profissional",
     },
     {
       email: "afiliado.teste@salao.app",
-      password: "Teste@123",
+      password: generateSecurePassword(),
       name: "Afiliado SaaS Teste",
       whatsapp: "11999990005",
       role: "afiliado_saas",
     },
     {
       email: "contador.teste@salao.app",
-      password: "Teste@123",
+      password: generateSecurePassword(),
       name: "Contador Teste",
       whatsapp: "11999990006",
       role: "contador",
-    },
-    {
-      email: "escarpelineparticular@gmail.com",
-      password: "Admin@2026",
-      name: "Super Admin",
-      whatsapp: "11999990003",
-      role: "super_admin",
     },
   ];
 
@@ -84,12 +131,18 @@ serve(async (req) => {
 
       if (existing) {
         userId = existing.id;
-        // Update password and confirm email
+        // 🔒 Gerar nova senha segura
+        const newPassword = generateSecurePassword();
         await admin.auth.admin.updateUserById(userId, {
-          password: u.password,
+          password: newPassword,
           email_confirm: true,
         });
-        results.push({ email: u.email, status: "updated", userId });
+        results.push({ 
+          email: u.email, 
+          status: "updated", 
+          userId,
+          password: newPassword // 🔒 Mostrar senha apenas para o admin autenticado
+        });
       } else {
         // Create user
         const { data, error } = await admin.auth.admin.createUser({
@@ -104,7 +157,12 @@ serve(async (req) => {
           continue;
         }
         userId = data.user.id;
-        results.push({ email: u.email, status: "created", userId });
+        results.push({ 
+          email: u.email, 
+          status: "created", 
+          userId,
+          password: u.password // 🔒 Mostrar senha apenas para o admin autenticado
+        });
       }
 
       // Ensure profile exists
@@ -138,7 +196,7 @@ serve(async (req) => {
         });
       }
 
-      // For dono, ensure a barbershop exists
+      // Para dono, ensure a barbershop exists
       if (u.role === "dono") {
         const { data: existingShop } = await admin
           .from("barbershops")
@@ -173,7 +231,7 @@ serve(async (req) => {
         }
       }
 
-      // For profissional, link to the test barbershop
+      // Para profissional, link to the test barbershop
       if (u.role === "profissional") {
         const { data: testShop } = await admin
           .from("barbershops")
@@ -200,7 +258,7 @@ serve(async (req) => {
         }
       }
 
-      // For afiliado_saas, create affiliate record
+      // Para afiliado_saas, create affiliate record
       if (u.role === "afiliado_saas") {
         const { data: existingAff } = await admin
           .from("affiliates")
@@ -217,7 +275,7 @@ serve(async (req) => {
         }
       }
 
-      // For contador, create accountant record
+      // Para contador, create accountant record
       if (u.role === "contador") {
         const { data: existingAcc } = await admin
           .from("accountants")
@@ -234,13 +292,43 @@ serve(async (req) => {
           });
         }
       }
+
+      // 🔅 LOG DE AUDITORIA
+      await admin.from("security_audit_logs").insert({
+        action: "create_test_user",
+        target_user_id: userId,
+        performed_by: user.id,
+        metadata: {
+          email: u.email,
+          role: u.role,
+          environment,
+          ip_address: req.headers.get("x-forwarded-for") || "unknown"
+        }
+      });
+
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       results.push({ email: u.email, status: "exception", error: msg });
+      
+      // 🔅 LOG DE ERRO DE SEGURANÇA
+      await admin.from("security_audit_logs").insert({
+        action: "test_user_creation_error",
+        performed_by: user.id,
+        metadata: {
+          email: u.email,
+          error: msg,
+          environment,
+          ip_address: req.headers.get("x-forwarded-for") || "unknown"
+        }
+      });
     }
   }
 
-  return new Response(JSON.stringify({ success: true, results }), {
+  return new Response(JSON.stringify({ 
+    success: true, 
+    results,
+    warning: "Senhas geradas aleatoriamente. Guarde-as em local seguro."
+  }), {
     status: 200,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });

@@ -28,6 +28,26 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+    // 🔒 VALIDAR AUTENTICAÇÃO
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Autenticação obrigatória" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Extrair token e validar usuário
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Token inválido ou expirado" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const body = await req.json();
     const {
       user_id,
@@ -52,6 +72,14 @@ Deno.serve(async (req) => {
       vpn_suspicious: boolean;
       vpn_reasons: string[];
     };
+
+    // 🔒 VALIDAR QUE user_id CORRESPONDE AO USUÁRIO AUTENTICADO
+    if (user_id !== user.id) {
+      return new Response(
+        JSON.stringify({ error: "Não é permitido registrar afiliado para outro usuário" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // ============ VALIDAÇÕES BÁSICAS ============
     if (!user_id || !cpf_cnpj || !name) {
