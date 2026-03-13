@@ -529,7 +529,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Atualizar tracking de inatividade após login bem-sucedido
       if (!error) {
-        updateUserTracking().catch(err => console.warn('Erro ao atualizar tracking:', err));
+        try {
+          await updateUserTracking();
+        } catch (trackingErr) {
+          console.warn('Erro ao atualizar tracking (não crítico):', trackingErr);
+          // Não bloquear o login se tracking falhar
+        }
       }
       
       return { error: null };

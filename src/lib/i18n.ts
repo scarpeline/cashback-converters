@@ -74,6 +74,10 @@ i18n
     detection: {
       order: ['navigator', 'htmlTag', 'path', 'subdomain'],
       caches: ['localStorage', 'cookie'],
+    },
+    debug: false, // Desativar debug em produção
+    react: {
+      useSuspense: false, // Evitar suspense que pode causar página branca
     }
   });
 

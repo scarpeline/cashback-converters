@@ -8,7 +8,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
-    { label: "Seja um Franqueado", href: "/seja-um-franqueado" },
+    // { label: "Seja um Franqueado", href: "/seja-um-franqueado" }, // Temporariamente removido
     { label: "Funcionalidades", href: "#features" },
     { label: "Preços", href: "#pricing" },
   ];
@@ -37,11 +37,13 @@ const Header = () => {
             <Link to="/login">
               <Button variant="gold" size="sm">Começar Grátis</Button>
             </Link>
+            {/* Botão Seja um Franqueado removido temporariamente
             <Link to="/seja-um-franqueado">
               <Button variant="outline" size="sm" className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white">
                 Seja um Franqueado
               </Button>
             </Link>
+            */}
           </div>
 
           <button className="md:hidden p-2" style={{ color: "hsl(0 0% 98%)" }} onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -64,11 +66,13 @@ const Header = () => {
                 <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                   <Button variant="gold" className="w-full justify-center">Começar Grátis</Button>
                 </Link>
+                {/* Botão Seja um Franqueado removido temporariamente
                 <Link to="/seja-um-franqueado" onClick={() => setIsMenuOpen(false)}>
                   <Button variant="outline" className="w-full justify-center border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white">
                     Seja um Franqueado
                   </Button>
                 </Link>
+                */}
               </div>
             </nav>
           </div>

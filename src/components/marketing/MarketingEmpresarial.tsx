@@ -135,7 +135,8 @@ const MarketingEmpresarial = ({ isOwner = true }: { isOwner?: boolean }) => {
             title="Vídeo Promocional"
             className="w-full h-full"
             allowFullScreen
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
           />
         </div>
       );
@@ -152,6 +153,7 @@ const MarketingEmpresarial = ({ isOwner = true }: { isOwner?: boolean }) => {
             className="w-full h-full"
             allowFullScreen
             allow="autoplay; fullscreen; picture-in-picture"
+            referrerPolicy="strict-origin-when-cross-origin"
           />
         </div>
       );

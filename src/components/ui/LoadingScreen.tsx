@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,56 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   showRetry = false,
   onRetry 
 }) => {
+  // Adicionar timeout para mostrar erro se demorar muito
+  const [showError, setShowError] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowError(true);
+    }, 20000); // 20 segundos
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (showError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4 max-w-md mx-4">
+          <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-8 h-8 text-destructive" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-lg font-medium text-foreground">
+              Demorando mais que o esperado
+            </p>
+            <p className="text-sm text-muted-foreground">
+              O sistema está demorando para responder. Isso pode ser um problema temporário.
+            </p>
+          </div>
+          
+          <div className="pt-4 space-y-2">
+            <Button 
+              onClick={() => window.location.reload()}
+              className="flex items-center gap-2 mx-auto"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Recarregar Página
+            </Button>
+            {onRetry && (
+              <Button 
+                onClick={onRetry}
+                variant="outline"
+                className="flex items-center gap-2 mx-auto"
+              >
+                Tentar Novamente
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center space-y-4 max-w-md mx-4">
