@@ -99,7 +99,7 @@ export function AntiFraudPanel() {
             p_barbershop_id: barbershop.id
           });
           
-          await supabase.rpc('detect_unusual_volume', {
+          await db.rpc('detect_unusual_volume', {
             p_barbershop_id: barbershop.id
           });
         }
