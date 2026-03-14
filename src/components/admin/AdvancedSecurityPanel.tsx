@@ -124,7 +124,7 @@ export function AdvancedSecurityPanel() {
 
   const handleUnblockIP = async (ipAddress: string) => {
     try {
-      const { error } = await supabase.rpc('unblock_ip', { p_ip_address: ipAddress });
+      const { error } = await db.rpc('unblock_ip', { p_ip_address: ipAddress });
       
       if (error) {
         throw error;
