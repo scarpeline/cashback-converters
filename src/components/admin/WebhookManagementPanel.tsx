@@ -44,7 +44,7 @@ export const WebhookManagementPanel = () => {
   const loadWebhooks = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("webhook_configs")
         .select("*")
         .order("service_name");
@@ -83,8 +83,7 @@ export const WebhookManagementPanel = () => {
       };
 
       if (editingWebhook.id) {
-        // Atualizar
-        const { error } = await supabase
+        const { error } = await db
           .from("webhook_configs")
           .update(webhookData)
           .eq("id", editingWebhook.id);
@@ -92,8 +91,7 @@ export const WebhookManagementPanel = () => {
         if (error) throw error;
         toast.success("Webhook atualizado com sucesso!");
       } else {
-        // Criar
-        const { error } = await supabase
+        const { error } = await db
           .from("webhook_configs")
           .insert(webhookData);
 
@@ -114,7 +112,7 @@ export const WebhookManagementPanel = () => {
   const regenerateSecret = async (webhook: WebhookConfig) => {
     try {
       const newSecret = generateSecret();
-      const { error } = await supabase
+      const { error } = await db
         .from("webhook_configs")
         .update({
           webhook_secret: newSecret,
@@ -156,8 +154,7 @@ export const WebhookManagementPanel = () => {
       if (response.ok) {
         toast.success("Webhook testado com sucesso!");
         
-        // Atualizar último sucesso
-        await supabase
+        await db
           .from("webhook_configs")
           .update({
             last_success: new Date().toISOString(),
@@ -179,7 +176,7 @@ export const WebhookManagementPanel = () => {
 
   const toggleWebhook = async (webhook: WebhookConfig) => {
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from("webhook_configs")
         .update({
           is_active: !webhook.is_active,
