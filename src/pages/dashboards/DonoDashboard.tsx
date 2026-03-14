@@ -1119,72 +1119,51 @@ const SuportePage = () => {
     loadMessages(activeChat.id);
   };
 
-  const updateMessage = async (day: string, newMessage: string) => {
-    const newFlows = (flows || []).map((f: any) =>
-      f.day === day ? { ...f, message: newMessage } : f
-    );
-    const { error } = await supabase.from("barbershops").update({ marketing_flows: newFlows }).eq("id", barbershop.id);
-    if (!error) {
-      setFlows(newFlows);
-      toast.success("Mensagem atualizada!");
-      refetch();
-    }
-  };
-
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold">Automação de Marketing</h1>
+      <h1 className="font-display text-2xl font-bold">Suporte</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Programação Semanal</CardTitle>
-          <CardDescription>Envio automático de lembretes via WhatsApp/SMS</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Chat com Suporte</CardTitle>
+              <CardDescription>Envie suas dúvidas e receba ajuda</CardDescription>
+            </div>
+            <Button variant="gold" size="sm" onClick={startNewChat}>Novo Chat</Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-6">
-            {Object.entries(daysLabels).map(([key, label]) => {
-              const flow = flows?.find((f: any) => f.day === key);
-              return (
-                <div key={key} className="p-4 border rounded-xl space-y-3 bg-card shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <p className="font-bold text-lg">{label}</p>
-                    <Button
-                      variant={flow ? "gold" : "outline"}
-                      size="sm"
-                      onClick={() => toggleDay(key)}
-                    >
-                      {flow ? "Desativar" : "Ativar"}
-                    </Button>
+          {chats.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhum chat iniciado. Clique em "Novo Chat" para começar.</p>
+          ) : (
+            <>
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {chats.map(chat => (
+                  <Button key={chat.id} variant={activeChat?.id === chat.id ? "gold" : "outline"} size="sm" onClick={() => { setActiveChat(chat); loadMessages(chat.id); }}>
+                    Chat #{chat.id.slice(0, 6)}
+                  </Button>
+                ))}
+              </div>
+              {activeChat && (
+                <>
+                  <div className="border rounded-lg p-4 h-64 overflow-y-auto space-y-2">
+                    {messages.map(msg => (
+                      <div key={msg.id} className={`p-2 rounded-lg max-w-[80%] ${msg.is_from_support ? 'bg-primary/10 mr-auto' : 'bg-muted ml-auto'}`}>
+                        <p className="text-sm">{msg.message}</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">{new Date(msg.created_at).toLocaleString("pt-BR")}</p>
+                      </div>
+                    ))}
                   </div>
-
-                  {flow && (
-                    <div className="flex gap-2">
-                      <Input
-                        value={flow.message}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setFlows(curr => curr.map(f => f.day === key ? { ...f, message: val } : f));
-                        }}
-                        placeholder="Mensagem personalizada..."
-                        className="flex-1"
-                      />
-                      <Button size="icon" variant="ghost" onClick={() => updateMessage(key, flow.message)}>
-                        <Send className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  )}
-                  <p className="text-[10px] text-muted-foreground italic">
-                    {flow ? "✓ Envio programado para este dia" : "✕ Clique em Ativar para programar envios"}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <div className="p-4 border-t flex gap-2">
-              <Input placeholder="Digite sua mensagem..." value={newMsg} onChange={e => setNewMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} />
-              <Button variant="gold" onClick={sendMessage} disabled={sending}>Enviar</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                  <div className="flex gap-2">
+                    <Input placeholder="Digite sua mensagem..." value={newMsg} onChange={e => setNewMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} />
+                    <Button variant="gold" onClick={sendMessage} disabled={sending}>Enviar</Button>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
