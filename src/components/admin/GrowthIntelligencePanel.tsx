@@ -132,7 +132,7 @@ export function GrowthIntelligencePanel() {
       await db.rpc('update_growth_metrics');
       
       // Gerar insights
-      await supabase.rpc('generate_growth_insights');
+      await db.rpc('generate_growth_insights');
       
       // Recarregar dados
       await loadGrowthData();

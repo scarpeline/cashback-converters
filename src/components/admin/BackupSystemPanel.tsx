@@ -128,7 +128,7 @@ export function BackupSystemPanel() {
 
   const handleCleanup = async () => {
     try {
-      const { data } = await supabase.rpc('cleanup_old_backups');
+      const { data } = await db.rpc('cleanup_old_backups');
       
       if (data) {
         await loadBackupData();
