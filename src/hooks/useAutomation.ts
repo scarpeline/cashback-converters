@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
-import { useSubscription } from '@/contexts/SubscriptionContext'; // ✅ NOVO: Import do subscription context
+// import { useSubscription } from '@/contexts/SubscriptionContext'; // Desativado temporariamente
 
 export interface InactivitySettings {
   id: string;
@@ -72,7 +72,7 @@ export interface AutomationPermissions {
 
 export function useAutomation() {
   const { user, hasRole } = useAuth();
-  const { isActive: hasSubscription } = useSubscription(); // ✅ NOVO: Status da assinatura
+  // const { isActive: hasSubscription } = useSubscription(); // Desativado temporariamente
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -415,9 +415,10 @@ export function useAutomation() {
 
       // ✅ NOVO: Verificar status de assinatura e atualizar tracking
       let trackingStatus = 'reactivated';
-      if (hasSubscription) {
-        trackingStatus = 'subscribed'; // Se tem assinatura ativa
-      }
+      // Temporariamente desativado até resolver dependência circular
+      // if (hasSubscription) {
+      //   trackingStatus = 'subscribed'; // Se tem assinatura ativa
+      // }
 
       await supabase.rpc('update_user_inactivity_tracking', {
         p_user_id: user.id,
@@ -426,17 +427,18 @@ export function useAutomation() {
       });
 
       // ✅ NOVO: Se tem assinatura, garantir status subscribed
-      if (hasSubscription) {
-        await supabase
-          .from('user_inactivity_tracking')
-          .update({ status: 'subscribed' })
-          .eq('user_id', user.id);
-      }
+      // Temporariamente desativado até resolver dependência circular
+      // if (hasSubscription) {
+      //   await supabase
+      //     .from('user_inactivity_tracking')
+      //     .update({ status: 'subscribed' })
+      //     .eq('user_id', user.id);
+      // }
 
     } catch (err) {
       console.error('Erro ao atualizar tracking:', err);
     }
-  }, [user, hasRole, hasSubscription]); // ✅ NOVO: Adicionado hasSubscription
+  }, [user, hasRole]); // Removido hasSubscription temporariamente
 
   // Carregar dados iniciais
   useEffect(() => {

@@ -16,6 +16,7 @@ import { Loader2 } from "lucide-react";
 import ErrorBoundary from "@/components/error/ErrorBoundary";
 import { SystemDiagnostics } from "@/hooks/useSystemHealth";
 import { StabilityMonitorProvider } from "@/components/monitoring/StabilityMonitorProvider";
+// import { SubscriptionProvider } from "@/contexts/SubscriptionContext"; // Temporariamente desativado
 import { startAutomationWorker } from "@/lib/automation-worker";
 
 // Lazy pages
@@ -156,9 +157,11 @@ const App = () => {
           <BrowserRouter>
             <ErrorBoundary>
               <AuthProvider>
-                <StabilityMonitorProvider />
-                <AppRoutes />
-                <SystemDiagnostics />
+                {/* <SubscriptionProvider> Temporariamente desativado */}
+                  <StabilityMonitorProvider />
+                  <AppRoutes />
+                  <SystemDiagnostics />
+                {/* </SubscriptionProvider> */}
               </AuthProvider>
             </ErrorBoundary>
           </BrowserRouter>
