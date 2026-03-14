@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect, useMemo } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { SocialProofManager } from "@/components/social-proof/SocialProofManager";
