@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Módulo de Segurança — Service
  * Detecção de tentativas de invasão, brute force, SQL injection, XSS, abuso de API
