@@ -79,7 +79,7 @@ export function GrowthIntelligencePanel() {
     setLoading(true);
     try {
       // Carregar métricas de crescimento
-      const { data: metricsData } = await supabase
+      const { data: metricsData } = await db
         .from('growth_metrics')
         .select('*')
         .order('demand_score', { ascending: false })
