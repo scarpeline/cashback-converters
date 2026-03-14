@@ -139,7 +139,7 @@ export function AdvancedSecurityPanel() {
 
   const handleScanVulnerabilities = async () => {
     try {
-      const { data } = await supabase.rpc('scan_vulnerabilities');
+      const { data } = await db.rpc('scan_vulnerabilities');
       
       if (data) {
         await loadSecurityData();
