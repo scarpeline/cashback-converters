@@ -80,7 +80,7 @@ export function AdvancedSecurityPanel() {
       }
 
       // Carregar logs recentes
-      const { data: logsData } = await supabase
+      const { data: logsData } = await db
         .from('security_logs')
         .select(`
           *,
