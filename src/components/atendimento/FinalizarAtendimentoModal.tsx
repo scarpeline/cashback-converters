@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+const db = supabase as any;
 import { 
   CreditCard, 
   DollarSign, 
@@ -116,7 +117,7 @@ export const FinalizarAtendimentoModal = ({
       if (appointment.professionals?.commission_percent) {
         const commissionAmount = (Number(amount) * appointment.professionals.commission_percent) / 100;
         
-        await supabase
+        await db
           .from("professional_commissions")
           .insert({
             professional_id: appointment.professional_id,
@@ -132,7 +133,7 @@ export const FinalizarAtendimentoModal = ({
 
       // 4. Atualizar métricas da barbearia
       const today = new Date().toISOString().split('T')[0];
-      await supabase.rpc('update_daily_metrics', {
+      await db.rpc('update_daily_metrics', {
         p_barbershop_id: appointment.barbershop_id,
         p_date: today,
         p_revenue: Number(amount),

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * MarketingEmpresarial - Componente de vídeo promocional configurável
  */

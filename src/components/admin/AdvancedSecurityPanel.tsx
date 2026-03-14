@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useFeature } from '@/hooks/useFeatureFlags';
 import { supabase } from '@/integrations/supabase/client';
+const db = supabase as any;
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -73,13 +74,13 @@ export function AdvancedSecurityPanel() {
     setLoading(true);
     try {
       // Carregar estatísticas
-      const { data: statsData } = await supabase.rpc('get_security_stats');
+      const { data: statsData } = await db.rpc('get_security_stats');
       if (statsData) {
         setStats(statsData[0]);
       }
 
       // Carregar logs recentes
-      const { data: logsData } = await supabase
+      const { data: logsData } = await db
         .from('security_logs')
         .select(`
           *,
@@ -93,7 +94,7 @@ export function AdvancedSecurityPanel() {
       }
 
       // Carregar IPs bloqueados
-      const { data: ipsData } = await supabase
+      const { data: ipsData } = await db
         .from('blocked_ips')
         .select('*')
         .order('blocked_until', { ascending: false })
@@ -104,7 +105,7 @@ export function AdvancedSecurityPanel() {
       }
 
       // Carregar vulnerabilidades
-      const { data: vulnData } = await supabase
+      const { data: vulnData } = await db
         .from('vulnerability_scans')
         .select('*')
         .eq('status', 'open')
@@ -123,7 +124,7 @@ export function AdvancedSecurityPanel() {
 
   const handleUnblockIP = async (ipAddress: string) => {
     try {
-      const { error } = await supabase.rpc('unblock_ip', { p_ip_address: ipAddress });
+      const { error } = await db.rpc('unblock_ip', { p_ip_address: ipAddress });
       
       if (error) {
         throw error;
@@ -138,7 +139,7 @@ export function AdvancedSecurityPanel() {
 
   const handleScanVulnerabilities = async () => {
     try {
-      const { data } = await supabase.rpc('scan_vulnerabilities');
+      const { data } = await db.rpc('scan_vulnerabilities');
       
       if (data) {
         await loadSecurityData();

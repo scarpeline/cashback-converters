@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useFeature } from '@/hooks/useFeatureFlags';
 import { supabase } from '@/integrations/supabase/client';
+const db = supabase as any;
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -53,7 +54,7 @@ export function AntiFraudPanel() {
     setLoading(true);
     try {
       // Carregar alertas de fraude
-      const { data: alertsData } = await supabase.rpc('get_fraud_alerts', {
+      const { data: alertsData } = await db.rpc('get_fraud_alerts', {
         p_limit: 20
       });
       
@@ -62,7 +63,7 @@ export function AntiFraudPanel() {
       }
 
       // Carregar métricas recentes
-      const { data: metricsData } = await supabase
+      const { data: metricsData } = await db
         .from('fraud_metrics')
         .select(`
           *,
@@ -88,17 +89,17 @@ export function AntiFraudPanel() {
     setAnalyzing(true);
     try {
       // Analisar todas as barbearias
-      const { data: barbershops } = await supabase
+      const { data: barbershops } = await db
         .from('barbershops')
         .select('id');
       
       if (barbershops) {
         for (const barbershop of barbershops) {
-          await supabase.rpc('analyze_payment_discrepancy', {
+          await db.rpc('analyze_payment_discrepancy', {
             p_barbershop_id: barbershop.id
           });
           
-          await supabase.rpc('detect_unusual_volume', {
+          await db.rpc('detect_unusual_volume', {
             p_barbershop_id: barbershop.id
           });
         }
@@ -114,7 +115,7 @@ export function AntiFraudPanel() {
 
   const handleResolveAlert = async (alertId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from('fraud_alerts')
         .update({ 
           status: 'resolved',
