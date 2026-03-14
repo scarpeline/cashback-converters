@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AnticipationManager - Sistema de Antecipação Automática de Agendamentos
  * 

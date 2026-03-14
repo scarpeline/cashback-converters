@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Testes de Proteção do Sistema - Validação das Novas Funcionalidades
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';

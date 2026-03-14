@@ -66,6 +66,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithWhatsApp: (whatsapp: string, password: string) => Promise<{ error: Error | null }>;
   signInWithMagicLink: (email: string, returnPath?: string) => Promise<{ error: Error | null }>;
+  sendPasswordResetEmail: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
   getPrimaryRole: () => AppRole | null;
@@ -183,8 +184,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Execute queries in parallel using the abort signal
       const [profileResult, rolesResult] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle().abortSignal(controller.signal),
-        supabase.from("user_roles").select("role").eq("user_id", userId).abortSignal(controller.signal)
+        supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", userId)
       ]);
 
       clearTimeout(safetyTimeout);
