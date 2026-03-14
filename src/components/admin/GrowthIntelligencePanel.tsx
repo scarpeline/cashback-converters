@@ -102,7 +102,7 @@ export function GrowthIntelligencePanel() {
       }
 
       // Carregar previsões
-      const { data: forecastsData } = await supabase
+      const { data: forecastsData } = await db
         .from('growth_forecasts')
         .select('*')
         .order('created_at', { ascending: false })
