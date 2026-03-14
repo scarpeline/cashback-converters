@@ -94,7 +94,7 @@ export function AdvancedSecurityPanel() {
       }
 
       // Carregar IPs bloqueados
-      const { data: ipsData } = await supabase
+      const { data: ipsData } = await db
         .from('blocked_ips')
         .select('*')
         .order('blocked_until', { ascending: false })
