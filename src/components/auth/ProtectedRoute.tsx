@@ -2,7 +2,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { LoadingScreen, ErrorLoading } from "@/components/ui/LoadingScreen";
 import { getDashboardForRole, getLoginForRoute } from "@/lib/route-config";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -17,24 +17,44 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
   const [globalTimeout, setGlobalTimeout] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  
+  // Refs para evitar múltiplas execuções
+  const authCheckedRef = useRef(false);
+  const rolesCheckedRef = useRef(false);
 
   // Global safety timeout: se algo demorar >15s, força redirect
   useEffect(() => {
+    if (authCheckedRef.current) return;
+    
     const timer = setTimeout(() => {
       if (!authResolved || (user && roles.length === 0)) {
+        console.warn('[ProtectedRoute] Global timeout reached');
         setGlobalTimeout(true);
+        authCheckedRef.current = true;
       }
     }, 15000);
+    
     return () => clearTimeout(timer);
   }, [authResolved, user, roles]);
 
   // Timeout específico para roles: se não carregar em 10s após auth resolved
   useEffect(() => {
+    if (rolesCheckedRef.current) return;
+    
     if (authResolved && user && roles.length === 0) {
-      const timer = setTimeout(() => setRolesTimeout(true), 10000);
+      const timer = setTimeout(() => {
+        console.warn('[ProtectedRoute] Roles timeout reached');
+        setRolesTimeout(true);
+        rolesCheckedRef.current = true;
+      }, 10000);
+      
       return () => clearTimeout(timer);
     }
-    if (roles.length > 0) setRolesTimeout(false);
+    
+    if (roles.length > 0) {
+      setRolesTimeout(false);
+      rolesCheckedRef.current = true;
+    }
   }, [authResolved, user, roles]);
 
   // Resetar estados quando mudar de rota
@@ -42,6 +62,8 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
     setRolesTimeout(false);
     setGlobalTimeout(false);
     setError(null);
+    authCheckedRef.current = false;
+    rolesCheckedRef.current = false;
   }, [location.pathname]);
 
   const handleRetry = () => {
@@ -49,18 +71,24 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
     setRolesTimeout(false);
     setGlobalTimeout(false);
     setError(null);
-    window.location.reload();
+    authCheckedRef.current = false;
+    rolesCheckedRef.current = false;
+    
+    // Força reload apenas após múltiplas tentativas
+    if (retryCount >= 2) {
+      window.location.reload();
+    }
   };
 
   // Global timeout: força redirect para login
   if (globalTimeout && (!authResolved || (user && roles.length === 0))) {
-    console.warn('[ProtectedRoute] Global timeout reached - forcing redirect to login');
+    console.warn('[ProtectedRoute] Global timeout - forcing redirect to login');
     const loginPath = redirectTo || getLoginForRoute(location.pathname);
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
-  // STEP 1: Aguardar auth resolver E carregamento de perfil
-  if (!authResolved || (user && profileLoading && roles.length === 0 && !globalTimeout)) {
+  // STEP 1: Aguardar auth resolver (mas sem bloquear indefinidamente)
+  if (!authResolved) {
     return <LoadingScreen message="Carregando ambiente seguro..." showRetry={retryCount > 2} onRetry={handleRetry} />;
   }
 
@@ -73,15 +101,21 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
   // STEP 3: Sessão OK mas sem roles → aguardar brevemente (com timeout)
   if (roles.length === 0) {
     if (rolesTimeout) {
-      console.warn('[ProtectedRoute] Roles timeout (10s) - redirecting to login. User:', user?.email);
+      console.warn('[ProtectedRoute] Roles timeout - redirecting to login. User:', user?.email);
       const loginPath = redirectTo || getLoginForRoute(location.pathname);
       return <Navigate to={loginPath} state={{ from: location }} replace />;
     }
-    return <LoadingScreen 
-      message="Validando permissões..." 
-      showRetry={retryCount > 1}
-      onRetry={handleRetry}
-    />;
+    
+    // Não mostrar loading se profileLoading já for false (evitar tela branca)
+    if (!profileLoading) {
+      return <LoadingScreen 
+        message="Validando permissões..." 
+        showRetry={retryCount > 1}
+        onRetry={handleRetry}
+      />;
+    }
+    
+    return <LoadingScreen message="Carregando perfil..." />;
   }
 
   // STEP 4: Verificar permissão
@@ -90,6 +124,7 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
     if (!hasPermission) {
       const primaryRole = getPrimaryRole();
       const correctPath = getDashboardForRole(primaryRole);
+      console.warn('[ProtectedRoute] Permission denied - redirecting to:', correctPath);
       return <Navigate to={correctPath} replace />;
     }
   }

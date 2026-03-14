@@ -18,9 +18,10 @@ import { SystemDiagnostics } from "@/hooks/useSystemHealth";
 import { StabilityMonitorProvider } from "@/components/monitoring/StabilityMonitorProvider";
 // import { SubscriptionProvider } from "@/contexts/SubscriptionContext"; // Temporariamente desativado
 import { startAutomationWorker } from "@/lib/automation-worker";
+import "@/styles/landing.css"; // Importar estilos da nova landing page
 
 // Lazy pages
-const Index = lazy(() => import("./pages/Index"));
+const Index = lazy(() => import("./pages/IndexNew"));
 const PartnershipPage = lazy(() => import("./pages/public/PartnershipPage"));
 const DemoPage = lazy(() => import("./pages/public/DemoPage"));
 const NotFoundPage = lazy(() => import("./pages/public/NotFoundPage"));

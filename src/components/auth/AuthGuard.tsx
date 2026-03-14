@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { getDashboardForRole, isLoginRoute } from "@/lib/route-config";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -19,14 +19,30 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const { user, authResolved, roles, getPrimaryRole } = useAuth();
   const location = useLocation();
   const [redirectTimeout, setRedirectTimeout] = useState(false);
+  const redirectAttemptedRef = useRef(false);
 
   // Timeout para redirect automático se demorar muito
   useEffect(() => {
+    if (redirectAttemptedRef.current) return;
+    
     if (user && roles.length > 0 && isLoginRoute(location.pathname)) {
-      const timer = setTimeout(() => setRedirectTimeout(true), 3000);
+      const timer = setTimeout(() => {
+        console.warn('[AuthGuard] Redirect timeout - forcing navigation');
+        setRedirectTimeout(true);
+        redirectAttemptedRef.current = true;
+      }, 3000);
+      
       return () => clearTimeout(timer);
     }
   }, [user, roles, location.pathname]);
+
+  // Resetar estado quando mudar de rota
+  useEffect(() => {
+    if (!isLoginRoute(location.pathname)) {
+      setRedirectTimeout(false);
+      redirectAttemptedRef.current = false;
+    }
+  }, [location.pathname]);
 
   if (!authResolved) {
     return <LoadingScreen message="Preparando ambiente de autenticação..." />;
@@ -35,6 +51,21 @@ export function AuthGuard({ children }: AuthGuardProps) {
   // Logado + tem roles + está em rota de login → vai pro dashboard
   if (user && roles.length > 0 && isLoginRoute(location.pathname)) {
     const dashboard = getDashboardForRole(getPrimaryRole());
+    
+    if (redirectTimeout) {
+      // Força redirect se timeout
+      return (
+        <LoadingScreen 
+          message="Redirecionando para seu dashboard..." 
+          showRetry={true}
+          onRetry={() => {
+            redirectAttemptedRef.current = true;
+            window.location.href = dashboard;
+          }}
+        />
+      );
+    }
+    
     return <Navigate to={dashboard} replace />;
   }
 
@@ -44,10 +75,14 @@ export function AuthGuard({ children }: AuthGuardProps) {
       <LoadingScreen 
         message="Redirecionando para seu dashboard..." 
         showRetry={true}
-        onRetry={() => window.location.href = getDashboardForRole(getPrimaryRole())}
+        onRetry={() => {
+          redirectAttemptedRef.current = true;
+          window.location.href = getDashboardForRole(getPrimaryRole());
+        }}
       />
     );
   }
 
+  // Renderiza children (formulário de login)
   return <>{children}</>;
 }
