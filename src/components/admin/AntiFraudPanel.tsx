@@ -89,7 +89,7 @@ export function AntiFraudPanel() {
     setAnalyzing(true);
     try {
       // Analisar todas as barbearias
-      const { data: barbershops } = await supabase
+      const { data: barbershops } = await db
         .from('barbershops')
         .select('id');
       
