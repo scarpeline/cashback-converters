@@ -113,7 +113,7 @@ export function GrowthIntelligencePanel() {
       }
 
       // Carregar rankings de franqueados
-      const { data: rankingsData } = await supabase.rpc('get_franchise_rankings');
+      const { data: rankingsData } = await db.rpc('get_franchise_rankings');
       
       if (rankingsData) {
         setRankings(rankingsData);
