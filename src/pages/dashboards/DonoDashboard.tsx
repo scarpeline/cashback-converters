@@ -645,8 +645,7 @@ const FinanceiroPage = () => {
       </Card>
       <Card><CardHeader><CardDescription>Faturamento do Mês</CardDescription><CardTitle className="text-2xl">R$ 0,00</CardTitle></CardHeader></Card>
     </div>
-  </div>
-);
+  );
 };
 
 // ============ RECEBER PAGAMENTO RÁPIDO ============
