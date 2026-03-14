@@ -99,7 +99,7 @@ export function BackupSystemPanel() {
   const handleCreateBackup = async (type: string = 'full') => {
     setCreating(true);
     try {
-      const { data } = await supabase.rpc('start_backup', { p_backup_type: type });
+      const { data } = await db.rpc('start_backup', { p_backup_type: type });
       
       if (data) {
         await loadBackupData();
