@@ -81,7 +81,7 @@ export function BackupSystemPanel() {
       }
 
       // Carregar configurações
-      const { data: settingsData } = await supabase
+      const { data: settingsData } = await db
         .from('backup_settings')
         .select('*')
         .limit(1);
