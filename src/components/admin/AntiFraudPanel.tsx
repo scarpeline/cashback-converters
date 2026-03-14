@@ -95,7 +95,7 @@ export function AntiFraudPanel() {
       
       if (barbershops) {
         for (const barbershop of barbershops) {
-          await supabase.rpc('analyze_payment_discrepancy', {
+          await db.rpc('analyze_payment_discrepancy', {
             p_barbershop_id: barbershop.id
           });
           
