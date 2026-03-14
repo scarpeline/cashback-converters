@@ -70,7 +70,7 @@ export function BackupSystemPanel() {
       }
 
       // Carregar backups recentes
-      const { data: backupsData } = await supabase
+      const { data: backupsData } = await db
         .from('backups')
         .select('*')
         .order('created_at', { ascending: false })
