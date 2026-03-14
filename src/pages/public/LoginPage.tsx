@@ -4,12 +4,34 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Eye, EyeOff, Loader2, User, Scissors, Store, Sparkles } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Eye, 
+  EyeOff, 
+  Loader2, 
+  User, 
+  Scissors, 
+  Store, 
+  Sparkles, 
+  Mail, 
+  Globe, 
+  ChevronDown, 
+  Check 
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole, getDashboardForRole } from "@/lib/auth";
 import { formatCpfCnpjBR, formatWhatsAppBR } from "@/lib/input-masks";
 import logo from "@/assets/logo.png";
 import { z } from "zod";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/lib/supabase";
+import { useTranslation } from "react-i18next";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type UserType = "cliente" | "dono";
 type LoginType = "cliente" | "profissional" | "dono";
@@ -28,7 +50,8 @@ const signupSchema = z.object({
   pix: z.string().optional(),
 });
 
-const PublicLoginPage = () => {
+const LoginPage = () => {
+  const { t, i18n } = useTranslation("common");
   const navigate = useNavigate();
   const {
     user, signUp, signIn, signInWithWhatsApp,
@@ -145,17 +168,17 @@ const PublicLoginPage = () => {
         if (result.error) {
           const msg = result.error.message || "Erro ao fazer login";
           if (msg.toLowerCase().includes("email not confirmed")) {
-            toast.error("Confirme seu e-mail antes de entrar.");
+            toast.error(t("auth.error_email_confirmed"));
           } else if (msg.toLowerCase().includes("invalid login credentials")) {
-            toast.error("Credenciais inválidas. Verifique seus dados.");
+            toast.error(t("auth.error_invalid_credentials"));
           } else {
-            toast.error("Erro ao fazer login. Tente novamente.");
+            toast.error(t("auth.error_generic"));
           }
           setLoading(false);
           return;
         }
 
-        toast.success("Login realizado com sucesso!");
+        toast.success(t("auth.login_success"));
         setTimeout(() => setLoading(false), 3000);
         return;
       } else {
@@ -173,426 +196,544 @@ const PublicLoginPage = () => {
 
         if (error) {
           if (error.message.includes("already registered")) {
-            toast.error("Este e-mail já está cadastrado. Faça login.");
+            toast.error(t("auth.error_already_registered"));
           } else {
-            toast.error("Erro ao criar conta. Tente novamente.");
+            toast.error(t("auth.error_signup_generic"));
           }
           setLoading(false);
           return;
         }
 
         if (isBusinessUser) {
-          toast.success("Conta criada! Abrindo a Asaas para configurar seus pagamentos...");
+          toast.success(t("auth.signup_success_business"));
           setTimeout(() => {
             window.open("https://www.asaas.com/r/4095742a-0dd1-4fb7-b9ce-61431bb4f632", "_blank", "noopener,noreferrer");
           }, 1000);
           setTimeout(() => setMode("login"), 1500);
         } else {
-          toast.success("Conta criada! Verifique seu e-mail para confirmar e depois faça login.");
+          toast.success(t("auth.signup_success_client"));
           setMode("login");
         }
         setLoginType(userType === "dono" ? "dono" : "cliente");
         return;
       }
     } catch (err) {
-      toast.error("Ocorreu um erro. Tente novamente.");
+      toast.error(t("auth.error_generic"));
       setLoading(false);
     }
   };
 
-  const userTypes: { value: UserType; label: string; description: string; icon: React.ElementType }[] = [
-    { value: "cliente", label: "Sou Cliente", description: "Agendar serviços e ganhar cashback", icon: User },
-    { value: "dono", label: "Sou Dono de Barbearia", description: "Gerenciar meu negócio", icon: Store },
-  ];
-
   const loginTypes: { value: LoginType; label: string; icon: React.ElementType }[] = [
-    { value: "cliente", label: "Sou Cliente", icon: User },
-    { value: "profissional", label: "Sou Profissional", icon: Scissors },
-    { value: "dono", label: "Sou Dono de Barbearia", icon: Store },
+    { value: "cliente", label: t("auth.role_client_short"), icon: User },
+    { value: "profissional", label: t("auth.role_professional_short"), icon: Scissors },
+    { value: "dono", label: t("auth.role_business_owner_short"), icon: Store },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row" style={{ background: "linear-gradient(180deg, hsl(222 47% 6%) 0%, hsl(222 30% 12%) 100%)" }}>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-[#020617] animate-in fade-in duration-700">
       {/* Left Side - Form */}
-      <div className="flex-1 flex flex-col justify-center px-4 py-12 lg:px-12">
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="flex-1 flex flex-col justify-center px-4 py-12 lg:px-12 z-10 relative overflow-y-auto"
+      >
         <div className="w-full max-w-md mx-auto">
-          {/* Back Button */}
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 transition-colors mb-8"
-            style={{ color: "hsl(220 9% 55%)" }}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar
-          </Link>
+          {/* Back Button & Language Switcher */}
+          <div className="flex items-center justify-between mb-8">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 transition-all hover:text-gold group text-slate-400"
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              {t("auth.back_to_site")}
+            </Link>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2 text-slate-400 hover:text-gold transition-colors">
+                  <Globe className="w-4 h-4" />
+                  <span className="uppercase text-xs font-bold">{i18n.language}</span>
+                  <ChevronDown className="w-3 h-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-[#0f172a] border-slate-800">
+                {[
+                  { code: 'pt', label: 'Português', flag: '🇧🇷' },
+                  { code: 'en', label: 'English', flag: '🇺🇸' },
+                  { code: 'es', label: 'Español', flag: '🇪🇸' }
+                ].map((lang) => (
+                  <DropdownMenuItem 
+                    key={lang.code}
+                    onClick={() => i18n.changeLanguage(lang.code)}
+                    className="gap-3 cursor-pointer focus:bg-gold/10"
+                  >
+                    <span className="text-lg">{lang.flag}</span>
+                    <span className={`flex-1 ${i18n.language === lang.code ? 'text-gold font-bold' : 'text-slate-200'}`}>
+                      {lang.label}
+                    </span>
+                    {i18n.language === lang.code && <Check className="w-4 h-4 text-gold" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
           {/* Logo */}
           <div className="flex items-center gap-3 mb-8">
-            <img src={logo} alt="SalãoCashBack" className="w-12 h-12" />
-            <span className="font-display font-bold text-2xl text-gradient-gold">
+            <motion.img 
+              src={logo} 
+              alt="SalãoCashBack" 
+              className="w-12 h-12"
+              whileHover={{ rotate: 360, transition: { duration: 0.8 } }}
+            />
+            <span className="font-display font-bold text-2xl bg-gradient-to-r from-[#D4AF37] via-[#f7e48b] to-[#D4AF37] bg-clip-text text-transparent">
               SalãoCashBack
             </span>
           </div>
 
           {/* Title */}
-          <h1 className="font-display text-3xl font-bold mb-2" style={{ color: "hsl(0 0% 98%)" }}>
-            {mode === "login" ? "Bem-vindo de volta!" : "Crie sua conta"}
-          </h1>
-          <p className="mb-8" style={{ color: "hsl(220 9% 60%)" }}>
-            {mode === "login"
-              ? "Entre para acessar sua conta"
-              : "Preencha os dados para começar"}
-          </p>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <h1 className="font-display text-3xl font-bold mb-2 text-slate-50">
+              {mode === "login" ? t("auth.login_title") : t("auth.register_title")}
+            </h1>
+            <p className="mb-8 text-slate-400">
+              {mode === "login"
+                ? t("auth.login_subtitle")
+                : t("auth.register_subtitle")}
+            </p>
+          </motion.div>
 
           {/* Mode Toggle */}
-          <div className="flex gap-2 p-1 rounded-lg mb-6" style={{ background: "hsl(222 30% 12%)", border: "1px solid hsl(222 20% 18%)" }}>
+          <div className="flex gap-2 p-1 rounded-xl mb-8 bg-[#1e293b]/50 border border-slate-800 backdrop-blur-sm">
             <button
               type="button"
               onClick={() => setMode("login")}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${mode === "login"
-                ? "bg-gradient-gold shadow-sm"
-                : ""
+              className={`flex-1 py-3 px-4 rounded-lg text-sm font-bold transition-all duration-300 ${mode === "login"
+                ? "bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#020617] shadow-lg shadow-gold/20 scale-[1.02]"
+                : "text-slate-400 hover:text-slate-200"
                 }`}
-              style={mode === "login" ? { color: "hsl(222 47% 11%)" } : { color: "hsl(220 9% 55%)" }}
             >
-              Entrar
+              {t("auth.sign_in")}
             </button>
             <button
               type="button"
               onClick={() => setMode("signup")}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${mode === "signup"
-                ? "bg-gradient-gold shadow-sm"
-                : ""
+              className={`flex-1 py-3 px-4 rounded-lg text-sm font-bold transition-all duration-300 ${mode === "signup"
+                ? "bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#020617] shadow-lg shadow-gold/20 scale-[1.02]"
+                : "text-slate-400 hover:text-slate-200"
                 }`}
-              style={mode === "signup" ? { color: "hsl(222 47% 11%)" } : { color: "hsl(220 9% 55%)" }}
             >
-              Criar Conta
+              {t("auth.sign_up")}
             </button>
           </div>
 
-          {/* Login Type Selection (only for login) */}
-          {mode === "login" && (
-            <div className="mb-6">
-              <Label className="mb-3 block" style={{ color: "hsl(220 9% 70%)" }}>Como você quer entrar?</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {loginTypes.map((type) => (
-                  <button
-                    key={type.value}
-                    type="button"
-                    onClick={() => setLoginType(type.value)}
-                    className="p-3 rounded-lg text-center transition-all"
-                    style={{
-                      background: loginType === type.value ? "hsl(42 100% 50% / 0.1)" : "hsl(222 30% 12%)",
-                      border: loginType === type.value ? "1px solid hsl(42 100% 50% / 0.4)" : "1px solid hsl(222 20% 18%)",
-                    }}
-                  >
-                    <type.icon className="w-5 h-5 mx-auto mb-1" style={{ color: loginType === type.value ? "hsl(42 100% 55%)" : "hsl(220 9% 50%)" }} />
-                    <span className="text-xs font-medium block" style={{ color: loginType === type.value ? "hsl(42 100% 55%)" : "hsl(220 9% 50%)" }}>
-                      {type.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${mode}-${userType}-${loginType}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              {/* Login Type Selection (only for login) */}
+              {mode === "login" && (
+                <div className="mb-8">
+                  <Label className="mb-4 block text-slate-400 text-sm font-medium">{t("auth.login_type_label")}</Label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {loginTypes.map((type) => (
+                      <button
+                        key={type.value}
+                        type="button"
+                        onClick={() => setLoginType(type.value)}
+                        className={`p-3 rounded-xl text-center transition-all duration-300 border ${
+                          loginType === type.value 
+                            ? "bg-gold/10 border-gold/40 shadow-gold/20 shadow-lg scale-105" 
+                            : "bg-[#0f172a] border-slate-800 hover:border-slate-700"
+                        }`}
+                      >
+                        <type.icon className={`w-5 h-5 mx-auto mb-2 transition-colors ${
+                          loginType === type.value ? "text-gold" : "text-slate-500"
+                        }`} />
+                        <span className={`text-[11px] font-bold block transition-colors ${
+                          loginType === type.value ? "text-gold" : "text-slate-500"
+                        }`}>
+                          {type.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          {/* User Type Selection (only for signup) */}
-          {mode === "signup" && (
-            <div className="mb-6">
-              <Label className="mb-3 block" style={{ color: "hsl(220 9% 70%)" }}>Tipo de Conta</Label>
-              <div className="grid grid-cols-1 gap-3">
-                {userTypes.map((type) => (
-                  <button
-                    key={type.value}
-                    type="button"
-                    onClick={() => setUserType(type.value)}
-                    className="p-4 rounded-lg text-left transition-all flex items-center gap-3"
-                    style={{
-                      background: userType === type.value ? "hsl(42 100% 50% / 0.08)" : "hsl(222 30% 12%)",
-                      border: userType === type.value ? "1px solid hsl(42 100% 50% / 0.3)" : "1px solid hsl(222 20% 18%)",
-                    }}
-                  >
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ background: userType === type.value ? "hsl(42 100% 50% / 0.15)" : "hsl(222 30% 15%)" }}>
-                      <type.icon className="w-5 h-5" style={{ color: userType === type.value ? "hsl(42 100% 55%)" : "hsl(220 9% 50%)" }} />
+              {/* User Type Selection (only for signup) */}
+              {mode === "signup" && (
+                <div className="mb-8">
+                  <Label className="mb-4 block text-slate-400 text-sm font-medium">{t("auth.signup_type_label")}</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setUserType("cliente")}
+                      className={`flex-1 flex flex-col items-center gap-4 p-5 rounded-2xl border-2 transition-all duration-300 ${userType === "cliente"
+                        ? "border-gold bg-gold/5 shadow-[0_0_20px_rgba(212,175,55,0.1)] scale-[1.02]"
+                        : "border-slate-800 bg-[#0f172a] hover:border-gold/30 hover:bg-gold/5"
+                        }`}
+                    >
+                      <div className={`p-3 rounded-full ${userType === "cliente" ? "bg-gold text-[#020617]" : "bg-slate-800 text-slate-500"
+                        }`}>
+                        <User className="w-6 h-6" />
+                      </div>
+                      <div className="text-center">
+                        <span className={`block text-sm font-bold ${userType === "cliente" ? "text-gold" : "text-slate-300"
+                          }`}>
+                          {t("auth.role_client")}
+                        </span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setUserType("dono")}
+                      className={`flex-1 flex flex-col items-center gap-4 p-5 rounded-2xl border-2 transition-all duration-300 ${userType === "dono"
+                        ? "border-gold bg-gold/5 shadow-[0_0_20px_rgba(212,175,55,0.1)] scale-[1.02]"
+                        : "border-slate-800 bg-[#0f172a] hover:border-gold/30 hover:bg-gold/5"
+                        }`}
+                    >
+                      <div className={`p-3 rounded-full ${userType === "dono" ? "bg-gold text-[#020617]" : "bg-slate-800 text-slate-500"
+                        }`}>
+                        <Store className="w-6 h-6" />
+                      </div>
+                      <div className="text-center">
+                        <span className={`block text-sm font-bold ${userType === "dono" ? "text-gold" : "text-slate-300"
+                          }`}>
+                          {t("auth.role_business_owner")}
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                  <p className="text-[11px] mt-4 text-slate-500 italic text-center">
+                    {t("auth.signup_disclaimer")}
+                  </p>
+                </div>
+              )}
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {mode === "signup" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-slate-300 ml-1 text-sm font-medium">{t("auth.name_label")}</Label>
+                    <div className="relative group">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-gold transition-colors" />
+                      <Input
+                        id="name"
+                        type="text"
+                        placeholder={t("auth.name_placeholder")}
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="pl-11 bg-[#0f172a] border-slate-800 focus:border-gold/50 transition-all h-13 rounded-xl text-slate-200"
+                        autoComplete="name"
+                      />
                     </div>
-                    <div>
-                      <span className="font-medium block" style={{ color: userType === type.value ? "hsl(42 100% 55%)" : "hsl(0 0% 90%)" }}>
-                        {type.label}
-                      </span>
-                      <span className="text-sm" style={{ color: "hsl(220 9% 55%)" }}>{type.description}</span>
+                    {errors.name && <p className="text-xs text-red-500 mt-1 ml-1">{errors.name}</p>}
+                  </div>
+                )}
+
+                {/* WhatsApp */}
+                {(mode === "signup" || loginType === "cliente") && (
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsapp" className="text-slate-300 ml-1 text-sm font-medium">WhatsApp</Label>
+                    <div className="relative group">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-gold transition-colors">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                      </div>
+                      <Input
+                        id="whatsapp"
+                        type="tel"
+                        placeholder="(00) 00000-0000"
+                        value={formData.whatsapp}
+                        onChange={(e) => setFormData({ ...formData, whatsapp: formatWhatsAppBR(e.target.value) })}
+                        className="pl-11 bg-[#0f172a] border-slate-800 focus:border-gold/50 transition-all h-13 rounded-xl text-slate-200"
+                        autoComplete="tel"
+                      />
                     </div>
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs mt-3" style={{ color: "hsl(220 9% 50%)" }}>
-                Profissionais são cadastrados pelo dono. Afiliados têm página própria.
-              </p>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name (signup only) */}
-            {mode === "signup" && (
-              <div>
-                <Label htmlFor="name" style={{ color: "hsl(220 9% 70%)" }}>Nome Completo</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Seu nome"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className={`mt-1 bg-transparent text-white placeholder:text-white/30 ${errors.name ? "border-destructive" : ""}`}
-                  style={{ borderColor: errors.name ? undefined : "hsl(222 20% 22%)" }}
-                  autoComplete="name"
-                />
-                {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
-              </div>
-            )}
-
-            {/* WhatsApp */}
-            {(mode === "signup" || loginType === "cliente") && (
-              <div>
-                <Label htmlFor="whatsapp" style={{ color: "hsl(220 9% 70%)" }}>WhatsApp</Label>
-                <Input
-                  id="whatsapp"
-                  type="tel"
-                  placeholder="(00) 00000-0000"
-                  value={formData.whatsapp}
-                  onChange={(e) => setFormData({ ...formData, whatsapp: formatWhatsAppBR(e.target.value) })}
-                  className={`mt-1 bg-transparent text-white placeholder:text-white/30 ${errors.whatsapp || errors.identifier ? "border-destructive" : ""}`}
-                  style={{ borderColor: (errors.whatsapp || errors.identifier) ? undefined : "hsl(222 20% 22%)" }}
-                  autoComplete="tel"
-                />
-                {(errors.whatsapp || errors.identifier) && (
-                  <p className="text-xs text-destructive mt-1">{errors.whatsapp || errors.identifier}</p>
+                    {(errors.whatsapp || errors.identifier) && (
+                      <p className="text-xs text-red-500 mt-1 ml-1">{errors.whatsapp || errors.identifier}</p>
+                    )}
+                  </div>
                 )}
-              </div>
-            )}
 
-            {/* Email */}
-            {((mode === "signup" && isBusinessUser) || (mode === "login" && loginType !== "cliente")) && (
-              <div>
-                <Label htmlFor="email" style={{ color: "hsl(220 9% 70%)" }}>E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className={`mt-1 bg-transparent text-white placeholder:text-white/30 ${errors.email || errors.identifier ? "border-destructive" : ""}`}
-                  style={{ borderColor: (errors.email || errors.identifier) ? undefined : "hsl(222 20% 22%)" }}
-                  autoComplete="email"
-                />
-                {(errors.email || errors.identifier) && (
-                  <p className="text-xs text-destructive mt-1">{errors.email || errors.identifier}</p>
+                {/* Email */}
+                {((mode === "signup" && isBusinessUser) || (mode === "login" && loginType !== "cliente")) && (
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-slate-300 ml-1 text-sm font-medium">{t("auth.email_label")}</Label>
+                    <div className="relative group">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-gold transition-colors" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder={t("auth.email_placeholder")}
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="pl-11 bg-[#0f172a] border-slate-800 focus:border-gold/50 transition-all h-13 rounded-xl text-slate-200"
+                        autoComplete="email"
+                      />
+                    </div>
+                    {(errors.email || errors.identifier) && (
+                      <p className="text-xs text-red-500 mt-1 ml-1">{errors.email || errors.identifier}</p>
+                    )}
+                  </div>
                 )}
-              </div>
-            )}
 
-            {/* CPF/CNPJ */}
-            {mode === "signup" && isBusinessUser && (
-              <div>
-                <Label htmlFor="cpfCnpj" style={{ color: "hsl(220 9% 70%)" }}>CPF ou CNPJ</Label>
-                <Input
-                  id="cpfCnpj"
-                  type="text"
-                  placeholder="000.000.000-00"
-                  value={formData.cpfCnpj}
-                  onChange={(e) => setFormData({ ...formData, cpfCnpj: formatCpfCnpjBR(e.target.value) })}
-                  className="mt-1 bg-transparent text-white placeholder:text-white/30"
-                  style={{ borderColor: "hsl(222 20% 22%)" }}
-                  autoComplete="off"
-                />
-              </div>
-            )}
+                {/* CPF/CNPJ */}
+                {mode === "signup" && isBusinessUser && (
+                  <div className="space-y-2">
+                    <Label htmlFor="cpfCnpj" className="text-slate-300 ml-1 text-sm font-medium">{t("auth.cpf_cnpj_label")}</Label>
+                    <Input
+                      id="cpfCnpj"
+                      type="text"
+                      placeholder="000.000.000-00"
+                      value={formData.cpfCnpj}
+                      onChange={(e) => setFormData({ ...formData, cpfCnpj: formatCpfCnpjBR(e.target.value) })}
+                      className="bg-[#0f172a] border-slate-800 focus:border-gold/50 transition-all h-13 rounded-xl text-slate-200"
+                      autoComplete="off"
+                    />
+                  </div>
+                )}
 
-            {/* PIX */}
-            {mode === "signup" && isBusinessUser && (
-              <div>
-                <Label htmlFor="pix" style={{ color: "hsl(220 9% 70%)" }}>Chave PIX</Label>
-                <Input
-                  id="pix"
-                  type="text"
-                  placeholder="CPF, e-mail ou chave aleatória"
-                  value={formData.pix}
-                  onChange={(e) => setFormData({ ...formData, pix: e.target.value })}
-                  className="mt-1 bg-transparent text-white placeholder:text-white/30"
-                  style={{ borderColor: "hsl(222 20% 22%)" }}
-                  autoComplete="off"
-                />
-              </div>
-            )}
+                {/* PIX */}
+                {mode === "signup" && isBusinessUser && (
+                  <div className="space-y-2">
+                    <Label htmlFor="pix" className="text-slate-300 ml-1 text-sm font-medium">{t("auth.pix_label")}</Label>
+                    <Input
+                      id="pix"
+                      type="text"
+                      placeholder={t("auth.pix_placeholder")}
+                      value={formData.pix}
+                      onChange={(e) => setFormData({ ...formData, pix: e.target.value })}
+                      className="bg-[#0f172a] border-slate-800 focus:border-gold/50 transition-all h-13 rounded-xl text-slate-200"
+                      autoComplete="off"
+                    />
+                  </div>
+                )}
 
-            {/* Password */}
-            <div>
-              <Label htmlFor="password" style={{ color: "hsl(220 9% 70%)" }}>Senha</Label>
-              <div className="relative mt-1">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className={`pr-10 bg-transparent text-white placeholder:text-white/30 ${errors.password ? "border-destructive" : ""}`}
-                  style={{ borderColor: errors.password ? undefined : "hsl(222 20% 22%)" }}
-                  autoComplete={mode === "login" ? "current-password" : "new-password"}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                  style={{ color: "hsl(220 9% 50%)" }}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {errors.password && <p className="text-xs text-destructive mt-1">{errors.password}</p>}
-            </div>
+                {/* Password */}
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-slate-300 ml-1 text-sm font-medium">{t("auth.password_label")}</Label>
+                  <div className="relative group">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="px-11 bg-[#0f172a] border-slate-800 focus:border-gold/50 transition-all h-13 rounded-xl text-slate-200"
+                      autoComplete={mode === "login" ? "current-password" : "new-password"}
+                    />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-gold transition-colors">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {errors.password && <p className="text-xs text-red-500 mt-1 ml-1">{errors.password}</p>}
+                </div>
 
-            {/* Forgot Password (login only) */}
-            {mode === "login" && (
-              <div className="text-right">
-                <button
-                  type="button"
-                  className="text-sm text-primary hover:underline"
-                  onClick={async () => {
-                    const identifier = loginType === "cliente" ? formData.whatsapp : formData.email;
-                    let targetEmail = "";
+                {/* Forgot Password (login only) */}
+                {mode === "login" && (
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      className="text-xs text-gold hover:text-white transition-colors font-medium"
+                      onClick={async () => {
+                        const identifier = loginType === "cliente" ? formData.whatsapp : formData.email;
+                        let targetEmail = "";
 
-                    if (loginType === "cliente") {
-                      if (!formData.whatsapp || formData.whatsapp.length < 10) {
-                        toast.error("Insira seu WhatsApp primeiro para localizarmos sua conta.");
-                        return;
-                      }
-                      setLoading(true);
-                      const norm = formData.whatsapp.replace(/\D/g, '');
-                      const { data } = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: norm });
-                      setLoading(false);
-                      if (!data) {
-                        toast.error("Conta não encontrada com este WhatsApp.");
-                        return;
-                      }
-                      targetEmail = data;
-                    } else {
-                      if (!formData.email || !formData.email.includes("@")) {
-                        toast.error("Insira seu e-mail de cadastro primeiro.");
-                        return;
-                      }
-                      targetEmail = formData.email;
-                    }
+                        if (loginType === "cliente") {
+                          if (!formData.whatsapp || formData.whatsapp.length < 10) {
+                            toast.error(t("auth.error_whatsapp_required"));
+                            return;
+                          }
+                          setLoading(true);
+                          const norm = formData.whatsapp.replace(/\D/g, '');
+                          const { data } = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: norm });
+                          setLoading(false);
+                          if (!data) {
+                            toast.error(t("auth.error_account_not_found"));
+                            return;
+                          }
+                          targetEmail = data;
+                        } else {
+                          if (!formData.email || !formData.email.includes("@")) {
+                            toast.error(t("auth.error_email_required"));
+                            return;
+                          }
+                          targetEmail = formData.email;
+                        }
 
-                    if (targetEmail) {
-                      const { error } = await sendPasswordResetEmail(targetEmail);
-                      if (error) {
-                        toast.error("Erro ao enviar e-mail: " + error.message);
-                      } else {
-                        toast.success("E-mail de recuperação enviado! Verifique sua caixa de entrada.");
-                      }
-                    }
-                  }}
+                        if (targetEmail) {
+                          const { error } = await sendPasswordResetEmail(targetEmail);
+                          if (error) {
+                            toast.error(t("auth.error_reset_email") + error.message);
+                          } else {
+                            toast.success(t("auth.reset_email_sent"));
+                          }
+                        }
+                      }}
+                      disabled={loading}
+                    >
+                      {t("auth.forgot_password")}
+                    </button>
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  className="w-full h-13 mt-4 bg-gradient-to-r from-[#D4AF37] via-[#f7e48b] to-[#D4AF37] text-[#020617] font-black text-base rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.2)] hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] transition-all duration-300 border-none group"
                   disabled={loading}
                 >
-                  Esqueceu a senha?
-                </button>
-              </div>
-            )}
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              variant="hero"
-              className="w-full"
-              size="xl"
-              disabled={loading}
-            >
-              {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              {mode === "login" ? "Entrar" : "Criar Conta"}
-            </Button>
-          </form>
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      {t("common.processing")}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2">
+                       {mode === "login" ? t("auth.sign_in") : t("auth.sign_up")}
+                       <Sparkles className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  )}
+                </Button>
+              </form>
+            </motion.div>
+          </AnimatePresence>
 
           {/* Info for business users */}
           {mode === "signup" && isBusinessUser && (
-            <div className="mt-4 p-3 rounded-lg" style={{ background: "hsl(42 100% 50% / 0.05)", border: "1px solid hsl(42 100% 50% / 0.15)" }}>
-              <p className="text-xs text-center" style={{ color: "hsl(220 9% 55%)" }}>
-                Ao criar sua conta, você será direcionado para a{" "}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-6 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm"
+            >
+              <p className="text-[11px] text-center text-slate-500 leading-relaxed">
+                {t("auth.asaas_redirect_info")}{" "}
                 <a
                   href="https://www.asaas.com/r/4095742a-0dd1-4fb7-b9ce-61431bb4f632"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-semibold underline hover:opacity-80 transition-opacity"
-                  style={{ color: "hsl(42 100% 55%)" }}
+                  className="text-gold font-bold underline hover:text-white transition-colors"
                 >
                   Asaas
-                </a>{" "}
-                para configurar sua conta de pagamentos.
+                </a>
               </p>
-            </div>
+            </motion.div>
           )}
 
           {/* Affiliate Link */}
-          <div className="mt-4 pt-4 text-center" style={{ borderTop: "1px solid hsl(222 20% 18%)" }}>
+          <div className="mt-8 pt-6 text-center border-t border-slate-800">
             <Link
               to="/afiliado-saas/login"
-              className="text-sm transition-colors hover:opacity-80"
-              style={{ color: "hsl(220 9% 50%)" }}
+              className="text-xs text-slate-500 hover:text-slate-300 transition-colors inline-flex items-center gap-1"
             >
-              Quer ser afiliado do SaaS? <span className="underline" style={{ color: "hsl(42 100% 55%)" }}>Clique aqui</span>
+              {t("auth.want_to_be_affiliate")}{" "}
+              <span className="text-gold font-bold underline">{t("auth.click_here")}</span>
             </Link>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Right Side - Visual */}
-      <div className="hidden lg:flex flex-1 items-center justify-center p-12 relative overflow-hidden" style={{ background: "linear-gradient(145deg, hsl(222 30% 10%), hsl(222 47% 6%))" }}>
-        {/* Glowing orbs */}
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, hsl(42 100% 50% / 0.1), transparent 70%)" }} />
-        <div className="absolute bottom-1/3 left-1/3 w-72 h-72 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, hsl(217 91% 50% / 0.08), transparent 70%)" }} />
+      {/* Right Side - Premium Visual Marketing */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1, delay: 0.2 }}
+        className="hidden lg:flex flex-1 relative bg-[#020617] items-center justify-center p-12 overflow-hidden border-l border-slate-800"
+      >
+        {/* Background Atmosphere */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute top-0 right-0 w-[80%] h-[80%] bg-gold/10 rounded-full blur-[140px] opacity-40 animate-pulse" />
+          <div className="absolute bottom-0 left-0 w-[60%] h-[60%] bg-blue-500/5 rounded-full blur-[120px] opacity-30" />
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.05]" />
+          
+          {/* Subtle grid pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]" />
+        </div>
 
-        <div className="relative text-center max-w-lg">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8" style={{ background: "hsl(42 100% 50% / 0.1)", border: "1px solid hsl(42 100% 50% / 0.25)" }}>
-            <Sparkles className="w-4 h-4" style={{ color: "hsl(42 100% 50%)" }} />
-            <span className="text-sm font-medium" style={{ color: "hsl(42 100% 55%)" }}>SaaS para Barbearias</span>
-          </div>
+        <div className="max-w-xl text-center relative z-10">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-gold/20 bg-gold/5 text-gold text-[10px] font-black uppercase tracking-[0.3em] mb-12 backdrop-blur-md"
+          >
+            <Sparkles className="w-3 h-3 animate-pulse" />
+            {t("auth.visual_badge")}
+          </motion.div>
 
-          <div className="relative my-8">
-            <div className="absolute inset-0 blur-2xl scale-150" style={{ background: "radial-gradient(circle, hsl(42 100% 50% / 0.2), transparent)" }} />
-            <img
-              src={logo}
-              alt="SalãoCashBack"
-              className="relative w-56 h-56 mx-auto animate-float drop-shadow-2xl"
-            />
-          </div>
+          <motion.h2 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="font-display text-5xl xl:text-7xl font-black mb-8 text-slate-50 leading-[1.1] tracking-tight"
+          >
+            {t("auth.visual_title")} <br />
+            <span className="bg-gradient-to-r from-[#D4AF37] via-[#f7e48b] to-[#D4AF37] bg-clip-text text-transparent italic">
+               {t("auth.visual_title_highlight")}
+            </span>
+          </motion.h2>
+          
+          <motion.p 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="text-lg xl:text-xl text-slate-400 mb-16 leading-relaxed font-medium"
+          >
+            {t("auth.visual_subtitle")} <br />
+            <span className="text-gold underline decoration-gold/30 underline-offset-8">{t("auth.visual_description")}</span>
+          </motion.p>
 
-          <h2 className="font-display text-3xl font-bold mb-4" style={{ color: "hsl(0 0% 98%)" }}>
-            Eleve sua empresa ao{" "}
-            <span className="text-gradient-gold">próximo nível</span>
-          </h2>
-          <p style={{ color: "hsl(220 9% 60%)" }}>
-            Automatize vendas, agendamentos e pagamentos.
-            <br />
-            <strong style={{ color: "hsl(42 100% 55%)" }}>Enquanto você corta o cabelo, o sistema vende.</strong>
-          </p>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mt-10 pt-8" style={{ borderTop: "1px solid hsl(222 20% 18%)" }}>
+          {/* Stats cards */}
+          <motion.div 
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.7 }}
+            className="grid grid-cols-3 gap-6 pt-16 border-t border-slate-800"
+          >
             {[
-              { value: "500+", label: "Barbearias" },
-              { value: "40%", label: "Mais receita" },
-              { value: "7 dias", label: "Grátis" },
+              { value: "500+", label: t("auth.stat_partners") },
+              { value: "40%", label: t("auth.stat_revenue") },
+              { value: "100%", label: t("auth.stat_digital") },
             ].map(({ value, label }) => (
-              <div key={label} className="text-center">
-                <div className="text-xl font-display font-bold text-gradient-gold">{value}</div>
-                <div className="text-xs" style={{ color: "hsl(220 9% 50%)" }}>{label}</div>
+              <div key={label} className="text-center group p-4 rounded-2xl transition-all hover:bg-white/5 border border-transparent hover:border-white/10">
+                <div className="text-3xl font-display font-black bg-gradient-to-r from-[#D4AF37] to-[#B8860B] bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform">{value}</div>
+                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 leading-tight">{label}</div>
               </div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </div>
+
+        {/* Security badge at bottom right */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="absolute bottom-12 right-12 flex items-center gap-3 bg-[#0f172a]/50 backdrop-blur-xl px-5 py-2.5 rounded-full border border-slate-800 shadow-2xl"
+        >
+          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+          <span className="text-[10px] uppercase tracking-[0.2em] font-black text-slate-400">{t("auth.security_title")}</span>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };
 
-export default PublicLoginPage;
+export default LoginPage;

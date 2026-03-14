@@ -26,12 +26,12 @@ export function LanguageSelector() {
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all border border-slate-700/50 bg-slate-900/50 backdrop-blur-sm"
+          className="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-300 border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 text-white backdrop-blur-md shadow-premium group"
           id="language-menu-button"
           aria-expanded={isOpen}
           aria-haspopup="true"
         >
-          <Globe className="h-4 w-4 mr-2" />
+          <Globe className="h-4 w-4 mr-2 text-orange-400 group-hover:rotate-12 transition-transform" />
           <span className="hidden sm:inline">{currentLanguage.name}</span>
           <span className="sm:hidden uppercase">{currentLanguage.code}</span>
         </button>
@@ -44,28 +44,32 @@ export function LanguageSelector() {
             onClick={() => setIsOpen(false)}
           ></div>
           <div
-            className="absolute right-0 z-20 mt-2 w-48 origin-top-right rounded-xl bg-slate-900 border border-slate-700 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none overflow-hidden"
+            className="absolute right-1/2 translate-x-1/2 sm:right-0 sm:translate-x-0 z-20 mt-3 w-56 origin-top rounded-2xl bg-slate-950/90 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl ring-1 ring-white/20 focus:outline-none overflow-hidden animate-in fade-in zoom-in duration-200"
             role="menu"
             aria-orientation="vertical"
             aria-labelledby="language-menu-button"
           >
-            <div className="py-1" role="none">
+            <div className="p-2 space-y-1" role="none">
               {languages.map((lang) => (
                 <button
                   key={lang.code}
                   onClick={() => changeLanguage(lang.code)}
-                  className={`flex items-center justify-between w-full px-4 py-2 text-sm transition-colors ${
+                  className={`flex items-center justify-between w-full px-4 py-3 text-sm rounded-xl transition-all duration-200 ${
                     i18n.language === lang.code
-                      ? 'bg-blue-600/10 text-blue-400 font-semibold'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      ? 'bg-orange-500/20 text-orange-400 font-bold border border-orange-500/30'
+                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
                   }`}
                   role="menuitem"
                 >
                   <span className="flex items-center">
-                    <span className="mr-3 text-lg">{lang.flag === 'BR' ? '🇧🇷' : lang.flag === 'US' ? '🇺🇸' : lang.flag === 'ES' ? '🇪🇸' : '🇫🇷'}</span>
+                    <span className="mr-3 text-xl">{lang.flag === 'BR' ? '🇧🇷' : lang.flag === 'US' ? '🇺🇸' : lang.flag === 'ES' ? '🇪🇸' : '🇫🇷'}</span>
                     {lang.name}
                   </span>
-                  {i18n.language === lang.code && <Check className="h-4 w-4" />}
+                  {i18n.language === lang.code && (
+                    <div className="bg-orange-500 rounded-full p-0.5">
+                      <Check className="h-3 w-3 text-white" />
+                    </div>
+                  )}
                 </button>
               ))}
             </div>

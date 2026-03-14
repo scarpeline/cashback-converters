@@ -62,13 +62,16 @@ const Header = () => {
                 </a>
               ))}
               <div className="flex flex-col gap-2 pt-4" style={{ borderTop: "1px solid hsl(222 20% 18%)" }}>
-                <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                <div className="flex justify-center mb-2">
+                  <LanguageSelector />
+                </div>
+                <Link to="/login" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                   <Button variant="ghost" className="w-full justify-center text-white/70">{t("enter")}</Button>
                 </Link>
-                <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                <Link to="/login" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                   <Button variant="gold" className="w-full justify-center">{t("get_started")}</Button>
                 </Link>
-                <Link to="/seja-um-franqueado" onClick={() => setIsMenuOpen(false)}>
+                <Link to="/seja-um-franqueado" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                   <Button variant="outline" className="w-full justify-center border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white">
                     {t("be_franchisee")}
                   </Button>
