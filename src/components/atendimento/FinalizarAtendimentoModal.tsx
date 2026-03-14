@@ -117,7 +117,7 @@ export const FinalizarAtendimentoModal = ({
       if (appointment.professionals?.commission_percent) {
         const commissionAmount = (Number(amount) * appointment.professionals.commission_percent) / 100;
         
-        await supabase
+        await db
           .from("professional_commissions")
           .insert({
             professional_id: appointment.professional_id,
