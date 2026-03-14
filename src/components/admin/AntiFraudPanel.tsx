@@ -63,7 +63,7 @@ export function AntiFraudPanel() {
       }
 
       // Carregar métricas recentes
-      const { data: metricsData } = await supabase
+      const { data: metricsData } = await db
         .from('fraud_metrics')
         .select(`
           *,
