@@ -133,7 +133,7 @@ export const FinalizarAtendimentoModal = ({
 
       // 4. Atualizar métricas da barbearia
       const today = new Date().toISOString().split('T')[0];
-      await supabase.rpc('update_daily_metrics', {
+      await db.rpc('update_daily_metrics', {
         p_barbershop_id: appointment.barbershop_id,
         p_date: today,
         p_revenue: Number(amount),

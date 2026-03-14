@@ -71,7 +71,7 @@ export const AutomationSettingsPanel = () => {
     
     setLoadingLogs(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('automation_blocked_logs')
         .select(`
           *,
