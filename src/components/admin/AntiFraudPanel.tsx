@@ -54,7 +54,7 @@ export function AntiFraudPanel() {
     setLoading(true);
     try {
       // Carregar alertas de fraude
-      const { data: alertsData } = await supabase.rpc('get_fraud_alerts', {
+      const { data: alertsData } = await db.rpc('get_fraud_alerts', {
         p_limit: 20
       });
       
