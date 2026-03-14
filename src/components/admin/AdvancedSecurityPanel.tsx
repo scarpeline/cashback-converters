@@ -74,7 +74,7 @@ export function AdvancedSecurityPanel() {
     setLoading(true);
     try {
       // Carregar estatísticas
-      const { data: statsData } = await supabase.rpc('get_security_stats');
+      const { data: statsData } = await db.rpc('get_security_stats');
       if (statsData) {
         setStats(statsData[0]);
       }
