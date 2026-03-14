@@ -114,7 +114,7 @@ export function BackupSystemPanel() {
   const handleRestoreBackup = async (backupId: string) => {
     setRestoring(backupId);
     try {
-      const { data } = await supabase.rpc('restore_backup', { p_backup_id: backupId });
+      const { data } = await db.rpc('restore_backup', { p_backup_id: backupId });
       
       if (data) {
         // Backup restaurado com sucesso
