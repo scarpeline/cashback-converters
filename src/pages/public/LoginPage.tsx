@@ -24,14 +24,8 @@ import { formatCpfCnpjBR, formatWhatsAppBR } from "@/lib/input-masks";
 import logo from "@/assets/logo.png";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/lib/supabase";
 import { useTranslation } from "react-i18next";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { LanguageSelector } from "@/components/layout/LanguageSelector";
 
 type UserType = "cliente" | "dono";
 type LoginType = "cliente" | "profissional" | "dono";
@@ -249,34 +243,7 @@ const LoginPage = () => {
               {t("auth.back_to_site")}
             </Link>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2 text-slate-400 hover:text-gold transition-colors">
-                  <Globe className="w-4 h-4" />
-                  <span className="uppercase text-xs font-bold">{i18n.language}</span>
-                  <ChevronDown className="w-3 h-3 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-[#0f172a] border-slate-800">
-                {[
-                  { code: 'pt', label: 'Português', flag: '🇧🇷' },
-                  { code: 'en', label: 'English', flag: '🇺🇸' },
-                  { code: 'es', label: 'Español', flag: '🇪🇸' }
-                ].map((lang) => (
-                  <DropdownMenuItem 
-                    key={lang.code}
-                    onClick={() => i18n.changeLanguage(lang.code)}
-                    className="gap-3 cursor-pointer focus:bg-gold/10"
-                  >
-                    <span className="text-lg">{lang.flag}</span>
-                    <span className={`flex-1 ${i18n.language === lang.code ? 'text-gold font-bold' : 'text-slate-200'}`}>
-                      {lang.label}
-                    </span>
-                    {i18n.language === lang.code && <Check className="w-4 h-4 text-gold" />}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <LanguageSelector />
           </div>
 
           {/* Logo */}
