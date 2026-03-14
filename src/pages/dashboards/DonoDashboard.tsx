@@ -647,27 +647,6 @@ const FinanceiroPage = () => {
     </div>
   </div>
 );
-
-      <Card>
-        <CardHeader><CardTitle>Cashback por Serviço</CardTitle><CardDescription>Créditos vinculados a clientes</CardDescription></CardHeader>
-        <CardContent className="text-center py-6"><Gift className="w-8 h-8 text-muted-foreground mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum cashback distribuído ainda.</p></CardContent>
-      </Card>
-
-      {payments.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle>Últimos Pagamentos</CardTitle></CardHeader>
-          <CardContent className="space-y-2">
-            {payments.slice(0, 10).map(p => (
-              <div key={p.id} className="flex justify-between items-center p-2 border rounded">
-                <div><p className="text-sm font-medium">R$ {Number(p.amount).toFixed(2)}</p><p className="text-xs text-muted-foreground">{p.payment_method} • {new Date(p.created_at).toLocaleDateString("pt-BR")}</p></div>
-                <span className={`text-xs px-2 py-1 rounded-full ${p.status === 'paid' ? 'bg-green-500/10 text-green-600' : 'bg-yellow-500/10 text-yellow-600'}`}>{p.status}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
 };
 
 // ============ RECEBER PAGAMENTO RÁPIDO ============
