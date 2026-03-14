@@ -90,7 +90,7 @@ export function GrowthIntelligencePanel() {
       }
 
       // Carregar insights
-      const { data: insightsData } = await supabase
+      const { data: insightsData } = await db
         .from('growth_insights')
         .select('*')
         .eq('status', 'open')
