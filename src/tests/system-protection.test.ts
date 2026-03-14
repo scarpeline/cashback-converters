@@ -1,11 +1,10 @@
 // @ts-nocheck
 // Testes de Proteção do Sistema - Validação das Novas Funcionalidades
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { supabase } from '@/integrations/supabase/client';
 import { RecurringAppointmentService } from '@/services/recurring/RecurringAppointmentService';
 import { CRMServiceSuggestionService } from '@/services/crm/CRMServiceSuggestionService';
-import { PaymentRecoveryService } from '@/services/payment/PaymentRecoveryService';
 
 describe('Testes de Proteção do Sistema', () => {
   let testBarbershopId: string;
