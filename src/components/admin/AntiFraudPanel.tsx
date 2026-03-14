@@ -115,7 +115,7 @@ export function AntiFraudPanel() {
 
   const handleResolveAlert = async (alertId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from('fraud_alerts')
         .update({ 
           status: 'resolved',
