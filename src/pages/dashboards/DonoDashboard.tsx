@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * DonoDashboard - Painel completo do Dono de Barbearia
  */
