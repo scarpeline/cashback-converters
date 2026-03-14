@@ -105,7 +105,7 @@ export function AdvancedSecurityPanel() {
       }
 
       // Carregar vulnerabilidades
-      const { data: vulnData } = await supabase
+      const { data: vulnData } = await db
         .from('vulnerability_scans')
         .select('*')
         .eq('status', 'open')
