@@ -64,7 +64,7 @@ export function BackupSystemPanel() {
     setLoading(true);
     try {
       // Carregar estatísticas
-      const { data: statsData } = await supabase.rpc('get_backup_stats');
+      const { data: statsData } = await db.rpc('get_backup_stats');
       if (statsData) {
         setStats(statsData[0]);
       }
