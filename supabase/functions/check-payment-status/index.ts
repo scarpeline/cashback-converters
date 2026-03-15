@@ -110,10 +110,11 @@ serve(async (req) => {
         status: 200,
       }
     )
-  } catch (error) {
-    console.error('Erro ao verificar status do pagamento:', error)
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Erro ao verificar status do pagamento:', message)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,

@@ -150,8 +150,8 @@ const DonoDashboard = () => {
             <Route path="prova-social" element={<SocialProofManager barbershopId={mainBarbershop?.id} />} />
             <Route path="automacao" element={<NotificacoesDonoPage />} />
             <Route path="notificacoes" element={<NotificacoesDonoPage />} />
-            <Route path={`${basePath}/inteligencia-agenda`} element={<InteligenciaAgendaPage />} />
-            <Route path={`${basePath}/marketing-empresarial`} element={
+            <Route path="inteligencia-agenda" element={<InteligenciaAgendaPage />} />
+            <Route path="marketing-empresarial" element={
               <div className="p-6">
                 <MarketingEmpresarial isOwner={true} />
               </div>
