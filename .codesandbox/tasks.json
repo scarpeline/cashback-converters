@@ -1,0 +1,54 @@
+{
+  // These tasks will run in order when initializing your CodeSandbox project.
+  "setupTasks": [
+    {
+      "command": "npm install",
+      "name": "Installing Dependencies"
+    }
+  ],
+
+  // These tasks can be run from CodeSandbox. Running one will open a log in the app.
+  "tasks": {
+    "pwa-icons": {
+      "name": "pwa-icons",
+      "command": "npm run pwa-icons"
+    },
+    "dev": {
+      "name": "dev",
+      "command": "npm run dev",
+      "runAtStart": true
+    },
+    "build": {
+      "name": "build",
+      "command": "npm run build"
+    },
+    "build:dev": {
+      "name": "build:dev",
+      "command": "npm run build:dev"
+    },
+    "lint": {
+      "name": "lint",
+      "command": "npm run lint"
+    },
+    "preview": {
+      "name": "preview",
+      "command": "npm run preview"
+    },
+    "test": {
+      "name": "test",
+      "command": "npm run test"
+    },
+    "test:watch": {
+      "name": "test:watch",
+      "command": "npm run test:watch"
+    },
+    "security:test": {
+      "name": "security:test",
+      "command": "npm run security:test"
+    },
+    "security:check": {
+      "name": "security:check",
+      "command": "npm run security:check"
+    }
+  }
+}
