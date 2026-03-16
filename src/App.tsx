@@ -3,7 +3,7 @@
  * Rotas centralizadas. Sem guards duplicados.
  */
 
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, memo } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,27 +20,58 @@ const PartnershipPage = lazy(() => import("./pages/public/PartnershipPage"));
 const DemoPage = lazy(() => import("./pages/public/DemoPage"));
 const NotFoundPage = lazy(() => import("./pages/public/NotFoundPage"));
 const PublicLoginPage = lazy(() => import("./pages/public/LoginPage"));
-const AfiliadoSaasLoginPage = lazy(() => import("./pages/afiliado-saas/LoginPage"));
+const AfiliadoSaasLoginPage = lazy(
+  () => import("./pages/afiliado-saas/LoginPage"),
+);
 const ContadorLoginPage = lazy(() => import("./pages/contador2026/LoginPage"));
 const AdminLoginPage = lazy(() => import("./pages/admin/LoginPage"));
-const ClienteDashboard = lazy(() => import("./pages/dashboards/ClienteDashboard"));
+const ClienteDashboard = lazy(
+  () => import("./pages/dashboards/ClienteDashboard"),
+);
 const DonoDashboard = lazy(() => import("./pages/dashboards/DonoDashboard"));
-const ProfissionalDashboard = lazy(() => import("./pages/dashboards/ProfissionalDashboard"));
-const AfiliadoDashboard = lazy(() => import("./pages/dashboards/AfiliadoDashboard"));
-const ContadorDashboard = lazy(() => import("./pages/dashboards/ContadorDashboard"));
-const SuperAdminDashboard = lazy(() => import("./pages/dashboards/SuperAdminDashboard"));
-const PaymentSimulationPage = lazy(() => import("./pages/public/PaymentSimulationPage"));
+const ProfissionalDashboard = lazy(
+  () => import("./pages/dashboards/ProfissionalDashboard"),
+);
+const AfiliadoDashboard = lazy(
+  () => import("./pages/dashboards/AfiliadoDashboard"),
+);
+const ContadorDashboard = lazy(
+  () => import("./pages/dashboards/ContadorDashboard"),
+);
+const SuperAdminDashboard = lazy(
+  () => import("./pages/dashboards/SuperAdminDashboard"),
+);
+const PaymentSimulationPage = lazy(
+  () => import("./pages/public/PaymentSimulationPage"),
+);
 const InstallPage = lazy(() => import("./pages/public/InstallPage"));
 const CostAnalysisPage = lazy(() => import("./pages/public/CostAnalysisPage"));
 const VitrinePage = lazy(() => import("./pages/public/VitrinePage"));
 
-const queryClient = new QueryClient();
+/**
+ * QueryClient configurado para produção:
+ * - staleTime: 60s → não refaz fetch se dado foi buscado há menos de 60s
+ * - gcTime: 5min → mantém cache em memória por 5 minutos após componente desmontar
+ * - retry: 1 → tenta apenas 1 vez extra em caso de erro (padrão 3)
+ * - refetchOnWindowFocus: false → não refaz fetch ao focar a janela (reduz requisições)
+ */
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      gcTime: 5 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-const PageLoader = () => (
+const PageLoader = memo(() => (
   <div className="min-h-screen flex items-center justify-center bg-background">
     <Loader2 className="w-8 h-8 animate-spin text-primary" />
   </div>
-);
+));
+PageLoader.displayName = "PageLoader";
 
 function AppRoutes() {
   return (
@@ -51,50 +82,138 @@ function AppRoutes() {
         <Route path="/seja-um-franqueado" element={<PartnershipPage />} />
         <Route path="/demo" element={<DemoPage />} />
         <Route path="/404" element={<NotFoundPage />} />
-        <Route path="/simulacao-pagamento" element={<PaymentSimulationPage />} />
+        <Route
+          path="/simulacao-pagamento"
+          element={<PaymentSimulationPage />}
+        />
         <Route path="/install" element={<InstallPage />} />
         <Route path="/analise-custos" element={<CostAnalysisPage />} />
         <Route path="/v/:barbershopId" element={<VitrinePage />} />
 
         {/* ========== LOGIN (AuthGuard: se logado, vai pro dashboard) ========== */}
-        <Route path="/login" element={<AuthGuard><PublicLoginPage /></AuthGuard>} />
-        <Route path="/afiliado-saas/login" element={<AuthGuard><AfiliadoSaasLoginPage /></AuthGuard>} />
-        <Route path="/contador2026/login" element={<AuthGuard><ContadorLoginPage /></AuthGuard>} />
-        <Route path="/super-admin2026ok" element={<AuthGuard><AdminLoginPage /></AuthGuard>} />
+        <Route
+          path="/login"
+          element={
+            <AuthGuard>
+              <PublicLoginPage />
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/afiliado-saas/login"
+          element={
+            <AuthGuard>
+              <AfiliadoSaasLoginPage />
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/contador2026/login"
+          element={
+            <AuthGuard>
+              <ContadorLoginPage />
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/super-admin2026ok"
+          element={
+            <AuthGuard>
+              <AdminLoginPage />
+            </AuthGuard>
+          }
+        />
 
         {/* ========== PROTECTED ========== */}
-        <Route path="/app/*" element={
-          <ProtectedRoute allowedRoles={['cliente', 'afiliado_barbearia']}><ClienteDashboard /></ProtectedRoute>
-        } />
-        <Route path="/painel-dono/*" element={
-          <ProtectedRoute allowedRoles={['dono']}><DonoDashboard /></ProtectedRoute>
-        } />
-        <Route path="/painel-profissional/*" element={
-          <ProtectedRoute allowedRoles={['profissional']}><ProfissionalDashboard /></ProtectedRoute>
-        } />
-        <Route path="/afiliado-saas/*" element={
-          <ProtectedRoute allowedRoles={['afiliado_saas']}><AfiliadoDashboard /></ProtectedRoute>
-        } />
-        <Route path="/contador2026/*" element={
-          <ProtectedRoute allowedRoles={['contador']}><ContadorDashboard /></ProtectedRoute>
-        } />
-        <Route path="/admin/*" element={
-          <ProtectedRoute allowedRoles={['super_admin']}><SuperAdminDashboard /></ProtectedRoute>
-        } />
+        <Route
+          path="/app/*"
+          element={
+            <ProtectedRoute allowedRoles={["cliente", "afiliado_barbearia"]}>
+              <ClienteDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/painel-dono/*"
+          element={
+            <ProtectedRoute allowedRoles={["dono"]}>
+              <DonoDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/painel-profissional/*"
+          element={
+            <ProtectedRoute allowedRoles={["profissional"]}>
+              <ProfissionalDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/afiliado-saas/*"
+          element={
+            <ProtectedRoute allowedRoles={["afiliado_saas"]}>
+              <AfiliadoDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/contador2026/*"
+          element={
+            <ProtectedRoute allowedRoles={["contador"]}>
+              <ContadorDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute allowedRoles={["super_admin"]}>
+              <SuperAdminDashboard />
+            </ProtectedRoute>
+          }
+        />
 
         {/* ========== LEGACY REDIRECTS ========== */}
         <Route path="/auth" element={<Navigate to="/login" replace />} />
-        <Route path="/public/login" element={<Navigate to="/login" replace />} />
+        <Route
+          path="/public/login"
+          element={<Navigate to="/login" replace />}
+        />
         <Route path="/public/404" element={<Navigate to="/404" replace />} />
-        <Route path="/app/profissional/*" element={<Navigate to="/painel-profissional" replace />} />
+        <Route
+          path="/app/profissional/*"
+          element={<Navigate to="/painel-profissional" replace />}
+        />
         <Route path="/cliente/*" element={<Navigate to="/app" replace />} />
-        <Route path="/dono/*" element={<Navigate to="/painel-dono" replace />} />
-        <Route path="/profissional/*" element={<Navigate to="/painel-profissional" replace />} />
-        <Route path="/afiliado/*" element={<Navigate to="/afiliado-saas" replace />} />
-        <Route path="/contador/*" element={<Navigate to="/contador2026" replace />} />
-        <Route path="/super-admin/*" element={<Navigate to="/admin" replace />} />
-        <Route path="/admin/login" element={<Navigate to="/super-admin2026ok" replace />} />
-        <Route path="/notificacoes" element={<Navigate to="/painel-dono/notificacoes" replace />} />
+        <Route
+          path="/dono/*"
+          element={<Navigate to="/painel-dono" replace />}
+        />
+        <Route
+          path="/profissional/*"
+          element={<Navigate to="/painel-profissional" replace />}
+        />
+        <Route
+          path="/afiliado/*"
+          element={<Navigate to="/afiliado-saas" replace />}
+        />
+        <Route
+          path="/contador/*"
+          element={<Navigate to="/contador2026" replace />}
+        />
+        <Route
+          path="/super-admin/*"
+          element={<Navigate to="/admin" replace />}
+        />
+        <Route
+          path="/admin/login"
+          element={<Navigate to="/super-admin2026ok" replace />}
+        />
+        <Route
+          path="/notificacoes"
+          element={<Navigate to="/painel-dono/notificacoes" replace />}
+        />
 
         {/* ========== 404 ========== */}
         <Route path="*" element={<NotFoundPage />} />
