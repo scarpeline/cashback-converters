@@ -1,6 +1,6 @@
 /**
  * Auth Provider - SALÃO CASHBACK
- * 
+ *
  * REGRAS:
  * - AUTH_START, SESSION_CHECK, AUTH_VALIDATE executam 1 vez (initial load)
  * - authResolved = false até sessão + roles estarem carregados
@@ -8,7 +8,15 @@
  * - onAuthStateChange NÃO usa setTimeout
  */
 
-import { createContext, useContext, useEffect, useState, ReactNode, useRef, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+  useRef,
+  useCallback,
+} from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -23,16 +31,30 @@ import {
   logRoleBootstrap,
   logDebugSummary,
   logCriticalError,
-  logLoadComplete
+  logLoadComplete,
 } from "@/lib/debug/auth-logger";
-import { validateSession, clearLocalStorageToken } from "@/lib/debug/session-validator";
-import { getDashboardForRole, getLoginForRoute, ROLE_PRIORITY } from "@/lib/route-config";
+import {
+  validateSession,
+  clearLocalStorageToken,
+} from "@/lib/debug/session-validator";
+import {
+  getDashboardForRole,
+  getLoginForRoute,
+  ROLE_PRIORITY,
+} from "@/lib/route-config";
 
 // ============================================
 // TYPES
 // ============================================
 
-export type AppRole = 'cliente' | 'dono' | 'profissional' | 'afiliado_barbearia' | 'afiliado_saas' | 'contador' | 'super_admin';
+export type AppRole =
+  | "cliente"
+  | "dono"
+  | "profissional"
+  | "afiliado_barbearia"
+  | "afiliado_saas"
+  | "contador"
+  | "super_admin";
 
 interface Profile {
   id: string;
@@ -62,10 +84,20 @@ interface AuthContextType {
   profileLoading: boolean;
   initialLoadComplete: boolean;
   authResolved: boolean;
-  signUp: (email: string, password: string, metadata: SignUpMetadata) => Promise<{ error: Error | null; needsConfirmation?: boolean }>;
+  signUp: (
+    email: string,
+    password: string,
+    metadata: SignUpMetadata,
+  ) => Promise<{ error: Error | null; needsConfirmation?: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signInWithWhatsApp: (whatsapp: string, password: string) => Promise<{ error: Error | null }>;
-  signInWithMagicLink: (email: string, returnPath?: string) => Promise<{ error: Error | null }>;
+  signInWithWhatsApp: (
+    whatsapp: string,
+    password: string,
+  ) => Promise<{ error: Error | null }>;
+  signInWithMagicLink: (
+    email: string,
+    returnPath?: string,
+  ) => Promise<{ error: Error | null }>;
   sendPasswordResetEmail: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
@@ -116,19 +148,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(PENDING_ROLE_STORAGE_KEY, role);
       localStorage.setItem(PENDING_ROLE_USER_KEY, userId);
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
   }, []);
 
   const consumePendingRole = useCallback((userId: string): AppRole | null => {
     try {
       const storedUserId = localStorage.getItem(PENDING_ROLE_USER_KEY);
-      const storedRole = localStorage.getItem(PENDING_ROLE_STORAGE_KEY) as AppRole | null;
-      if (storedUserId === userId && storedRole && SELF_ASSIGNABLE_ROLES.includes(storedRole)) {
+      const storedRole = localStorage.getItem(
+        PENDING_ROLE_STORAGE_KEY,
+      ) as AppRole | null;
+      if (
+        storedUserId === userId &&
+        storedRole &&
+        SELF_ASSIGNABLE_ROLES.includes(storedRole)
+      ) {
         localStorage.removeItem(PENDING_ROLE_USER_KEY);
         localStorage.removeItem(PENDING_ROLE_STORAGE_KEY);
         return storedRole;
       }
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
     return null;
   }, []);
 
@@ -136,92 +178,122 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ROLE INFERENCE
   // ============================================
 
-  const inferRoleFromEmail = useCallback((email: string | undefined | null): AppRole | null => {
-    if (!email) return null;
-    if (email.endsWith("@salao.app")) return "cliente";
-    return null;
-  }, []);
+  const inferRoleFromEmail = useCallback(
+    (email: string | undefined | null): AppRole | null => {
+      if (!email) return null;
+      if (email.endsWith("@salao.app")) return "cliente";
+      return null;
+    },
+    [],
+  );
 
   // ============================================
   // ROLE ASSIGNMENT
   // ============================================
 
-  const ensureInitialRole = useCallback(async (sessionUser: User): Promise<AppRole | null> => {
-    const pending = consumePendingRole(sessionUser.id);
-    const inferred = inferRoleFromEmail(sessionUser.email);
-    const roleToAssign = pending || inferred;
-    if (!roleToAssign) return null;
+  const ensureInitialRole = useCallback(
+    async (sessionUser: User): Promise<AppRole | null> => {
+      const pending = consumePendingRole(sessionUser.id);
+      const inferred = inferRoleFromEmail(sessionUser.email);
+      const roleToAssign = pending || inferred;
+      if (!roleToAssign) return null;
 
-    const { error } = await supabase.from("user_roles").insert({
-      user_id: sessionUser.id,
-      role: roleToAssign,
-    });
+      const { error } = await supabase.from("user_roles").insert({
+        user_id: sessionUser.id,
+        role: roleToAssign,
+      });
 
-    if (error) {
-      const msg = (error.message || "").toLowerCase();
-      if (!msg.includes("duplicate") && !msg.includes("already") && !msg.includes("unique")) {
-        logAuthError("Initial role assignment failed", { error: error.message, role: roleToAssign });
-        logRoleAssignment(sessionUser.id, roleToAssign, false);
-        return null;
+      if (error) {
+        const msg = (error.message || "").toLowerCase();
+        if (
+          !msg.includes("duplicate") &&
+          !msg.includes("already") &&
+          !msg.includes("unique")
+        ) {
+          logAuthError("Initial role assignment failed", {
+            error: error.message,
+            role: roleToAssign,
+          });
+          logRoleAssignment(sessionUser.id, roleToAssign, false);
+          return null;
+        }
       }
-    }
 
-    logRoleAssignment(sessionUser.id, roleToAssign, true);
-    logAuthRole({ role_detectado: roleToAssign });
-    return roleToAssign;
-  }, [consumePendingRole, inferRoleFromEmail]);
+      logRoleAssignment(sessionUser.id, roleToAssign, true);
+      logAuthRole({ role_detectado: roleToAssign });
+      return roleToAssign;
+    },
+    [consumePendingRole, inferRoleFromEmail],
+  );
 
   // ============================================
   // DATA FETCHING - returns { profile, roles }
   // ============================================
 
-  const fetchUserData = useCallback(async (userId: string): Promise<AppRole[]> => {
-    const controller = new AbortController();
-    const safetyTimeout = setTimeout(() => controller.abort(), 15000); // 15s global timeout
+  const fetchUserData = useCallback(
+    async (userId: string): Promise<AppRole[]> => {
+      const controller = new AbortController();
+      const safetyTimeout = setTimeout(() => controller.abort(), 15000); // 15s global timeout
 
-    try {
-      console.log('[AUTH] fetchUserData START (Parallel) for:', userId);
+      try {
+        console.log("[AUTH] fetchUserData START (Parallel) for:", userId);
 
-      // Execute queries in parallel using the abort signal
-      const [profileResult, rolesResult] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", userId)
-      ]);
+        // Execute queries in parallel using the abort signal
+        const [profileResult, rolesResult] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("*")
+            .eq("user_id", userId)
+            .maybeSingle(),
+          supabase.from("user_roles").select("role").eq("user_id", userId),
+        ]);
 
-      clearTimeout(safetyTimeout);
-      console.log('[AUTH] DB Queries DONE. Profile:', !!profileResult.data, 'Roles:', rolesResult.data?.length || 0);
+        clearTimeout(safetyTimeout);
+        console.log(
+          "[AUTH] DB Queries DONE. Profile:",
+          !!profileResult.data,
+          "Roles:",
+          rolesResult.data?.length || 0,
+        );
 
-      if (profileResult.error) {
-        logAuthError("Failed to fetch profile", { error: profileResult.error.message });
-      } else if (profileResult.data) {
-        setProfile(profileResult.data as Profile);
-      }
+        if (profileResult.error) {
+          logAuthError("Failed to fetch profile", {
+            error: profileResult.error.message,
+          });
+        } else if (profileResult.data) {
+          setProfile(profileResult.data as Profile);
+        }
 
-      if (rolesResult.error) {
-        logAuthError("Failed to fetch roles", { error: rolesResult.error.message });
+        if (rolesResult.error) {
+          logAuthError("Failed to fetch roles", {
+            error: rolesResult.error.message,
+          });
+          return [];
+        }
+
+        const fetchedRoles =
+          rolesResult.data?.map((r) => r.role as AppRole) || [];
+        setRoles(fetchedRoles);
+
+        if (fetchedRoles.length > 0) {
+          logAuthRole({ role_detectado: fetchedRoles[0] });
+        }
+
+        return fetchedRoles;
+      } catch (error: any) {
+        clearTimeout(safetyTimeout);
+        if (error.name === "AbortError") {
+          console.error("[AUTH] fetchUserData TIMEOUT - request aborted");
+          logAuthError("fetchUserData timeout", { userId });
+        } else {
+          console.error("[AUTH] fetchUserData CRITICAL ERROR:", error);
+          logCriticalError("fetchUserData", error);
+        }
         return [];
       }
-
-      const fetchedRoles = rolesResult.data?.map(r => r.role as AppRole) || [];
-      setRoles(fetchedRoles);
-
-      if (fetchedRoles.length > 0) {
-        logAuthRole({ role_detectado: fetchedRoles[0] });
-      }
-
-      return fetchedRoles;
-    } catch (error: any) {
-      clearTimeout(safetyTimeout);
-      if (error.name === 'AbortError') {
-        console.error('[AUTH] fetchUserData TIMEOUT - request aborted');
-        logAuthError("fetchUserData timeout", { userId });
-      } else {
-        console.error('[AUTH] fetchUserData CRITICAL ERROR:', error);
-        logCriticalError("fetchUserData", error);
-      }
-      return [];
-    }
-  }, []);
+    },
+    [],
+  );
 
   // ============================================
   // ROLE BOOTSTRAP (via Edge Function)
@@ -235,10 +307,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const timeout = setTimeout(() => controller.abort(), 5000); // 5s bootstrap timeout
 
     try {
-      const { data, error } = await supabase.functions.invoke("bootstrap-role", {
-        body: { user_id: sessionUser.id, email: sessionUser.email },
-        headers: { "Abort-Signal": "true" } // Note: invoke doesn't directly support signal yet in v2, but we simulate via race
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "bootstrap-role",
+        {
+          body: { user_id: sessionUser.id, email: sessionUser.email },
+          headers: { "Abort-Signal": "true" }, // Note: invoke doesn't directly support signal yet in v2, but we simulate via race
+        },
+      );
 
       clearTimeout(timeout);
       if (error) {
@@ -261,68 +336,89 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // FULL USER LOAD (session -> profile -> roles)
   // ============================================
 
-  const loadUserComplete = useCallback(async (sessionUser: User): Promise<AppRole[]> => {
-    if (profileLoading) return roles;
+  const loadUserComplete = useCallback(
+    async (sessionUser: User): Promise<AppRole[]> => {
+      // Evita chamadas redundantes se já estiver carregando o mesmo usuário
+      if (
+        profileLoading &&
+        userLoadInFlightUserIdRef.current === sessionUser.id
+      )
+        return roles;
 
-    setProfileLoading(true);
-    console.log('[AUTH] loadUserComplete STARTED for:', sessionUser.id);
+      setProfileLoading(true);
+      userLoadInFlightUserIdRef.current = sessionUser.id;
+      console.log("[AUTH] loadUserComplete STARTED for:", sessionUser.id);
 
-    try {
-      // Race for roles with 15s max
-      let fetchedRoles = await fetchUserData(sessionUser.id);
+      try {
+        // Passo 1: Busca inicial paralela (Perfil + Roles)
+        let currentRoles = await fetchUserData(sessionUser.id);
 
-      // Only try bootstrap if no roles found
-      if (fetchedRoles.length === 0 && !roleBootstrapAttemptedRef.current) {
-        console.log('[AUTH] No roles found, attempting bootstrap...');
-        await bootstrapRoles(sessionUser);
-        fetchedRoles = await fetchUserData(sessionUser.id);
+        // Passo 2: Se já possui roles, encerra aqui para evitar latência de rede adicional
+        if (currentRoles.length > 0) {
+          console.log("[AUTH] Roles carregadas imediatamente.");
+        } else {
+          // Passo 3: Só tenta bootstrap se for estritamente necessário
+          if (!roleBootstrapAttemptedRef.current) {
+            console.log("[AUTH] Sem roles encontradas, tentando bootstrap...");
+            await bootstrapRoles(sessionUser);
+            currentRoles = await fetchUserData(sessionUser.id);
+          }
+
+          // Passo 4: Fallback final caso o bootstrap não tenha atribuído a role
+          if (currentRoles.length === 0) {
+            console.log(
+              "[AUTH] Persiste sem roles, verificando ensureInitialRole...",
+            );
+            const assigned = await ensureInitialRole(sessionUser);
+            if (assigned) {
+              currentRoles = await fetchUserData(sessionUser.id);
+            }
+          }
+        }
+
+        console.log("[AUTH] loadUserComplete FINISHED. Roles:", currentRoles);
+        logAuthSuccess({ user_id: sessionUser.id, roles: currentRoles });
+        return currentRoles;
+      } catch (err) {
+        console.error("[AUTH] loadUserComplete CRITICAL ERROR:", err);
+        return [];
+      } finally {
+        setProfileLoading(false);
+        userLoadInFlightUserIdRef.current = null;
+      }
+    },
+    [fetchUserData, bootstrapRoles, ensureInitialRole, profileLoading, roles],
+  );
+
+  const runUserLoad = useCallback(
+    async (sessionUser: User, force = false): Promise<AppRole[]> => {
+      if (
+        !force &&
+        userLoadInFlightRef.current &&
+        userLoadInFlightUserIdRef.current === sessionUser.id
+      ) {
+        return userLoadInFlightRef.current;
       }
 
-      if (fetchedRoles.length === 0) {
-        console.log('[AUTH] Still no roles, checking ensureInitialRole...');
-        const assigned = await ensureInitialRole(sessionUser);
-        if (assigned) {
-          fetchedRoles = await fetchUserData(sessionUser.id);
-        }
-      }
+      const runner = loadUserComplete(sessionUser)
+        .catch((error) => {
+          logCriticalError("runUserLoad", error);
+          return [] as AppRole[];
+        })
+        .finally(() => {
+          if (userLoadInFlightRef.current === runner) {
+            userLoadInFlightRef.current = null;
+            userLoadInFlightUserIdRef.current = null;
+          }
+        });
 
-      console.log('[AUTH] loadUserComplete FINISHED. Roles:', fetchedRoles);
-      logAuthSuccess({ user_id: sessionUser.id, roles: fetchedRoles });
-      return fetchedRoles;
-    } catch (err) {
-      console.error('[AUTH] loadUserComplete CRITICAL ERROR:', err);
-      return [];
-    } finally {
-      setProfileLoading(false);
-    }
-  }, [fetchUserData, bootstrapRoles, ensureInitialRole, profileLoading, roles]);
+      userLoadInFlightRef.current = runner;
+      userLoadInFlightUserIdRef.current = sessionUser.id;
 
-  const runUserLoad = useCallback(async (sessionUser: User, force = false): Promise<AppRole[]> => {
-    if (
-      !force &&
-      userLoadInFlightRef.current &&
-      userLoadInFlightUserIdRef.current === sessionUser.id
-    ) {
-      return userLoadInFlightRef.current;
-    }
-
-    const runner = loadUserComplete(sessionUser)
-      .catch((error) => {
-        logCriticalError("runUserLoad", error);
-        return [] as AppRole[];
-      })
-      .finally(() => {
-        if (userLoadInFlightRef.current === runner) {
-          userLoadInFlightRef.current = null;
-          userLoadInFlightUserIdRef.current = null;
-        }
-      });
-
-    userLoadInFlightRef.current = runner;
-    userLoadInFlightUserIdRef.current = sessionUser.id;
-
-    return runner;
-  }, [loadUserComplete]);
+      return runner;
+    },
+    [loadUserComplete],
+  );
 
   // ============================================
   // SESSION MANAGEMENT
@@ -355,47 +451,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const startTime = Date.now();
     let currentUserId: string | null = null;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        if (!isMounted) return;
-        if (event === 'INITIAL_SESSION') return;
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      if (!isMounted) return;
+      if (event === "INITIAL_SESSION") return;
 
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
 
-        if (currentSession?.user) {
-          const incomingUserId = currentSession.user.id;
-          const shouldReload = incomingUserId !== currentUserId || event === 'SIGNED_IN';
-          currentUserId = incomingUserId;
+      if (currentSession?.user) {
+        const incomingUserId = currentSession.user.id;
+        const shouldReload =
+          incomingUserId !== currentUserId || event === "SIGNED_IN";
+        currentUserId = incomingUserId;
 
-          // Critical: never await inside onAuthStateChange callback
-          if (shouldReload) {
-            queueMicrotask(() => {
-              if (!isMounted) return;
-              void runUserLoad(currentSession.user, true);
-            });
-          }
-        } else if (event === 'SIGNED_OUT' || !currentSession) {
-          currentUserId = null;
-          setProfile(null);
-          setRoles([]);
-          roleBootstrapAttemptedRef.current = false;
-          userLoadInFlightRef.current = null;
-          userLoadInFlightUserIdRef.current = null;
+        // Critical: never await inside onAuthStateChange callback
+        if (shouldReload) {
+          queueMicrotask(() => {
+            if (!isMounted) return;
+            void runUserLoad(currentSession.user, true);
+          });
         }
+      } else if (event === "SIGNED_OUT" || !currentSession) {
+        currentUserId = null;
+        setProfile(null);
+        setRoles([]);
+        roleBootstrapAttemptedRef.current = false;
+        userLoadInFlightRef.current = null;
+        userLoadInFlightUserIdRef.current = null;
       }
-    );
+    });
 
     const initializeAuth = async () => {
       try {
-        console.log('[AUTH] Fetching session...');
+        console.log("[AUTH] Fetching session...");
         // getSession with implicit timeout managed by initializeAuth safety timer logic
-        const { data: { session: existingSession }, error } = await supabase.auth.getSession();
-        console.log('[AUTH] Session fetched:', !!existingSession);
+        const {
+          data: { session: existingSession },
+          error,
+        } = await supabase.auth.getSession();
+        console.log("[AUTH] Session fetched:", !!existingSession);
 
         if (error) {
           logAuthError("getSession failed", { error: error.message });
-          console.error('[AUTH] getSession error:', error);
+          console.error("[AUTH] getSession error:", error);
         }
         if (!isMounted) return;
 
@@ -410,12 +510,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (existingSession?.user && validation.isValid) {
           currentUserId = existingSession.user.id;
           try {
-            console.log('[AUTH] Loading user complete data...', existingSession.user.id);
+            console.log(
+              "[AUTH] Loading user complete data...",
+              existingSession.user.id,
+            );
             // This now has its own internal AbortController/Timeout
             await loadUserComplete(existingSession.user);
-            console.log('[AUTH] User data load finished');
+            console.log("[AUTH] User data load finished");
           } catch (userDataError) {
-            console.error('[AUTH] Failed to load user data during init:', userDataError);
+            console.error(
+              "[AUTH] Failed to load user data during init:",
+              userDataError,
+            );
           }
         }
       } catch (error) {
@@ -423,7 +529,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } finally {
         if (isMounted) {
           const duration = Date.now() - startTime;
-          logLoadComplete({ duration_ms: duration, status: 'liberado' });
+          logLoadComplete({ duration_ms: duration, status: "liberado" });
           setLoading(false);
           setInitialLoadComplete(true);
           setAuthResolved(true);
@@ -444,7 +550,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // AUTH METHODS
   // ============================================
 
-  const signUp = async (email: string, password: string, metadata: SignUpMetadata) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    metadata: SignUpMetadata,
+  ) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       const { data, error } = await supabase.auth.signUp({
@@ -453,7 +563,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         options: {
           emailRedirectTo: redirectUrl,
           data: { name: metadata.name, whatsapp: metadata.whatsapp || null },
-        }
+        },
       });
 
       if (error) {
@@ -473,10 +583,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // If auto-confirm is enabled (session returned immediately), assign role now
         if (data.session && SELF_ASSIGNABLE_ROLES.includes(metadata.role)) {
-          const { error: roleError } = await supabase.from("user_roles").insert({
-            user_id: data.user.id,
-            role: metadata.role,
-          });
+          const { error: roleError } = await supabase
+            .from("user_roles")
+            .insert({
+              user_id: data.user.id,
+              role: metadata.role,
+            });
           if (!roleError) {
             setRoles([metadata.role]);
           }
@@ -493,7 +605,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       if (error) {
         logAuthError("Login failed", { error: error.message });
         return { error };
@@ -524,22 +639,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithWhatsApp = async (whatsapp: string, password: string) => {
     try {
-      const normalizedWhatsApp = whatsapp.replace(/\D/g, '');
+      const normalizedWhatsApp = whatsapp.replace(/\D/g, "");
 
       // Use SECURITY DEFINER function to bypass RLS on profiles
-      const { data: emailFromNormalized } = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: normalizedWhatsApp });
+      const { data: emailFromNormalized } = await supabase.rpc(
+        "get_email_by_whatsapp",
+        { _whatsapp: normalizedWhatsApp },
+      );
 
       let email = emailFromNormalized;
 
       // Try with formatted whatsapp if not found
       if (!email && whatsapp !== normalizedWhatsApp) {
-        const { data: emailFromFormatted } = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: whatsapp });
+        const { data: emailFromFormatted } = await supabase.rpc(
+          "get_email_by_whatsapp",
+          { _whatsapp: whatsapp },
+        );
         email = emailFromFormatted;
       }
 
       if (!email) {
-        const error = new Error("WhatsApp não encontrado. Verifique o número ou crie uma conta.");
-        logAuthError("WhatsApp login - user not found", { whatsapp: normalizedWhatsApp });
+        const error = new Error(
+          "WhatsApp não encontrado. Verifique o número ou crie uma conta.",
+        );
+        logAuthError("WhatsApp login - user not found", {
+          whatsapp: normalizedWhatsApp,
+        });
         return { error };
       }
 
@@ -605,13 +730,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================
 
   return (
-    <AuthContext.Provider value={{
-      user, session, profile, roles,
-      loading, profileLoading, initialLoadComplete, authResolved,
-      signUp, signIn, signInWithWhatsApp, signInWithMagicLink,
-      sendPasswordResetEmail,
-      signOut, hasRole, getPrimaryRole, refreshSession,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        profile,
+        roles,
+        loading,
+        profileLoading,
+        initialLoadComplete,
+        authResolved,
+        signUp,
+        signIn,
+        signInWithWhatsApp,
+        signInWithMagicLink,
+        sendPasswordResetEmail,
+        signOut,
+        hasRole,
+        getPrimaryRole,
+        refreshSession,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -633,4 +772,8 @@ export function useAuth() {
 // RE-EXPORTS
 // ============================================
 
-export { getDashboardForRole, getLoginForRoute, getLoginForRole as getLoginPathForRole } from "@/lib/route-config";
+export {
+  getDashboardForRole,
+  getLoginForRoute,
+  getLoginForRole as getLoginPathForRole,
+} from "@/lib/route-config";
