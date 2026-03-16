@@ -236,8 +236,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const safetyTimeout = setTimeout(() => controller.abort(), 15000); // 15s global timeout
 
       try {
-        console.log("[AUTH] fetchUserData START (Parallel) for:", userId);
-
         // Execute queries in parallel using the abort signal
         const [profileResult, rolesResult] = await Promise.all([
           supabase
@@ -249,12 +247,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ]);
 
         clearTimeout(safetyTimeout);
-        console.log(
-          "[AUTH] DB Queries DONE. Profile:",
-          !!profileResult.data,
-          "Roles:",
-          rolesResult.data?.length || 0,
-        );
 
         if (profileResult.error) {
           logAuthError("Failed to fetch profile", {
@@ -347,7 +339,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setProfileLoading(true);
       userLoadInFlightUserIdRef.current = sessionUser.id;
-      console.log("[AUTH] loadUserComplete STARTED for:", sessionUser.id);
 
       try {
         // Passo 1: Busca inicial paralela (Perfil + Roles)
@@ -355,20 +346,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Passo 2: Se já possui roles, encerra aqui para evitar latência de rede adicional
         if (currentRoles.length > 0) {
-          console.log("[AUTH] Roles carregadas imediatamente.");
         } else {
           // Passo 3: Só tenta bootstrap se for estritamente necessário
           if (!roleBootstrapAttemptedRef.current) {
-            console.log("[AUTH] Sem roles encontradas, tentando bootstrap...");
             await bootstrapRoles(sessionUser);
             currentRoles = await fetchUserData(sessionUser.id);
           }
 
           // Passo 4: Fallback final caso o bootstrap não tenha atribuído a role
           if (currentRoles.length === 0) {
-            console.log(
-              "[AUTH] Persiste sem roles, verificando ensureInitialRole...",
-            );
             const assigned = await ensureInitialRole(sessionUser);
             if (assigned) {
               currentRoles = await fetchUserData(sessionUser.id);
@@ -376,7 +362,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        console.log("[AUTH] loadUserComplete FINISHED. Roles:", currentRoles);
         logAuthSuccess({ user_id: sessionUser.id, roles: currentRoles });
         return currentRoles;
       } catch (err) {
@@ -485,13 +470,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        console.log("[AUTH] Fetching session...");
         // getSession with implicit timeout managed by initializeAuth safety timer logic
         const {
           data: { session: existingSession },
           error,
         } = await supabase.auth.getSession();
-        console.log("[AUTH] Session fetched:", !!existingSession);
 
         if (error) {
           logAuthError("getSession failed", { error: error.message });
@@ -510,13 +493,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (existingSession?.user && validation.isValid) {
           currentUserId = existingSession.user.id;
           try {
-            console.log(
-              "[AUTH] Loading user complete data...",
-              existingSession.user.id,
-            );
             // This now has its own internal AbortController/Timeout
             await loadUserComplete(existingSession.user);
-            console.log("[AUTH] User data load finished");
           } catch (userDataError) {
             console.error(
               "[AUTH] Failed to load user data during init:",
