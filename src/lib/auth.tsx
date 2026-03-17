@@ -186,6 +186,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const inferRoleFromMetadata = useCallback(
+    (rawRole: unknown): AppRole | null => {
+      if (!rawRole || typeof rawRole !== "string") return null;
+      const role = rawRole as AppRole;
+      if (ROLE_PRIORITY.includes(role)) return role;
+      return null;
+    },
+    [],
+  );
+
   // ============================================
   // ROLE ASSIGNMENT
   // ============================================
