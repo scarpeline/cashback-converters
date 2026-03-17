@@ -135,7 +135,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [authResolved, setAuthResolved] = useState(false);
 
-  const roleBootstrapAttemptedRef = useRef(false);
   const userLoadInFlightRef = useRef<Promise<AppRole[]> | null>(null);
   const userLoadInFlightUserIdRef = useRef<string | null>(null);
 
@@ -187,6 +186,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const inferRoleFromMetadata = useCallback(
+    (rawRole: unknown): AppRole | null => {
+      if (!rawRole || typeof rawRole !== "string") return null;
+      const role = rawRole as AppRole;
+      if (ROLE_PRIORITY.includes(role)) return role;
+      return null;
+    },
+    [],
+  );
+
   // ============================================
   // ROLE ASSIGNMENT
   // ============================================
@@ -194,8 +203,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const ensureInitialRole = useCallback(
     async (sessionUser: User): Promise<AppRole | null> => {
       const pending = consumePendingRole(sessionUser.id);
+      const metadataRole = inferRoleFromMetadata(
+        sessionUser.user_metadata?.role,
+      );
       const inferred = inferRoleFromEmail(sessionUser.email);
-      const roleToAssign = pending || inferred;
+      const roleToAssign = pending || metadataRole || inferred;
       if (!roleToAssign) return null;
 
       const { error } = await supabase.from("user_roles").insert({
@@ -223,7 +235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logAuthRole({ role_detectado: roleToAssign });
       return roleToAssign;
     },
-    [consumePendingRole, inferRoleFromEmail],
+    [consumePendingRole, inferRoleFromMetadata, inferRoleFromEmail],
   );
 
   // ============================================
@@ -292,35 +304,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================
 
   const bootstrapRoles = useCallback(async (sessionUser: User) => {
-    if (roleBootstrapAttemptedRef.current) return;
-    roleBootstrapAttemptedRef.current = true;
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000); // 5s bootstrap timeout
-
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "bootstrap-role",
-        {
-          body: { user_id: sessionUser.id, email: sessionUser.email },
-          headers: { "Abort-Signal": "true" }, // Note: invoke doesn't directly support signal yet in v2, but we simulate via race
-        },
-      );
+      const { data, error } = await supabase.functions.invoke("bootstrap-role", {
+        body: { user_id: sessionUser.id, email: sessionUser.email },
+      });
 
-      clearTimeout(timeout);
       if (error) {
         logAuthError("Role bootstrap failed", { error: error.message });
         logRoleBootstrap(sessionUser.id, null);
-        return;
+        return false;
       }
 
       if (data?.role_assigned) {
         logRoleBootstrap(sessionUser.id, data.role_assigned);
         logAuthRole({ role_detectado: data.role_assigned as AppRole });
+        return true;
       }
+
+      return false;
     } catch (error: any) {
-      clearTimeout(timeout);
       logCriticalError("bootstrapRoles", error);
+      return false;
     }
   }, []);
 
@@ -344,20 +348,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Passo 1: Busca inicial paralela (Perfil + Roles)
         let currentRoles = await fetchUserData(sessionUser.id);
 
-        // Passo 2: Se já possui roles, encerra aqui para evitar latência de rede adicional
-        if (currentRoles.length > 0) {
-        } else {
-          // Passo 3: Só tenta bootstrap se for estritamente necessário
-          if (!roleBootstrapAttemptedRef.current) {
-            await bootstrapRoles(sessionUser);
+        if (currentRoles.length === 0) {
+          const bootstrapped = await bootstrapRoles(sessionUser);
+          if (bootstrapped) {
             currentRoles = await fetchUserData(sessionUser.id);
           }
 
-          // Passo 4: Fallback final caso o bootstrap não tenha atribuído a role
           if (currentRoles.length === 0) {
             const assigned = await ensureInitialRole(sessionUser);
             if (assigned) {
               currentRoles = await fetchUserData(sessionUser.id);
+            }
+          }
+
+          if (currentRoles.length === 0) {
+            for (let attempt = 0; attempt < 4 && currentRoles.length === 0; attempt++) {
+              await new Promise((resolve) => setTimeout(resolve, 600));
+              currentRoles = await fetchUserData(sessionUser.id);
+
+              if (currentRoles.length === 0) {
+                const retryBootstrap = await bootstrapRoles(sessionUser);
+                if (retryBootstrap) {
+                  currentRoles = await fetchUserData(sessionUser.id);
+                }
+              }
             }
           }
         }
@@ -462,7 +476,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         currentUserId = null;
         setProfile(null);
         setRoles([]);
-        roleBootstrapAttemptedRef.current = false;
         userLoadInFlightRef.current = null;
         userLoadInFlightUserIdRef.current = null;
       }
@@ -540,7 +553,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
         options: {
           emailRedirectTo: redirectUrl,
-          data: { name: metadata.name, whatsapp: metadata.whatsapp || null },
+          data: {
+            name: metadata.name,
+            whatsapp: metadata.whatsapp || null,
+            role: metadata.role,
+          },
         },
       });
 
@@ -682,7 +699,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(null);
       setProfile(null);
       setRoles([]);
-      roleBootstrapAttemptedRef.current = false;
       const loginPath = getLoginForRoute(currentPath);
       window.location.href = loginPath;
     } catch (err) {
