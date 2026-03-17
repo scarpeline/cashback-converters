@@ -71,7 +71,7 @@ const LoginPage = () => {
 
   // Redirect if already logged in AND roles loaded
   useEffect(() => {
-    if (!user || !authResolved || roles.length === 0) return;
+    if (!user || !authResolved) return;
     
     const role = getPrimaryRole();
     if (!role) return;
@@ -90,7 +90,7 @@ const LoginPage = () => {
     }
     localStorage.removeItem("selected_plan");
 
-    const dashboardUrl = getDashboardForRole(role);
+    const dashboardUrl = role ? getDashboardForRole(role) : "/app";
     if (dashboardUrl) {
       navigate(dashboardUrl, { replace: true });
     }
@@ -98,7 +98,7 @@ const LoginPage = () => {
 
   // Failsafe: libera botão assim que auth/roles resolverem
   useEffect(() => {
-    if (loading && user && authResolved && roles.length > 0) {
+    if (loading && user && authResolved) {
       setLoading(false);
     }
   }, [loading, user, authResolved, roles]);
