@@ -3051,4 +3051,233 @@ const AfiliadosBarbeariaPage = () => {
   );
 };
 
+// ============ PÁGINAS FALTANTES ============
+
+const DividasPage = () => {
+  const { barbershop } = useBarbershop();
+  const [debts, setDebts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!barbershop?.id) return;
+    supabase
+      .from("debts")
+      .select("*, profiles:client_id(name, whatsapp)")
+      .eq("barbershop_id", barbershop.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => { setDebts(data || []); setLoading(false); });
+  }, [barbershop?.id]);
+
+  const total = debts.reduce((s, d) => s + Number(d.amount || 0), 0);
+  const pending = debts.filter((d) => d.status === "pending");
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-bold">Dívidas de Clientes</h1>
+        <p className="text-muted-foreground text-sm">Controle de valores em aberto</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card><CardHeader className="pb-2"><CardDescription>Total em Aberto</CardDescription><CardTitle className="text-2xl text-red-400">R$ {total.toFixed(2)}</CardTitle></CardHeader></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>Pendentes</CardDescription><CardTitle className="text-2xl">{pending.length}</CardTitle></CardHeader></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>Total de Registros</CardDescription><CardTitle className="text-2xl">{debts.length}</CardTitle></CardHeader></Card>
+      </div>
+      <Card>
+        <CardHeader><CardTitle>Registros</CardTitle></CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          ) : debts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-30" />
+              <p>Nenhuma dívida registrada.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {debts.map((d) => (
+                <div key={d.id} className="flex items-center justify-between p-4 border rounded-xl">
+                  <div>
+                    <p className="font-semibold">{(d as any).profiles?.name || "Cliente"}</p>
+                    <p className="text-xs text-muted-foreground">{(d as any).profiles?.whatsapp || ""}</p>
+                    <p className="text-xs text-muted-foreground">{d.description || ""}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-red-400">R$ {Number(d.amount || 0).toFixed(2)}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${d.status === "paid" ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
+                      {d.status === "paid" ? "Pago" : "Pendente"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+const EstoquePage = () => {
+  const { barbershop } = useBarbershop();
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!barbershop?.id) return;
+    supabase
+      .from("inventory")
+      .select("*")
+      .eq("barbershop_id", barbershop.id)
+      .order("name")
+      .then(({ data }) => { setItems(data || []); setLoading(false); });
+  }, [barbershop?.id]);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-bold">Estoque</h1>
+        <p className="text-muted-foreground text-sm">Controle de produtos e insumos</p>
+      </div>
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Package className="w-5 h-5 text-primary" />Itens em Estoque</CardTitle></CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          ) : items.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Package className="w-12 h-12 mx-auto mb-4 opacity-30" />
+              <p>Nenhum item cadastrado no estoque.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {items.map((item) => (
+                <div key={item.id} className="flex items-center justify-between p-4 border rounded-xl">
+                  <div>
+                    <p className="font-semibold">{item.name}</p>
+                    <p className="text-xs text-muted-foreground">{item.category || "Sem categoria"}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold">{item.quantity ?? 0} {item.unit || "un"}</p>
+                    {item.min_quantity && item.quantity <= item.min_quantity && (
+                      <span className="text-xs text-red-400">Estoque baixo</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+const VitrinePage = () => {
+  const { barbershop } = useBarbershop();
+  const vitrine = barbershop?.id ? `${window.location.origin}/v/${barbershop.id}` : "";
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-bold">Vitrine Online</h1>
+        <p className="text-muted-foreground text-sm">Página pública da sua barbearia</p>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Eye className="w-5 h-5 text-primary" />Link da Vitrine</CardTitle>
+          <CardDescription>Compartilhe este link com seus clientes</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-xl border">
+            <LinkIcon className="w-4 h-4 text-primary shrink-0" />
+            <span className="text-sm font-mono break-all">{vitrine || "Carregando..."}</span>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" className="gap-2" onClick={() => { navigator.clipboard.writeText(vitrine); toast.success("Link copiado!"); }}>
+              <Share2 className="w-4 h-4" />Copiar Link
+            </Button>
+            <Button variant="gold" className="gap-2" onClick={() => window.open(vitrine, "_blank")}>
+              <Eye className="w-4 h-4" />Ver Vitrine
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+const CashbackPage = () => {
+  const { barbershop } = useBarbershop();
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!barbershop?.id) return;
+    supabase
+      .from("cashback_transactions")
+      .select("*, profiles:client_id(name)")
+      .eq("barbershop_id", barbershop.id)
+      .order("created_at", { ascending: false })
+      .limit(50)
+      .then(({ data }) => { setTransactions(data || []); setLoading(false); });
+  }, [barbershop?.id]);
+
+  const totalDistribuido = transactions.filter((t) => t.type === "earned").reduce((s, t) => s + Number(t.amount || 0), 0);
+  const totalResgatado = transactions.filter((t) => t.type === "redeemed").reduce((s, t) => s + Number(t.amount || 0), 0);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-bold">Cashback</h1>
+        <p className="text-muted-foreground text-sm">Programa de fidelidade da sua barbearia</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card className="bg-gradient-card border-primary/20">
+          <CardHeader className="pb-2"><CardDescription>Total Distribuído</CardDescription><CardTitle className="text-2xl text-gradient-gold">R$ {totalDistribuido.toFixed(2)}</CardTitle></CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardDescription>Total Resgatado</CardDescription><CardTitle className="text-2xl">R$ {totalResgatado.toFixed(2)}</CardTitle></CardHeader>
+        </Card>
+      </div>
+      <Card>
+        <CardHeader><CardTitle>Histórico de Transações</CardTitle></CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          ) : transactions.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Gift className="w-12 h-12 mx-auto mb-4 opacity-30" />
+              <p>Nenhuma transação de cashback ainda.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {transactions.map((t) => (
+                <div key={t.id} className="flex items-center justify-between p-4 border rounded-xl">
+                  <div>
+                    <p className="font-semibold">{(t as any).profiles?.name || "Cliente"}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleDateString("pt-BR")}</p>
+                  </div>
+                  <span className={`font-bold ${t.type === "earned" ? "text-primary" : "text-muted-foreground"}`}>
+                    {t.type === "earned" ? "+" : "-"}R$ {Number(t.amount || 0).toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+const NotificacoesDonoPage = () => (
+  <div className="space-y-6">
+    <div>
+      <h1 className="font-display text-2xl font-bold">Automação & Notificações</h1>
+      <p className="text-muted-foreground text-sm">Configure lembretes e mensagens automáticas</p>
+    </div>
+    <AutomationSettingsPanel />
+  </div>
+);
+
 export default DonoDashboard;

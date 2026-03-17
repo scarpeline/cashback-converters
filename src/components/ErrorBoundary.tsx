@@ -1,7 +1,5 @@
-
 import React, { Component, ErrorInfo, ReactNode } from "react";
-import { AlertTriangle, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 
 interface Props {
   children: ReactNode;
@@ -26,7 +24,7 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleReset = () => {
+  private handleGoHome = () => {
     this.setState({ hasError: false, error: null });
     window.location.href = "/";
   };
@@ -34,26 +32,53 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-[#020617] text-white p-6 text-center">
-          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
-            <AlertTriangle className="w-8 h-8 text-red-500" />
+        <div
+          className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
+          style={{ backgroundColor: "#0A0A0B" }}
+        >
+          {/* Ícone */}
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center mb-8"
+            style={{ backgroundColor: "rgba(239,68,68,0.15)" }}
+          >
+            <AlertTriangle className="w-10 h-10" style={{ color: "#ef4444" }} />
           </div>
-          <h1 className="text-2xl font-bold mb-2">Ops! Algo deu errado.</h1>
-          <p className="text-slate-400 mb-8 max-w-md">
-            Ocorreu um erro inesperado na aplicação. Tente recarregar a página ou voltar para o início.
+
+          {/* Título */}
+          <h1 className="text-2xl font-bold text-white mb-3">
+            Ops! Algo deu errado.
+          </h1>
+
+          {/* Descrição */}
+          <p className="text-slate-400 mb-10 max-w-sm leading-relaxed">
+            Ocorreu um erro inesperado na aplicação. Tente recarregar a página
+            ou voltar para o início.
           </p>
-          <div className="flex gap-4">
-            <Button onClick={() => window.location.reload()} variant="outline" className="gap-2">
+
+          {/* Botões */}
+          <div className="flex gap-4 flex-wrap justify-center">
+            <button
+              onClick={() => window.location.reload()}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-full border text-white text-sm font-medium transition-colors hover:bg-white/5"
+              style={{ borderColor: "#3b82f6", color: "#3b82f6" }}
+            >
               <RefreshCw className="w-4 h-4" />
               Recarregar
-            </Button>
-            <Button onClick={this.handleReset} className="bg-gold text-black hover:bg-gold/90">
+            </button>
+            <button
+              onClick={this.handleGoHome}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-opacity hover:opacity-90"
+              style={{ backgroundColor: "#D4AF37", color: "#0A0A0B" }}
+            >
+              <Home className="w-4 h-4" />
               Ir para o Início
-            </Button>
+            </button>
           </div>
-          {process.env.NODE_ENV === "development" && (
-            <pre className="mt-8 p-4 bg-black/50 rounded text-left text-xs overflow-auto max-w-full text-red-400">
-              {this.state.error?.stack}
+
+          {/* Stack trace em dev */}
+          {process.env.NODE_ENV === "development" && this.state.error && (
+            <pre className="mt-10 p-4 bg-black/50 rounded-lg text-left text-xs overflow-auto max-w-2xl w-full text-red-400 border border-red-900/30">
+              {this.state.error.stack}
             </pre>
           )}
         </div>
