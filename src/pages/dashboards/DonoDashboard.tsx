@@ -354,7 +354,13 @@ function useServices(barbershopId: string | undefined) {
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const fetch = async () => {
-    if (!barbershopId) return;
+    if (!barbershopId) {
+      setServices([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     const { data } = await supabase
       .from("services")
       .select("*")
@@ -373,7 +379,13 @@ function useProfessionals(barbershopId: string | undefined) {
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const fetch = async () => {
-    if (!barbershopId) return;
+    if (!barbershopId) {
+      setProfessionals([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     const { data } = await supabase
       .from("professionals")
       .select("*")
@@ -392,7 +404,13 @@ function useAppointments(barbershopId: string | undefined) {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const fetch = async () => {
-    if (!barbershopId) return;
+    if (!barbershopId) {
+      setAppointments([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     const { data } = await supabase
       .from("appointments")
       .select("*, services(name, price, duration_minutes), professionals(name)")
