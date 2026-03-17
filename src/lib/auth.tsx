@@ -304,35 +304,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================
 
   const bootstrapRoles = useCallback(async (sessionUser: User) => {
-    if (roleBootstrapAttemptedRef.current) return;
-    roleBootstrapAttemptedRef.current = true;
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000); // 5s bootstrap timeout
-
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "bootstrap-role",
-        {
-          body: { user_id: sessionUser.id, email: sessionUser.email },
-          headers: { "Abort-Signal": "true" }, // Note: invoke doesn't directly support signal yet in v2, but we simulate via race
-        },
-      );
+      const { data, error } = await supabase.functions.invoke("bootstrap-role", {
+        body: { user_id: sessionUser.id, email: sessionUser.email },
+      });
 
-      clearTimeout(timeout);
       if (error) {
         logAuthError("Role bootstrap failed", { error: error.message });
         logRoleBootstrap(sessionUser.id, null);
-        return;
+        return false;
       }
 
       if (data?.role_assigned) {
         logRoleBootstrap(sessionUser.id, data.role_assigned);
         logAuthRole({ role_detectado: data.role_assigned as AppRole });
+        return true;
       }
+
+      return false;
     } catch (error: any) {
-      clearTimeout(timeout);
       logCriticalError("bootstrapRoles", error);
+      return false;
     }
   }, []);
 
