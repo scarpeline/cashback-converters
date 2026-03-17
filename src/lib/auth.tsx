@@ -476,7 +476,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         currentUserId = null;
         setProfile(null);
         setRoles([]);
-        roleBootstrapAttemptedRef.current = false;
         userLoadInFlightRef.current = null;
         userLoadInFlightUserIdRef.current = null;
       }
