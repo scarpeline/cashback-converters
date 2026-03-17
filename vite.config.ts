@@ -19,9 +19,12 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
+      // Usa generateSW (padrão) — não processa código do app no build do SW
+      strategies: "generateSW",
       includeAssets: ["favicon.ico", "pwa-icon-192.png", "pwa-icon-512.png"],
       workbox: {
-        navigateFallbackDenylist: [/^\/~oauth/],
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         // Aumenta limite de aviso de asset para evitar falsos positivos no build
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
