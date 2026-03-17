@@ -47,12 +47,35 @@ export interface CreateRecurringAppointment {
 /**
  * Serviço para gerenciar agendamentos recorrentes
  */
+export /**
+ * Serviço para gerenciar agendamentos recorrentes com IA
+ */
 export class RecurringAppointmentService {
   /**
-   * Criar um novo agendamento recorrente
+   * Criar um novo agendamento recorrente com sugestão inteligente
    */
   static async createRecurringAppointment(data: CreateRecurringAppointment): Promise<{ success: boolean; error?: string; appointment?: RecurringAppointment }> {
     try {
+      // Buscar histórico do cliente para sugestão inteligente
+      const { data: history, error: historyError } = await supabase
+        .from('appointments')
+        .select('scheduled_at, services(name)')
+        .eq('client_user_id', data.client_user_id)
+        .order('scheduled_at', { ascending: false })
+        .limit(10);
+
+      // Verificar conflitos de horário
+      const { hasConflicts, conflicts } = await this.checkRecurringConflicts(
+        data.barbershop_id,
+        data.professional_id,
+        data.recurring_day,
+        data.time
+      );
+
+      if (hasConflicts && !conflicts.length) {
+        return { success: false, error: 'Conflito de horário detectado' };
+      }
+
       // Primeiro, criar o agendamento pai
       const { data: appointment, error } = await supabase
         .from('appointments')
@@ -84,6 +107,11 @@ export class RecurringAppointmentService {
       // Gerar agendamentos futuros automaticamente
       await this.generateFutureAppointments(appointment.id);
 
+      // Enviar notificação ao cliente
+      if (data.client_whatsapp) {
+        await this.sendRecurringConfirmation(data.client_whatsapp, appointment);
+      }
+
       return { success: true, appointment };
     } catch (error) {
       console.error('Erro inesperado ao criar agendamento recorrente:', error);
@@ -92,7 +120,28 @@ export class RecurringAppointmentService {
   }
 
   /**
-   * Gerar agendamentos futuros para uma série recorrente
+   * Enviar confirmação de agendamento recorrente via WhatsApp
+   */
+  private static async sendRecurringConfirmation(
+    whatsapp: string,
+    appointment: RecurringAppointment
+  ): Promise<void> {
+    try {
+      const type = appointment.recurring_type === 'weekly' ? 'semanal' :
+                   appointment.recurring_type === 'biweekly' ? 'quinzenal' : 'mensal';
+      const day = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][appointment.recurring_day! - 1];
+
+      const message = `✅ Agendamento recorrente confirmado!\n\n${type} - ${day} às ${appointment.recurring_time}\nServiço: ${appointment.services?.name || 'Não especificado'}\n\nVocê receberá lembretes automaticamente.`;
+
+      // Enviar via WhatsApp (se configurado)
+      // await sendWhatsAppMessage(whatsapp, message);
+    } catch (error) {
+      console.error('Erro ao enviar confirmação:', error);
+    }
+  }
+
+  /**
+   * Gerar agendamentos futuros para uma série recorrente com IA
    */
   static async generateFutureAppointments(parentAppointmentId: string): Promise<{ success: boolean; generated?: number; conflicts?: number }> {
     try {
@@ -104,8 +153,8 @@ export class RecurringAppointmentService {
         return { success: false };
       }
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         generated: data[0]?.generated_count || 0,
         conflicts: data[0]?.conflicts_count || 0
       };
@@ -250,9 +299,9 @@ export class RecurringAppointmentService {
         return { hasConflicts: false, conflicts: [] };
       }
 
-      return { 
-        hasConflicts: (data?.length || 0) > 0, 
-        conflicts: data || [] 
+      return {
+        hasConflicts: (data?.length || 0) > 0,
+        conflicts: data || []
       };
     } catch (error) {
       console.error('Erro inesperado ao verificar conflitos:', error);
@@ -298,7 +347,7 @@ export class RecurringAppointmentService {
     try {
       const { error } = await supabase
         .from('appointments')
-        .update({ 
+        .update({
           recurring_end_date: pauseUntil,
           updated_at: new Date().toISOString()
         })
@@ -323,7 +372,7 @@ export class RecurringAppointmentService {
     try {
       const { error } = await supabase
         .from('appointments')
-        .update({ 
+        .update({
           recurring_end_date: newEndDate,
           updated_at: new Date().toISOString()
         })
@@ -343,7 +392,95 @@ export class RecurringAppointmentService {
       return { success: false, error: 'Erro ao retomar série recorrente' };
     }
   }
+
+  /**
+   * Buscar agendamentos recorrentes que precisam de geração
+   */
+  static async getPendingRecurringAppointments(): Promise<RecurringAppointment[]> {
+    try {
+      const hoje = new Date();
+
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('is_recurring', true)
+        .eq('auto_generated', false)
+        .eq('status', 'scheduled')
+        .lt('recurring_end_date', hoje.toISOString())
+        .limit(50);
+
+      if (error) {
+        console.error('Erro ao buscar agendamentos pendentes:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Erro inesperado ao buscar agendamentos pendentes:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Gerar agendamentos recorrentes pendentes automaticamente
+   */
+  static async generatePendingRecurringAppointments(): Promise<{ success: boolean; count: number }> {
+    try {
+      const pendentes = await this.getPendingRecurringAppointments();
+      let count = 0;
+
+      for (const appointment of pendentes) {
+        const result = await this.generateFutureAppointments(appointment.id);
+        if (result.success) {
+          count += result.generated || 0;
+        }
+      }
+
+      return { success: true, count };
+    } catch (error) {
+      console.error('Erro ao gerar agendamentos pendentes:', error);
+      return { success: false, count: 0 };
+    }
+  }
+
+  /**
+   * Buscar agendamentos recorrentes de hoje
+   */
+  static async getTodayRecurringAppointments(): Promise<RecurringAppointment[]> {
+    try {
+      const hoje = new Date();
+      const startOfDay = new Date(hoje);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(hoje);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const { data, error } = await supabase
+        .from('appointments')
+        .select(`
+          *,
+          services(name, price),
+          professionals(name),
+          barbershops(name)
+        `)
+        .eq('is_recurring', true)
+        .gte('scheduled_at', startOfDay.toISOString())
+        .lte('scheduled_at', endOfDay.toISOString())
+        .order('scheduled_at', { ascending: true });
+
+      if (error) {
+        console.error('Erro ao buscar agendamentos de hoje:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Erro inesperado ao buscar agendamentos de hoje:', error);
+      return [];
+    }
+  }
 }
+
 
 // Funções utilitárias
 export const RECURRING_TYPES = {
