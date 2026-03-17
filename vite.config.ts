@@ -74,6 +74,8 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    // Garante instância única de React no bundle (evita "createContext of undefined")
+    dedupe: ["react", "react-dom", "react-router-dom"],
   },
   build: {
     // Aumenta aviso de chunk para 600KB (era 500KB padrão)
@@ -87,12 +89,15 @@ export default defineConfig(({ mode }) => ({
          * - Dashboards são lazy-loaded via React.lazy no App.tsx
          */
         manualChunks: (id) => {
-          // Chunk: React core (menor, mais cacheável)
+          // Chunk: React core + i18n (i18n precisa do React no mesmo chunk ou carregado antes)
           if (
             id.includes("node_modules/react/") ||
             id.includes("node_modules/react-dom/") ||
             id.includes("node_modules/react-router-dom/") ||
-            id.includes("node_modules/scheduler/")
+            id.includes("node_modules/scheduler/") ||
+            id.includes("node_modules/i18next") ||
+            id.includes("node_modules/react-i18next") ||
+            id.includes("node_modules/i18next-browser-languagedetector")
           ) {
             return "vendor-react";
           }
@@ -137,14 +142,6 @@ export default defineConfig(({ mode }) => ({
           // Chunk: Ícones (lucide é grande)
           if (id.includes("node_modules/lucide-react/")) {
             return "vendor-icons";
-          }
-
-          // Chunk: i18n
-          if (
-            id.includes("node_modules/i18next") ||
-            id.includes("node_modules/react-i18next")
-          ) {
-            return "vendor-i18n";
           }
 
           // Chunk: date/utils
