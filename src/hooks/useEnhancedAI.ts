@@ -2,10 +2,13 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
-  processEnhancedAI, 
+  processarMensagemAprimorada,
   generateProactiveSuggestion,
   analyzeConversationPatterns,
   needsReactivation,
+  processAudioMessage,
+  sendEnhancedWhatsAppMessage,
+  getAdvancedAIStats,
   type EnhancedAISuggestion 
 } from '@/services/aiEnhancedService';
 import { getClientHistory, getAIStats } from '@/services/aiMemoryService';
@@ -29,7 +32,8 @@ export function useEnhancedAI(clientId?: string) {
   
   const processMessage = useCallback(async (
     message: string,
-    clientName?: string
+    clientName?: string,
+    tipo: 'text' | 'audio' = 'text'
   ): Promise<EnhancedAISuggestion> => {
     if (!clientId) {
       throw new Error('Client ID é necessário para usar IA aprimorada');
@@ -37,7 +41,31 @@ export function useEnhancedAI(clientId?: string) {
     
     setIsProcessing(true);
     try {
-      const response = await processEnhancedAI(clientId, message, clientName);
+      const response = await processarMensagemAprimorada(
+        { id: clientId, name: clientName || 'Cliente' },
+        message,
+        tipo
+      );
+      setLastResponse(response);
+      return response;
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [clientId]);
+  
+  const processAudio = useCallback(async (
+    audioUrl: string
+  ): Promise<EnhancedAISuggestion> => {
+    if (!clientId) {
+      throw new Error('Client ID é necessário');
+    }
+    
+    setIsProcessing(true);
+    try {
+      const response = await processAudioMessage(
+        { id: clientId, name: 'Cliente' },
+        audioUrl
+      );
       setLastResponse(response);
       return response;
     } finally {
@@ -47,6 +75,7 @@ export function useEnhancedAI(clientId?: string) {
   
   return {
     processMessage,
+    processAudio,
     isProcessing,
     lastResponse,
   };
@@ -215,4 +244,81 @@ export function useAIDashboard() {
   };
   
   return dashboardData;
+}
+
+/**
+ * Hook para enviar mensagem com IA via WhatsApp
+ */
+export function useSendWhatsAppWithAI(clientId?: string) {
+  const [isSending, setIsSending] = useState(false);
+
+  const sendMessage = useCallback(async (
+    to: string,
+    message: string,
+    tipo: 'text' | 'audio' = 'text'
+  ): Promise<{ success: boolean; response?: string }> => {
+    if (!clientId) {
+      throw new Error('Client ID é necessário');
+    }
+
+    setIsSending(true);
+    try {
+      const result = await sendEnhancedWhatsAppMessage(to, message, clientId, tipo);
+      return result;
+    } finally {
+      setIsSending(false);
+    }
+  }, [clientId]);
+
+  return {
+    sendMessage,
+    isSending,
+  };
+}
+
+/**
+ * Hook para verificar necessidade de reativação
+ */
+export function useReactivationCheck(clientId?: string) {
+  return useQuery({
+    queryKey: aiKeys.reactivation(clientId || ''),
+    queryFn: () => needsReactivation(clientId || ''),
+    enabled: !!clientId,
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook para estatísticas avançadas da IA
+ */
+export function useAdvancedAIStats() {
+  const [stats, setStats] = useState<{
+    totalConversations: number;
+    uniqueClients: number;
+    audioConversations: number;
+    textConversations: number;
+    averageConfidence: number;
+    mostUsedIntents: Record<string, number>;
+  }>({
+    totalConversations: 0,
+    uniqueClients: 0,
+    audioConversations: 0,
+    textConversations: 0,
+    averageConfidence: 0,
+    mostUsedIntents: {},
+  });
+
+  const loadStats = useCallback(async () => {
+    try {
+      const advancedStats = await getAdvancedAIStats();
+      setStats(advancedStats);
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas avançadas:', error);
+    }
+  }, []);
+
+  return {
+    stats,
+    loadStats,
+  };
 }
