@@ -203,8 +203,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const ensureInitialRole = useCallback(
     async (sessionUser: User): Promise<AppRole | null> => {
       const pending = consumePendingRole(sessionUser.id);
+      const metadataRole = inferRoleFromMetadata(
+        sessionUser.user_metadata?.role,
+      );
       const inferred = inferRoleFromEmail(sessionUser.email);
-      const roleToAssign = pending || inferred;
+      const roleToAssign = pending || metadataRole || inferred;
       if (!roleToAssign) return null;
 
       const { error } = await supabase.from("user_roles").insert({
@@ -232,7 +235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logAuthRole({ role_detectado: roleToAssign });
       return roleToAssign;
     },
-    [consumePendingRole, inferRoleFromEmail],
+    [consumePendingRole, inferRoleFromMetadata, inferRoleFromEmail],
   );
 
   // ============================================
