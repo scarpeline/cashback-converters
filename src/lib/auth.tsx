@@ -348,20 +348,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Passo 1: Busca inicial paralela (Perfil + Roles)
         let currentRoles = await fetchUserData(sessionUser.id);
 
-        // Passo 2: Se já possui roles, encerra aqui para evitar latência de rede adicional
-        if (currentRoles.length > 0) {
-        } else {
-          // Passo 3: Só tenta bootstrap se for estritamente necessário
-          if (!roleBootstrapAttemptedRef.current) {
-            await bootstrapRoles(sessionUser);
+        if (currentRoles.length === 0) {
+          const bootstrapped = await bootstrapRoles(sessionUser);
+          if (bootstrapped) {
             currentRoles = await fetchUserData(sessionUser.id);
           }
 
-          // Passo 4: Fallback final caso o bootstrap não tenha atribuído a role
           if (currentRoles.length === 0) {
             const assigned = await ensureInitialRole(sessionUser);
             if (assigned) {
               currentRoles = await fetchUserData(sessionUser.id);
+            }
+          }
+
+          if (currentRoles.length === 0) {
+            for (let attempt = 0; attempt < 4 && currentRoles.length === 0; attempt++) {
+              await new Promise((resolve) => setTimeout(resolve, 600));
+              currentRoles = await fetchUserData(sessionUser.id);
+
+              if (currentRoles.length === 0) {
+                const retryBootstrap = await bootstrapRoles(sessionUser);
+                if (retryBootstrap) {
+                  currentRoles = await fetchUserData(sessionUser.id);
+                }
+              }
             }
           }
         }
