@@ -553,7 +553,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
         options: {
           emailRedirectTo: redirectUrl,
-          data: { name: metadata.name, whatsapp: metadata.whatsapp || null },
+          data: {
+            name: metadata.name,
+            whatsapp: metadata.whatsapp || null,
+            role: metadata.role,
+          },
         },
       });
 
