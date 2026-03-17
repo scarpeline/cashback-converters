@@ -135,7 +135,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [authResolved, setAuthResolved] = useState(false);
 
-  const roleBootstrapAttemptedRef = useRef(false);
   const userLoadInFlightRef = useRef<Promise<AppRole[]> | null>(null);
   const userLoadInFlightUserIdRef = useRef<string | null>(null);
 
