@@ -25,7 +25,8 @@ import {
   QrCode,
   Smartphone,
   CheckCircle,
-  Loader2
+  Loader2,
+  Share2
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
