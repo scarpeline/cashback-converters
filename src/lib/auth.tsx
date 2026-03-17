@@ -695,7 +695,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(null);
       setProfile(null);
       setRoles([]);
-      roleBootstrapAttemptedRef.current = false;
       const loginPath = getLoginForRoute(currentPath);
       window.location.href = loginPath;
     } catch (err) {
