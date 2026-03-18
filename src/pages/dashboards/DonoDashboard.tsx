@@ -167,6 +167,7 @@ const DonoDashboard = () => {
       href: `${basePath}/dados-bancarios`,
       icon: CreditCard,
     },
+    { name: "Nota Fiscal", href: `${basePath}/nota-fiscal`, icon: FileText },
     { name: "Seja Afiliado", href: `${basePath}/seja-afiliado`, icon: Share2 },
     { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
     {
@@ -325,6 +326,7 @@ const DonoDashboard = () => {
               }
             />
             <Route path="dados-bancarios" element={<DadosBancariosPage />} />
+            <Route path="nota-fiscal" element={<NotaFiscalPage />} />
             <Route path="suporte" element={<SuportePage />} />
             <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
@@ -3299,6 +3301,56 @@ const NotificacoesDonoPage = () => (
       <p className="text-muted-foreground text-sm">Configure lembretes e mensagens automáticas</p>
     </div>
     <AutomationSettingsPanel />
+  </div>
+);
+
+const NotaFiscalPage = () => (
+  <div className="space-y-6">
+    <div>
+      <h1 className="font-display text-2xl font-bold">Nota Fiscal</h1>
+      <p className="text-muted-foreground text-sm">Emita e gerencie notas fiscais dos seus serviços</p>
+    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Emitir Nota Fiscal</CardTitle>
+        <CardDescription>Gere notas fiscais para seus clientes</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label>Cliente</Label>
+            <Input placeholder="Nome do cliente" className="mt-1" />
+          </div>
+          <div>
+            <Label>CNPJ/CPF</Label>
+            <Input placeholder="00.000.000/0000-00" className="mt-1" />
+          </div>
+          <div>
+            <Label>Descrição do Serviço</Label>
+            <Input placeholder="Ex: Corte de cabelo" className="mt-1" />
+          </div>
+          <div>
+            <Label>Valor (R$)</Label>
+            <Input type="number" placeholder="0.00" className="mt-1" />
+          </div>
+        </div>
+        <Button variant="gold" className="w-full">
+          <FileText className="w-4 h-4 mr-2" />
+          Emitir Nota Fiscal
+        </Button>
+      </CardContent>
+    </Card>
+    <Card>
+      <CardHeader>
+        <CardTitle>Notas Fiscais Recentes</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-center py-8 text-muted-foreground">
+          <FileText className="w-12 h-12 mx-auto mb-4 opacity-30" />
+          <p>Nenhuma nota fiscal emitida ainda.</p>
+        </div>
+      </CardContent>
+    </Card>
   </div>
 );
 
