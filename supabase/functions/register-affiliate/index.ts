@@ -23,14 +23,37 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // ── AUTENTICAÇÃO OBRIGATÓRIA ──────────────────────────────────────────────
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // Verificar identidade do chamador via JWT
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user: callerUser }, error: authError } = await userClient.auth.getUser();
+    if (authError || !callerUser) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const body = await req.json();
     const {
-      user_id,
+      user_id: requestedUserId,
       name,
       email,
       whatsapp,
@@ -54,9 +77,12 @@ Deno.serve(async (req) => {
     };
 
     // ============ VALIDAÇÕES BÁSICAS ============
-    if (!user_id || !cpf_cnpj || !name) {
+    // user_id DEVE ser o próprio usuário autenticado — nunca aceitar caller-supplied
+    const user_id = callerUser.id;
+
+    if (!cpf_cnpj || !name) {
       return new Response(
-        JSON.stringify({ error: "Campos obrigatórios: user_id, cpf_cnpj, name" }),
+        JSON.stringify({ error: "Campos obrigatórios: cpf_cnpj, name" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

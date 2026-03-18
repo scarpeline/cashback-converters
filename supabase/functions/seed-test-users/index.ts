@@ -11,8 +11,18 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // ── AUTENTICAÇÃO OBRIGATÓRIA ──────────────────────────────────────────────
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     return new Response(JSON.stringify({ error: "Missing env vars" }), {
@@ -21,84 +31,78 @@ serve(async (req) => {
     });
   }
 
-  const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  // Verificar se o chamador é super_admin
+  const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: authHeader } },
+  });
+
+  const { data: { user }, error: userError } = await userClient.auth.getUser();
+  if (userError || !user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
+  const { data: isAdmin } = await serviceClient.rpc("is_super_admin", { _user_id: user.id });
+  if (!isAdmin) {
+    return new Response(JSON.stringify({ error: "Forbidden: super_admin only" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // ── BLOQUEAR EM PRODUÇÃO ──────────────────────────────────────────────────
+  const appEnv = Deno.env.get("APP_ENV") || "development";
+  if (appEnv === "production") {
+    return new Response(
+      JSON.stringify({ error: "Seed function is disabled in production" }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  // ── SEED DE USUÁRIOS DE TESTE ─────────────────────────────────────────────
+  const admin = serviceClient;
+
+  // Senhas lidas de env vars — nunca hardcoded
+  const testPassword = Deno.env.get("SEED_TEST_PASSWORD") || "Teste@123";
+
   const testUsers = [
-    {
-      email: "cliente.teste@salao.app",
-      password: "Teste@123",
-      name: "Cliente Teste",
-      whatsapp: "11999990001",
-      role: "cliente",
-    },
-    {
-      email: "dono.teste@salao.app",
-      password: "Teste@123",
-      name: "Dono Teste",
-      whatsapp: "11999990002",
-      role: "dono",
-    },
-    {
-      email: "profissional.teste@salao.app",
-      password: "Teste@123",
-      name: "Profissional Teste",
-      whatsapp: "11999990004",
-      role: "profissional",
-    },
-    {
-      email: "afiliado.teste@salao.app",
-      password: "Teste@123",
-      name: "Afiliado SaaS Teste",
-      whatsapp: "11999990005",
-      role: "afiliado_saas",
-    },
-    {
-      email: "contador.teste@salao.app",
-      password: "Teste@123",
-      name: "Contador Teste",
-      whatsapp: "11999990006",
-      role: "contador",
-    },
-    {
-      email: "escarpelineparticular@gmail.com",
-      password: "Admin@2026",
-      name: "Super Admin",
-      whatsapp: "11999990003",
-      role: "super_admin",
-    },
+    { email: "cliente.teste@salao.app",       password: testPassword, name: "Cliente Teste",       whatsapp: "11999990001", role: "cliente" },
+    { email: "dono.teste@salao.app",           password: testPassword, name: "Dono Teste",           whatsapp: "11999990002", role: "dono" },
+    { email: "profissional.teste@salao.app",   password: testPassword, name: "Profissional Teste",   whatsapp: "11999990004", role: "profissional" },
+    { email: "afiliado.teste@salao.app",       password: testPassword, name: "Afiliado SaaS Teste",  whatsapp: "11999990005", role: "afiliado_saas" },
+    { email: "contador.teste@salao.app",       password: testPassword, name: "Contador Teste",       whatsapp: "11999990006", role: "contador" },
   ];
+  // Nota: super_admin NÃO é criado via seed — deve ser criado manualmente
 
   const results: Record<string, unknown>[] = [];
 
   for (const u of testUsers) {
     try {
-      // Check if user already exists by email
       const { data: existingUsers } = await admin.auth.admin.listUsers();
-      const existing = existingUsers?.users?.find(
-        (eu) => eu.email === u.email
-      );
+      const existing = existingUsers?.users?.find((eu) => eu.email === u.email);
 
       let userId: string;
 
       if (existing) {
         userId = existing.id;
-        // Update password and confirm email
         await admin.auth.admin.updateUserById(userId, {
           password: u.password,
           email_confirm: true,
         });
         results.push({ email: u.email, status: "updated", userId });
       } else {
-        // Create user
         const { data, error } = await admin.auth.admin.createUser({
           email: u.email,
           password: u.password,
           email_confirm: true,
           user_metadata: { name: u.name, whatsapp: u.whatsapp },
         });
-
         if (error) {
           results.push({ email: u.email, status: "error", error: error.message });
           continue;
@@ -107,136 +111,65 @@ serve(async (req) => {
         results.push({ email: u.email, status: "created", userId });
       }
 
-      // Ensure profile exists
-      const { data: existingProfile } = await admin
-        .from("profiles")
-        .select("id")
-        .eq("user_id", userId)
-        .maybeSingle();
-
+      // Perfil
+      const { data: existingProfile } = await admin.from("profiles").select("id").eq("user_id", userId).maybeSingle();
       if (!existingProfile) {
-        await admin.from("profiles").insert({
-          user_id: userId,
-          name: u.name,
-          email: u.email,
-          whatsapp: u.whatsapp,
-        });
+        await admin.from("profiles").insert({ user_id: userId, name: u.name, email: u.email, whatsapp: u.whatsapp });
       }
 
-      // Ensure role exists
-      const { data: existingRole } = await admin
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("role", u.role)
-        .maybeSingle();
-
+      // Role
+      const { data: existingRole } = await admin.from("user_roles").select("id").eq("user_id", userId).eq("role", u.role).maybeSingle();
       if (!existingRole) {
-        await admin.from("user_roles").insert({
-          user_id: userId,
-          role: u.role,
-        });
+        await admin.from("user_roles").insert({ user_id: userId, role: u.role });
       }
 
-      // For dono, ensure a barbershop exists
+      // Barbearia para dono
       if (u.role === "dono") {
-        const { data: existingShop } = await admin
-          .from("barbershops")
-          .select("id")
-          .eq("owner_user_id", userId)
-          .maybeSingle();
-
+        const { data: existingShop } = await admin.from("barbershops").select("id").eq("owner_user_id", userId).maybeSingle();
         if (!existingShop) {
           const { data: newShop } = await admin.from("barbershops").insert({
-            owner_user_id: userId,
-            name: "Barbearia Teste",
-            phone: u.whatsapp,
+            owner_user_id: userId, name: "Barbearia Teste", phone: u.whatsapp,
           }).select("id").single();
-
-          // Create a test service for the barbershop
           if (newShop) {
-            await admin.from("services").insert({
-              barbershop_id: newShop.id,
-              name: "Corte Masculino",
-              price: 45.00,
-              duration_minutes: 30,
-              description: "Corte masculino completo",
-            });
-            await admin.from("services").insert({
-              barbershop_id: newShop.id,
-              name: "Barba",
-              price: 25.00,
-              duration_minutes: 20,
-              description: "Barba com navalha",
-            });
+            await admin.from("services").insert([
+              { barbershop_id: newShop.id, name: "Corte Masculino", price: 45.00, duration_minutes: 30 },
+              { barbershop_id: newShop.id, name: "Barba", price: 25.00, duration_minutes: 20 },
+            ]);
           }
         }
       }
 
-      // For profissional, link to the test barbershop
+      // Profissional
       if (u.role === "profissional") {
-        const { data: testShop } = await admin
-          .from("barbershops")
-          .select("id")
-          .eq("name", "Barbearia Teste")
-          .maybeSingle();
-
+        const { data: testShop } = await admin.from("barbershops").select("id").eq("name", "Barbearia Teste").maybeSingle();
         if (testShop) {
-          const { data: existingPro } = await admin
-            .from("professionals")
-            .select("id")
-            .eq("user_id", userId)
-            .maybeSingle();
-
+          const { data: existingPro } = await admin.from("professionals").select("id").eq("user_id", userId).maybeSingle();
           if (!existingPro) {
-            await admin.from("professionals").insert({
-              user_id: userId,
-              barbershop_id: testShop.id,
-              name: u.name,
-              email: u.email,
-              whatsapp: u.whatsapp,
-            });
+            await admin.from("professionals").insert({ user_id: userId, barbershop_id: testShop.id, name: u.name, email: u.email, whatsapp: u.whatsapp });
           }
         }
       }
 
-      // For afiliado_saas, create affiliate record
+      // Afiliado
       if (u.role === "afiliado_saas") {
-        const { data: existingAff } = await admin
-          .from("affiliates")
-          .select("id")
-          .eq("user_id", userId)
-          .maybeSingle();
-
+        const { data: existingAff } = await admin.from("affiliates").select("id").eq("user_id", userId).maybeSingle();
         if (!existingAff) {
           await admin.from("affiliates").insert({
-            user_id: userId,
-            type: "afiliado_saas",
+            user_id: userId, type: "afiliado_saas",
             referral_code: "TESTE" + Math.random().toString(36).substring(2, 6).toUpperCase(),
           });
         }
       }
 
-      // For contador, create accountant record
+      // Contador
       if (u.role === "contador") {
-        const { data: existingAcc } = await admin
-          .from("accountants")
-          .select("id")
-          .eq("user_id", userId)
-          .maybeSingle();
-
+        const { data: existingAcc } = await admin.from("accountants").select("id").eq("user_id", userId).maybeSingle();
         if (!existingAcc) {
-          await admin.from("accountants").insert({
-            user_id: userId,
-            name: u.name,
-            email: u.email,
-            whatsapp: u.whatsapp,
-          });
+          await admin.from("accountants").insert({ user_id: userId, name: u.name, email: u.email, whatsapp: u.whatsapp });
         }
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Unknown error";
-      results.push({ email: u.email, status: "exception", error: msg });
+      results.push({ email: u.email, status: "exception", error: (err as Error).message });
     }
   }
 
