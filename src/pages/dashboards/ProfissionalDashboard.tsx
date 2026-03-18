@@ -5,6 +5,8 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   LayoutDashboard,
   Calendar,
@@ -14,7 +16,20 @@ import {
   LogOut,
   Menu,
   X,
-  Clock
+  Clock,
+  Wallet,
+  CreditCard,
+  Video,
+  FileText,
+  Share2,
+  Plus,
+  QrCode,
+  Smartphone,
+  Loader2,
+  CheckCircle,
+  Lock,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
