@@ -35,6 +35,7 @@ const ClienteDashboard = () => {
     { name: t("nav.my_debts"), href: `${basePath}/dividas`, icon: Wallet },
     { name: t("nav.accounting_services"), href: `${basePath}/servicos-contabeis`, icon: FileText },
     { name: t("nav.cashback"), href: `${basePath}/cashback`, icon: Gift },
+    { name: "Meus Planos", href: `${basePath}/meus-planos`, icon: CreditCard },
     { name: t("nav.history"), href: `${basePath}/historico`, icon: History },
     { name: t("nav.refer_friends"), href: `${basePath}/indicar`, icon: Users },
     { name: t("nav.friends_action"), href: `${basePath}/acao-entre-amigos`, icon: Gift },
@@ -95,6 +96,7 @@ const ClienteDashboard = () => {
             <Route path="dividas" element={<MinhasDividasPage />} />
             <Route path="servicos-contabeis" element={<ServicosContabeisPage />} />
             <Route path="cashback" element={<CashbackPage />} />
+            <Route path="meus-planos" element={<MeusplanosPage />} />
             <Route path="historico" element={<HistoricoPage />} />
             <Route path="indicar" element={<IndicarPage />} />
             <Route path="acao-entre-amigos" element={<AcaoEntreAmigosPage />} />
@@ -597,6 +599,42 @@ const AcaoEntreAmigosPage = () => {
     </div>
   );
 };
+
+const MeusplanosPage = () => (
+  <div className="space-y-6">
+    <div>
+      <h1 className="font-display text-2xl font-bold">Meus Planos</h1>
+      <p className="text-muted-foreground text-sm">Escolha um plano e comece a usar</p>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {[
+        { name: 'Básico', price: '29', features: ['Até 5 clientes', 'Agendamentos básicos', 'Suporte por email'] },
+        { name: 'Profissional', price: '79', features: ['Até 50 clientes', 'Agendamentos avançados', 'IA integrada', 'Suporte prioritário'], popular: true },
+        { name: 'Premium', price: '199', features: ['Clientes ilimitados', 'Todas as features', 'IA com áudio', 'Suporte 24/7'] },
+      ].map(plan => (
+        <Card key={plan.name} className={plan.popular ? 'border-primary/50 border-2' : ''}>
+          <CardHeader>
+            <CardTitle className="text-lg">{plan.name}</CardTitle>
+            <div className="text-3xl font-bold text-gradient-gold mt-2">R$ {plan.price}<span className="text-sm text-muted-foreground">/mês</span></div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ul className="space-y-2">
+              {plan.features.map(f => (
+                <li key={f} className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-success" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Button variant={plan.popular ? 'gold' : 'outline'} className="w-full">
+              Escolher Plano
+            </Button>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  </div>
+);
 
 export default ClienteDashboard;
 
