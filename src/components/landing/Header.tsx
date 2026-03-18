@@ -38,6 +38,14 @@ const Header = () => {
             <Link to="/login">
               <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10">{t("enter")}</Button>
             </Link>
+            <Link to="/login">
+              <Button variant="gold" size="sm">{t("get_started")}</Button>
+            </Link>
+            <Link to="/seja-um-franqueado">
+              <Button variant="outline" size="sm" className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white">
+                {t("be_franchisee")}
+              </Button>
+            </Link>
           </div>
 
           <button className="md:hidden p-2" style={{ color: "hsl(0 0% 98%)" }} onClick={() => setIsMenuOpen(!isMenuOpen)}>

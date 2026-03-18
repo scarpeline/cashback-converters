@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check } from 'lucide-react';
+import { Globe, Check } from 'lucide-react';
 
 const languages = [
   { code: 'pt', name: 'Português', flag: 'BR' },
@@ -19,7 +19,6 @@ export function LanguageSelector() {
   };
 
   const currentLanguage = languages.find(l => l.code === i18n.language) || languages[0];
-  const flagEmoji = currentLanguage.flag === 'BR' ? '🇧🇷' : currentLanguage.flag === 'US' ? '🇺🇸' : currentLanguage.flag === 'ES' ? '🇪🇸' : '🇫🇷';
 
   return (
     <div className="relative inline-block text-left">
@@ -27,13 +26,14 @@ export function LanguageSelector() {
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="inline-flex items-center justify-center rounded-lg px-3 py-2 text-2xl transition-all duration-300 hover:scale-110"
+          className="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-300 border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 text-white backdrop-blur-md shadow-premium group"
           id="language-menu-button"
           aria-expanded={isOpen}
           aria-haspopup="true"
-          title={currentLanguage.name}
         >
-          {flagEmoji}
+          <Globe className="h-4 w-4 mr-2 text-orange-400 group-hover:rotate-12 transition-transform" />
+          <span className="hidden sm:inline">{currentLanguage.name}</span>
+          <span className="sm:hidden uppercase">{currentLanguage.code}</span>
         </button>
       </div>
 
@@ -56,7 +56,7 @@ export function LanguageSelector() {
                   onClick={() => changeLanguage(lang.code)}
                   className={`flex items-center justify-between w-full px-4 py-3 text-sm rounded-xl transition-all duration-200 ${
                     i18n.language === lang.code
-                      ? 'bg-blue-600/20 text-blue-400 font-bold border border-blue-500/30'
+                      ? 'bg-orange-500/20 text-orange-400 font-bold border border-orange-500/30'
                       : 'text-slate-300 hover:bg-white/10 hover:text-white'
                   }`}
                   role="menuitem"
@@ -66,7 +66,7 @@ export function LanguageSelector() {
                     {lang.name}
                   </span>
                   {i18n.language === lang.code && (
-                    <div className="bg-blue-600 rounded-full p-0.5">
+                    <div className="bg-orange-500 rounded-full p-0.5">
                       <Check className="h-3 w-3 text-white" />
                     </div>
                   )}
