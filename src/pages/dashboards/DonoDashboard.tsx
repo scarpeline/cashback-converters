@@ -99,6 +99,7 @@ import { SubscriptionPlans } from "@/components/subscription/SubscriptionPlans";
 import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 import { ReportsPanel } from "@/components/shared/ReportsPanel";
 import { AIChat } from "@/components/AIChat";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 const DonoDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -257,11 +258,7 @@ const DonoDashboard = () => {
           </button>
           <div className="flex-1 lg:flex-none" />
           <div className="flex items-center gap-4">
-            <Link to={`${basePath}/notificacoes`}>
-              <Button variant="ghost" size="icon">
-                <Bell className="w-5 h-5" />
-              </Button>
-            </Link>
+            <NotificationBell />
           </div>
         </header>
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
@@ -452,9 +449,44 @@ function useAppointments(barbershopId: string | undefined) {
 
 // ============ DASHBOARD HOME ============
 
+function useDashboardMetrics(barbershopId: string | undefined) {
+  const [metrics, setMetrics] = useState({ todayRevenue: 0, todayAppointments: 0, activeClients: 0, cashbackTotal: 0 });
+  useEffect(() => {
+    if (!barbershopId) return;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+
+    Promise.all([
+      supabase.from("appointments").select("id", { count: "exact", head: true })
+        .eq("barbershop_id", barbershopId)
+        .gte("scheduled_at", today.toISOString())
+        .lt("scheduled_at", tomorrow.toISOString())
+        .in("status", ["scheduled", "confirmed", "completed"]),
+      supabase.from("appointments").select("services(price)")
+        .eq("barbershop_id", barbershopId)
+        .eq("status", "completed")
+        .gte("scheduled_at", today.toISOString())
+        .lt("scheduled_at", tomorrow.toISOString()),
+      supabase.from("appointments").select("client_name", { count: "exact", head: true })
+        .eq("barbershop_id", barbershopId),
+    ]).then(([todayApts, completedApts, allClients]) => {
+      const revenue = (completedApts.data || []).reduce((s: number, a: any) => s + Number(a.services?.price || 0), 0);
+      setMetrics({
+        todayAppointments: todayApts.count || 0,
+        todayRevenue: revenue,
+        activeClients: allClients.count || 0,
+        cashbackTotal: 0,
+      });
+    });
+  }, [barbershopId]);
+  return metrics;
+}
+
 const DashboardHome = () => {
   const navigate = useNavigate();
   const { barbershop } = useBarbershop();
+  const metrics = useDashboardMetrics(barbershop?.id);
   const bookingLink = useMemo(
     () =>
       barbershop?.slug
@@ -469,11 +501,7 @@ const DashboardHome = () => {
       return;
     }
     if (navigator.share) {
-      navigator.share({
-        title: barbershop?.name,
-        text: "Agende seu horário!",
-        url: bookingLink,
-      });
+      navigator.share({ title: barbershop?.name, text: "Agende seu horário!", url: bookingLink });
     } else {
       navigator.clipboard?.writeText(bookingLink);
       toast.success("Link copiado!");
@@ -512,12 +540,12 @@ const DashboardHome = () => {
               Faturamento Hoje
             </CardDescription>
             <CardTitle className="text-2xl text-gradient-gold">
-              R$ 0,00
+              R$ {metrics.todayRevenue.toFixed(2)}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" /> 0% vs ontem
+              <TrendingUp className="w-3 h-3" /> Atendimentos concluídos
             </p>
           </CardContent>
         </Card>
@@ -526,7 +554,7 @@ const DashboardHome = () => {
             <CardDescription className="text-xs">
               Agendamentos Hoje
             </CardDescription>
-            <CardTitle className="text-2xl">0</CardTitle>
+            <CardTitle className="text-2xl">{metrics.todayAppointments}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -534,7 +562,7 @@ const DashboardHome = () => {
             <CardDescription className="text-xs">
               Clientes Ativos
             </CardDescription>
-            <CardTitle className="text-2xl">0</CardTitle>
+            <CardTitle className="text-2xl">{metrics.activeClients}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -542,7 +570,7 @@ const DashboardHome = () => {
             <CardDescription className="text-xs">
               Cashback Distribuído
             </CardDescription>
-            <CardTitle className="text-2xl">R$ 0,00</CardTitle>
+            <CardTitle className="text-2xl">R$ {metrics.cashbackTotal.toFixed(2)}</CardTitle>
           </CardHeader>
         </Card>
       </div>
