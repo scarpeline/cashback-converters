@@ -1,11 +1,11 @@
 import { useAuth } from '@/lib/auth';
-import { usePartner } from '@/hooks/usePartners';
+import { usePartnerByUserId } from '@/hooks/usePartners';
 import { Loader2 } from 'lucide-react';
 import PartnerNotificationCenter from '@/components/partners/PartnerNotificationCenter';
 
 export default function NotificationsPage() {
   const { user } = useAuth();
-  const { data: partner, isLoading } = usePartner(user?.id || '');
+  const { data: partner, isLoading } = usePartnerByUserId(user?.id || '');
 
   if (isLoading) {
     return (
