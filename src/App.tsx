@@ -236,7 +236,7 @@ function AppRoutes() {
         />
         <Route
           path="/notificacoes"
-          element={<Navigate to="/painel-dono/notificacoes" replace />}
+          element={<Navigate to="/painel-dono/automacoes" replace />}
         />
 
         {/* ========== 404 ========== */}

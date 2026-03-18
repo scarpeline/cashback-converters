@@ -300,6 +300,7 @@ const DonoDashboard = () => {
               element={<SocialProofManager barbershopId={mainBarbershop?.id} />}
             />
             <Route path="automacao" element={<NotificacoesDonoPage />} />
+            <Route path="automacoes" element={<NotificacoesDonoPage />} />
             <Route path="notificacoes" element={<NotificacoesDonoPage />} />
             <Route path="ia" element={
               <div className="h-full">
