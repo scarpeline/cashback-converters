@@ -58,6 +58,9 @@ const PartnerManagementPage = lazy(
 const PartnerDashboard = lazy(
   () => import("./components/partners/PartnerDashboard"),
 );
+const CommissionsPage = lazy(
+  () => import("./pages/admin/CommissionsPage"),
+);
 
 /**
  * QueryClient configurado para produção:
@@ -205,6 +208,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={["super_admin"]}>
               <SuperAdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/comissoes"
+          element={
+            <ProtectedRoute allowedRoles={["super_admin"]}>
+              <CommissionsPage />
             </ProtectedRoute>
           }
         />

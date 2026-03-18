@@ -228,6 +228,82 @@ serve(async (req) => {
             .eq("id", paymentRecord.id);
           if (updateError) console.error("[WEBHOOK] Failed to update payment:", updateError);
           else console.log(`[WEBHOOK] Payment ${event.payment.id} confirmed`);
+
+          // ========== GERAR COMISSÕES DE PARCEIROS ==========
+          if (!updateError && paymentRecord.status !== "paid") {
+            try {
+              // 1. Verificar se cliente foi indicado por um parceiro
+              const { data: referral } = await supabase
+                .from("partner_referrals")
+                .select("referrer_id")
+                .eq("referred_user_id", paymentRecord.client_id)
+                .eq("status", "completed")
+                .maybeSingle();
+
+              if (referral?.referrer_id) {
+                const commissionAmount = paymentRecord.amount * 0.10; // 10% para afiliados
+                await supabase.from("partner_commissions").insert({
+                  partner_id: referral.referrer_id,
+                  type: "referral",
+                  amount: commissionAmount,
+                  description: `Comissão de indicação - Cliente ${paymentRecord.client_id.substring(0, 8)}`,
+                  source_id: event.payment.id,
+                  source_type: "payment",
+                  status: "pending",
+                });
+                console.log(`[WEBHOOK] Created referral commission: ${commissionAmount} for partner ${referral.referrer_id}`);
+              }
+
+              // 2. Verificar se barbershop é franqueado
+              const { data: franchise } = await supabase
+                .from("partners")
+                .select("id")
+                .eq("barbershop_id", paymentRecord.barbershop_id)
+                .eq("type", "franqueado")
+                .eq("status", "ativo")
+                .maybeSingle();
+
+              if (franchise?.id) {
+                const commissionAmount = paymentRecord.amount * 0.30; // 30% para franqueados
+                await supabase.from("partner_commissions").insert({
+                  partner_id: franchise.id,
+                  type: "franchise_revenue",
+                  amount: commissionAmount,
+                  description: `Comissão sobre faturamento da unidade`,
+                  source_id: event.payment.id,
+                  source_type: "payment",
+                  status: "pending",
+                });
+                console.log(`[WEBHOOK] Created franchise commission: ${commissionAmount} for partner ${franchise.id}`);
+
+                // 3. Se franqueado tem diretor, gerar comissão de rede
+                const { data: director } = await supabase
+                  .from("partners")
+                  .select("id")
+                  .eq("id", franchise.parent_id)
+                  .eq("type", "diretor")
+                  .eq("status", "ativo")
+                  .maybeSingle();
+
+                if (director?.id) {
+                  const networkCommissionAmount = paymentRecord.amount * 0.05; // 5% para diretores
+                  await supabase.from("partner_commissions").insert({
+                    partner_id: director.id,
+                    type: "network_revenue",
+                    amount: networkCommissionAmount,
+                    description: `Comissão sobre faturamento da rede`,
+                    source_id: event.payment.id,
+                    source_type: "payment",
+                    status: "pending",
+                  });
+                  console.log(`[WEBHOOK] Created network commission: ${networkCommissionAmount} for director ${director.id}`);
+                }
+              }
+            } catch (commissionError) {
+              console.error("[WEBHOOK] Error generating commissions:", commissionError);
+              // Não falha o webhook se comissão falhar
+            }
+          }
         }
         break;
       }
