@@ -2,14 +2,22 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Users, UserPlus, TrendingUp, DollarSign, Crown, Shield } from 'lucide-react';
+import { Users, UserPlus, TrendingUp, DollarSign, Crown, Shield, Download } from 'lucide-react';
 import PartnerList from '@/components/partners/PartnerList';
 import PartnerForm from '@/components/partners/PartnerForm';
-import { usePartnerStats } from '@/hooks/usePartners';
+import { usePartnerStats, usePartners } from '@/hooks/usePartners';
+import { exportPartnersToCSV } from '@/lib/csvExporter';
 
 export default function PartnerManagementPage() {
   const [showForm, setShowForm] = useState(false);
   const { stats, isLoading } = usePartnerStats();
+  const { data: partners } = usePartners();
+
+  const handleExportCSV = () => {
+    if (partners) {
+      exportPartnersToCSV(partners);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -21,13 +29,23 @@ export default function PartnerManagementPage() {
             Gerencie afiliados, franqueados e diretores do sistema
           </p>
         </div>
-        <Button
-          onClick={() => setShowForm(!showForm)}
-          className="gap-2"
-        >
-          <UserPlus className="w-4 h-4" />
-          {showForm ? 'Ver Lista' : 'Novo Parceiro'}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExportCSV}
+            className="gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Exportar CSV
+          </Button>
+          <Button
+            onClick={() => setShowForm(!showForm)}
+            className="gap-2"
+          >
+            <UserPlus className="w-4 h-4" />
+            {showForm ? 'Ver Lista' : 'Novo Parceiro'}
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -163,7 +181,7 @@ export default function PartnerManagementPage() {
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
-            <PartnerList showFilters={true} />
+            <PartnerList showFilters={true} filterByType={undefined} />
           </TabsContent>
 
           <TabsContent value="afiliados" className="space-y-4">
@@ -178,7 +196,7 @@ export default function PartnerManagementPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <PartnerList showFilters={false} />
+                <PartnerList showFilters={false} filterByType="afiliado" />
               </CardContent>
             </Card>
           </TabsContent>
@@ -195,7 +213,7 @@ export default function PartnerManagementPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <PartnerList showFilters={false} />
+                <PartnerList showFilters={false} filterByType="franqueado" />
               </CardContent>
             </Card>
           </TabsContent>
@@ -212,7 +230,7 @@ export default function PartnerManagementPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <PartnerList showFilters={false} />
+                <PartnerList showFilters={false} filterByType="diretor" />
               </CardContent>
             </Card>
           </TabsContent>

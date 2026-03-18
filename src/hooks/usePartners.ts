@@ -12,6 +12,9 @@ import {
   getPartnerHierarchy,
   countDirectReferrals,
   isUserPartner,
+  getPartnerCommissions,
+  getPartnerCommissionSummary,
+  createPartnerCommission,
   type Partner,
   type PartnerWithUser
 } from '@/services/partnersService';
@@ -189,4 +192,47 @@ export function usePartnerStats() {
     isLoading,
     error,
   };
+}
+
+/**
+ * Hook para comissões de um parceiro
+ */
+export function usePartnerCommissions(partnerId: string) {
+  return useQuery({
+    queryKey: [...partnerKeys.all, 'commissions', partnerId],
+    queryFn: () => getPartnerCommissions(partnerId),
+    enabled: !!partnerId,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook para resumo de comissões
+ */
+export function usePartnerCommissionSummary(partnerId: string) {
+  return useQuery({
+    queryKey: [...partnerKeys.all, 'commission-summary', partnerId],
+    queryFn: () => getPartnerCommissionSummary(partnerId),
+    enabled: !!partnerId,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook para criar comissão
+ */
+export function useCreatePartnerCommission() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createPartnerCommission,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ 
+        queryKey: [...partnerKeys.all, 'commissions', variables.partner_id] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: [...partnerKeys.all, 'commission-summary', variables.partner_id] 
+      });
+    },
+  });
 }

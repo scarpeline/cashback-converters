@@ -55,6 +55,9 @@ const ClientReactivationPage = lazy(
 const PartnerManagementPage = lazy(
   () => import("./pages/dashboards/PartnerManagementPage"),
 );
+const PartnerDashboard = lazy(
+  () => import("./components/partners/PartnerDashboard"),
+);
 
 /**
  * QueryClient configurado para produção:
@@ -170,6 +173,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={["dono", "super_admin"]}>
               <PartnerManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/painel-parceiro"
+          element={
+            <ProtectedRoute allowedRoles={["afiliado_saas", "afiliado_barbearia"]}>
+              <PartnerDashboard />
             </ProtectedRoute>
           }
         />

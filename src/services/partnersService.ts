@@ -251,3 +251,148 @@ export async function isUserPartner(userId: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Gerar código de referência único
+ */
+function generateReferralCode(): string {
+  return Math.random().toString(36).substring(2, 10).toUpperCase();
+}
+
+/**
+ * Buscar parceiro por referral_code
+ */
+export async function getPartnerByReferralCode(code: string): Promise<PartnerWithUser | null> {
+  try {
+    const { data, error } = await supabase
+      .from('partners')
+      .select(`
+        *,
+        users:user_id (
+          name,
+          email,
+          whatsapp
+        )
+      `)
+      .eq('referral_code', code.toUpperCase())
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Erro ao buscar parceiro por código:', error);
+    return null;
+  }
+}
+
+/**
+ * Registrar referência (quando alguém se cadastra via link)
+ */
+export async function createPartnerReferral(referrerId: string, referredUserId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('partner_referrals')
+      .insert([{
+        referrer_id: referrerId,
+        referred_user_id: referredUserId,
+        status: 'pending'
+      }]);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Erro ao registrar referência:', error);
+    return false;
+  }
+}
+
+/**
+ * Buscar comissões de um parceiro
+ */
+export async function getPartnerCommissions(partnerId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('partner_commissions')
+      .select('*')
+      .eq('partner_id', partnerId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Erro ao buscar comissões:', error);
+    return [];
+  }
+}
+
+/**
+ * Buscar resumo de comissões
+ */
+export async function getPartnerCommissionSummary(partnerId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('partner_commission_summary')
+      .select('*')
+      .eq('id', partnerId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return {
+          pending_count: 0,
+          approved_count: 0,
+          paid_count: 0,
+          pending_amount: 0,
+          approved_amount: 0,
+          paid_amount: 0,
+          total_amount: 0
+        };
+      }
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Erro ao buscar resumo de comissões:', error);
+    return {
+      pending_count: 0,
+      approved_count: 0,
+      paid_count: 0,
+      pending_amount: 0,
+      approved_amount: 0,
+      paid_amount: 0,
+      total_amount: 0
+    };
+  }
+}
+
+/**
+ * Criar comissão para parceiro
+ */
+export async function createPartnerCommission(data: {
+  partner_id: string;
+  type: 'referral' | 'franchise_revenue' | 'network_revenue';
+  amount: number;
+  description?: string;
+  source_id?: string;
+  source_type?: string;
+}): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('partner_commissions')
+      .insert([{
+        ...data,
+        status: 'pending'
+      }]);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Erro ao criar comissão:', error);
+    return false;
+  }
+}

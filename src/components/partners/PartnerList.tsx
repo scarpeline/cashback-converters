@@ -7,7 +7,8 @@ import { PartnerWithUser } from '@/services/partnersService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, Users, Crown, Shield, MoreVertical } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2, User, Users, Crown, Shield, MoreVertical, Search } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,14 +20,16 @@ import { toast } from 'sonner';
 interface PartnerListProps {
   showFilters?: boolean;
   limit?: number;
+  filterByType?: 'afiliado' | 'franqueado' | 'diretor';
 }
 
-export default function PartnerList({ showFilters = true, limit }: PartnerListProps) {
+export default function PartnerList({ showFilters = true, limit, filterByType }: PartnerListProps) {
   const { data: partners, isLoading, error } = usePartners();
   const updateStatus = useUpdatePartnerStatus();
   
-  const [filterType, setFilterType] = useState<string>('all');
+  const [filterType, setFilterType] = useState<string>(filterByType || 'all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   if (isLoading) {
     return (
@@ -67,11 +70,18 @@ export default function PartnerList({ showFilters = true, limit }: PartnerListPr
     );
   }
 
-  // Aplicar filtros
+  // Aplicar filtros e busca
   const filteredPartners = partners
     .filter(partner => {
       if (filterType !== 'all' && partner.type !== filterType) return false;
       if (filterStatus !== 'all' && partner.status !== filterStatus) return false;
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        const name = partner.users?.name?.toLowerCase() || '';
+        const email = partner.users?.email?.toLowerCase() || '';
+        const whatsapp = partner.users?.whatsapp || '';
+        if (!name.includes(term) && !email.includes(term) && !whatsapp.includes(term)) return false;
+      }
       return true;
     })
     .slice(0, limit || partners.length);
@@ -110,14 +120,24 @@ export default function PartnerList({ showFilters = true, limit }: PartnerListPr
   return (
     <div className="space-y-4">
       {showFilters && (
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={filterType === 'all' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilterType('all')}
-          >
-            Todos
-          </Button>
+        <div className="flex flex-wrap gap-2 items-center">
+          <div className="relative flex-1 min-w-[200px] max-w-xs">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome, email ou WhatsApp..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              variant={filterType === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilterType('all')}
+            >
+              Todos
+            </Button>
           <Button
             variant={filterType === 'afiliado' ? 'default' : 'outline'}
             size="sm"
@@ -165,6 +185,7 @@ export default function PartnerList({ showFilters = true, limit }: PartnerListPr
             >
               Bloqueados
             </Button>
+          </div>
           </div>
         </div>
       )}
