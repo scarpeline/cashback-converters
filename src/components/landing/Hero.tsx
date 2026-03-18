@@ -53,7 +53,7 @@ const Hero = () => {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 animate-fade-in" style={{ animationDelay: "0.4s" }}>
             <Link to="/login">
-              <Button variant="hero" size="lg" sm:size="xl" className="w-full sm:w-auto text-lg sm:text-xl lg:text-2xl px-8 py-4 font-bold" style={{ background: "hsl(38 92% 50%)", color: "hsl(0 0% 100%)", border: "2px solid hsl(38 92% 50%)" }}>
+              <Button variant="hero" size="lg" className="w-full sm:w-auto text-lg sm:text-xl lg:text-2xl px-8 py-4 font-bold" style={{ background: "hsl(38 92% 50%)", color: "hsl(0 0% 100%)", border: "2px solid hsl(38 92% 50%)" }}>
                 <span className="text-lg sm:text-xl lg:text-2xl">Testar Sistema</span>
                 <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
               </Button>
