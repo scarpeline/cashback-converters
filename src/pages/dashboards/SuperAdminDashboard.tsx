@@ -51,6 +51,7 @@ import {
   Trash2,
   EyeOff,
   Globe,
+  ShieldOff,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -61,6 +62,14 @@ import { WebhookManagementPanel } from "@/components/admin/WebhookManagementPane
 import { IntegrationTestsPanel } from "@/components/admin/IntegrationTestsPanel";
 import { RealTimeMetricsPanel } from "@/components/admin/RealTimeMetricsPanel";
 import { RemarketingPanel } from "@/components/admin/RemarketingPanel";
+import { AIDashboard } from "@/components/AIDashboard";
+
+const AIDashboardPage = () => (
+  <div className="space-y-6">
+    <h1 className="font-display text-2xl font-bold">IA Dashboard</h1>
+    <AIDashboard />
+  </div>
+);
 
 const IntegrationSettingsPage = lazy(
   () => import("@/pages/admin/IntegrationSettingsPage"),
@@ -116,6 +125,7 @@ const SuperAdminDashboard = () => {
       { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
       { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
       { name: "Remarketing", href: `${basePath}/remarketing`, icon: TrendingUp },
+      { name: "IA Dashboard", href: `${basePath}/ia`, icon: Activity },
       {
         name: "Visibilidade Landing",
         href: `${basePath}/visibilidade`,
@@ -256,6 +266,7 @@ const SuperAdminDashboard = () => {
             <Route path="suporte" element={<SuporteAdminPage />} />
             <Route path="notificacoes" element={<NotificacoesAdminPage />} />
             <Route path="remarketing" element={<RemarketingPanel />} />
+            <Route path="ia" element={<AIDashboardPage />} />
             <Route path="visibilidade" element={<LandingVisibilidadePage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
           </Routes>
@@ -1199,6 +1210,24 @@ const BarbeariasPage = () => {
                 <Calendar className="w-4 h-4 mr-1" />
                 Liberar
               </Button>
+              <Button
+                variant={s.blocked ? "destructive" : "outline"}
+                size="sm"
+                onClick={async () => {
+                  const newBlocked = !s.blocked;
+                  const { error } = await supabase
+                    .from("barbershops")
+                    .update({ blocked: newBlocked } as any)
+                    .eq("id", s.id);
+                  if (error) toast.error(error.message);
+                  else {
+                    toast.success(newBlocked ? "Barbearia bloqueada" : "Barbearia desbloqueada");
+                    setShops(shops.map(sh => sh.id === s.id ? { ...sh, blocked: newBlocked } : sh));
+                  }
+                }}
+              >
+                {s.blocked ? <><ShieldOff className="w-4 h-4 mr-1" />Desbloquear</> : <><Shield className="w-4 h-4 mr-1" />Bloquear</>}
+              </Button>
             </CardContent>
           </Card>
         ))
@@ -1208,6 +1237,21 @@ const BarbeariasPage = () => {
 };
 
 // ============ AFILIADOS (convite + comissão individual) ============
+
+// Níveis de afiliados baseados em indicações
+const AFFILIATE_LEVELS = [
+  { min: 0,    max: 50,   label: "Explorador",            color: "bg-slate-100 text-slate-700" },
+  { min: 51,   max: 100,  label: "Visionário",            color: "bg-blue-100 text-blue-700" },
+  { min: 101,  max: 200,  label: "Estrategista Visionário", color: "bg-purple-100 text-purple-700" },
+  { min: 201,  max: 400,  label: "Líder Supremo",         color: "bg-orange-100 text-orange-700" },
+  { min: 401,  max: 700,  label: "Imperador Líder",       color: "bg-red-100 text-red-700" },
+  { min: 701,  max: 1000, label: "Sócio PLM",             color: "bg-yellow-100 text-yellow-800" },
+];
+
+function getAffiliateLevel(totalReferrals: number) {
+  return AFFILIATE_LEVELS.find(l => totalReferrals >= l.min && totalReferrals <= l.max) || AFFILIATE_LEVELS[0];
+}
+
 const AfiliadosPage = () => {
   const { user } = useAuth();
   const [affiliates, setAffiliates] = useState<any[]>([]);
@@ -1391,6 +1435,9 @@ const AfiliadosPage = () => {
                   {a.commission_recurring}% / {a.commission_saas_tax}%
                 </p>
               </div>
+              <span className={`text-xs px-2 py-1 rounded-full font-medium ${getAffiliateLevel(a.total_referrals || 0).color}`}>
+                {getAffiliateLevel(a.total_referrals || 0).label}
+              </span>
               <span className="text-xs bg-success/10 text-success px-2 py-1 rounded-full">
                 {a.type}
               </span>
@@ -1408,6 +1455,24 @@ const AfiliadosPage = () => {
               >
                 <Edit className="w-4 h-4 mr-1" />
                 Comissão
+              </Button>
+              <Button
+                variant={a.blocked ? "destructive" : "outline"}
+                size="sm"
+                onClick={async () => {
+                  const newBlocked = !a.blocked;
+                  const { error } = await supabase
+                    .from("affiliates")
+                    .update({ blocked: newBlocked } as any)
+                    .eq("id", a.id);
+                  if (error) toast.error(error.message);
+                  else {
+                    toast.success(newBlocked ? "Afiliado bloqueado" : "Afiliado desbloqueado");
+                    setAffiliates(affiliates.map(af => af.id === a.id ? { ...af, blocked: newBlocked } : af));
+                  }
+                }}
+              >
+                {a.blocked ? <><ShieldOff className="w-4 h-4 mr-1" />Desbloquear</> : <><Shield className="w-4 h-4 mr-1" />Bloquear</>}
               </Button>
             </CardContent>
           </Card>
