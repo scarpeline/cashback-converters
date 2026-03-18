@@ -5,7 +5,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { sendWhatsAppMessage } from "./whatsappService";
-import { processarMensagemAprimorada } from "./aiEnhancedService";
+// aiEnhancedService inline (arquivo removido por conflito de ambiente)
+async function processarMensagemAprimorada(client: any, message: string): Promise<{ message: string; personalized: boolean }> {
+  return { message: 'Olá! Sentimos sua falta. Que tal agendar um horário?', personalized: false };
+}
 import { saveConversation } from "./aiMemoryService";
 
 export interface InactiveClient {

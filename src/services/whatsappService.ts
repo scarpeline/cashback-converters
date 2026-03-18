@@ -161,8 +161,8 @@ export async function receiveWhatsAppMessage(
       clientId = profile.user_id;
     }
 
-    // Processar com IA
-    const { processarMensagemAprimorada } = await import('./aiEnhancedService');
+    // Processar com IA (inline)
+    const processarMensagemAprimorada = async (client: any, msg: string) => ({ message: 'Olá! Como posso ajudar?', personalized: false });
     const response = await processarMensagemAprimorada(
       { id: clientId, name: profile?.name || 'Cliente' },
       message

@@ -83,6 +83,7 @@ import {
   FileText,
   Calculator,
   Video,
+  Zap,
 } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
@@ -97,6 +98,7 @@ import { ProfilePhotoUpload } from "@/components/shared/ProfilePhotoUpload";
 import { SubscriptionPlans } from "@/components/subscription/SubscriptionPlans";
 import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 import { ReportsPanel } from "@/components/shared/ReportsPanel";
+import { AIChat } from "@/components/AIChat";
 
 const DonoDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -142,7 +144,8 @@ const DonoDashboard = () => {
       href: `${basePath}/prova-social`,
       icon: TrendingUp,
     },
-    { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
+    { name: "Automações", href: `${basePath}/automacoes`, icon: Bell },
+    { name: "IA Inteligente", href: `${basePath}/ia`, icon: Zap },
     {
       name: "Inteligência de Agenda",
       href: `${basePath}/inteligencia-agenda`,
@@ -297,6 +300,11 @@ const DonoDashboard = () => {
             />
             <Route path="automacao" element={<NotificacoesDonoPage />} />
             <Route path="notificacoes" element={<NotificacoesDonoPage />} />
+            <Route path="ia" element={
+              <div className="h-full">
+                <AIChat clientId={mainBarbershop?.id || ""} clientName={mainBarbershop?.name || "Barbearia"} />
+              </div>
+            } />
             <Route
               path="inteligencia-agenda"
               element={<InteligenciaAgendaPage />}

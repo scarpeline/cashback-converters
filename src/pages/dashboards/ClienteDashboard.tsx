@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Calendar, Gift, History, Bell, User, LogOut, Menu, X, QrCode,
-  Users, Clock, Search, MapPin, Star, ChevronRight, Phone, Wallet, MessageCircle, FileText, Loader2, ClipboardList, Share2
+  Users, Clock, Search, MapPin, Star, ChevronRight, Phone, Wallet, MessageCircle, FileText, Loader2, ClipboardList, Share2, Zap
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
@@ -19,6 +19,7 @@ import { formatWhatsAppBR } from "@/lib/input-masks";
 import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 import { ProfilePhotoUpload } from "@/components/shared/ProfilePhotoUpload";
+import { AIChat } from "@/components/AIChat";
 
 const ClienteDashboard = () => {
   const { i18n, t } = useTranslation();
@@ -39,6 +40,7 @@ const ClienteDashboard = () => {
     { name: t("nav.friends_action"), href: `${basePath}/acao-entre-amigos`, icon: Gift },
     { name: t("nav.support"), href: `${basePath}/suporte`, icon: MessageCircle },
     { name: t("nav.notifications"), href: `${basePath}/notificacoes`, icon: Bell },
+    { name: "IA Inteligente", href: `${basePath}/ia`, icon: Zap },
     { name: t("nav.be_affiliate"), href: `${basePath}/seja-afiliado`, icon: Share2 },
     { name: t("nav.my_profile"), href: `${basePath}/perfil`, icon: User },
   ];
@@ -99,6 +101,11 @@ const ClienteDashboard = () => {
             <Route path="rifas" element={<AcaoEntreAmigosPage />} />
             <Route path="suporte" element={<SuporteClientePage />} />
             <Route path="notificacoes" element={<NotificacoesPage />} />
+            <Route path="ia" element={
+              <div className="h-full">
+                <AIChat clientId={profile?.id || ""} clientName={profile?.name || "Cliente"} />
+              </div>
+            } />
             <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Routes>
