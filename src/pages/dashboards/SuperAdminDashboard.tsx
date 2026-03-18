@@ -60,6 +60,7 @@ import { ConfigComissoesPanel } from "@/components/contabilidade/ConfigComissoes
 import { WebhookManagementPanel } from "@/components/admin/WebhookManagementPanel";
 import { IntegrationTestsPanel } from "@/components/admin/IntegrationTestsPanel";
 import { RealTimeMetricsPanel } from "@/components/admin/RealTimeMetricsPanel";
+import { RemarketingPanel } from "@/components/admin/RemarketingPanel";
 
 const IntegrationSettingsPage = lazy(
   () => import("@/pages/admin/IntegrationSettingsPage"),
@@ -114,6 +115,7 @@ const SuperAdminDashboard = () => {
       },
       { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
       { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
+      { name: "Remarketing", href: `${basePath}/remarketing`, icon: TrendingUp },
       {
         name: "Visibilidade Landing",
         href: `${basePath}/visibilidade`,
@@ -253,6 +255,7 @@ const SuperAdminDashboard = () => {
             />
             <Route path="suporte" element={<SuporteAdminPage />} />
             <Route path="notificacoes" element={<NotificacoesAdminPage />} />
+            <Route path="remarketing" element={<RemarketingPanel />} />
             <Route path="visibilidade" element={<LandingVisibilidadePage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
           </Routes>

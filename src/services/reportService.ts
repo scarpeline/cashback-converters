@@ -76,7 +76,7 @@ export async function generateFinancialReport(
 
     // Quebrar por tipo de parceiro
     const byType: Record<string, number> = {};
-    (commissions || []).forEach((c: any) => {
+    for (const c of commissions || []) {
       // Buscar tipo do parceiro
       const { data: partner } = await supabase
         .from('partners')
@@ -87,7 +87,7 @@ export async function generateFinancialReport(
       if (partner?.type) {
         byType[partner.type] = (byType[partner.type] || 0) + Number(c.amount);
       }
-    });
+    }
 
     // Quebrar por parceiro
     const byPartner = (commissions || []).reduce((acc: any[], c: any) => {
