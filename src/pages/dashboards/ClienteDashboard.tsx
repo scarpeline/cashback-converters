@@ -238,18 +238,70 @@ const MinhasDividasPage = () => {
   );
 };
 
-const CashbackPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Meu Cashback</h1>
-    <Card className="border-primary/20 bg-primary/5">
-      <CardHeader><CardDescription>Saldo Disponível</CardDescription><CardTitle className="text-4xl text-gradient-gold">R$ 0,00</CardTitle></CardHeader>
-      <CardContent><p className="text-sm text-muted-foreground mb-3">Use seu cashback no próximo agendamento!</p><Button variant="gold" size="sm" onClick={() => toast.info("Cashback será aplicado automaticamente no próximo agendamento.")}>Como usar?</Button></CardContent>
-    </Card>
-    <Card><CardHeader><CardTitle>Histórico de Cashback</CardTitle></CardHeader>
-      <CardContent className="text-center py-8"><Gift className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum cashback recebido ainda.</p></CardContent>
-    </Card>
-  </div>
-);
+const CashbackPage = () => {
+  const { user } = useAuth();
+  const [cashback, setCashback] = useState({ balance: 0, total_earned: 0, history: [] as any[] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([
+      supabase.from("cashback_transactions").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
+      supabase.from("profiles").select("cashback_balance, total_cashback_earned").eq("user_id", user.id).maybeSingle(),
+    ]).then(([txns, profile]) => {
+      setCashback({
+        balance: Number(profile.data?.cashback_balance || 0),
+        total_earned: Number(profile.data?.total_cashback_earned || 0),
+        history: txns.data || [],
+      });
+      setLoading(false);
+    });
+  }, [user]);
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Meu Cashback</h1>
+      <Card className="border-primary/20 bg-primary/5">
+        <CardHeader>
+          <CardDescription>Saldo Disponível</CardDescription>
+          <CardTitle className="text-4xl text-gradient-gold">
+            {loading ? "..." : `R$ ${cashback.balance.toFixed(2)}`}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-3">Use seu cashback no próximo agendamento!</p>
+          <div className="flex items-center gap-4 text-sm">
+            <span className="text-muted-foreground">Total ganho: <span className="font-medium text-foreground">R$ {cashback.total_earned.toFixed(2)}</span></span>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader><CardTitle>Histórico de Cashback</CardTitle></CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+          ) : cashback.history.length === 0 ? (
+            <div className="text-center py-8"><Gift className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhum cashback recebido ainda.</p></div>
+          ) : (
+            <div className="space-y-2">
+              {cashback.history.map((tx: any) => (
+                <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <div>
+                    <p className="text-sm font-medium">{tx.description || "Cashback"}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(tx.created_at).toLocaleDateString("pt-BR")}</p>
+                  </div>
+                  <span className={`font-bold ${tx.type === 'credit' ? 'text-success' : 'text-destructive'}`}>
+                    {tx.type === 'credit' ? '+' : '-'}R$ {Number(tx.amount).toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 const HistoricoPage = () => (
   <div className="space-y-6">
