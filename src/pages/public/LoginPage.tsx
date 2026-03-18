@@ -571,7 +571,7 @@ const LoginPage = () => {
                   {loading ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      {t("common.processing")}
+                      {t("processing")}
                     </div>
                   ) : (
                     <div className="flex items-center justify-center gap-2">
