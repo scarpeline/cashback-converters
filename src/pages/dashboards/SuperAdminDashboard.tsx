@@ -43,6 +43,7 @@ import {
   Copy,
   ExternalLink,
   Package,
+  Plus,
   CreditCard,
   Eye,
   Wallet,
@@ -95,6 +96,7 @@ const SuperAdminDashboard = () => {
       { name: "Usuários", href: `${basePath}/usuarios`, icon: Users },
       { name: "Parceiros", href: `${basePath}/parceiros`, icon: Users },
       { name: "Barbearias", href: `${basePath}/barbearias`, icon: Building2 },
+      { name: "Produtos", href: `${basePath}/produtos`, icon: Package },
       { name: "Afiliados", href: `${basePath}/afiliados`, icon: Users },
       { name: "Contadores", href: `${basePath}/contadores`, icon: Calculator },
       {
@@ -233,6 +235,7 @@ const SuperAdminDashboard = () => {
               </Suspense>
             } />
             <Route path="barbearias" element={<BarbeariasPage />} />
+            <Route path="produtos" element={<ProdutosPage />} />
             <Route path="afiliados" element={<AfiliadosPage />} />
             <Route path="contadores" element={<ContadoresPage />} />
             <Route
@@ -929,6 +932,132 @@ const UsuariosPage = () => {
             </Card>
           ))}
         </div>
+      )}
+    </div>
+  );
+};
+
+// ============ PRODUTOS (CRUD com gateway_product_id e gateway_price_id) ============
+const ProdutosPage = () => {
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [formData, setFormData] = useState({ name: '', description: '', price: '', gateway_product_id: '', gateway_price_id: '' });
+
+  useEffect(() => {
+    supabase.from('products').select('*').then(({ data }) => {
+      setProducts(data || []);
+      setLoading(false);
+    });
+  }, []);
+
+  const saveProduct = async () => {
+    if (!formData.name || !formData.price) {
+      toast.error('Preencha nome e preço');
+      return;
+    }
+    setCreating(true);
+    const { error } = editingProduct
+      ? await supabase.from('products').update(formData).eq('id', editingProduct.id)
+      : await supabase.from('products').insert([formData]);
+    setCreating(false);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(editingProduct ? 'Produto atualizado' : 'Produto criado');
+      setFormData({ name: '', description: '', price: '', gateway_product_id: '', gateway_price_id: '' });
+      setEditingProduct(null);
+      supabase.from('products').select('*').then(({ data }) => setProducts(data || []));
+    }
+  };
+
+  const deleteProduct = async (id: string) => {
+    if (!confirm('Tem certeza?')) return;
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success('Produto deletado');
+      setProducts(products.filter(p => p.id !== id));
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="font-display text-2xl font-bold">Produtos</h1>
+        <Button variant="gold" onClick={() => { setEditingProduct(null); setFormData({ name: '', description: '', price: '', gateway_product_id: '', gateway_price_id: '' }); }}>
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Produto
+        </Button>
+      </div>
+
+      {editingProduct !== undefined && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-sm">{editingProduct ? 'Editar' : 'Criar'} Produto</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label>Nome *</Label>
+                <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Nome do produto" className="mt-1" />
+              </div>
+              <div>
+                <Label>Preço (R$) *</Label>
+                <Input type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} placeholder="0.00" className="mt-1" />
+              </div>
+              <div className="md:col-span-2">
+                <Label>Descrição</Label>
+                <Input value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} placeholder="Descrição do produto" className="mt-1" />
+              </div>
+              <div>
+                <Label>Gateway Product ID</Label>
+                <Input value={formData.gateway_product_id} onChange={(e) => setFormData({...formData, gateway_product_id: e.target.value})} placeholder="prod_xxxxx" className="mt-1" />
+              </div>
+              <div>
+                <Label>Gateway Price ID</Label>
+                <Input value={formData.gateway_price_id} onChange={(e) => setFormData({...formData, gateway_price_id: e.target.value})} placeholder="price_xxxxx" className="mt-1" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="gold" onClick={saveProduct} disabled={creating}>
+                {creating ? 'Salvando...' : 'Salvar'}
+              </Button>
+              <Button variant="ghost" onClick={() => setEditingProduct(undefined)}>Cancelar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {loading ? (
+        <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+      ) : products.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Nenhum produto cadastrado.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        products.map(p => (
+          <Card key={p.id}>
+            <CardContent className="p-4 flex items-center gap-4">
+              <Package className="w-5 h-5 text-primary" />
+              <div className="flex-1">
+                <p className="font-semibold">{p.name}</p>
+                <p className="text-sm text-muted-foreground">R$ {Number(p.price).toFixed(2)} • {p.description || 'Sem descrição'}</p>
+                {p.gateway_product_id && <p className="text-xs text-muted-foreground">Gateway: {p.gateway_product_id}</p>}
+              </div>
+              <Button variant="outline" size="sm" onClick={() => { setEditingProduct(p); setFormData(p); }}>
+                <Edit className="w-4 h-4 mr-1" />
+                Editar
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => deleteProduct(p.id)}>
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        ))
       )}
     </div>
   );
