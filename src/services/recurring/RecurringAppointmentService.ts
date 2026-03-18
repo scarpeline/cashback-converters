@@ -47,7 +47,7 @@ export interface CreateRecurringAppointment {
 /**
  * Serviço para gerenciar agendamentos recorrentes
  */
-export /**
+/**
  * Serviço para gerenciar agendamentos recorrentes com IA
  */
 export class RecurringAppointmentService {

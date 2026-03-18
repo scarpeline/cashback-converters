@@ -48,6 +48,12 @@ const PaymentSimulationPage = lazy(
 const InstallPage = lazy(() => import("./pages/public/InstallPage"));
 const CostAnalysisPage = lazy(() => import("./pages/public/CostAnalysisPage"));
 const VitrinePage = lazy(() => import("./pages/public/VitrinePage"));
+const ClientReactivationPage = lazy(
+  () => import("./pages/dashboards/ClientReactivationPage"),
+);
+const PartnerManagementPage = lazy(
+  () => import("./pages/dashboards/PartnerManagementPage"),
+);
 
 /**
  * QueryClient configurado para produção:
@@ -147,6 +153,22 @@ function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={["profissional"]}>
               <ProfissionalDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reativacao-clientes"
+          element={
+            <ProtectedRoute allowedRoles={["profissional", "dono"]}>
+              <ClientReactivationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/gestao-parceiros"
+          element={
+            <ProtectedRoute allowedRoles={["dono", "super_admin"]}>
+              <PartnerManagementPage />
             </ProtectedRoute>
           }
         />

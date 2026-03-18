@@ -392,13 +392,7 @@ export async function sendAppointmentReminder(
       minute: '2-digit' 
     });
 
-    const message = ` reminders: 
-      `Olá! Lembrete do seu agendamento 📅\n\n
-      📅 Data: ${dataFormatada}\n
-      ⏰ Hora: ${horaFormatada}\n
-      💈 Serviço: ${appointment.services?.name}\n
-      ✂️ Profissional: ${appointment.professionals?.name}\n\n
-      Até logo!`;
+    const message = `Olá! Lembrete do seu agendamento 📅\n\n📅 Data: ${dataFormatada}\n⏰ Hora: ${horaFormatada}\n💈 Serviço: ${appointment.services?.name}\n✂️ Profissional: ${appointment.professionals?.name}\n\nAté logo!`;
 
     return await sendWhatsAppMessage(profile.whatsapp, message);
   } catch (error) {
