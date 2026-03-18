@@ -2,6 +2,7 @@
 // NÃO duplica funcionalidades existentes
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   getPartners, 
   getPartnerById, 
@@ -53,6 +54,26 @@ export function usePartner(id: string) {
     queryFn: () => getPartnerById(id),
     enabled: !!id,
     staleTime: 2 * 60 * 1000, // 2 minutos
+  });
+}
+
+/**
+ * Hook para buscar parceiro pelo user_id do auth
+ */
+export function usePartnerByUserId(userId: string) {
+  return useQuery({
+    queryKey: [...partnerKeys.all, 'by-user', userId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('partners')
+        .select(`*, users:user_id (name, email, whatsapp)`)
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (error) throw error;
+      return data as PartnerWithUser | null;
+    },
+    enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
   });
 }
 

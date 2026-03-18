@@ -11,6 +11,7 @@ export interface Partner {
   level: number;
   total_indicados: number;
   status: 'ativo' | 'bloqueado';
+  referral_code?: string;
   created_at: string;
   updated_at: string;
 }
@@ -21,6 +22,7 @@ export interface PartnerWithUser extends Partner {
     email: string;
     whatsapp: string;
   };
+  referral_code?: string;
 }
 
 /**

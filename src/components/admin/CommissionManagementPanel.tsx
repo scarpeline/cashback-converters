@@ -41,12 +41,21 @@ export default function CommissionManagementPanel() {
   });
 
   const approveMutation = useMutation({
-    mutationFn: async (commissionId: string) => {
+    mutationFn: async (commission: any) => {
       const { error } = await supabase
         .from('partner_commissions')
         .update({ status: 'approved' })
-        .eq('id', commissionId);
+        .eq('id', commission.id);
       if (error) throw error;
+      // Notificar parceiro
+      await (supabase as any).from('partner_notifications').insert({
+        partner_id: commission.partner_id,
+        type: 'commission_approved',
+        title: 'Comissão aprovada',
+        message: `Sua comissão de R$ ${Number(commission.amount).toFixed(2)} foi aprovada`,
+        data: { amount: commission.amount },
+        read: false,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-commissions'] });
@@ -58,15 +67,24 @@ export default function CommissionManagementPanel() {
   });
 
   const payMutation = useMutation({
-    mutationFn: async (commissionId: string) => {
+    mutationFn: async (commission: any) => {
       const { error } = await supabase
         .from('partner_commissions')
         .update({ 
           status: 'paid',
           paid_at: new Date().toISOString()
         })
-        .eq('id', commissionId);
+        .eq('id', commission.id);
       if (error) throw error;
+      // Notificar parceiro
+      await (supabase as any).from('partner_notifications').insert({
+        partner_id: commission.partner_id,
+        type: 'commission_paid',
+        title: 'Comissão paga',
+        message: `Você recebeu R$ ${Number(commission.amount).toFixed(2)} de comissão`,
+        data: { amount: commission.amount },
+        read: false,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-commissions'] });
@@ -230,7 +248,7 @@ export default function CommissionManagementPanel() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => approveMutation.mutate(commission.id)}
+                          onClick={() => approveMutation.mutate(commission)}
                           disabled={approveMutation.isPending}
                         >
                           Aprovar
@@ -249,7 +267,7 @@ export default function CommissionManagementPanel() {
                     {commission.status === 'approved' && (
                       <Button
                         size="sm"
-                        onClick={() => payMutation.mutate(commission.id)}
+                        onClick={() => payMutation.mutate(commission)}
                         disabled={payMutation.isPending}
                       >
                         Marcar como Paga

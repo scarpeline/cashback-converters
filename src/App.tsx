@@ -58,6 +58,12 @@ const PartnerManagementPage = lazy(
 const PartnerDashboard = lazy(
   () => import("./components/partners/PartnerDashboard"),
 );
+const PartnerNotificationCenter = lazy(
+  () => import("./components/partners/PartnerNotificationCenter"),
+);
+const NotificationsPage = lazy(
+  () => import("./pages/partners/NotificationsPage"),
+);
 const CommissionsPage = lazy(
   () => import("./pages/admin/CommissionsPage"),
 );
@@ -184,6 +190,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={["afiliado_saas", "afiliado_barbearia"]}>
               <PartnerDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/painel-parceiro/notificacoes"
+          element={
+            <ProtectedRoute allowedRoles={["afiliado_saas", "afiliado_barbearia"]}>
+              <NotificationsPage />
             </ProtectedRoute>
           }
         />
