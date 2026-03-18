@@ -1556,44 +1556,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ai_memory: {
-        Row: {
-          id: string
-          client_id: string
-          message: string
-          response: string
-          intent: string | null
-          metadata: Json
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          client_id: string
-          message: string
-          response: string
-          intent?: string | null
-          metadata?: Json
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          client_id?: string
-          message?: string
-          response?: string
-          intent?: string | null
-          metadata?: Json
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ai_memory_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       webhooks_log: {
         Row: {
           created_at: string

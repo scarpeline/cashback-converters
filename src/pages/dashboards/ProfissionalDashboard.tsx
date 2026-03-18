@@ -19,14 +19,17 @@ import {
   Clock,
   Wallet,
   CreditCard,
-  FileText,
   Video,
+  FileText,
+  Share2,
   Plus,
   QrCode,
   Smartphone,
-  CheckCircle,
   Loader2,
-  Share2
+  CheckCircle,
+  Lock,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -409,7 +412,50 @@ const GanhosPage = () => (
 
 // ContaBancariaPage is now imported from @/components/profissional/ContaBancariaPage
 const PerfilPage = () => {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: "", whatsapp: "", pix_key: "" });
+  const [changingPw, setChangingPw] = useState(false);
+  const [savingPw, setSavingPw] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+  const [pwForm, setPwForm] = useState({ newPassword: "", confirmPassword: "" });
+
+  const startEdit = () => {
+    setForm({
+      name: profile?.name || "",
+      whatsapp: profile?.whatsapp || "",
+      pix_key: profile?.pix_key || "",
+    });
+    setEditing(true);
+  };
+
+  const saveProfile = async () => {
+    if (!user) return;
+    setSaving(true);
+    const { error } = await supabase.from("profiles").update({
+      name: form.name,
+      whatsapp: form.whatsapp,
+      pix_key: form.pix_key,
+    }).eq("user_id", user.id);
+    setSaving(false);
+    if (error) { toast.error("Erro ao salvar perfil"); return; }
+    toast.success("Perfil atualizado!");
+    setEditing(false);
+  };
+
+  const changePassword = async () => {
+    if (pwForm.newPassword.length < 6) { toast.error("Senha deve ter no mínimo 6 caracteres"); return; }
+    if (pwForm.newPassword !== pwForm.confirmPassword) { toast.error("Senhas não conferem"); return; }
+    setSavingPw(true);
+    const { error } = await supabase.auth.updateUser({ password: pwForm.newPassword });
+    setSavingPw(false);
+    if (error) { toast.error("Erro ao alterar senha"); return; }
+    toast.success("Senha alterada com sucesso!");
+    setChangingPw(false);
+    setPwForm({ newPassword: "", confirmPassword: "" });
+  };
 
   return (
     <div className="space-y-6">
@@ -417,8 +463,8 @@ const PerfilPage = () => {
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div className="flex items-center gap-4 mb-4">
-            <ProfilePhotoUpload userId={user!.id} avatarUrl={avatarUrl ?? profile?.avatar_url ?? null} onUpdate={setAvatarUrl} size="lg" />
-            <div><p className="font-bold">{profile?.name || "Profissional"}</p><p className="text-xs text-muted-foreground">Passe o mouse e clique na câmera para alterar a foto</p></div>
+            {user && <ProfilePhotoUpload userId={user.id} avatarUrl={avatarUrl ?? profile?.avatar_url ?? null} onUpdate={setAvatarUrl} size="lg" />}
+            <div><p className="font-bold">{profile?.name || "Profissional"}</p><p className="text-xs text-muted-foreground">Clique na foto para alterar</p></div>
           </div>
           {editing ? (
             <>
