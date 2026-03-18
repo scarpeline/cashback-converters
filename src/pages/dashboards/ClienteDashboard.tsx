@@ -20,6 +20,7 @@ import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 import { ProfilePhotoUpload } from "@/components/shared/ProfilePhotoUpload";
 import { AIChat } from "@/components/AIChat";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 const ClienteDashboard = () => {
   const { i18n, t } = useTranslation();
@@ -86,7 +87,7 @@ const ClienteDashboard = () => {
           <div className="flex-1 lg:flex-none" />
           <div className="flex items-center gap-4">
             <LanguageSelector />
-            <Link to={`${basePath}/notificacoes`}><Button variant="ghost" size="icon"><Bell className="w-5 h-5" /></Button></Link>
+            <NotificationBell />
           </div>
         </header>
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
