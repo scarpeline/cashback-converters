@@ -141,6 +141,16 @@ const ContabeisHubAfiliadoPage = () => {
   );
 };
 
+const AFFILIATE_LEVELS = [
+  { min: 0,   max: 50,   label: "Explorador",              color: "bg-slate-100 text-slate-700" },
+  { min: 51,  max: 100,  label: "Visionário",              color: "bg-blue-100 text-blue-700" },
+  { min: 101, max: 200,  label: "Estrategista Visionário", color: "bg-purple-100 text-purple-700" },
+  { min: 201, max: 400,  label: "Líder Supremo",           color: "bg-orange-100 text-orange-700" },
+  { min: 401, max: 700,  label: "Imperador Líder",         color: "bg-red-100 text-red-700" },
+  { min: 701, max: 9999, label: "Sócio PLM",               color: "bg-yellow-100 text-yellow-800" },
+];
+function getLevel(n: number) { return AFFILIATE_LEVELS.find(l => n >= l.min && n <= l.max) || AFFILIATE_LEVELS[0]; }
+
 const DashboardHome = () => {
   const { user } = useAuth();
   const [affiliate, setAffiliate] = useState<any>(null);
@@ -152,7 +162,13 @@ const DashboardHome = () => {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="font-display text-2xl font-bold">Dashboard do Afiliado</h1><p className="text-muted-foreground">Acompanhe seus ganhos e indicações</p></div>
+      <div><h1 className="font-display text-2xl font-bold">Dashboard do Afiliado</h1><p className="text-muted-foreground">Acompanhe seus ganhos e indicações</p>
+        {affiliate && (
+          <span className={`inline-flex items-center gap-1 mt-2 px-3 py-1 rounded-full text-sm font-medium ${getLevel(affiliate.total_referrals || 0).color}`}>
+            ⭐ {getLevel(affiliate.total_referrals || 0).label} • {affiliate.total_referrals || 0} indicações
+          </span>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-gradient-card border-primary/20">
           <CardHeader className="pb-2"><CardDescription>Ganhos Totais</CardDescription><CardTitle className="text-2xl text-gradient-gold">R$ {Number(affiliate?.total_earnings || 0).toFixed(2)}</CardTitle></CardHeader>
@@ -176,6 +192,25 @@ const DashboardHome = () => {
           <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
             <div><p className="font-medium">Você precisa de 3 empresas ativas</p><p className="text-sm text-muted-foreground">para liberar saques</p></div>
             <Button variant="gold" disabled={(affiliate?.active_referrals || 0) < 3}>Solicitar Saque</Button>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader><CardTitle>Progressão de Nível</CardTitle></CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {AFFILIATE_LEVELS.map(l => {
+              const total = affiliate?.total_referrals || 0;
+              const isActive = total >= l.min && total <= l.max;
+              const isDone = total > l.max;
+              return (
+                <div key={l.label} className={`flex items-center gap-3 p-2 rounded-lg ${isActive ? 'bg-primary/10 border border-primary/30' : ''}`}>
+                  <span className={`w-3 h-3 rounded-full ${isDone ? 'bg-success' : isActive ? 'bg-primary' : 'bg-muted-foreground/30'}`} />
+                  <span className={`text-sm font-medium ${isActive ? 'text-primary' : isDone ? 'text-success' : 'text-muted-foreground'}`}>{l.label}</span>
+                  <span className="text-xs text-muted-foreground ml-auto">{l.min}–{l.max === 9999 ? '1000+' : l.max} indicações</span>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
