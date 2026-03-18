@@ -2,7 +2,7 @@
 // Integração com estrutura existente
 
 import { useState } from 'react';
-import { usePartnerStats } from '@/hooks/usePartners';
+import { usePartnerStats, usePartners } from '@/hooks/usePartners';
 import PartnerList from '@/components/partners/PartnerList';
 import PartnerForm from '@/components/partners/PartnerForm';
 import { Button } from '@/components/ui/button';
@@ -20,12 +20,18 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { exportPartnersToCSV } from '@/lib/csvExporter';
 
 export default function PartnersPage() {
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   
   const { stats, isLoading: statsLoading } = usePartnerStats();
+  const { data: allPartners = [] } = usePartners();
+
+  const handleExport = () => {
+    exportPartnersToCSV(allPartners);
+  };
 
   return (
     <div className="space-y-6">
@@ -39,7 +45,7 @@ export default function PartnersPage() {
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="w-4 h-4 mr-2" />
             Exportar
           </Button>
@@ -192,15 +198,15 @@ export default function PartnersPage() {
         </TabsContent>
 
         <TabsContent value="afiliado" className="space-y-4">
-          <PartnerList showFilters={false} />
+          <PartnerList showFilters={false} filterByType="afiliado" />
         </TabsContent>
 
         <TabsContent value="franqueado" className="space-y-4">
-          <PartnerList showFilters={false} />
+          <PartnerList showFilters={false} filterByType="franqueado" />
         </TabsContent>
 
         <TabsContent value="diretor" className="space-y-4">
-          <PartnerList showFilters={false} />
+          <PartnerList showFilters={false} filterByType="diretor" />
         </TabsContent>
 
         <TabsContent value="stats" className="space-y-4">

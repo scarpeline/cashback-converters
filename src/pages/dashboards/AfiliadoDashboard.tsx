@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
   LayoutDashboard, DollarSign, Users, Link as LinkIcon, History, User, LogOut,
-  Menu, X, Copy, TrendingUp, Wallet, Loader2, CreditCard, Building2, FileText
+  Menu, X, TrendingUp, Wallet, Loader2, CreditCard, FileText
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -20,6 +20,10 @@ import { ChatContadorPanel } from "@/components/contabilidade/ChatContadorPanel"
 import { PedidoContabilPanel } from "@/components/contabilidade/PedidoContabilPanel";
 import { AssinaturaContabilPanel } from "@/components/contabilidade/AssinaturaContabilPanel";
 import UniversalChatPanel from "@/components/shared/UniversalChatPanel";
+import CommissionsPanel from "@/components/partners/CommissionsPanel";
+import ReferralsPanel from "@/components/partners/ReferralsPanel";
+import ReferralCodeDisplay from "@/components/partners/ReferralCodeDisplay";
+import { usePartnerByUserId } from "@/hooks/usePartners";
 
 const AfiliadoDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -218,25 +222,43 @@ const DashboardHome = () => {
   );
 };
 
-const IndicadosPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Meus Indicados</h1>
-    <Card><CardContent className="py-12 text-center"><Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhuma empresa indicada ainda.</p><p className="text-sm text-muted-foreground mt-2">Compartilhe seu link e comece a ganhar!</p></CardContent></Card>
-  </div>
-);
+const IndicadosPage = () => {
+  const { user } = useAuth();
+  const { data: partner } = usePartnerByUserId(user?.id || '');
 
-const ComissoesPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Minhas Comissões</h1>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <Card className="bg-gradient-card border-primary/20"><CardHeader><CardDescription>Total de Comissões</CardDescription><CardTitle className="text-3xl text-gradient-gold">R$ 0,00</CardTitle></CardHeader></Card>
-      <Card><CardHeader><CardDescription>Pendente de Pagamento</CardDescription><CardTitle className="text-2xl">R$ 0,00</CardTitle></CardHeader></Card>
+  if (!partner) return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Meus Indicados</h1>
+      <Card><CardContent className="py-12 text-center"><Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Você ainda não está cadastrado como parceiro.</p></CardContent></Card>
     </div>
-    <Card><CardHeader><CardTitle>Histórico de Comissões</CardTitle></CardHeader>
-      <CardContent className="text-center py-8"><DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhuma comissão registrada.</p></CardContent>
-    </Card>
-  </div>
-);
+  );
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Meus Indicados</h1>
+      <ReferralsPanel partnerId={partner.id} />
+    </div>
+  );
+};
+
+const ComissoesPage = () => {
+  const { user } = useAuth();
+  const { data: partner } = usePartnerByUserId(user?.id || '');
+
+  if (!partner) return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Minhas Comissões</h1>
+      <Card><CardContent className="py-12 text-center"><DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Você ainda não está cadastrado como parceiro.</p></CardContent></Card>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Minhas Comissões</h1>
+      <CommissionsPanel partnerId={partner.id} />
+    </div>
+  );
+};
 
 // ============ CONTA BANCÁRIA ============
 const ContaBancariaPage = () => {
@@ -356,37 +378,19 @@ const HistoricoPage = () => (
 
 const LinkPage = () => {
   const { user } = useAuth();
-  const [affiliate, setAffiliate] = useState<any>(null);
+  const { data: partner } = usePartnerByUserId(user?.id || '');
 
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("affiliates").select("referral_code").eq("user_id", user.id).maybeSingle().then(({ data }) => setAffiliate(data));
-  }, [user]);
-
-  const referralCode = affiliate?.referral_code || "MEUCOD01";
-  const referralLink = `${window.location.origin}/cadastro?ref=${referralCode}`;
-
-  const copyLink = () => { navigator.clipboard.writeText(referralLink); toast.success("Link copiado!"); };
+  if (!partner) return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Meu Link de Indicação</h1>
+      <Card><CardContent className="py-12 text-center"><LinkIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Você ainda não está cadastrado como parceiro.</p></CardContent></Card>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Meu Link de Indicação</h1>
-      <Card>
-        <CardHeader><CardTitle>Compartilhe seu link</CardTitle><CardDescription>Quando alguém se cadastrar pelo seu link, você ganha comissões automaticamente.</CardDescription></CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <code className="flex-1 p-3 bg-muted rounded-lg text-sm overflow-x-auto">{referralLink}</code>
-            <Button variant="gold" onClick={copyLink}><Copy className="w-4 h-4 mr-2" />Copiar</Button>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => { const url = `https://wa.me/?text=${encodeURIComponent(`Conheça o sistema: ${referralLink}`)}`; window.open(url, '_blank'); }}>Compartilhar WhatsApp</Button>
-            <Button variant="outline" className="flex-1" onClick={() => { if (navigator.share) navigator.share({ title: "SalãoCashBack", url: referralLink }); else copyLink(); }}>Compartilhar Redes</Button>
-          </div>
-        </CardContent>
-      </Card>
-      <Card><CardHeader><CardTitle>Código de Referência</CardTitle></CardHeader>
-        <CardContent><div className="text-center p-6 bg-muted rounded-lg"><p className="text-3xl font-bold tracking-wider">{referralCode}</p></div></CardContent>
-      </Card>
+      <ReferralCodeDisplay referralCode={partner.referral_code || ''} partnerName={partner.users?.name || 'Afiliado'} />
     </div>
   );
 };

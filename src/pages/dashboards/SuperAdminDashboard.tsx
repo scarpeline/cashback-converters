@@ -76,6 +76,7 @@ const IntegrationSettingsPage = lazy(
   () => import("@/pages/admin/IntegrationSettingsPage"),
 );
 const PartnersPage = lazy(() => import("@/pages/super-admin/PartnersPage"));
+const CommissionsPage = lazy(() => import("@/pages/admin/CommissionsPage"));
 
 const PageFallback = () => (
   <div className="flex items-center justify-center min-h-[400px]">
@@ -95,6 +96,7 @@ const SuperAdminDashboard = () => {
       { name: "Dashboard", href: basePath, icon: LayoutDashboard },
       { name: "Usuários", href: `${basePath}/usuarios`, icon: Users },
       { name: "Parceiros", href: `${basePath}/parceiros`, icon: Users },
+      { name: "Comissões Parceiros", href: `${basePath}/comissoes`, icon: DollarSign },
       { name: "Barbearias", href: `${basePath}/barbearias`, icon: Building2 },
       { name: "Produtos", href: `${basePath}/produtos`, icon: Package },
       { name: "Afiliados", href: `${basePath}/afiliados`, icon: Users },
@@ -232,6 +234,11 @@ const SuperAdminDashboard = () => {
             <Route path="parceiros" element={
               <Suspense fallback={<PageFallback />}>
                 <PartnersPage />
+              </Suspense>
+            } />
+            <Route path="comissoes" element={
+              <Suspense fallback={<PageFallback />}>
+                <CommissionsPage />
               </Suspense>
             } />
             <Route path="barbearias" element={<BarbeariasPage />} />
