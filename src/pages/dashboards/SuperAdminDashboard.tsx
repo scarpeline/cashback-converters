@@ -64,6 +64,7 @@ import { RealTimeMetricsPanel } from "@/components/admin/RealTimeMetricsPanel";
 const IntegrationSettingsPage = lazy(
   () => import("@/pages/admin/IntegrationSettingsPage"),
 );
+const PartnersPage = lazy(() => import("@/pages/super-admin/PartnersPage"));
 
 const PageFallback = () => (
   <div className="flex items-center justify-center min-h-[400px]">
@@ -82,6 +83,7 @@ const SuperAdminDashboard = () => {
     () => [
       { name: "Dashboard", href: basePath, icon: LayoutDashboard },
       { name: "Usuários", href: `${basePath}/usuarios`, icon: Users },
+      { name: "Parceiros", href: `${basePath}/parceiros`, icon: Users },
       { name: "Barbearias", href: `${basePath}/barbearias`, icon: Building2 },
       { name: "Afiliados", href: `${basePath}/afiliados`, icon: Users },
       { name: "Contadores", href: `${basePath}/contadores`, icon: Calculator },
@@ -213,6 +215,11 @@ const SuperAdminDashboard = () => {
           <Routes>
             <Route index element={<DashboardHome />} />
             <Route path="usuarios" element={<UsuariosPage />} />
+            <Route path="parceiros" element={
+              <Suspense fallback={<PageFallback />}>
+                <PartnersPage />
+              </Suspense>
+            } />
             <Route path="barbearias" element={<BarbeariasPage />} />
             <Route path="afiliados" element={<AfiliadosPage />} />
             <Route path="contadores" element={<ContadoresPage />} />

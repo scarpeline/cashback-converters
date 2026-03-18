@@ -14,6 +14,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { Loader2 } from "lucide-react";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 
 // Lazy pages
 const Index = lazy(() => import("./pages/Index"));
@@ -253,7 +254,9 @@ const App = () => (
       <BrowserRouter>
         <ErrorBoundary>
         <AuthProvider>
-          <AppRoutes />
+          <SubscriptionProvider>
+            <AppRoutes />
+          </SubscriptionProvider>
         </AuthProvider>
       </ErrorBoundary>
       </BrowserRouter>

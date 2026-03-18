@@ -94,6 +94,8 @@ import {
 } from "@/lib/nfc/payment";
 import { uploadImage } from "@/lib/upload-image";
 import { ProfilePhotoUpload } from "@/components/shared/ProfilePhotoUpload";
+import { SubscriptionPlans } from "@/components/subscription/SubscriptionPlans";
+import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 
 const DonoDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -122,7 +124,8 @@ const DonoDashboard = () => {
     { name: "Profissionais", href: `${basePath}/profissionais`, icon: Users },
     { name: "Serviços", href: `${basePath}/servicos`, icon: Scissors },
     { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
-    { name: "Receber Dívida", href: `${basePath}/dividas`, icon: Wallet },
+    { name: "Meu Plano", href: `${basePath}/meu-plano`, icon: CreditCard },
+    { name: "Receber Pagamento", href: `${basePath}/dividas`, icon: Wallet },
     { name: "Afiliados", href: `${basePath}/afiliados`, icon: UserCheck },
     { name: "Estoque", href: `${basePath}/estoque`, icon: Package },
     { name: "Vitrine", href: `${basePath}/vitrine`, icon: Image },
@@ -270,6 +273,12 @@ const DonoDashboard = () => {
             <Route path="profissionais" element={<ProfissionaisPage />} />
             <Route path="servicos" element={<ServicosPage />} />
             <Route path="financeiro" element={<FinanceiroPage />} />
+            <Route path="meu-plano" element={
+              <div className="space-y-6">
+                <SubscriptionStatus />
+                <SubscriptionPlans />
+              </div>
+            } />
             <Route path="dividas" element={<DividasPage />} />
             <Route path="afiliados" element={<AfiliadosBarbeariaPage />} />
             <Route path="estoque" element={<EstoquePage />} />
