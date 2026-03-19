@@ -21,6 +21,7 @@ import { AccountingTaxesPanel } from "@/components/shared/AccountingTaxesPanel";
 import { AccountingMessagesPanel } from "@/components/shared/AccountingMessagesPanel";
 import { FiscalAutomationPanel } from "@/components/fiscal/FiscalAutomationPanel";
 import { AutomationSettingsPanel } from "@/components/automation/AutomationSettingsPanel";
+import { SmartMessagingPanel } from "@/components/automation/SmartMessagingPanel";
 import { AgendaIntelligencePanel } from "@/components/waitlist/AgendaIntelligencePanel";
 import InteligenciaAgendaPage from "@/pages/dashboards/InteligenciaAgendaPage";
 import MarketingEmpresarial from "@/components/marketing/MarketingEmpresarial";
@@ -3329,6 +3330,7 @@ const NotificacoesDonoPage = () => (
       <h1 className="font-display text-2xl font-bold">Automação & Notificações</h1>
       <p className="text-muted-foreground text-sm">Configure lembretes e mensagens automáticas</p>
     </div>
+    <SmartMessagingPanel />
     <AutomationSettingsPanel />
   </div>
 );
