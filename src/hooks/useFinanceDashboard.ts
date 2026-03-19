@@ -184,7 +184,7 @@ export function useCommissions() {
 
       if (error) throw error;
 
-      setCommissions(data || []);
+      setCommissions((data || []) as Commission[]);
     } catch (error) {
       console.error('Erro ao carregar comissões:', error);
     } finally {
