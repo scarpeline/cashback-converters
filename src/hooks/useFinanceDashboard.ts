@@ -75,7 +75,7 @@ export function useFinanceSummary(period: '7d' | '30d' | '90d' | '12m' = '30d') 
       }
 
       // Buscar pagamentos
-      const { data: pagamentos, error: pagError } = await supabase
+      const { data: pagamentos, error: pagError } = await (supabase as any)
         .from('payments')
         .select('*')
         .gte('created_at', dataInicio.toISOString())
@@ -95,7 +95,7 @@ export function useFinanceSummary(period: '7d' | '30d' | '90d' | '12m' = '30d') 
         .eq('status', 'pago');
 
       // Buscar pagamentos pendentes
-      const { data: pendentes, error: pendError } = await supabase
+      const { data: pendentes, error: pendError } = await (supabase as any)
         .from('payments')
         .select('*')
         .eq('status', 'pending');
@@ -142,7 +142,7 @@ export function useTransactions() {
     setLoading(true);
     
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('payments')
         .select('*')
         .order('created_at', { ascending: false })

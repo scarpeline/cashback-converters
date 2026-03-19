@@ -189,7 +189,7 @@ export function useWhatsAppStats() {
 
   const loadStats = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('whatsapp_messages')
         .select('status');
 

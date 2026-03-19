@@ -72,7 +72,7 @@ export class CRMServiceSuggestionService {
     triggerServiceId: string
   ): Promise<ServiceSuggestion[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .rpc('generate_service_suggestions', {
           p_client_user_id: clientId,
           p_barbershop_id: barbershopId,
@@ -96,7 +96,7 @@ export class CRMServiceSuggestionService {
    */
   static async registerServiceHistory(appointmentId: string): Promise<boolean> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .rpc('register_service_history', {
           p_appointment_id: appointmentId
         });
@@ -118,7 +118,7 @@ export class CRMServiceSuggestionService {
    */
   static async getSuggestionSettings(barbershopId: string): Promise<ServiceSuggestionSettings | null> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('service_suggestion_settings')
         .select('*')
         .eq('barbershop_id', barbershopId)
@@ -144,7 +144,7 @@ export class CRMServiceSuggestionService {
     settings: Partial<ServiceSuggestionSettings>
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('service_suggestion_settings')
         .upsert({
           barbershop_id: barbershopId,
@@ -169,7 +169,7 @@ export class CRMServiceSuggestionService {
    */
   static async getSuggestionRules(barbershopId: string): Promise<ServiceSuggestionRule[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('service_suggestion_rules')
         .select(`
           *,
@@ -199,7 +199,7 @@ export class CRMServiceSuggestionService {
     rule: Omit<ServiceSuggestionRule, 'id'>
   ): Promise<{ success: boolean; error?: string; rule?: ServiceSuggestionRule }> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('service_suggestion_rules')
         .insert(rule)
         .select()
@@ -225,7 +225,7 @@ export class CRMServiceSuggestionService {
     updates: Partial<ServiceSuggestionRule>
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('service_suggestion_rules')
         .update({
           ...updates,
@@ -254,7 +254,7 @@ export class CRMServiceSuggestionService {
     limit: number = 50
   ): Promise<ClientServiceHistory[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('client_service_history')
         .select(`
           *,
@@ -290,7 +290,7 @@ export class CRMServiceSuggestionService {
     suggestedServices: ServiceSuggestion[]
   ): Promise<{ success: boolean; logId?: string; error?: string }> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('service_suggestion_logs')
         .insert({
           barbershop_id: barbershopId,
@@ -327,7 +327,7 @@ export class CRMServiceSuggestionService {
     }
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .rpc('record_suggestion_response', {
           p_log_id: logId,
           p_response: response
@@ -350,7 +350,7 @@ export class CRMServiceSuggestionService {
    */
   static async getSuggestionStats(barbershopId: string): Promise<any[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('service_suggestion_stats')
         .select(`
           *,
@@ -380,7 +380,7 @@ export class CRMServiceSuggestionService {
     limit: number = 100
   ): Promise<ServiceSuggestionLog[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('service_suggestion_logs')
         .select(`
           *,
@@ -419,7 +419,7 @@ export class CRMServiceSuggestionService {
     visitFrequency: 'rare' | 'occasional' | 'frequent';
   }> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('client_service_history')
         .select(`
           service_price,

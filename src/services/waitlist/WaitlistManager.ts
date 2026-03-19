@@ -104,7 +104,7 @@ class WaitlistManager {
       }
 
       // Verificar se cliente já está na fila para este dia
-      const existingEntry = await supabase
+      const existingEntry = await (supabase as any)
         .from("waitlist_queue")
         .select("id")
         .eq("barbershop_id", barbershopId)
@@ -118,7 +118,7 @@ class WaitlistManager {
       }
 
       // Inserir na fila
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("waitlist_queue")
         .insert({
           barbershop_id: barbershopId,
@@ -155,7 +155,7 @@ class WaitlistManager {
    */
   async removeFromWaitlist(waitlistId: string, clientId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("waitlist_queue")
         .update({ status: "cancelled" })
         .eq("id", waitlistId)
@@ -190,7 +190,7 @@ class WaitlistManager {
       }
 
       // Buscar próximo cliente elegível
-      const { data: clients } = await supabase.rpc("find_next_waitlist_client", {
+      const { data: clients } = await (supabase as any).rpc("find_next_waitlist_client", {
         p_barbershop_id: barbershopId,
         p_available_date: availableDate,
         p_available_time: availableTime,
@@ -208,7 +208,7 @@ class WaitlistManager {
       const deadline = new Date();
       deadline.setMinutes(deadline.getMinutes() + settings.waitlist_response_minutes);
 
-      const { error: offerError } = await supabase
+      const { error: offerError } = await (supabase as any)
         .from("waitlist_queue")
         .update({
           status: "offered",
@@ -223,7 +223,7 @@ class WaitlistManager {
       }
 
       // Registrar histórico da oferta
-      await supabase
+      await (supabase as any)
         .from("waitlist_offer_history")
         .insert({
           waitlist_id: nextClient.waitlist_id,
@@ -251,7 +251,7 @@ class WaitlistManager {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       // Atualizar status na fila
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from("waitlist_queue")
         .update({
           status: response,
@@ -266,7 +266,7 @@ class WaitlistManager {
       }
 
       // Atualizar histórico
-      await supabase
+      await (supabase as any)
         .from("waitlist_offer_history")
         .update({
           response,
@@ -302,7 +302,7 @@ class WaitlistManager {
       const now = new Date().toISOString();
 
       // Buscar ofertas expiradas
-      const { data: expiredOffers } = await supabase
+      const { data: expiredOffers } = await (supabase as any)
         .from("waitlist_queue")
         .select("id, barbershop_id")
         .eq("status", "offered")
@@ -316,7 +316,7 @@ class WaitlistManager {
 
       for (const offer of expiredOffers) {
         // Marcar como expirado
-        await supabase
+        await (supabase as any)
           .from("waitlist_queue")
           .update({
             status: "expired",
@@ -325,7 +325,7 @@ class WaitlistManager {
           .eq("id", offer.id);
 
         // Atualizar histórico
-        await supabase
+        await (supabase as any)
           .from("waitlist_offer_history")
           .update({
             response: "expired",
@@ -364,7 +364,7 @@ class WaitlistManager {
       }
 
       // Usar função do banco para calcular preço
-      const { data, error } = await supabase.rpc("calculate_dynamic_price", {
+      const { data, error } = await (supabase as any).rpc("calculate_dynamic_price", {
         p_barbershop_id: barbershopId,
         p_service_id: serviceId,
         p_date: date,
@@ -392,7 +392,7 @@ class WaitlistManager {
    */
   async getAgendaSettings(barbershopId: string): Promise<AgendaIntelligenceSettings | null> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("agenda_intelligence_settings")
         .select("*")
         .eq("barbershop_id", barbershopId)
@@ -418,7 +418,7 @@ class WaitlistManager {
     settings: Partial<AgendaIntelligenceSettings>
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("agenda_intelligence_settings")
         .update(settings)
         .eq("barbershop_id", barbershopId);
@@ -440,7 +440,7 @@ class WaitlistManager {
    */
   async getDynamicPricingRules(barbershopId: string): Promise<DynamicPricingRule[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("dynamic_pricing")
         .select("*")
         .eq("barbershop_id", barbershopId)
@@ -465,7 +465,7 @@ class WaitlistManager {
     rule: Partial<DynamicPricingRule> & { barbershop_id: string }
   ): Promise<{ success: boolean; ruleId?: string; error?: string }> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("dynamic_pricing")
         .upsert(rule)
         .select("id")
@@ -488,7 +488,7 @@ class WaitlistManager {
    */
   async deleteDynamicPricingRule(ruleId: string, barbershopId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("dynamic_pricing")
         .delete()
         .eq("id", ruleId)
@@ -559,7 +559,7 @@ class WaitlistManager {
    */
   async getClientOfferHistory(clientId: string): Promise<WaitlistOffer[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("waitlist_offer_history")
         .select(`
           *,
@@ -608,7 +608,7 @@ class WaitlistManager {
     professionalId: string | null
   ): Promise<void> {
     // Buscar dados do cliente
-    const { data: waitlist } = await supabase
+    const { data: waitlist } = await (supabase as any)
       .from("waitlist_queue")
       .select("client_id, services:services(name)")
       .eq("id", waitlistId)
@@ -641,7 +641,7 @@ class WaitlistManager {
 
   private async processNextInLine(waitlistId: string): Promise<void> {
     // Buscar dados da oferta atual
-    const { data: currentOffer } = await supabase
+    const { data: currentOffer } = await (supabase as any)
       .from("waitlist_queue")
       .select("barbershop_id, desired_date, desired_time, professional_preferred_id, service_id")
       .eq("id", waitlistId)

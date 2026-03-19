@@ -66,7 +66,7 @@ async function sugerirHorario(cliente: any): Promise<string> {
     const amanha = new Date();
     amanha.setDate(amanha.getDate() + 1);
     
-    const { data: horarios, error } = await supabase
+    const { data: horarios, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .gte('scheduled_at', hoje.toISOString())
@@ -105,7 +105,7 @@ async function sugerirHorario(cliente: any): Promise<string> {
  */
 async function listarServicos(): Promise<string> {
   try {
-    const { data: servicos, error } = await supabase
+    const { data: servicos, error } = await (supabase as any)
       .from('services')
       .select('*')
       .eq('is_active', true)
@@ -146,7 +146,7 @@ async function listarServicos(): Promise<string> {
 async function criarAgendamento(cliente: any): Promise<{ message: string; data?: any }> {
   try {
     // Primeiro, precisamos de uma barbearia ativa
-    const { data: barbearias, error: barbError } = await supabase
+    const { data: barbearias, error: barbError } = await (supabase as any)
       .from('barbershops')
       .select('id, name')
       .eq('is_active', true)
@@ -161,7 +161,7 @@ async function criarAgendamento(cliente: any): Promise<{ message: string; data?:
     const barbearia = barbearias[0];
     
     // Buscar profissional disponível
-    const { data: profissionais, error: profError } = await supabase
+    const { data: profissionais, error: profError } = await (supabase as any)
       .from('professionals')
       .select('id, name')
       .eq('barbershop_id', barbearia.id)
@@ -177,7 +177,7 @@ async function criarAgendamento(cliente: any): Promise<{ message: string; data?:
     const profissional = profissionais[0];
     
     // Buscar serviço básico
-    const { data: servicos, error: servError } = await supabase
+    const { data: servicos, error: servError } = await (supabase as any)
       .from('services')
       .select('id, name, price')
       .eq('barbershop_id', barbearia.id)
@@ -196,7 +196,7 @@ async function criarAgendamento(cliente: any): Promise<{ message: string; data?:
     const dataAgendamento = new Date();
     dataAgendamento.setHours(dataAgendamento.getHours() + 1);
     
-    const { data: agendamento, error: agendError } = await supabase
+    const { data: agendamento, error: agendError } = await (supabase as any)
       .from('appointments')
       .insert([{
         barbershop_id: barbearia.id,
@@ -248,7 +248,7 @@ export async function analisarPerfilCliente(clienteId: string): Promise<{
   diasDesdeUltimaVisita: number;
 }> {
   try {
-    const { data: historico, error } = await supabase
+    const { data: historico, error } = await (supabase as any)
       .from('appointments')
       .select('*, services(name, price)')
       .eq('client_user_id', clienteId)
