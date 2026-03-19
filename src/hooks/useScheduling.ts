@@ -217,7 +217,8 @@ export function useTodayAppointmentsForBarbershop(barbershopId: string) {
  * Hook para agendamento inteligente
  */
 export function useSmartScheduling() {
-  const [suggestions, setSuggestions] = useState<SchedulingSuggestion[]>([]);
+  interface SmartSuggestion { time: string; reason: string; confidence: number; }
+  const [suggestions, setSuggestions] = useState<SmartSuggestion[]>([]);
 
   const generateSuggestions = useCallback(async (
     barbershopId: string,
@@ -225,11 +226,8 @@ export function useSmartScheduling() {
     date: Date
   ) => {
     try {
-      // Buscar horários disponíveis
       const slots = await getAvailableSlots(barbershopId, professionalId, date);
-
-      // Gerar sugestões baseadas em padrões
-      const sugestoes: SchedulingSuggestion[] = [];
+      const sugestoes: SmartSuggestion[] = [];
 
       // Sugerir horários de maior demanda
       if (slots.length > 0) {

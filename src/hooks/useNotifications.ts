@@ -149,7 +149,8 @@ export function useAppointmentNotification() {
  */
 export function usePaymentNotification() {
   return useMutation({
-    mutationFn: sendPaymentNotification,
+    mutationFn: (params: { userId: string; amount: number; status: 'pending' | 'success' | 'failed'; barbershopName: string }) =>
+      sendPaymentNotification(params.userId, params.amount, params.status, params.barbershopName),
   });
 }
 
