@@ -39,7 +39,7 @@ export async function getAvailableSlots(
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data: appointments, error } = await supabase
+    const { data: appointments, error } = await (supabase as any)
       .from('appointments')
       .select('scheduled_at, status')
       .eq('barbershop_id', barbershopId)
@@ -118,7 +118,7 @@ export async function createAppointment(
   notes?: string
 ): Promise<Appointment | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments')
       .insert({
         barbershop_id: barbershopId,
@@ -154,7 +154,7 @@ export async function updateAppointmentStatus(
   status: Appointment['status']
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('appointments')
       .update({ status })
       .eq('id', appointmentId);
@@ -186,7 +186,7 @@ export async function cancelAppointment(
  */
 export async function getClientAppointments(clientId: string, limit: number = 50): Promise<Appointment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .eq('client_user_id', clientId)
@@ -214,7 +214,7 @@ export async function getBarbershopAppointments(
   endDate: Date
 ): Promise<Appointment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -243,7 +243,7 @@ export async function getProfessionalAppointments(
   endDate: Date
 ): Promise<Appointment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .eq('professional_id', professionalId)
@@ -275,7 +275,7 @@ export async function getPendingAppointmentsToday(): Promise<Appointment[]> {
     const endOfDay = new Date(hoje);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .eq('status', 'scheduled')
@@ -307,7 +307,7 @@ export async function getAppointmentsToday(): Promise<Appointment[]> {
     const endOfDay = new Date(hoje);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .gte('scheduled_at', startOfDay.toISOString())
@@ -338,7 +338,7 @@ export async function getTodayAppointmentsForClient(clientId: string): Promise<A
     const endOfDay = new Date(hoje);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .eq('client_user_id', clientId)
@@ -370,7 +370,7 @@ export async function getTodayAppointmentsForProfessional(professionalId: string
     const endOfDay = new Date(hoje);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .eq('professional_id', professionalId)
@@ -402,7 +402,7 @@ export async function getTodayAppointmentsForBarbershop(barbershopId: string): P
     const endOfDay = new Date(hoje);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -437,7 +437,7 @@ export async function getTodayAppointmentsForClientAndProfessional(
     const endOfDay = new Date(hoje);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .eq('client_user_id', clientId)
@@ -473,7 +473,7 @@ export async function getTodayAppointmentsForClientAndBarbershop(
     const endOfDay = new Date(hoje);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .eq('client_user_id', clientId)
@@ -509,7 +509,7 @@ export async function getTodayAppointmentsForProfessionalAndBarbershop(
     const endOfDay = new Date(hoje);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .eq('professional_id', professionalId)
@@ -546,7 +546,7 @@ export async function getTodayAppointmentsForAll(
     const endOfDay = new Date(hoje);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .eq('client_user_id', clientId)

@@ -69,9 +69,9 @@ export function useCreateNotification() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createNotification,
+    mutationFn: (params: { userId: string; title: string; message: string; type?: string; priority?: string; data?: any }) => 
+      createNotification(params.userId, params.title, params.message, params.type as any, params.priority as any, params.data),
     onSuccess: (_, variables) => {
-      // Invalidar queries
       queryClient.invalidateQueries({ queryKey: notificationKeys.list(variables.userId) });
       queryClient.invalidateQueries({ queryKey: notificationKeys.unread(variables.userId) });
       queryClient.invalidateQueries({ queryKey: notificationKeys.stats(variables.userId) });
@@ -129,7 +129,8 @@ export function useDeleteNotification() {
  */
 export function useCommissionNotification() {
   return useMutation({
-    mutationFn: sendCommissionNotification,
+    mutationFn: (params: { userId: string; amount: number; type: 'adesao' | 'recorrente' }) =>
+      sendCommissionNotification(params.userId, params.amount, params.type),
   });
 }
 
@@ -138,7 +139,8 @@ export function useCommissionNotification() {
  */
 export function useAppointmentNotification() {
   return useMutation({
-    mutationFn: sendAppointmentNotification,
+    mutationFn: (params: { userId: string; barbershopName: string; service: string; date: Date; time: string; type?: string }) =>
+      sendAppointmentNotification(params.userId, params.barbershopName, params.service, params.date, params.time, params.type as any),
   });
 }
 
@@ -147,7 +149,8 @@ export function useAppointmentNotification() {
  */
 export function usePaymentNotification() {
   return useMutation({
-    mutationFn: sendPaymentNotification,
+    mutationFn: (params: { userId: string; amount: number; status: 'pending' | 'success' | 'failed'; barbershopName: string }) =>
+      sendPaymentNotification(params.userId, params.amount, params.status, params.barbershopName),
   });
 }
 

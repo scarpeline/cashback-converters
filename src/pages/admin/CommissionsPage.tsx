@@ -9,7 +9,7 @@ export default function CommissionsPage() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['commission-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('partner_commissions')
         .select('status, amount');
 

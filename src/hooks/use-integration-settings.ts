@@ -36,7 +36,7 @@ export function useIntegrationSettings() {
     setLoading(true);
     try {
       // Carregar ambiente
-      const { data: envData, error: envError } = await supabase
+      const { data: envData, error: envError } = await (supabase as any)
         .from('app_environment')
         .select('*')
         .limit(1)
@@ -52,7 +52,7 @@ export function useIntegrationSettings() {
       }
 
       // Carregar settings
-      const { data: settingsData, error: settingsError } = await supabase
+      const { data: settingsData, error: settingsError } = await (supabase as any)
         .from('integration_settings')
         .select('*')
         .order('service_name');
@@ -78,7 +78,7 @@ export function useIntegrationSettings() {
   // Alternar ambiente global
   const switchEnvironment = async (env: Environment) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('app_environment')
         .update({ current_env: env, updated_at: new Date().toISOString() })
         .neq('id', '00000000-0000-0000-0000-000000000000');
@@ -142,14 +142,14 @@ export function useIntegrationSettings() {
       };
 
       if (existing) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('integration_settings')
           .update(payload)
           .eq('id', existing.id);
 
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('integration_settings')
           .insert(payload);
 
@@ -178,7 +178,7 @@ export function useIntegrationSettings() {
   // Toggle ativo/inativo
   const toggleServiceActive = async (id: string, isActive: boolean) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('integration_settings')
         .update({ is_active: isActive })
         .eq('id', id);

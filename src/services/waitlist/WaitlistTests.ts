@@ -100,7 +100,7 @@ class WaitlistTests {
         }
         
         // Verificar se foi criado corretamente
-        const { data: waitlist } = await supabase
+        const { data: waitlist } = await (supabase as any)
           .from("waitlist_queue")
           .select("*")
           .eq("id", result.waitlistId)
@@ -147,7 +147,7 @@ class WaitlistTests {
         }
         
         // Verificar se foi criado corretamente
-        const { data: waitlist } = await supabase
+        const { data: waitlist } = await (supabase as any)
           .from("waitlist_queue")
           .select("*")
           .eq("id", result.waitlistId)
@@ -187,7 +187,7 @@ class WaitlistTests {
       "Processamento de resposta - Aceite",
       async () => {
         // Criar uma oferta simulada
-        const { data: waitlist } = await supabase
+        const { data: waitlist } = await (supabase as any)
           .from("waitlist_queue")
           .select("id")
           .eq("status", "offered")
@@ -316,7 +316,7 @@ class WaitlistTests {
       "Processamento de aceite de antecipação",
       async () => {
         // Buscar oferta pendente
-        const { data: offer } = await supabase
+        const { data: offer } = await (supabase as any)
           .from("anticipation_offers")
           .select("id")
           .eq("status", "pending")
@@ -637,7 +637,7 @@ class WaitlistTests {
         }
         
         // 3. Verificar se oferta foi criada
-        const { data: updatedWaitlist } = await supabase
+        const { data: updatedWaitlist } = await (supabase as any)
           .from("waitlist_queue")
           .select("status, offered_at")
           .eq("id", waitlistResult.waitlistId)
@@ -762,25 +762,25 @@ class WaitlistTests {
       console.log("[CLEANUP] Limpando dados de teste...");
       
       // Limpar entradas na fila de teste
-      await supabase
+      await (supabase as any)
         .from("waitlist_queue")
         .delete()
         .like("client_id", "test-client-%");
       
       // Limpar ofertas de antecipação de teste
-      await supabase
+      await (supabase as any)
         .from("anticipation_offers")
         .delete()
         .like("client_id", "test-client-%");
       
       // Limpar notificações de teste
-      await supabase
+      await (supabase as any)
         .from("notifications")
         .delete()
         .like("user_id", "test-client-%");
       
       // Limpar regras de preço dinâmico de teste
-      await supabase
+      await (supabase as any)
         .from("dynamic_pricing")
         .delete()
         .like("description", "Teste - %");

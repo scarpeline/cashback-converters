@@ -37,7 +37,7 @@ export function useBarbershop() {
     }
 
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("barbershops")
       .select("*")
       .eq("owner_user_id", user.id)

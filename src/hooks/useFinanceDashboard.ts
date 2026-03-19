@@ -75,27 +75,27 @@ export function useFinanceSummary(period: '7d' | '30d' | '90d' | '12m' = '30d') 
       }
 
       // Buscar pagamentos
-      const { data: pagamentos, error: pagError } = await supabase
+      const { data: pagamentos, error: pagError } = await (supabase as any)
         .from('payments')
         .select('*')
         .gte('created_at', dataInicio.toISOString())
         .eq('status', 'paid');
 
       // Buscar assinaturas ativas
-      const { data: assinaturas, error: subError } = await supabase
+      const { data: assinaturas, error: subError } = await (supabase as any)
         .from('subscriptions')
         .select('*')
         .eq('status', 'ativo');
 
       // Buscar comissões pagas
-      const { data: comissoes, error: comError } = await supabase
+      const { data: comissoes, error: comError } = await (supabase as any)
         .from('commissions')
         .select('*')
         .gte('created_at', dataInicio.toISOString())
         .eq('status', 'pago');
 
       // Buscar pagamentos pendentes
-      const { data: pendentes, error: pendError } = await supabase
+      const { data: pendentes, error: pendError } = await (supabase as any)
         .from('payments')
         .select('*')
         .eq('status', 'pending');
@@ -142,7 +142,7 @@ export function useTransactions() {
     setLoading(true);
     
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('payments')
         .select('*')
         .order('created_at', { ascending: false })
@@ -150,7 +150,7 @@ export function useTransactions() {
 
       if (error) throw error;
 
-      setTransactions(data || []);
+      setTransactions((data || []).map((p: any) => ({ ...p, type: 'income' as const, description: p.payment_method || '' })));
     } catch (error) {
       console.error('Erro ao carregar transações:', error);
     } finally {
@@ -176,7 +176,7 @@ export function useCommissions() {
     setLoading(true);
     
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('commissions')
         .select('*')
         .order('created_at', { ascending: false })
@@ -184,7 +184,7 @@ export function useCommissions() {
 
       if (error) throw error;
 
-      setCommissions(data || []);
+      setCommissions((data || []) as Commission[]);
     } catch (error) {
       console.error('Erro ao carregar comissões:', error);
     } finally {
@@ -215,12 +215,12 @@ export function usePartnerStats() {
     
     try {
       // Buscar parceiros
-      const { data: partners, error: partnersError } = await supabase
+      const { data: partners, error: partnersError } = await (supabase as any)
         .from('partners')
         .select('*');
 
       // Buscar comissões pagas
-      const { data: commissions, error: commissionsError } = await supabase
+      const { data: commissions, error: commissionsError } = await (supabase as any)
         .from('commissions')
         .select('*')
         .eq('status', 'pago');

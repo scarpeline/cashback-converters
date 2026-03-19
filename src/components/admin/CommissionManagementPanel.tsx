@@ -15,7 +15,7 @@ export default function CommissionManagementPanel() {
   const { data: commissions, isLoading } = useQuery({
     queryKey: ['admin-commissions', filterStatus],
     queryFn: async () => {
-      let query = supabase
+      let query = (supabase as any)
         .from('partner_commissions')
         .select(`
           *,
@@ -31,7 +31,7 @@ export default function CommissionManagementPanel() {
         .order('created_at', { ascending: false });
 
       if (filterStatus !== 'all') {
-        query = query.eq('status', filterStatus);
+        query = (query as any).eq('status', filterStatus);
       }
 
       const { data, error } = await query;
@@ -42,7 +42,7 @@ export default function CommissionManagementPanel() {
 
   const approveMutation = useMutation({
     mutationFn: async (commission: any) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('partner_commissions')
         .update({ status: 'approved' })
         .eq('id', commission.id);
@@ -68,7 +68,7 @@ export default function CommissionManagementPanel() {
 
   const payMutation = useMutation({
     mutationFn: async (commission: any) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('partner_commissions')
         .update({ 
           status: 'paid',
@@ -97,7 +97,7 @@ export default function CommissionManagementPanel() {
 
   const cancelMutation = useMutation({
     mutationFn: async (commissionId: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('partner_commissions')
         .update({ status: 'cancelled' })
         .eq('id', commissionId);

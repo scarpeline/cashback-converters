@@ -28,7 +28,7 @@ export interface AutomationQueueItem {
  */
 export async function getActiveAutomations(): Promise<Automation[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('automations')
       .select('*')
       .eq('active', true)
@@ -54,7 +54,7 @@ export async function getAutomationByType(
   channel: Automation['channel']
 ): Promise<Automation | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('automations')
       .select('*')
       .eq('type', type)
@@ -84,7 +84,7 @@ export async function addToAutomationQueue(
   scheduledAt?: Date
 ): Promise<AutomationQueueItem | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('automation_queue')
       .insert({
         client_id: clientId,
@@ -114,7 +114,7 @@ export async function addToAutomationQueue(
 export async function processAutomationQueue(): Promise<number> {
   try {
     // Buscar itens pendentes
-    const { data: queueItems, error } = await supabase
+    const { data: queueItems, error } = await (supabase as any)
       .from('automation_queue')
       .select('*')
       .eq('status', 'pendente')
@@ -138,7 +138,7 @@ export async function processAutomationQueue(): Promise<number> {
         // Exemplo: enviar via WhatsApp, SMS, Email, Push
         
         // Atualizar status para enviado
-        await supabase
+        await (supabase as any)
           .from('automation_queue')
           .update({
             status: 'enviado',
@@ -151,7 +151,7 @@ export async function processAutomationQueue(): Promise<number> {
         console.error('Erro ao processar item:', itemError);
         
         // Atualizar status para erro
-        await supabase
+        await (supabase as any)
           .from('automation_queue')
           .update({
             status: 'erro',
@@ -174,7 +174,7 @@ export async function processAutomationQueue(): Promise<number> {
 export async function reativarClientesInativos(): Promise<number> {
   try {
     // Buscar clientes inativos há mais de 15 dias
-    const { data: appointments, error } = await supabase
+    const { data: appointments, error } = await (supabase as any)
       .from('appointments')
       .select('client_user_id, client_name, client_whatsapp')
       .eq('status', 'completed')
@@ -233,7 +233,7 @@ export async function preencherAgendaVazia(): Promise<number> {
     const amanha = new Date();
     amanha.setDate(amanha.getDate() + 1);
 
-    const { data: horariosVazios, error } = await supabase
+    const { data: horariosVazios, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .gte('scheduled_at', hoje.toISOString())
@@ -255,7 +255,7 @@ export async function preencherAgendaVazia(): Promise<number> {
     let enviados = 0;
 
     // Enviar para clientes preferenciais (simplificado)
-    const { data: clientes } = await supabase
+    const { data: clientes } = await (supabase as any)
       .from('profiles')
       .select('id, name, whatsapp')
       .limit(10);
@@ -294,7 +294,7 @@ export async function notificarComissaoGerada(
         .replace('{tipo}', type === 'adesao' ? 'adesão' : 'recorrente');
 
       // Buscar email do parceiro
-      const { data: partner, error } = await supabase
+      const { data: partner, error } = await (supabase as any)
         .from('partners')
         .select('user_id')
         .eq('id', partnerId)
@@ -306,7 +306,7 @@ export async function notificarComissaoGerada(
       }
 
       // Buscar email do usuário
-      const { data: user, error: userError } = await supabase
+      const { data: user, error: userError } = await (supabase as any)
         .from('profiles')
         .select('email')
         .eq('user_id', partner.user_id)
@@ -364,21 +364,21 @@ export async function getAutomationStatus(): Promise<{
   lastProcessed: string;
 }> {
   try {
-    const { count: totalQueue, error: countError } = await supabase
+    const { count: totalQueue, error: countError } = await (supabase as any)
       .from('automation_queue')
       .select('*', { count: 'exact', head: true });
 
-    const { data: pending, error: pendingError } = await supabase
+    const { data: pending, error: pendingError } = await (supabase as any)
       .from('automation_queue')
       .select('id')
       .eq('status', 'pendente');
 
-    const { data: sent, error: sentError } = await supabase
+    const { data: sent, error: sentError } = await (supabase as any)
       .from('automation_queue')
       .select('id')
       .eq('status', 'enviado');
 
-    const { data: errored, error: erroredError } = await supabase
+    const { data: errored, error: erroredError } = await (supabase as any)
       .from('automation_queue')
       .select('id')
       .eq('status', 'erro');
@@ -410,7 +410,7 @@ export async function cleanupOldQueue(daysToKeep: number = 30): Promise<void> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
-    await supabase
+    await (supabase as any)
       .from('automation_queue')
       .delete()
       .lt('created_at', cutoffDate.toISOString());

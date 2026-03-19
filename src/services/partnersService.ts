@@ -31,7 +31,7 @@ export interface PartnerWithUser extends Partner {
  */
 export async function getPartners(): Promise<PartnerWithUser[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('partners')
       .select(`
         *,
@@ -64,7 +64,7 @@ export async function getPartners(): Promise<PartnerWithUser[]> {
  */
 export async function getPartnerById(id: string): Promise<PartnerWithUser | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('partners')
       .select(`
         *,
@@ -98,7 +98,7 @@ export async function createPartner(partnerData: {
   parent_id?: string | null;
 }): Promise<Partner | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('partners')
       .insert([{
         ...partnerData,
@@ -125,7 +125,7 @@ export async function updatePartner(
   updates: Partial<Partner>
 ): Promise<Partner | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('partners')
       .update(updates)
       .eq('id', id)
@@ -155,7 +155,7 @@ export async function updatePartnerStatus(
  */
 export async function getPartnersByType(type: Partner['type']): Promise<PartnerWithUser[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('partners')
       .select(`
         *,
@@ -183,7 +183,7 @@ export async function getPartnersByType(type: Partner['type']): Promise<PartnerW
 export async function getPartnerHierarchy(partnerId: string): Promise<Partner[]> {
   try {
     // Buscar parceiro atual
-    const { data: partner, error } = await supabase
+    const { data: partner, error } = await (supabase as any)
       .from('partners')
       .select('*')
       .eq('id', partnerId)
@@ -196,7 +196,7 @@ export async function getPartnerHierarchy(partnerId: string): Promise<Partner[]>
     // Buscar parceiros acima na hierarquia
     let currentParentId = partner.parent_id;
     while (currentParentId) {
-      const { data: parent, error: parentError } = await supabase
+      const { data: parent, error: parentError } = await (supabase as any)
         .from('partners')
         .select('*')
         .eq('id', currentParentId)
@@ -220,7 +220,7 @@ export async function getPartnerHierarchy(partnerId: string): Promise<Partner[]>
  */
 export async function countDirectReferrals(partnerId: string): Promise<number> {
   try {
-    const { count, error } = await supabase
+    const { count, error } = await (supabase as any)
       .from('partners')
       .select('*', { count: 'exact', head: true })
       .eq('parent_id', partnerId)
@@ -239,7 +239,7 @@ export async function countDirectReferrals(partnerId: string): Promise<number> {
  */
 export async function isUserPartner(userId: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('partners')
       .select('id')
       .eq('user_id', userId)
@@ -266,7 +266,7 @@ function generateReferralCode(): string {
  */
 export async function getPartnerByReferralCode(code: string): Promise<PartnerWithUser | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('partners')
       .select(`
         *,
@@ -296,7 +296,7 @@ export async function getPartnerByReferralCode(code: string): Promise<PartnerWit
  */
 export async function createPartnerReferral(referrerId: string, referredUserId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('partner_referrals')
       .insert([{
         referrer_id: referrerId,
@@ -317,7 +317,7 @@ export async function createPartnerReferral(referrerId: string, referredUserId: 
  */
 export async function getPartnerCommissions(partnerId: string) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('partner_commissions')
       .select('*')
       .eq('partner_id', partnerId)
@@ -336,7 +336,7 @@ export async function getPartnerCommissions(partnerId: string) {
  */
 export async function getPartnerCommissionSummary(partnerId: string) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('partner_commission_summary')
       .select('*')
       .eq('id', partnerId)
@@ -384,7 +384,7 @@ export async function createPartnerCommission(data: {
   source_type?: string;
 }): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('partner_commissions')
       .insert([{
         ...data,

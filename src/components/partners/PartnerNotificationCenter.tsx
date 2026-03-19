@@ -19,14 +19,14 @@ export default function PartnerNotificationCenter({ partnerId }: PartnerNotifica
   const { data: notifications, isLoading } = useQuery({
     queryKey: ['partner-notifications', partnerId, filter],
     queryFn: async () => {
-      let query = supabase
+      let query = (supabase as any)
         .from('partner_notifications')
         .select('*')
         .eq('partner_id', partnerId)
         .order('created_at', { ascending: false });
 
       if (filter === 'unread') {
-        query = query.eq('read', false);
+        query = (query as any).eq('read', false);
       }
 
       const { data, error } = await query;
@@ -84,7 +84,7 @@ export default function PartnerNotificationCenter({ partnerId }: PartnerNotifica
     }
   };
 
-  const unreadCount = notifications?.filter(n => !n.read).length || 0;
+  const unreadCount = notifications?.filter((n: any) => !n.read).length || 0;
 
   if (isLoading) {
     return (

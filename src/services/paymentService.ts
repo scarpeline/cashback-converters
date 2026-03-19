@@ -39,7 +39,7 @@ export async function createPayment(
   }
 ): Promise<Payment | null> {
   try {
-    const { data: payment, error } = await supabase
+    const { data: payment, error } = await (supabase as any)
       .from('payments')
       .insert({
         barbershop_id: data.barbershop_id,
@@ -72,7 +72,7 @@ export async function confirmPayment(
   paidAt?: Date
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('payments')
       .update({
         status: 'paid',
@@ -100,7 +100,7 @@ export async function failPayment(
   reason: string
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('payments')
       .update({
         status: 'failed',
@@ -127,7 +127,7 @@ export async function getClientPayments(
   limit: number = 50
 ): Promise<Payment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .eq('client_id', clientId)
@@ -155,7 +155,7 @@ export async function getBarbershopPayments(
   endDate: Date
 ): Promise<Payment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -182,7 +182,7 @@ export async function getPendingPayments(): Promise<Payment[]> {
   try {
     const hoje = new Date();
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .eq('status', 'pending')
@@ -214,7 +214,7 @@ export async function getTodayPayments(): Promise<Payment[]> {
     const endOfDay = new Date(hoje);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .gte('created_at', startOfDay.toISOString())
@@ -238,7 +238,7 @@ export async function getTodayPayments(): Promise<Payment[]> {
  */
 export async function getPaymentsByStatus(status: Payment['status']): Promise<Payment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .eq('status', status)
@@ -261,7 +261,7 @@ export async function getPaymentsByStatus(status: Payment['status']): Promise<Pa
  */
 export async function getPaymentsByMethod(method: Payment['method']): Promise<Payment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .eq('method', method)
@@ -284,7 +284,7 @@ export async function getPaymentsByMethod(method: Payment['method']): Promise<Pa
  */
 export async function getPaymentStats(barbershopId: string): Promise<PaymentStats> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('status, method, amount')
       .eq('barbershop_id', barbershopId);
@@ -340,7 +340,7 @@ export async function getTotalPayments(
   endDate: Date
 ): Promise<number> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('amount')
       .eq('barbershop_id', barbershopId)
@@ -368,7 +368,7 @@ export async function getRecurringPayments(
   status: 'active' | 'cancelled' = 'active'
 ): Promise<Payment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -396,7 +396,7 @@ export async function getPaymentsByClient(
   endDate: Date
 ): Promise<Payment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .eq('client_id', clientId)
@@ -424,7 +424,7 @@ export async function getBarbershopPaymentsByStatus(
   status: Payment['status']
 ): Promise<Payment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -451,7 +451,7 @@ export async function getBarbershopPaymentsByMethod(
   method: Payment['method']
 ): Promise<Payment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -479,7 +479,7 @@ export async function getBarbershopPaymentsByStatusAndMethod(
   method: Payment['method']
 ): Promise<Payment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -508,7 +508,7 @@ export async function getBarbershopPaymentsByDateRange(
   endDate: Date
 ): Promise<Payment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -538,7 +538,7 @@ export async function getBarbershopPaymentsByDateRangeAndStatus(
   status: Payment['status']
 ): Promise<Payment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -569,7 +569,7 @@ export async function getBarbershopPaymentsByDateRangeAndMethod(
   method: Payment['method']
 ): Promise<Payment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -601,7 +601,7 @@ export async function getBarbershopPaymentsByDateRangeAndStatusAndMethod(
   method: Payment['method']
 ): Promise<Payment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('payments')
       .select('*')
       .eq('barbershop_id', barbershopId)

@@ -54,7 +54,7 @@ export class RecurringAppointmentService {
   static async createRecurringAppointment(data: CreateRecurringAppointment): Promise<{ success: boolean; error?: string; appointment?: RecurringAppointment }> {
     try {
       // Primeiro, criar o agendamento pai
-      const { data: appointment, error } = await supabase
+      const { data: appointment, error } = await (supabase as any)
         .from('appointments')
         .insert({
           barbershop_id: data.barbershop_id,
@@ -96,7 +96,7 @@ export class RecurringAppointmentService {
    */
   static async generateFutureAppointments(parentAppointmentId: string): Promise<{ success: boolean; generated?: number; conflicts?: number }> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .rpc('generate_recurring_appointments');
 
       if (error) {
@@ -120,7 +120,7 @@ export class RecurringAppointmentService {
    */
   static async cancelRecurringSeries(parentAppointmentId: string): Promise<{ success: boolean; cancelled?: number; error?: string }> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .rpc('cancel_recurring_series', { p_parent_appointment_id: parentAppointmentId });
 
       if (error) {
@@ -140,7 +140,7 @@ export class RecurringAppointmentService {
    */
   static async getRecurringAppointments(barbershopId: string): Promise<RecurringAppointment[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('appointments')
         .select(`
           *,
@@ -170,7 +170,7 @@ export class RecurringAppointmentService {
    */
   static async getRecurringSettings(barbershopId: string): Promise<RecurringSettings | null> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('recurring_settings')
         .select('*')
         .eq('barbershop_id', barbershopId)
@@ -193,7 +193,7 @@ export class RecurringAppointmentService {
    */
   static async updateRecurringSettings(barbershopId: string, settings: Partial<RecurringSettings>): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('recurring_settings')
         .upsert({
           barbershop_id,
@@ -265,7 +265,7 @@ export class RecurringAppointmentService {
    */
   static async getClientRecurringAppointments(clientUserId: string): Promise<RecurringAppointment[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('appointments')
         .select(`
           *,
@@ -296,7 +296,7 @@ export class RecurringAppointmentService {
    */
   static async pauseRecurringSeries(parentAppointmentId: string, pauseUntil: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('appointments')
         .update({ 
           recurring_end_date: pauseUntil,
@@ -321,7 +321,7 @@ export class RecurringAppointmentService {
    */
   static async resumeRecurringSeries(parentAppointmentId: string, newEndDate: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('appointments')
         .update({ 
           recurring_end_date: newEndDate,

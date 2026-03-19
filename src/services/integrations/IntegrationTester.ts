@@ -28,7 +28,7 @@ export class IntegrationTester {
       const startTime = Date.now();
 
       // Buscar configuração do Asaas
-      const { data: config, error: configError } = await supabase
+      const { data: config, error: configError } = await (supabase as any)
         .from('integrations')
         .select('*')
         .eq('provider_name', 'asaas')
@@ -91,7 +91,7 @@ export class IntegrationTester {
       const startTime = Date.now();
 
       // Buscar configuração do Twilio
-      const { data: config, error: configError } = await supabase
+      const { data: config, error: configError } = await (supabase as any)
         .from('integrations')
         .select('*')
         .eq('provider_name', 'twilio')
@@ -154,7 +154,7 @@ export class IntegrationTester {
       const startTime = Date.now();
 
       // Buscar configuração do Resend
-      const { data: config, error: configError } = await supabase
+      const { data: config, error: configError } = await (supabase as any)
         .from('integrations')
         .select('*')
         .eq('provider_name', 'resend')
@@ -215,7 +215,7 @@ export class IntegrationTester {
       const startTime = Date.now();
 
       // Buscar webhooks ativos
-      const { data: webhooks, error: webhooksError } = await supabase
+      const { data: webhooks, error: webhooksError } = await (supabase as any)
         .from('webhook_configs')
         .select('*')
         .eq('is_active', true);
@@ -228,7 +228,7 @@ export class IntegrationTester {
       const results = [];
       for (const webhook of webhooks || []) {
         try {
-          const { data: testResult } = await supabase.rpc('test_webhook', {
+          const { data: testResult } = await (supabase as any).rpc('test_webhook', {
             p_webhook_config_id: webhook.id
           });
 

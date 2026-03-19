@@ -10,10 +10,10 @@ import {
 } from '@/services/partnerNotificationService';
 
 // Chaves de query
-export const notificationKeys = {
+export const partnerNotificationKeys = {
   all: ['partner-notifications'] as const,
-  unread: (partnerId: string) => [...notificationKeys.all, 'unread', partnerId] as const,
-  all: (partnerId: string) => [...notificationKeys.all, 'all', partnerId] as const,
+  unread: (partnerId: string) => ['partner-notifications', 'unread', partnerId] as const,
+  list: (partnerId: string) => ['partner-notifications', 'all', partnerId] as const,
 };
 
 /**
@@ -21,11 +21,11 @@ export const notificationKeys = {
  */
 export function useUnreadNotifications(partnerId: string) {
   return useQuery({
-    queryKey: notificationKeys.unread(partnerId),
+    queryKey: partnerNotificationKeys.unread(partnerId),
     queryFn: () => getUnreadNotifications(partnerId),
     enabled: !!partnerId,
-    staleTime: 30 * 1000, // 30 segundos
-    refetchInterval: 60 * 1000, // Refetch a cada 1 minuto
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
   });
 }
 
@@ -34,7 +34,7 @@ export function useUnreadNotifications(partnerId: string) {
  */
 export function useAllNotifications(partnerId: string, limit = 50) {
   return useQuery({
-    queryKey: notificationKeys.all(partnerId),
+    queryKey: partnerNotificationKeys.list(partnerId),
     queryFn: () => getAllNotifications(partnerId, limit),
     enabled: !!partnerId,
     staleTime: 30 * 1000,
@@ -50,7 +50,7 @@ export function useMarkNotificationAsRead() {
   return useMutation({
     mutationFn: markNotificationAsRead,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+      queryClient.invalidateQueries({ queryKey: partnerNotificationKeys.all });
     },
   });
 }
@@ -64,7 +64,7 @@ export function useMarkAllNotificationsAsRead() {
   return useMutation({
     mutationFn: markAllNotificationsAsRead,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+      queryClient.invalidateQueries({ queryKey: partnerNotificationKeys.all });
     },
   });
 }
@@ -78,7 +78,7 @@ export function useDeleteNotification() {
   return useMutation({
     mutationFn: deleteNotification,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+      queryClient.invalidateQueries({ queryKey: partnerNotificationKeys.all });
     },
   });
 }
@@ -105,7 +105,7 @@ export function useCreateNotification() {
         params.data
       ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+      queryClient.invalidateQueries({ queryKey: partnerNotificationKeys.all });
     },
   });
 }

@@ -75,9 +75,9 @@ export function useCreateAppointment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createAppointment,
+    mutationFn: (params: { barbershopId: string; professionalId: string; serviceId: string; clientId: string; clientName: string; clientWhatsApp: string; scheduledAt: Date; notes?: string }) =>
+      createAppointment(params.barbershopId, params.professionalId, params.serviceId, params.clientId, params.clientName, params.clientWhatsApp, params.scheduledAt, params.notes),
     onSuccess: (_, variables) => {
-      // Invalidar queries
       queryClient.invalidateQueries({ queryKey: schedulingKeys.today() });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.barbershop(variables.barbershopId, '', '') });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.professional(variables.professionalId, '', '') });
@@ -93,7 +93,8 @@ export function useUpdateAppointmentStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: updateAppointmentStatus,
+    mutationFn: (params: { appointmentId: string; status: 'scheduled' | 'completed' | 'cancelled' | 'no_show' }) =>
+      updateAppointmentStatus(params.appointmentId, params.status),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: schedulingKeys.today() });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.all });
@@ -216,7 +217,8 @@ export function useTodayAppointmentsForBarbershop(barbershopId: string) {
  * Hook para agendamento inteligente
  */
 export function useSmartScheduling() {
-  const [suggestions, setSuggestions] = useState<SchedulingSuggestion[]>([]);
+  interface SmartSuggestion { time: string; reason: string; confidence: number; }
+  const [suggestions, setSuggestions] = useState<SmartSuggestion[]>([]);
 
   const generateSuggestions = useCallback(async (
     barbershopId: string,
@@ -224,11 +226,8 @@ export function useSmartScheduling() {
     date: Date
   ) => {
     try {
-      // Buscar horários disponíveis
       const slots = await getAvailableSlots(barbershopId, professionalId, date);
-
-      // Gerar sugestões baseadas em padrões
-      const sugestoes: SchedulingSuggestion[] = [];
+      const sugestoes: SmartSuggestion[] = [];
 
       // Sugerir horários de maior demanda
       if (slots.length > 0) {

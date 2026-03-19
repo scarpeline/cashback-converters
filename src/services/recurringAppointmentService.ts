@@ -49,7 +49,7 @@ export async function createRecurringAppointment(
   }
 ): Promise<RecurringAppointment | null> {
   try {
-    const { data: recurring, error } = await supabase
+    const { data: recurring, error } = await (supabase as any)
       .from('recurring_appointments')
       .insert({
         barbershop_id: data.barbershop_id,
@@ -88,7 +88,7 @@ export async function createRecurringAppointment(
  */
 async function generateFirstAppointment(recurringId: string): Promise<void> {
   try {
-    const { data: recurring, error: recurringError } = await supabase
+    const { data: recurring, error: recurringError } = await (supabase as any)
       .from('recurring_appointments')
       .select('*')
       .eq('id', recurringId)
@@ -101,7 +101,7 @@ async function generateFirstAppointment(recurringId: string): Promise<void> {
     const startDate = new Date(recurring.start_date);
     const nextDate = calculateNextDate(startDate, recurring.frequency, recurring.day_of_week, recurring.day_of_month);
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('appointments')
       .insert({
         barbershop_id: recurring.barbershop_id,
@@ -171,7 +171,7 @@ export async function generateFutureAppointments(
   monthsAhead: number = 3
 ): Promise<{ success: boolean; count: number }> {
   try {
-    const { data: recurring, error: recurringError } = await supabase
+    const { data: recurring, error: recurringError } = await (supabase as any)
       .from('recurring_appointments')
       .select('*')
       .eq('id', recurringId)
@@ -198,7 +198,7 @@ export async function generateFutureAppointments(
 
     while (currentDate <= maxDate && (!endDate || currentDate <= endDate)) {
       // Verificar se já existe agendamento para esta data
-      const { data: existing } = await supabase
+      const { data: existing } = await (supabase as any)
         .from('appointments')
         .select('id')
         .eq('barbershop_id', recurring.barbershop_id)
@@ -209,7 +209,7 @@ export async function generateFutureAppointments(
 
       if (!existing) {
         // Criar agendamento
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('appointments')
           .insert({
             barbershop_id: recurring.barbershop_id,
@@ -239,7 +239,7 @@ export async function generateFutureAppointments(
 
     // Atualizar próxima data
     if (count > 0) {
-      await supabase
+      await (supabase as any)
         .from('recurring_appointments')
         .update({ next_scheduled_at: currentDate.toISOString() })
         .eq('id', recurringId);
@@ -258,7 +258,7 @@ export async function generateFutureAppointments(
 export async function cancelRecurringSeries(recurringId: string): Promise<boolean> {
   try {
     // Atualizar status da série
-    const { error: recurringError } = await supabase
+    const { error: recurringError } = await (supabase as any)
       .from('recurring_appointments')
       .update({ status: 'cancelled' })
       .eq('id', recurringId);
@@ -269,7 +269,7 @@ export async function cancelRecurringSeries(recurringId: string): Promise<boolea
     }
 
     // Cancelar agendamentos futuros
-    const { error: appointmentsError } = await supabase
+    const { error: appointmentsError } = await (supabase as any)
       .from('appointments')
       .update({ status: 'cancelled' })
       .eq('recurring_id', recurringId)
@@ -292,7 +292,7 @@ export async function cancelRecurringSeries(recurringId: string): Promise<boolea
  */
 export async function pauseRecurringSeries(recurringId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('recurring_appointments')
       .update({ status: 'paused' })
       .eq('id', recurringId);
@@ -314,7 +314,7 @@ export async function pauseRecurringSeries(recurringId: string): Promise<boolean
  */
 export async function resumeRecurringSeries(recurringId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('recurring_appointments')
       .update({ status: 'active' })
       .eq('id', recurringId);
@@ -339,7 +339,7 @@ export async function getRecurringAppointments(
   limit: number = 50
 ): Promise<RecurringAppointment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('recurring_appointments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -366,7 +366,7 @@ export async function getClientRecurringAppointments(
   limit: number = 50
 ): Promise<RecurringAppointment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('recurring_appointments')
       .select('*')
       .eq('client_user_id', clientId)
@@ -393,7 +393,7 @@ export async function getProfessionalRecurringAppointments(
   limit: number = 50
 ): Promise<RecurringAppointment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('recurring_appointments')
       .select('*')
       .eq('professional_id', professionalId)
@@ -419,7 +419,7 @@ export async function getActiveRecurringAppointments(
   barbershopId: string
 ): Promise<RecurringAppointment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('recurring_appointments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -446,7 +446,7 @@ export async function getRecurringAppointmentsByFrequency(
   frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly'
 ): Promise<RecurringAppointment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('recurring_appointments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -473,7 +473,7 @@ export async function getRecurringAppointmentsByStatus(
   status: 'active' | 'paused' | 'cancelled'
 ): Promise<RecurringAppointment[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('recurring_appointments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -501,7 +501,7 @@ export async function getExpiringRecurringAppointments(): Promise<RecurringAppoi
     const amanha = new Date();
     amanha.setDate(amanha.getDate() + 1);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('recurring_appointments')
       .select('*')
       .gte('end_date', hoje.toISOString())
@@ -528,7 +528,7 @@ export async function getRecurringAppointmentsNeedingGeneration(): Promise<Recur
   try {
     const hoje = new Date();
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('recurring_appointments')
       .select('*')
       .eq('status', 'active')
@@ -582,7 +582,7 @@ export async function getRecurringAppointmentsToday(): Promise<RecurringAppointm
     const endOfDay = new Date(hoje);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('recurring_appointments')
       .select('*')
       .eq('status', 'active')
@@ -614,7 +614,7 @@ export async function getRecurringAppointmentsTodayForClient(clientId: string): 
     const endOfDay = new Date(hoje);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('recurring_appointments')
       .select('*')
       .eq('client_user_id', clientId)
@@ -647,7 +647,7 @@ export async function getRecurringAppointmentsTodayForProfessional(professionalI
     const endOfDay = new Date(hoje);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('recurring_appointments')
       .select('*')
       .eq('professional_id', professionalId)
@@ -680,7 +680,7 @@ export async function getRecurringAppointmentsTodayForBarbershop(barbershopId: s
     const endOfDay = new Date(hoje);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('recurring_appointments')
       .select('*')
       .eq('barbershop_id', barbershopId)

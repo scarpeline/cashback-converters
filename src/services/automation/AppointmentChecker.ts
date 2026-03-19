@@ -131,7 +131,7 @@ export async function registrarBloqueioAutomacao(
   barbershopId?: string
 ): Promise<void> {
   try {
-    await supabase.from('automation_blocked_logs').insert({
+    await (supabase as any).from('automation_blocked_logs').insert({
       client_id: clientId,
       automation_type: automationType,
       block_reason: reason,

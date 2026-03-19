@@ -1,5 +1,6 @@
 // Hook para WhatsApp Integration
 import { useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   sendWhatsAppMessage, 
@@ -189,7 +190,7 @@ export function useWhatsAppStats() {
 
   const loadStats = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('whatsapp_messages')
         .select('status');
 

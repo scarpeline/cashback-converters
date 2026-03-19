@@ -30,7 +30,7 @@ export async function saveConversation(
   metadata?: Record<string, any>
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('ai_memory')
       .insert({
         client_id: clientId,
@@ -60,7 +60,7 @@ export async function getClientHistory(
   limit: number = 10
 ): Promise<AIMemory[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('ai_memory')
       .select('*')
       .eq('client_id', clientId)
@@ -88,7 +88,7 @@ export async function analyzeClientPreferences(clientId: string): Promise<Client
     const history = await getClientHistory(clientId, 50);
     
     // Buscar agendamentos do cliente (se houver tabela de agendamentos)
-    const { data: appointments } = await supabase
+    const { data: appointments } = await (supabase as any)
       .from('appointments')
       .select('*')
       .eq('client_user_id', clientId)
@@ -183,7 +183,7 @@ export async function cleanupOldMemories(daysToKeep: number = 90): Promise<void>
     const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
     
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('ai_memory')
       .delete()
       .lt('created_at', cutoffDate.toISOString());
@@ -206,18 +206,18 @@ export async function getAIStats(): Promise<{
 }> {
   try {
     // Contar conversas totais
-    const { count: totalConversations, error: countError } = await supabase
+    const { count: totalConversations, error: countError } = await (supabase as any)
       .from('ai_memory')
       .select('*', { count: 'exact', head: true });
 
     // Contar clientes únicos
-    const { data: uniqueClients, error: clientError } = await supabase
+    const { data: uniqueClients, error: clientError } = await (supabase as any)
       .from('ai_memory')
       .select('client_id')
       .limit(1000);
 
     // Intenção mais comum (simplificado)
-    const { data: intents } = await supabase
+    const { data: intents } = await (supabase as any)
       .from('ai_memory')
       .select('intent')
       .not('intent', 'is', null)

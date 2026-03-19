@@ -9,8 +9,8 @@ interface CommissionsPanelProps {
 }
 
 export default function CommissionsPanel({ partnerId }: CommissionsPanelProps) {
-  const { data: summary, isLoading: summaryLoading } = usePartnerCommissionSummary(partnerId);
-  const { data: commissions, isLoading: commissionsLoading } = usePartnerCommissions(partnerId);
+  const { data: summary, isLoading: summaryLoading } = usePartnerCommissionSummary(partnerId) as { data: any; isLoading: boolean };
+  const { data: commissions, isLoading: commissionsLoading } = usePartnerCommissions(partnerId) as { data: any[]; isLoading: boolean };
 
   if (summaryLoading) {
     return (
