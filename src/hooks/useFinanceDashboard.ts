@@ -150,7 +150,7 @@ export function useTransactions() {
 
       if (error) throw error;
 
-      setTransactions(data || []);
+      setTransactions((data || []).map((p: any) => ({ ...p, type: 'income' as const, description: p.payment_method || '' })));
     } catch (error) {
       console.error('Erro ao carregar transações:', error);
     } finally {
