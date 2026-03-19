@@ -41,7 +41,7 @@ export interface CRMAction {
 export async function getClientProfile(clientId: string): Promise<ClientProfile | null> {
   try {
     // Buscar dados básicos
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await (supabase as any)
       .from('profiles')
       .select('*')
       .eq('user_id', clientId)
@@ -52,7 +52,7 @@ export async function getClientProfile(clientId: string): Promise<ClientProfile 
     }
 
     // Buscar histórico de agendamentos
-    const { data: appointments, error: appointmentsError } = await supabase
+    const { data: appointments, error: appointmentsError } = await (supabase as any)
       .from('appointments')
       .select('scheduled_at, services(price), professionals(name)')
       .eq('client_user_id', clientId)
@@ -93,7 +93,7 @@ export async function getClientProfile(clientId: string): Promise<ClientProfile 
     const score = frequencyScore + spendingScore + recencyScore;
 
     // Buscar tags
-    const { data: tags, error: tagsError } = await supabase
+    const { data: tags, error: tagsError } = await (supabase as any)
       .from('client_tags')
       .select('tag')
       .eq('client_id', clientId);
@@ -129,7 +129,7 @@ export async function getClientProfile(clientId: string): Promise<ClientProfile 
  */
 export async function getTopClientsByScore(barbershopId: string, limit: number = 10): Promise<ClientProfile[]> {
   try {
-    const { data: appointments, error: appointmentsError } = await supabase
+    const { data: appointments, error: appointmentsError } = await (supabase as any)
       .from('appointments')
       .select('client_user_id, services(price)')
       .eq('barbershop_id', barbershopId);
@@ -194,7 +194,7 @@ export async function getTopClientsByScore(barbershopId: string, limit: number =
  */
 export async function addClientTag(clientId: string, tag: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('client_tags')
       .insert({
         client_id: clientId,
@@ -218,7 +218,7 @@ export async function addClientTag(clientId: string, tag: string): Promise<boole
  */
 export async function removeClientTag(clientId: string, tag: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('client_tags')
       .delete()
       .eq('client_id', clientId)
@@ -241,7 +241,7 @@ export async function removeClientTag(clientId: string, tag: string): Promise<bo
  */
 export async function getClientsByTag(tag: string, limit: number = 50): Promise<ClientProfile[]> {
   try {
-    const { data: taggedClients, error: taggedError } = await supabase
+    const { data: taggedClients, error: taggedError } = await (supabase as any)
       .from('client_tags')
       .select('client_id')
       .eq('tag', tag.toLowerCase().trim())
@@ -255,7 +255,7 @@ export async function getClientsByTag(tag: string, limit: number = 50): Promise<
     const clientIds = taggedClients?.map((t: any) => t.client_id) || [];
     if (clientIds.length === 0) return [];
 
-    const { data: profiles, error: profilesError } = await supabase
+    const { data: profiles, error: profilesError } = await (supabase as any)
       .from('profiles')
       .select('*')
       .in('user_id', clientIds);
@@ -298,7 +298,7 @@ export async function createCRMAction(
   scheduledAt?: Date
 ): Promise<CRMAction | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('crm_actions')
       .insert({
         client_id: clientId,
@@ -328,7 +328,7 @@ export async function getPendingCRMActions(): Promise<CRMAction[]> {
   try {
     const hoje = new Date();
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('crm_actions')
       .select('*')
       .eq('status', 'pending')
@@ -362,7 +362,7 @@ export async function processPendingCRMActions(): Promise<{ success: boolean; co
         // Exemplo: enviar WhatsApp, SMS, Email, etc.
 
         // Atualizar status para completed
-        await supabase
+        await (supabase as any)
           .from('crm_actions')
           .update({
             status: 'completed',
@@ -388,7 +388,7 @@ export async function processPendingCRMActions(): Promise<{ success: boolean; co
  */
 export async function getClientsNeedingReactivation(): Promise<ClientProfile[]> {
   try {
-    const { data: appointments, error: appointmentsError } = await supabase
+    const { data: appointments, error: appointmentsError } = await (supabase as any)
       .from('appointments')
       .select('client_user_id, client_name, client_whatsapp')
       .eq('status', 'completed')
@@ -446,7 +446,7 @@ export async function getClientsNeedingReactivation(): Promise<ClientProfile[]> 
 export async function getHighPotentialClients(barbershopId: string): Promise<ClientProfile[]> {
   try {
     // Clientes que gastaram mais de R$ 500 e visitaram pelo menos 3 vezes
-    const { data: appointments, error: appointmentsError } = await supabase
+    const { data: appointments, error: appointmentsError } = await (supabase as any)
       .from('appointments')
       .select('client_user_id, services(price)')
       .eq('barbershop_id', barbershopId);
@@ -503,7 +503,7 @@ export async function getHighPotentialClients(barbershopId: string): Promise<Cli
 export async function getClientsForPartnerConversion(barbershopId: string): Promise<ClientProfile[]> {
   try {
     // Clientes que indicaram 3 ou mais amigos
-    const { data: referrals, error: referralsError } = await supabase
+    const { data: referrals, error: referralsError } = await (supabase as any)
       .from('referrals')
       .select('client_id, count')
       .eq('barbershop_id', barbershopId)
@@ -517,7 +517,7 @@ export async function getClientsForPartnerConversion(barbershopId: string): Prom
     const clientIds = referrals?.map((r: any) => r.client_id) || [];
     if (clientIds.length === 0) return [];
 
-    const { data: profiles, error: profilesError } = await supabase
+    const { data: profiles, error: profilesError } = await (supabase as any)
       .from('profiles')
       .select('*')
       .in('user_id', clientIds);

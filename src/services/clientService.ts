@@ -30,7 +30,7 @@ export interface ClientScore {
  */
 export async function getClients(barbershopId: string, limit: number = 50): Promise<Client[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -54,7 +54,7 @@ export async function getClients(barbershopId: string, limit: number = 50): Prom
  */
 export async function getClientById(clientId: string): Promise<Client | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .select('*')
       .eq('user_id', clientId)
@@ -77,7 +77,7 @@ export async function getClientById(clientId: string): Promise<Client | null> {
  */
 export async function getClientByWhatsApp(whatsapp: string): Promise<Client | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .select('*')
       .eq('whatsapp', whatsapp)
@@ -107,7 +107,7 @@ export async function createClient(clientData: {
   barbershop_id?: string;
 }): Promise<Client | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .insert({
         user_id: clientData.user_id,
@@ -140,7 +140,7 @@ export async function updateClient(
   updates: Partial<Client>
 ): Promise<Client | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .update(updates)
       .eq('user_id', clientId)
@@ -168,7 +168,7 @@ export async function searchClientsByName(
   limit: number = 20
 ): Promise<Client[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -196,7 +196,7 @@ export async function searchClientsByWhatsApp(
   limit: number = 20
 ): Promise<Client[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -223,7 +223,7 @@ export async function getActiveClients(barbershopId: string, days: number = 30):
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
-    const { data: appointments, error: appointmentsError } = await supabase
+    const { data: appointments, error: appointmentsError } = await (supabase as any)
       .from('appointments')
       .select('client_user_id')
       .eq('barbershop_id', barbershopId)
@@ -241,7 +241,7 @@ export async function getActiveClients(barbershopId: string, days: number = 30):
       return [];
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -267,7 +267,7 @@ export async function getInactiveClients(barbershopId: string, days: number = 30
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
-    const { data: appointments, error: appointmentsError } = await supabase
+    const { data: appointments, error: appointmentsError } = await (supabase as any)
       .from('appointments')
       .select('client_user_id')
       .eq('barbershop_id', barbershopId)
@@ -281,7 +281,7 @@ export async function getInactiveClients(barbershopId: string, days: number = 30
 
     const activeClientIds = appointments?.map((a: any) => a.client_user_id) || [];
     
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -305,7 +305,7 @@ export async function getInactiveClients(barbershopId: string, days: number = 30
 export async function calculateClientScore(clientId: string): Promise<ClientScore> {
   try {
     // Buscar histórico de agendamentos
-    const { data: appointments, error } = await supabase
+    const { data: appointments, error } = await (supabase as any)
       .from('appointments')
       .select('scheduled_at, services(price)')
       .eq('client_user_id', clientId)
@@ -375,7 +375,7 @@ export async function calculateClientScore(clientId: string): Promise<ClientScor
  */
 export async function getTopClients(barbershopId: string, limit: number = 10): Promise<Array<Client & { score: number }>> {
   try {
-    const { data: appointments, error: appointmentsError } = await supabase
+    const { data: appointments, error: appointmentsError } = await (supabase as any)
       .from('appointments')
       .select('client_user_id, services(price)')
       .eq('barbershop_id', barbershopId);
@@ -418,7 +418,7 @@ export async function getTopClients(barbershopId: string, limit: number = 10): P
 
     // Buscar detalhes dos clientes
     const clientIds = topClients.map(c => c.user_id);
-    const { data: clients, error } = await supabase
+    const { data: clients, error } = await (supabase as any)
       .from('profiles')
       .select('*')
       .in('user_id', clientIds);
@@ -487,7 +487,7 @@ export async function getClientsBySpending(
   maxSpent: number = 10000
 ): Promise<Client[]> {
   try {
-    const { data: appointments, error: appointmentsError } = await supabase
+    const { data: appointments, error: appointmentsError } = await (supabase as any)
       .from('appointments')
       .select('client_user_id, services(price)')
       .eq('barbershop_id', barbershopId);
@@ -515,7 +515,7 @@ export async function getClientsBySpending(
       return [];
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -542,7 +542,7 @@ export async function getClientsByFrequency(
   maxVisits: number = 100
 ): Promise<Client[]> {
   try {
-    const { data: appointments, error: appointmentsError } = await supabase
+    const { data: appointments, error: appointmentsError } = await (supabase as any)
       .from('appointments')
       .select('client_user_id')
       .eq('barbershop_id', barbershopId);
@@ -570,7 +570,7 @@ export async function getClientsByFrequency(
       return [];
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .select('*')
       .eq('barbershop_id', barbershopId)

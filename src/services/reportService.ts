@@ -34,33 +34,33 @@ export async function generateFinancialReport(
 ): Promise<ReportData> {
   try {
     // Buscar pagamentos
-    const { data: payments, error: paymentsError } = await supabase
+    const { data: payments, error: paymentsError } = await (supabase as any)
       .from('payments')
       .select('*')
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString());
 
     // Buscar comissões
-    const { data: commissions, error: commissionsError } = await supabase
+    const { data: commissions, error: commissionsError } = await (supabase as any)
       .from('commissions')
       .select('*')
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString());
 
     // Buscar parceiros
-    const { data: partners, error: partnersError } = await supabase
+    const { data: partners, error: partnersError } = await (supabase as any)
       .from('partners')
       .select('*');
 
     // Buscar agendamentos
-    const { data: appointments, error: appointmentsError } = await supabase
+    const { data: appointments, error: appointmentsError } = await (supabase as any)
       .from('appointments')
       .select('*')
       .gte('scheduled_at', startDate.toISOString())
       .lte('scheduled_at', endDate.toISOString());
 
     // Buscar clientes únicos
-    const { data: clients, error: clientsError } = await supabase
+    const { data: clients, error: clientsError } = await (supabase as any)
       .from('profiles')
       .select('id');
 
@@ -78,7 +78,7 @@ export async function generateFinancialReport(
     const byType: Record<string, number> = {};
     for (const c of commissions || []) {
       // Buscar tipo do parceiro
-      const { data: partner } = await supabase
+      const { data: partner } = await (supabase as any)
         .from('partners')
         .select('type')
         .eq('id', c.partner_id)
@@ -158,7 +158,7 @@ export async function generatePartnerCommissionReport(
   endDate: Date
 ) {
   try {
-    const { data: commissions, error } = await supabase
+    const { data: commissions, error } = await (supabase as any)
       .from('commissions')
       .select('*')
       .eq('partner_id', partnerId)
@@ -205,7 +205,7 @@ export async function generateAppointmentReport(
   endDate: Date
 ) {
   try {
-    const { data: appointments, error } = await supabase
+    const { data: appointments, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -224,7 +224,7 @@ export async function generateAppointmentReport(
     const cancelados = (appointments || []).filter((a: any) => a.status === 'cancelled').length;
 
     // Calcular receita
-    const { data: payments, error: paymentsError } = await supabase
+    const { data: payments, error: paymentsError } = await (supabase as any)
       .from('payments')
       .select('*')
       .in('appointment_id', appointments?.map((a: any) => a.id) || []);
@@ -260,7 +260,7 @@ export async function generateClientReport(
 ) {
   try {
     // Buscar clientes únicos
-    const { data: appointments, error: appointmentsError } = await supabase
+    const { data: appointments, error: appointmentsError } = await (supabase as any)
       .from('appointments')
       .select('client_user_id, client_name')
       .eq('barbershop_id', barbershopId)
@@ -360,18 +360,18 @@ export async function exportReportToCSV(
 export async function generateAIDashboardReport() {
   try {
     // Buscar estatísticas da IA
-    const { data: aiStats, error: aiError } = await supabase
+    const { data: aiStats, error: aiError } = await (supabase as any)
       .from('ai_memory')
       .select('*');
 
     // Buscar automações
-    const { data: automations, error: autoError } = await supabase
+    const { data: automations, error: autoError } = await (supabase as any)
       .from('automations')
       .select('*')
       .eq('active', true);
 
     // Buscar fila de automação
-    const { data: queue, error: queueError } = await supabase
+    const { data: queue, error: queueError } = await (supabase as any)
       .from('automation_queue')
       .select('*')
       .eq('status', 'pendente');

@@ -42,7 +42,7 @@ export async function distribuirComissaoMultinivel(
           const valorComissao = valor * (regra.commission_percent / 100);
           
           // Criar comissão
-          const { data: comissao, error } = await supabase
+          const { data: comissao, error } = await (supabase as any)
             .from('commissions')
             .insert({
               partner_id: parceiro.id,
@@ -89,7 +89,7 @@ export async function distribuirComissaoMultinivel(
  */
 async function getPartner(partnerId: string) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('partners')
       .select('*')
       .eq('id', partnerId)
@@ -107,7 +107,7 @@ async function getPartner(partnerId: string) {
  */
 async function getCommissionRule(partner: any, nivel: number) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('commission_rules')
       .select('*')
       .eq('partner_type', partner.type)
@@ -131,7 +131,7 @@ async function alreadyHasCommission(
   type: 'adesao' | 'recorrente'
 ) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('commissions')
       .select('id')
       .eq('partner_id', partnerId)
@@ -162,7 +162,7 @@ export async function processarPagamento(
     }
 
     // Criar pagamento
-    const { data: pagamento, error: pagError } = await supabase
+    const { data: pagamento, error: pagError } = await (supabase as any)
       .from('payments')
       .insert({
         barbershop_id: barbershopId,
@@ -210,7 +210,7 @@ export async function processarPagamentoRecurrente(
     }
 
     // Criar pagamento
-    const { data: pagamento, error: pagError } = await supabase
+    const { data: pagamento, error: pagError } = await (supabase as any)
       .from('payments')
       .insert({
         barbershop_id: barbershopId,
@@ -247,7 +247,7 @@ export async function processarPagamentoRecurrente(
  */
 export async function getPartnerCommissions(partnerId: string) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('commissions')
       .select('*')
       .eq('partner_id', partnerId)
@@ -270,7 +270,7 @@ export async function getPartnerCommissions(partnerId: string) {
  */
 export async function getTotalCommissions(partnerId: string) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('commissions')
       .select('amount, status')
       .eq('partner_id', partnerId);
@@ -302,7 +302,7 @@ export async function getTotalCommissions(partnerId: string) {
  */
 export async function getCommissionsByStatus(status: 'pending' | 'paid') {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('commissions')
       .select('*, partners:user_id(name, type)')
       .eq('status', status)
@@ -328,7 +328,7 @@ export async function updateCommissionStatus(
   status: 'pending' | 'paid'
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('commissions')
       .update({ status })
       .eq('id', commissionId);
@@ -354,7 +354,7 @@ export async function generateCommissionReport(
   endDate: Date
 ) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('commissions')
       .select('*')
       .eq('partner_id', partnerId)

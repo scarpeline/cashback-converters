@@ -28,7 +28,7 @@ const PartnerDashboard = () => {
   const { user } = useAuth();
   const { data: partner, isLoading } = usePartnerByUserId(user?.id || '');
   const { data: referralCount = 0 } = useDirectReferralsCount(partner?.id || '');
-  const { data: summary } = usePartnerCommissionSummary(partner?.id || '');
+  const { data: summary } = usePartnerCommissionSummary(partner?.id || '') as { data: any };
 
   if (isLoading) {
     return (

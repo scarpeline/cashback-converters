@@ -44,7 +44,7 @@ export async function getInactiveClients(
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysInactive);
 
-    const { data: appointments, error } = await supabase
+    const { data: appointments, error } = await (supabase as any)
       .from('appointments')
       .select('client_user_id, scheduled_at, services(price)')
       .eq('status', 'completed')
@@ -81,7 +81,7 @@ export async function getInactiveClients(
     const inactiveClients: InactiveClient[] = [];
     
     for (const [userId, data] of clientMap.entries()) {
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('id, name, whatsapp, email')
         .eq('user_id', userId)
@@ -168,7 +168,7 @@ export async function sendReactivationMessage(
       );
 
       // Registrar no banco de dados
-      await supabase.from('reactivation_campaigns_log').insert({
+      await (supabase as any).from('reactivation_campaigns_log').insert({
         client_id: client.id,
         message: message,
         status: 'sent',
@@ -257,7 +257,7 @@ export async function getReactivationStats(): Promise<{
   avg_response_time: number;
 }> {
   try {
-    const { data: logs, error } = await supabase
+    const { data: logs, error } = await (supabase as any)
       .from('reactivation_campaigns_log')
       .select('*')
       .order('sent_at', { ascending: false })
@@ -305,7 +305,7 @@ export async function trackReactivationResponse(
   responseType: 'scheduled' | 'declined' | 'no_response'
 ): Promise<void> {
   try {
-    await supabase
+    await (supabase as any)
       .from('reactivation_campaigns_log')
       .update({
         response_type: responseType,
