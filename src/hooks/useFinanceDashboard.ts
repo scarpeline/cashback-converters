@@ -220,7 +220,7 @@ export function usePartnerStats() {
         .select('*');
 
       // Buscar comissões pagas
-      const { data: commissions, error: commissionsError } = await supabase
+      const { data: commissions, error: commissionsError } = await (supabase as any)
         .from('commissions')
         .select('*')
         .eq('status', 'pago');

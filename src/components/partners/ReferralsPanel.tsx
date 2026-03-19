@@ -12,7 +12,7 @@ export default function ReferralsPanel({ partnerId }: ReferralsPanelProps) {
   const { data: referrals, isLoading } = useQuery({
     queryKey: ['partner-referrals', partnerId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('partner_referrals')
         .select(`
           *,

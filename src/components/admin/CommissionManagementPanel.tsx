@@ -97,7 +97,7 @@ export default function CommissionManagementPanel() {
 
   const cancelMutation = useMutation({
     mutationFn: async (commissionId: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('partner_commissions')
         .update({ status: 'cancelled' })
         .eq('id', commissionId);

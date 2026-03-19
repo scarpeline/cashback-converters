@@ -84,7 +84,7 @@ export default function PartnerNotificationCenter({ partnerId }: PartnerNotifica
     }
   };
 
-  const unreadCount = notifications?.filter(n => !n.read).length || 0;
+  const unreadCount = notifications?.filter((n: any) => !n.read).length || 0;
 
   if (isLoading) {
     return (
