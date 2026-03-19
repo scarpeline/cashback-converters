@@ -31,7 +31,7 @@ export default function CommissionManagementPanel() {
         .order('created_at', { ascending: false });
 
       if (filterStatus !== 'all') {
-        query = query.eq('status', filterStatus);
+        query = (query as any).eq('status', filterStatus);
       }
 
       const { data, error } = await query;
