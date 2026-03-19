@@ -215,7 +215,7 @@ export function usePartnerStats() {
     
     try {
       // Buscar parceiros
-      const { data: partners, error: partnersError } = await supabase
+      const { data: partners, error: partnersError } = await (supabase as any)
         .from('partners')
         .select('*');
 
