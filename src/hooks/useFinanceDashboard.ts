@@ -82,7 +82,7 @@ export function useFinanceSummary(period: '7d' | '30d' | '90d' | '12m' = '30d') 
         .eq('status', 'paid');
 
       // Buscar assinaturas ativas
-      const { data: assinaturas, error: subError } = await supabase
+      const { data: assinaturas, error: subError } = await (supabase as any)
         .from('subscriptions')
         .select('*')
         .eq('status', 'ativo');
