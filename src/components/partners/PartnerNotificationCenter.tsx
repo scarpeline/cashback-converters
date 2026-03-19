@@ -26,7 +26,7 @@ export default function PartnerNotificationCenter({ partnerId }: PartnerNotifica
         .order('created_at', { ascending: false });
 
       if (filter === 'unread') {
-        query = query.eq('read', false);
+        query = (query as any).eq('read', false);
       }
 
       const { data, error } = await query;
