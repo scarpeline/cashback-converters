@@ -69,9 +69,9 @@ export function useCreateNotification() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createNotification,
+    mutationFn: (params: { userId: string; title: string; message: string; type?: string; priority?: string; data?: any }) => 
+      createNotification(params.userId, params.title, params.message, params.type as any, params.priority as any, params.data),
     onSuccess: (_, variables) => {
-      // Invalidar queries
       queryClient.invalidateQueries({ queryKey: notificationKeys.list(variables.userId) });
       queryClient.invalidateQueries({ queryKey: notificationKeys.unread(variables.userId) });
       queryClient.invalidateQueries({ queryKey: notificationKeys.stats(variables.userId) });
