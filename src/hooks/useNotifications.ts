@@ -129,7 +129,8 @@ export function useDeleteNotification() {
  */
 export function useCommissionNotification() {
   return useMutation({
-    mutationFn: sendCommissionNotification,
+    mutationFn: (params: { userId: string; amount: number; type: 'adesao' | 'recorrente' }) =>
+      sendCommissionNotification(params.userId, params.amount, params.type),
   });
 }
 
