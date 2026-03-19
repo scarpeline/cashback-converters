@@ -42,7 +42,7 @@ export default function CommissionManagementPanel() {
 
   const approveMutation = useMutation({
     mutationFn: async (commission: any) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('partner_commissions')
         .update({ status: 'approved' })
         .eq('id', commission.id);
