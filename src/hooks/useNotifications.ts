@@ -139,7 +139,8 @@ export function useCommissionNotification() {
  */
 export function useAppointmentNotification() {
   return useMutation({
-    mutationFn: sendAppointmentNotification,
+    mutationFn: (params: { userId: string; barbershopName: string; service: string; date: Date; time: string; type?: string }) =>
+      sendAppointmentNotification(params.userId, params.barbershopName, params.service, params.date, params.time, params.type as any),
   });
 }
 
