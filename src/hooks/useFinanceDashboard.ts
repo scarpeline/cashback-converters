@@ -88,7 +88,7 @@ export function useFinanceSummary(period: '7d' | '30d' | '90d' | '12m' = '30d') 
         .eq('status', 'ativo');
 
       // Buscar comissões pagas
-      const { data: comissoes, error: comError } = await supabase
+      const { data: comissoes, error: comError } = await (supabase as any)
         .from('commissions')
         .select('*')
         .gte('created_at', dataInicio.toISOString())
