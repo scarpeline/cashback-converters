@@ -15,7 +15,7 @@ export default function CommissionManagementPanel() {
   const { data: commissions, isLoading } = useQuery({
     queryKey: ['admin-commissions', filterStatus],
     queryFn: async () => {
-      let query = supabase
+      let query = (supabase as any)
         .from('partner_commissions')
         .select(`
           *,
