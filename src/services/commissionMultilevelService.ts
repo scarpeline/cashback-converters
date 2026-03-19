@@ -19,7 +19,7 @@ export async function distribuirComissaoMultinivel(
   valor: number,
   partnerId: string,
   sourceUserId: string,
-  type: 'adesao' | 'recorrente = 'adesao'
+  type: 'adesao' | 'recorrente' = 'adesao'
 ): Promise<CommissionDistribution[]> {
   try {
     const distribuicoes: CommissionDistribution[] = [];
