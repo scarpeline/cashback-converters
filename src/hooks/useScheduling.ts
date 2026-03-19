@@ -75,9 +75,9 @@ export function useCreateAppointment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createAppointment,
+    mutationFn: (params: { barbershopId: string; professionalId: string; serviceId: string; clientId: string; clientName: string; clientWhatsApp: string; scheduledAt: Date; notes?: string }) =>
+      createAppointment(params.barbershopId, params.professionalId, params.serviceId, params.clientId, params.clientName, params.clientWhatsApp, params.scheduledAt, params.notes),
     onSuccess: (_, variables) => {
-      // Invalidar queries
       queryClient.invalidateQueries({ queryKey: schedulingKeys.today() });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.barbershop(variables.barbershopId, '', '') });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.professional(variables.professionalId, '', '') });
