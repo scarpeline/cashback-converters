@@ -19,7 +19,7 @@ export default function PartnerNotificationCenter({ partnerId }: PartnerNotifica
   const { data: notifications, isLoading } = useQuery({
     queryKey: ['partner-notifications', partnerId, filter],
     queryFn: async () => {
-      let query = supabase
+      let query = (supabase as any)
         .from('partner_notifications')
         .select('*')
         .eq('partner_id', partnerId)
