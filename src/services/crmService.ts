@@ -109,7 +109,7 @@ export async function getClientProfile(clientId: string): Promise<ClientProfile 
       created_at: profile.created_at,
       last_visit: appointments?.[0]?.scheduled_at,
       total_visits: totalVisits,
-      total_spent,
+      total_spent: totalSpent,
       average_ticket: averageTicket,
       favorite_service: undefined, // Calcular a partir do histórico
       favorite_professional: undefined, // Calcular a partir do histórico
