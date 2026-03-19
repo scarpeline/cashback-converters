@@ -99,7 +99,7 @@ export async function generateNetworkCommission(
  */
 export async function getPendingCommissions(partnerId: string) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('partner_commissions')
       .select('*')
       .eq('partner_id', partnerId)
@@ -119,7 +119,7 @@ export async function getPendingCommissions(partnerId: string) {
  */
 export async function approveCommission(commissionId: string) {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('partner_commissions')
       .update({ status: 'approved' })
       .eq('id', commissionId);
@@ -137,7 +137,7 @@ export async function approveCommission(commissionId: string) {
  */
 export async function markCommissionAsPaid(commissionId: string) {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('partner_commissions')
       .update({ 
         status: 'paid',
@@ -158,7 +158,7 @@ export async function markCommissionAsPaid(commissionId: string) {
  */
 export async function cancelCommission(commissionId: string) {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('partner_commissions')
       .update({ status: 'cancelled' })
       .eq('id', commissionId);
