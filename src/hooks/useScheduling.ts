@@ -93,7 +93,8 @@ export function useUpdateAppointmentStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: updateAppointmentStatus,
+    mutationFn: (params: { appointmentId: string; status: 'scheduled' | 'completed' | 'cancelled' | 'no_show' }) =>
+      updateAppointmentStatus(params.appointmentId, params.status),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: schedulingKeys.today() });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.all });
