@@ -176,7 +176,7 @@ export function useCommissions() {
     setLoading(true);
     
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('commissions')
         .select('*')
         .order('created_at', { ascending: false })
