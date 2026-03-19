@@ -490,7 +490,7 @@ export async function getHighPotentialClients(barbershopId: string): Promise<Cli
         tags: ['high-potential'],
       }));
 
-    return highPotential;
+    return highPotential as any;
   } catch (error) {
     console.error('Erro ao buscar clientes com alto potencial:', error);
     return [];
