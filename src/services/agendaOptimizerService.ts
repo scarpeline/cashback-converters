@@ -177,7 +177,7 @@ export async function getHourlyOccupancy(barbershopId: string, days: number = 30
       const avgOccupancy = totalDays > 0 ? (totalOccupancy / totalDays / days) * 100 : 0;
 
       result.push({
-        hour,
+        hour: h,
         occupancy: Math.round(avgOccupancy * 100) / 100,
         dayOfWeek: 0,
       });
