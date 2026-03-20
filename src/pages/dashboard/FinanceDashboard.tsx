@@ -48,7 +48,7 @@ export default function FinanceDashboard() {
       }
 
       // Buscar pagamentos
-      const { data: pagamentos, error: pagError } = await supabase
+      const { data: pagamentos, error: pagError } = await (supabase as any)
         .from('payments')
         .select('*')
         .gte('created_at', dataInicio.toISOString())
@@ -68,7 +68,7 @@ export default function FinanceDashboard() {
         .eq('status', 'pago');
 
       // Buscar pagamentos pendentes
-      const { data: pendentes, error: pendError } = await supabase
+      const { data: pendentes, error: pendError } = await (supabase as any)
         .from('payments')
         .select('*')
         .eq('status', 'pending');

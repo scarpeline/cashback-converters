@@ -17,7 +17,7 @@ describe('Testes de Proteção do Sistema', () => {
     console.log('🔧 Iniciando setup de testes...');
     
     // Criar barbearia de teste
-    const { data: barbershop } = await supabase
+    const { data: barbershop } = await (supabase as any)
       .from('barbershops')
       .insert({
         name: 'Barbearia Teste Sistema',
@@ -30,7 +30,7 @@ describe('Testes de Proteção do Sistema', () => {
     testBarbershopId = barbershop.id;
     
     // Criar cliente de teste
-    const { data: client } = await supabase
+    const { data: client } = await (supabase as any)
       .from('profiles')
       .insert({
         user_id: 'test-client-id',
@@ -43,7 +43,7 @@ describe('Testes de Proteção do Sistema', () => {
     testClientId = client.id;
     
     // Criar profissional de teste
-    const { data: professional } = await supabase
+    const { data: professional } = await (supabase as any)
       .from('professionals')
       .insert({
         barbershop_id: testBarbershopId,
@@ -56,7 +56,7 @@ describe('Testes de Proteção do Sistema', () => {
     testProfessionalId = professional.id;
     
     // Criar serviço de teste
-    const { data: service } = await supabase
+    const { data: service } = await (supabase as any)
       .from('services')
       .insert({
         barbershop_id: testBarbershopId,
@@ -74,10 +74,10 @@ describe('Testes de Proteção do Sistema', () => {
     // Cleanup após testes
     console.log('🧹 Limpando dados de teste...');
     
-    await supabase.from('appointments').delete().eq('barbershop_id', testBarbershopId);
-    await supabase.from('services').delete().eq('barbershop_id', testBarbershopId);
-    await supabase.from('professionals').delete().eq('barbershop_id', testBarbershopId);
-    await supabase.from('barbershops').delete().eq('id', testBarbershopId);
+    await (supabase as any).from('appointments').delete().eq('barbershop_id', testBarbershopId);
+    await (supabase as any).from('services').delete().eq('barbershop_id', testBarbershopId);
+    await (supabase as any).from('professionals').delete().eq('barbershop_id', testBarbershopId);
+    await (supabase as any).from('barbershops').delete().eq('id', testBarbershopId);
   });
 
   describe('🔄 Agendamento Recorrente', () => {
@@ -161,7 +161,7 @@ describe('Testes de Proteção do Sistema', () => {
       console.log('💡 Testando geração de sugestões CRM...');
       
       // Criar histórico de serviços para o cliente
-      await supabase.from('client_service_history').insert({
+      await (supabase as any).from('client_service_history').insert({
         client_user_id: testClientId,
         barbershop_id: testBarbershopId,
         service_id: testServiceId,
@@ -187,7 +187,7 @@ describe('Testes de Proteção do Sistema', () => {
       console.log('📊 Testando registro automático de histórico...');
       
       // Criar agendamento
-      const { data: appointment } = await supabase
+      const { data: appointment } = await (supabase as any)
         .from('appointments')
         .insert({
           barbershop_id: testBarbershopId,
@@ -207,7 +207,7 @@ describe('Testes de Proteção do Sistema', () => {
       expect(result).toBe(true);
       
       // Verificar se foi registrado
-      const { data: history } = await supabase
+      const { data: history } = await (supabase as any)
         .from('client_service_history')
         .select('*')
         .eq('appointment_id', appointment.id)
@@ -230,7 +230,7 @@ describe('Testes de Proteção do Sistema', () => {
       ];
 
       for (const service of services) {
-        await supabase.from('client_service_history').insert({
+        await (supabase as any).from('client_service_history').insert({
           client_user_id: testClientId,
           barbershop_id: testBarbershopId,
           service_id: testServiceId,
@@ -260,7 +260,7 @@ describe('Testes de Proteção do Sistema', () => {
       console.log('💰 Testando início de recuperação de pagamento...');
       
       // Criar pagamento pendente
-      const { data: payment } = await supabase
+      const { data: payment } = await (supabase as any)
         .from('payments')
         .insert({
           barbershop_id: testBarbershopId,
@@ -281,7 +281,7 @@ describe('Testes de Proteção do Sistema', () => {
       expect(recoveryId).toBeDefined();
       
       // Verificar se foi criado
-      const { data: recovery } = await supabase
+      const { data: recovery } = await (supabase as any)
         .from('payment_recovery')
         .select('*')
         .eq('payment_id', payment.id)
@@ -297,7 +297,7 @@ describe('Testes de Proteção do Sistema', () => {
       console.log('⚙️ Testando processamento automático de recuperação...');
       
       // Criar pagamento e recuperação
-      const { data: payment } = await supabase
+      const { data: payment } = await (supabase as any)
         .from('payments')
         .insert({
           barbershop_id: testBarbershopId,
@@ -329,7 +329,7 @@ describe('Testes de Proteção do Sistema', () => {
       console.log('🔓 Testando reativação de acesso...');
       
       // Criar pagamento
-      const { data: payment } = await supabase
+      const { data: payment } = await (supabase as any)
         .from('payments')
         .insert({
           barbershop_id: testBarbershopId,
@@ -347,13 +347,13 @@ describe('Testes de Proteção do Sistema', () => {
           p_payment_id: payment.id
         });
 
-      await supabase.rpc('apply_access_block', {
+      await (supabase as any).rpc('apply_access_block', {
         p_recovery_id: recoveryId,
         p_block_type: 'partial'
       });
 
       // Marcar pagamento como pago
-      await supabase
+      await (supabase as any)
         .from('payments')
         .update({
           status: 'paid',
@@ -370,7 +370,7 @@ describe('Testes de Proteção do Sistema', () => {
       expect(result).toBe(true);
       
       // Verificar se bloqueio foi removido
-      const { data: block } = await supabase
+      const { data: block } = await (supabase as any)
         .from('access_blocks')
         .select('*')
         .eq('user_id', testClientId)
@@ -396,7 +396,7 @@ describe('Testes de Proteção do Sistema', () => {
       ];
 
       for (const visit of visits) {
-        await supabase.from('appointments').insert({
+        await (supabase as any).from('appointments').insert({
           barbershop_id: testBarbershopId,
           professional_id: testProfessionalId,
           service_id: testServiceId,
@@ -406,7 +406,7 @@ describe('Testes de Proteção do Sistema', () => {
           status: 'completed'
         });
 
-        await supabase.from('payments').insert({
+        await (supabase as any).from('payments').insert({
           barbershop_id: testBarbershopId,
           client_user_id: testClientId,
           amount: visit.amount,
@@ -447,7 +447,7 @@ describe('Testes de Proteção do Sistema', () => {
         const clientId = `test-client-${i}`;
         
         // Criar perfil
-        await supabase.from('profiles').insert({
+        await (supabase as any).from('profiles').insert({
           user_id: clientId,
           name: client.name,
           email: `client${i}@teste.com`
@@ -455,7 +455,7 @@ describe('Testes de Proteção do Sistema', () => {
 
         // Criar visitas
         for (let j = 0; j < client.visits; j++) {
-          await supabase.from('appointments').insert({
+          await (supabase as any).from('appointments').insert({
             barbershop_id: testBarbershopId,
             professional_id: testProfessionalId,
             service_id: testServiceId,
@@ -465,7 +465,7 @@ describe('Testes de Proteção do Sistema', () => {
             status: 'completed'
           });
 
-          await supabase.from('payments').insert({
+          await (supabase as any).from('payments').insert({
             barbershop_id: testBarbershopId,
             client_user_id: clientId,
             amount: client.spent / client.visits,
@@ -476,7 +476,7 @@ describe('Testes de Proteção do Sistema', () => {
         }
 
         // Atualizar métricas
-        await supabase.rpc('update_client_metrics', {
+        await (supabase as any).rpc('update_client_metrics', {
           p_client_user_id: clientId,
           p_barbershop_id: testBarbershopId
         });
@@ -503,7 +503,7 @@ describe('Testes de Proteção do Sistema', () => {
       console.log('🔒 Testando segurança de acesso...');
       
       // Tentar acessar dados de outra barbearia
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('client_metrics')
         .select('*')
         .eq('barbershop_id', 'outra-barbershop-id');
@@ -541,7 +541,7 @@ describe('Testes de Proteção do Sistema', () => {
       console.log('🔗 Testando integridade referencial...');
       
       // Tentar criar agendamento com service_id inexistente
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('appointments')
         .insert({
           barbershop_id: testBarbershopId,
@@ -605,7 +605,7 @@ describe('Testes de Proteção do Sistema', () => {
       const promises = [];
       for (let i = 0; i < 100; i++) {
         promises.push(
-          supabase.from('client_service_history').insert({
+          (supabase as any).from('client_service_history').insert({
             client_user_id: testClientId,
             barbershop_id: testBarbershopId,
             service_id: testServiceId,
@@ -645,7 +645,7 @@ describe('🔄 Teste de Integração Final', () => {
     const startTime = Date.now();
     
     // 1. Criar barbearia (deve criar serviços automaticamente)
-    const { data: barbershop } = await supabase
+    const { data: barbershop } = await (supabase as any)
       .from('barbershops')
       .insert({
         name: 'Barbearia Integração',
@@ -656,7 +656,7 @@ describe('🔄 Teste de Integração Final', () => {
       .single();
     
     // 2. Verificar se serviços foram criados
-    const { data: services } = await supabase
+    const { data: services } = await (supabase as any)
       .from('services')
       .select('*')
       .eq('barbershop_id', barbershop.id);
@@ -664,7 +664,7 @@ describe('🔄 Teste de Integração Final', () => {
     expect(services?.length).toBeGreaterThan(0);
     
     // 3. Criar cliente e agendamento recorrente
-    const { data: client } = await supabase
+    const { data: client } = await (supabase as any)
       .from('profiles')
       .insert({
         user_id: 'integration-client',
@@ -674,7 +674,7 @@ describe('🔄 Teste de Integração Final', () => {
       .select('id')
       .single();
     
-    const { data: professional } = await supabase
+    const { data: professional } = await (supabase as any)
       .from('professionals')
       .insert({
         barbershop_id: barbershop.id,
@@ -700,7 +700,7 @@ describe('🔄 Teste de Integração Final', () => {
     expect(recurringResult.success).toBe(true);
     
     // 5. Criar pagamento e iniciar recuperação
-    const { data: payment } = await supabase
+    const { data: payment } = await (supabase as any)
       .from('payments')
       .insert({
         barbershop_id: barbershop.id,
@@ -720,7 +720,7 @@ describe('🔄 Teste de Integração Final', () => {
     expect(recoveryId).toBeDefined();
     
     // 6. Atualizar métricas do cliente
-    await supabase.rpc('update_client_metrics', {
+    await (supabase as any).rpc('update_client_metrics', {
       p_client_user_id: client.id,
       p_barbershop_id: barbershop.id
     });
@@ -744,10 +744,10 @@ describe('🔄 Teste de Integração Final', () => {
     expect(Array.isArray(ranking)).toBe(true);
     
     // Cleanup
-    await supabase.from('appointments').delete().eq('barbershop_id', barbershop.id);
-    await supabase.from('services').delete().eq('barbershop_id', barbershop.id);
-    await supabase.from('professionals').delete().eq('barbershop_id', barbershop.id);
-    await supabase.from('barbershops').delete().eq('id', barbershop.id);
+    await (supabase as any).from('appointments').delete().eq('barbershop_id', barbershop.id);
+    await (supabase as any).from('services').delete().eq('barbershop_id', barbershop.id);
+    await (supabase as any).from('professionals').delete().eq('barbershop_id', barbershop.id);
+    await (supabase as any).from('barbershops').delete().eq('id', barbershop.id);
     
     const endTime = Date.now();
     const duration = endTime - startTime;

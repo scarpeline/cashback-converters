@@ -27,7 +27,7 @@ export interface ReferralStats {
 
 export async function getReferralCode(userId: string): Promise<string | null> {
   try {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('profiles')
       .select('referral_code')
       .eq('id', userId)
@@ -43,7 +43,7 @@ export async function generateReferralCode(userId: string): Promise<string> {
   try {
     const code = `INDICA-${userId.substring(0, 8).toUpperCase()}`;
 
-    await supabase
+    await (supabase as any)
       .from('profiles')
       .update({ referral_code: code })
       .eq('id', userId);
@@ -69,7 +69,7 @@ export async function applyReferralCode(userId: string, code: string): Promise<{
   error?: string;
 }> {
   try {
-    const { data: referrer, error: referrerError } = await supabase
+    const { data: referrer, error: referrerError } = await (supabase as any)
       .from('profiles')
       .select('id, name, referral_code')
       .eq('referral_code', code.toUpperCase())
@@ -83,7 +83,7 @@ export async function applyReferralCode(userId: string, code: string): Promise<{
       return { success: false, error: 'Você não pode usar seu próprio código' };
     }
 
-    const { data: existing } = await supabase
+    const { data: existing } = await (supabase as any)
       .from('client_referrals')
       .select('id')
       .eq('referred_user_id', userId)
@@ -95,7 +95,7 @@ export async function applyReferralCode(userId: string, code: string): Promise<{
 
     const defaultReward = { type: 'cashback', amount: 10 };
 
-    await supabase.from('client_referrals').insert({
+    await (supabase as any).from('client_referrals').insert({
       referrer_user_id: referrer.id,
       referred_user_id: userId,
       referral_code: code.toUpperCase(),
@@ -112,7 +112,7 @@ export async function applyReferralCode(userId: string, code: string): Promise<{
 
 export async function getMyReferrals(userId: string): Promise<Referral[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('client_referrals')
       .select('*')
       .eq('referrer_user_id', userId)
@@ -128,7 +128,7 @@ export async function getMyReferrals(userId: string): Promise<Referral[]> {
 
 export async function getReferralsByMe(userId: string): Promise<Referral[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('client_referrals')
       .select('*')
       .eq('referred_user_id', userId)
@@ -180,7 +180,7 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
 
 export async function completeReferral(referralId: string): Promise<boolean> {
   try {
-    const { data: referral } = await supabase
+    const { data: referral } = await (supabase as any)
       .from('client_referrals')
       .select('*')
       .eq('id', referralId)
@@ -188,7 +188,7 @@ export async function completeReferral(referralId: string): Promise<boolean> {
 
     if (!referral) return false;
 
-    await supabase
+    await (supabase as any)
       .from('client_referrals')
       .update({
         status: 'completed',
@@ -197,7 +197,7 @@ export async function completeReferral(referralId: string): Promise<boolean> {
       .eq('id', referralId);
 
     if (referral.reward_type === 'cashback' && referral.reward_amount) {
-      await supabase.rpc('credit_referral_cashback', {
+      await (supabase as any).rpc('credit_referral_cashback', {
         p_user_id: referral.referrer_user_id,
         p_amount: referral.reward_amount,
         p_referral_id: referralId,
@@ -213,7 +213,7 @@ export async function completeReferral(referralId: string): Promise<boolean> {
 
 export async function processReferralReward(referralId: string): Promise<boolean> {
   try {
-    const { data: referral } = await supabase
+    const { data: referral } = await (supabase as any)
       .from('client_referrals')
       .select('*')
       .eq('id', referralId)
@@ -222,14 +222,14 @@ export async function processReferralReward(referralId: string): Promise<boolean
     if (!referral) return false;
 
     if (referral.reward_type === 'cashback' && referral.reward_amount) {
-      await supabase.rpc('credit_referral_cashback', {
+      await (supabase as any).rpc('credit_referral_cashback', {
         p_user_id: referral.referrer_user_id,
         p_amount: referral.reward_amount,
         p_referral_id: referralId,
       });
     }
 
-    await supabase
+    await (supabase as any)
       .from('client_referrals')
       .update({
         status: 'rewarded',

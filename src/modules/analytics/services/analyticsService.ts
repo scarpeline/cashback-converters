@@ -38,7 +38,7 @@ function getDateRange(filter: AnalyticsFilter): { start: string; end: string } {
 export async function getRevenueMetrics(filter: AnalyticsFilter): Promise<RevenueMetrics> {
   const { start, end } = getDateRange(filter);
 
-  const { data: payments } = await supabase
+  const { data: payments } = await (supabase as any)
     .from('payments')
     .select('amount, paid_at, appointment_id')
     .eq('barbershop_id', filter.barbershop_id)
@@ -65,7 +65,7 @@ export async function getRetentionMetrics(filter: AnalyticsFilter): Promise<Rete
   const { start, end } = getDateRange(filter);
 
   // Clientes com agendamentos no período
-  const { data: appointments } = await supabase
+  const { data: appointments } = await (supabase as any)
     .from('appointments')
     .select('client_user_id, status')
     .eq('barbershop_id', filter.barbershop_id)
@@ -78,7 +78,7 @@ export async function getRetentionMetrics(filter: AnalyticsFilter): Promise<Rete
 
   // Clientes do período anterior (para churn)
   const prevStart = new Date(new Date(start).getTime() - (new Date(end).getTime() - new Date(start).getTime()));
-  const { data: prevAppointments } = await supabase
+  const { data: prevAppointments } = await (supabase as any)
     .from('appointments')
     .select('client_user_id')
     .eq('barbershop_id', filter.barbershop_id)
@@ -104,7 +104,7 @@ export async function getRetentionMetrics(filter: AnalyticsFilter): Promise<Rete
 export async function getAppointmentMetrics(filter: AnalyticsFilter): Promise<AppointmentMetrics> {
   const { start, end } = getDateRange(filter);
 
-  const { data: appointments } = await supabase
+  const { data: appointments } = await (supabase as any)
     .from('appointments')
     .select('status, scheduled_at')
     .eq('barbershop_id', filter.barbershop_id)
@@ -146,7 +146,7 @@ export async function getOccupancyMetrics(filter: AnalyticsFilter): Promise<Occu
   const { start, end } = getDateRange(filter);
 
   // Profissionais ativos
-  const { data: professionals } = await supabase
+  const { data: professionals } = await (supabase as any)
     .from('professionals')
     .select('id, name')
     .eq('barbershop_id', filter.barbershop_id)
@@ -163,7 +163,7 @@ export async function getOccupancyMetrics(filter: AnalyticsFilter): Promise<Occu
     };
   }
 
-  const { data: appointments } = await supabase
+  const { data: appointments } = await (supabase as any)
     .from('appointments')
     .select('professional_id, scheduled_at')
     .eq('barbershop_id', filter.barbershop_id)

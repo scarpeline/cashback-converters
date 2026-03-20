@@ -781,7 +781,7 @@ const PedidosServicoPage = () => {
           return;
         }
         setAccountantId(data.id);
-        const { data: reqs } = await supabase
+        const { data: reqs } = await (supabase as any)
           .from("fiscal_service_requests")
           .select("*, profiles:client_user_id(name, email, whatsapp)")
           .order("created_at", { ascending: false });
@@ -799,7 +799,7 @@ const PedidosServicoPage = () => {
       const updatePayload: any = shouldClaim
         ? { status, accountant_id: accountantId }
         : { status };
-      let query = supabase
+      let query = (supabase as any)
         .from("fiscal_service_requests")
         .update(updatePayload)
         .eq("id", id);
@@ -1074,7 +1074,7 @@ const ContaBancariaPage = () => {
       account_type: form.account_type,
       pix_key_type: form.pix_key_type,
     };
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("profiles")
       .update({
         bank_info: bankData,
@@ -1247,7 +1247,7 @@ const PerfilPage = () => {
   const saveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("profiles")
       .update({
         name: form.name,
@@ -1355,7 +1355,7 @@ const AutomacaoFiscalContadorPage = () => {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: acc } = await supabase
+      const { data: acc } = await (supabase as any)
         .from("accountants")
         .select("id")
         .eq("user_id", user.id)

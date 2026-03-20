@@ -61,7 +61,7 @@ export function AccountingMessagesPanel({
       return;
     }
 
-    const { data: accountantRow, error: accountantErr } = await supabase
+    const { data: accountantRow, error: accountantErr } = await (supabase as any)
       .from("accountants")
       .select("id")
       .eq("user_id", currentUserId)
@@ -163,7 +163,7 @@ export function AccountingMessagesPanel({
 
     let accountantId: string | null = null;
     if (mode === "accountant") {
-      const { data: accountantRow, error: accountantErr } = await supabase
+      const { data: accountantRow, error: accountantErr } = await (supabase as any)
         .from("accountants")
         .select("id")
         .eq("user_id", user.id)

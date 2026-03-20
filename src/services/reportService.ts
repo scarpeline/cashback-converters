@@ -33,7 +33,7 @@ export async function generateFinancialReport(
   endDate: Date
 ): Promise<ReportData> {
   try {
-    const { data: payments, error: paymentsError } = await supabase
+    const { data: payments, error: paymentsError } = await (supabase as any)
       .from('payments')
       .select('*')
       .gte('created_at', startDate.toISOString())
@@ -43,7 +43,7 @@ export async function generateFinancialReport(
       console.warn('Erro ao buscar pagamentos:', paymentsError.message);
     }
 
-    const { data: commissions, error: commissionsError } = await supabase
+    const { data: commissions, error: commissionsError } = await (supabase as any)
       .from('commissions')
       .select('*')
       .gte('created_at', startDate.toISOString())
@@ -53,17 +53,17 @@ export async function generateFinancialReport(
       console.warn('Erro ao buscar comissões:', commissionsError.message);
     }
 
-    const { data: partners } = await supabase
+    const { data: partners } = await (supabase as any)
       .from('partners')
       .select('*');
 
-    const { data: appointments } = await supabase
+    const { data: appointments } = await (supabase as any)
       .from('appointments')
       .select('*')
       .gte('scheduled_at', startDate.toISOString())
       .lte('scheduled_at', endDate.toISOString());
 
-    const { data: clients } = await supabase
+    const { data: clients } = await (supabase as any)
       .from('profiles')
       .select('id');
 
@@ -187,7 +187,7 @@ export async function generateAppointmentReport(
   endDate: Date
 ) {
   try {
-    const { data: appointments, error } = await supabase
+    const { data: appointments, error } = await (supabase as any)
       .from('appointments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -248,7 +248,7 @@ export async function generateClientReport(
   endDate: Date
 ) {
   try {
-    const { data: appointments, error } = await supabase
+    const { data: appointments, error } = await (supabase as any)
       .from('appointments')
       .select('client_user_id, client_name')
       .eq('barbershop_id', barbershopId)

@@ -102,14 +102,14 @@ export function RemarketingPanel() {
     setRunning(true);
     try {
       // Buscar usuários inativos e disparar notificação
-      const { data: users } = await supabase
+      const { data: users } = await (supabase as any)
         .from("profiles")
         .select("user_id, name")
         .limit(50);
 
       let sent = 0;
       for (const user of users || []) {
-        await supabase.from("notifications").insert({
+        await (supabase as any).from("notifications").insert({
           user_id: user.user_id,
           title: rule.title,
           message: rule.message,

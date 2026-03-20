@@ -190,7 +190,7 @@ const MinhasDividasPage = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("debts").select("*, barbershops:barbershop_id(name)")
+    (supabase as any).from("debts").select("*, barbershops:barbershop_id(name)")
       .eq("client_user_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => { setDebts(data || []); setLoading(false); });
@@ -246,8 +246,8 @@ const CashbackPage = () => {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("cashback_transactions").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
-      supabase.from("profiles").select("cashback_balance, total_cashback_earned").eq("user_id", user.id).maybeSingle(),
+      (supabase as any).from("cashback_transactions").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
+      (supabase as any).from("profiles").select("cashback_balance, total_cashback_earned").eq("user_id", user.id).maybeSingle(),
     ]).then(([txns, profile]) => {
       setCashback({
         balance: Number(profile.data?.cashback_balance || 0),
@@ -417,7 +417,7 @@ const NotificacoesPage = () => {
 
     // Fetch notifications
     const fetchNotifications = async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("notifications")
         .select("*")
         .eq("user_id", user.id)
@@ -427,7 +427,7 @@ const NotificacoesPage = () => {
 
     // Fetch raffles (as referenced in original code but not correctly used)
     const fetchRaffles = async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("raffles")
         .select("*")
         .eq("status", "open")
@@ -444,7 +444,7 @@ const NotificacoesPage = () => {
     if (!profile?.id) return toast.error("Faça login para participar");
 
     // Simulação de verificação de saldo de cashback para pagar rifa
-    const { data: ticket, error } = await supabase.from("raffle_tickets").insert({
+    const { data: ticket, error } = await (supabase as any).from("raffle_tickets").insert({
       raffle_id: raffleId,
       user_id: profile.id,
       ticket_number: Math.floor(Math.random() * 1000) // Simplificado para o MVP
@@ -495,20 +495,20 @@ const SuporteClientePage = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("support_chats").select("*").eq("user_id", user.id).order("updated_at", { ascending: false }).then(({ data }) => {
+    (supabase as any).from("support_chats").select("*").eq("user_id", user.id).order("updated_at", { ascending: false }).then(({ data }) => {
       setChats(data || []);
       if (data && data.length > 0) { setActiveChat(data[0]); loadMessages(data[0].id); }
     });
   }, [user]);
 
   const loadMessages = async (chatId: string) => {
-    const { data } = await supabase.from("support_messages").select("*").eq("chat_id", chatId).order("created_at", { ascending: true });
+    const { data } = await (supabase as any).from("support_messages").select("*").eq("chat_id", chatId).order("created_at", { ascending: true });
     setMessages(data || []);
   };
 
   const startNewChat = async () => {
     if (!user) return;
-    const { data, error } = await supabase.from("support_chats").insert({ user_id: user.id }).select().single();
+    const { data, error } = await (supabase as any).from("support_chats").insert({ user_id: user.id }).select().single();
     if (error) { toast.error("Erro ao iniciar chat."); return; }
     setActiveChat(data);
     setChats([data, ...chats]);
@@ -518,7 +518,7 @@ const SuporteClientePage = () => {
   const sendMessage = async () => {
     if (!newMsg.trim() || !activeChat || !user) return;
     setSending(true);
-    const { error } = await supabase.from("support_messages").insert({
+    const { error } = await (supabase as any).from("support_messages").insert({
       chat_id: activeChat.id, sender_id: user.id, message: newMsg.trim(), is_from_support: false,
     });
     setSending(false);
@@ -577,7 +577,7 @@ const PerfilPage = () => {
   const saveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({ name: form.name, whatsapp: form.whatsapp || null }).eq("user_id", user.id);
+    const { error } = await (supabase as any).from("profiles").update({ name: form.name, whatsapp: form.whatsapp || null }).eq("user_id", user.id);
     setSaving(false);
     if (error) { toast.error("Erro: " + error.message); return; }
     toast.success("Perfil atualizado!"); setEditing(false);
@@ -622,7 +622,7 @@ const AcaoEntreAmigosPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.from("raffles").select("*").eq("status", "open").order("created_at", { ascending: false }).then(({ data }) => {
+    (supabase as any).from("raffles").select("*").eq("status", "open").order("created_at", { ascending: false }).then(({ data }) => {
       setRaffles(data || []); setLoading(false);
     });
   }, []);

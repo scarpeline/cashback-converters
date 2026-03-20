@@ -63,7 +63,7 @@ export async function logMessageUsage(params: {
   errorMessage?: string;
 }): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('message_usage')
       .insert({
         barbershop_id: params.barbershopId,
@@ -111,7 +111,7 @@ export async function getMessageUsage(
   }
 ): Promise<{ data: MessageUsage[]; total: number }> {
   try {
-    let query = supabase
+    let query = (supabase as any)
       .from('message_usage')
       .select('*', { count: 'exact' })
       .eq('barbershop_id', barbershopId);
@@ -153,7 +153,7 @@ export async function getReportSummary(
   endDate: Date
 ): Promise<MessageReportSummary> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('message_usage')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -238,7 +238,7 @@ export async function getDailyUsage(
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('message_usage')
       .select('created_at, total_cost')
       .eq('barbershop_id', barbershopId)
@@ -274,7 +274,7 @@ export async function getTopRecipients(
   limit: number = 10
 ): Promise<{ phone: string; count: number; last_sent: string }[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('message_usage')
       .select('recipient_phone, created_at')
       .eq('barbershop_id', barbershopId)
@@ -315,7 +315,7 @@ export async function getCampaignReport(
   by_status: Record<string, number>;
 }> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('message_usage')
       .select('twilio_status, total_cost')
       .eq('campaign_id', campaignId);
@@ -357,7 +357,7 @@ export async function exportMessageUsage(
   endDate: Date
 ): Promise<string> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('message_usage')
       .select(`
         created_at,

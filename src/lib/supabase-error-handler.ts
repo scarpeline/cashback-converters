@@ -74,7 +74,7 @@ export const safeSupabaseQuery = async <T>(
  */
 export const tableExists = async (supabase: any, tableName: string): Promise<boolean> => {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from(tableName)
       .select("1")
       .limit(1);

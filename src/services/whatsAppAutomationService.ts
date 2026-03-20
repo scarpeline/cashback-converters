@@ -326,7 +326,7 @@ export async function getInactiveClientsForCampaign(
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysInactive);
 
-    const { data: appointments } = await supabase
+    const { data: appointments } = await (supabase as any)
       .from('appointments')
       .select('client_user_id, client_name, client_whatsapp, scheduled_at, professionals(id)')
       .eq('barbershop_id', barbershopId)

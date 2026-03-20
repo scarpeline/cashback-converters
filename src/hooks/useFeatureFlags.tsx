@@ -23,7 +23,7 @@ export function useFeatureFlags() {
 
   const loadFeatureFlags = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_all_features');
+      const { data, error } = await (supabase as any).rpc('get_all_features');
       
       if (error) {
         console.error('Erro ao carregar features:', error);
@@ -51,7 +51,7 @@ export function useFeatureFlags() {
 
   const toggleFeature = async (featureKey: string, enabled: boolean) => {
     try {
-      const { error } = await supabase.rpc('toggle_feature', {
+      const { error } = await (supabase as any).rpc('toggle_feature', {
         p_feature_key: featureKey,
         p_enabled: enabled
       });

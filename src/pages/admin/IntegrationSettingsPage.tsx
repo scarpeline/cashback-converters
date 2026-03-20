@@ -112,10 +112,10 @@ function useIntegrationsData() {
     setLoading(true);
     try {
       const [intRes, epRes, pixRes, logRes] = await Promise.all([
-        supabase.from("integrations").select("*").order("created_at", { ascending: false }),
-        supabase.from("integration_endpoints").select("*").order("event_name"),
-        supabase.from("pixels").select("*").order("created_at", { ascending: false }),
-        supabase.from("webhooks_log").select("id, event, target_url, response_code, success, created_at").order("created_at", { ascending: false }).limit(50),
+        (supabase as any).from("integrations").select("*").order("created_at", { ascending: false }),
+        (supabase as any).from("integration_endpoints").select("*").order("event_name"),
+        (supabase as any).from("pixels").select("*").order("created_at", { ascending: false }),
+        (supabase as any).from("webhooks_log").select("id, event, target_url, response_code, success, created_at").order("created_at", { ascending: false }).limit(50),
       ]);
 
       if (intRes.data) setIntegrations(intRes.data as Integration[]);
@@ -208,7 +208,7 @@ function AddIntegrationDialog({ onSaved }: { onSaved: () => void }) {
     }
     setSaving(true);
     try {
-      const { error } = await supabase.from("integrations").insert({
+      const { error } = await (supabase as any).from("integrations").insert({
         name: form.name, type: form.type, provider_name: form.provider_name,
         api_key_encrypted: form.api_key || null, api_secret_encrypted: form.api_secret || null,
         base_url: form.base_url || null, environment: form.environment, status: form.status,
@@ -297,7 +297,7 @@ function AddEndpointDialog({ integrations, onSaved }: { integrations: Integratio
       if (form.headers_json) {
         try { parsedHeaders = JSON.parse(form.headers_json); } catch { throw new Error("Headers JSON inválido"); }
       }
-      const { error } = await supabase.from("integration_endpoints").insert({
+      const { error } = await (supabase as any).from("integration_endpoints").insert({
         integration_id: form.integration_id, event_name: form.event_name,
         endpoint_url: form.endpoint_url, method: form.method,
         headers_json: parsedHeaders, retry_enabled: form.retry_enabled,
@@ -396,7 +396,7 @@ function AddPixelDialog({ onSaved }: { onSaved: () => void }) {
     }
     setSaving(true);
     try {
-      const { error } = await supabase.from("pixels").insert({
+      const { error } = await (supabase as any).from("pixels").insert({
         pixel_type: form.pixel_type, pixel_id: form.pixel_id,
         owner_type: form.owner_type, active: form.active,
         events_json: selectedEvents,
@@ -479,12 +479,12 @@ function IntegrationsTable({ integrations, onRefresh }: { integrations: Integrat
 
   const toggleStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === "active" ? "inactive" : "active";
-    const { error } = await supabase.from("integrations").update({ status: newStatus }).eq("id", id);
+    const { error } = await (supabase as any).from("integrations").update({ status: newStatus }).eq("id", id);
     if (!error) onRefresh();
   };
 
   const deleteIntegration = async (id: string) => {
-    const { error } = await supabase.from("integrations").delete().eq("id", id);
+    const { error } = await (supabase as any).from("integrations").delete().eq("id", id);
     if (!error) { toast({ title: "Removida" }); onRefresh(); }
   };
 
@@ -568,12 +568,12 @@ function EndpointsTable({ endpoints, onRefresh }: { endpoints: IntegrationEndpoi
   const [testingId, setTestingId] = useState<string | null>(null);
 
   const toggleActive = async (id: string, active: boolean) => {
-    const { error } = await supabase.from("integration_endpoints").update({ active: !active }).eq("id", id);
+    const { error } = await (supabase as any).from("integration_endpoints").update({ active: !active }).eq("id", id);
     if (!error) onRefresh();
   };
 
   const deleteEndpoint = async (id: string) => {
-    const { error } = await supabase.from("integration_endpoints").delete().eq("id", id);
+    const { error } = await (supabase as any).from("integration_endpoints").delete().eq("id", id);
     if (!error) { toast({ title: "Endpoint removido" }); onRefresh(); }
   };
 
@@ -660,12 +660,12 @@ function PixelsTable({ pixels, onRefresh }: { pixels: Pixel[]; onRefresh: () => 
   const { toast } = useToast();
 
   const toggleActive = async (id: string, active: boolean) => {
-    const { error } = await supabase.from("pixels").update({ active: !active }).eq("id", id);
+    const { error } = await (supabase as any).from("pixels").update({ active: !active }).eq("id", id);
     if (!error) onRefresh();
   };
 
   const deletePixel = async (id: string) => {
-    const { error } = await supabase.from("pixels").delete().eq("id", id);
+    const { error } = await (supabase as any).from("pixels").delete().eq("id", id);
     if (!error) { toast({ title: "Pixel removido" }); onRefresh(); }
   };
 

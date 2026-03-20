@@ -225,7 +225,7 @@ export class RecurringAppointmentService {
   ): Promise<{ hasConflicts: boolean; conflicts: any[] }> {
     try {
       // Buscar agendamentos existentes no mesmo dia/horário
-      let query = supabase
+      let query = (supabase as any)
         .from('appointments')
         .select(`
           *,

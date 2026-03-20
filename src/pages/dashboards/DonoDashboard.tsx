@@ -381,7 +381,7 @@ function useBarbershop() {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("barbershops")
       .select("*")
       .eq("owner_user_id", user.id)
@@ -414,7 +414,7 @@ function useServices(barbershopId: string | undefined) {
     }
 
     setLoading(true);
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("services")
       .select("*")
       .eq("barbershop_id", barbershopId)
@@ -439,7 +439,7 @@ function useProfessionals(barbershopId: string | undefined) {
     }
 
     setLoading(true);
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("professionals")
       .select("*")
       .eq("barbershop_id", barbershopId)
@@ -464,7 +464,7 @@ function useAppointments(barbershopId: string | undefined) {
     }
 
     setLoading(true);
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("appointments")
       .select("*, services(name, price, duration_minutes), professionals(name)")
       .eq("barbershop_id", barbershopId)
@@ -489,17 +489,17 @@ function useDashboardMetrics(barbershopId: string | undefined) {
     const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
 
     Promise.all([
-      supabase.from("appointments").select("id", { count: "exact", head: true })
+      (supabase as any).from("appointments").select("id", { count: "exact", head: true })
         .eq("barbershop_id", barbershopId)
         .gte("scheduled_at", today.toISOString())
         .lt("scheduled_at", tomorrow.toISOString())
         .in("status", ["scheduled", "confirmed", "completed"]),
-      supabase.from("appointments").select("services(price)")
+      (supabase as any).from("appointments").select("services(price)")
         .eq("barbershop_id", barbershopId)
         .eq("status", "completed")
         .gte("scheduled_at", today.toISOString())
         .lt("scheduled_at", tomorrow.toISOString()),
-      supabase.from("appointments").select("client_name", { count: "exact", head: true })
+      (supabase as any).from("appointments").select("client_name", { count: "exact", head: true })
         .eq("barbershop_id", barbershopId),
     ]).then(([todayApts, completedApts, allClients]) => {
       const revenue = (completedApts.data || []).reduce((s: number, a: any) => s + Number(a.services?.price || 0), 0);
@@ -677,7 +677,7 @@ const AgendamentosPage = () => {
     }
     if (!barbershop) return;
     setSaving(true);
-    const { error } = await supabase.from("appointments").insert({
+    const { error } = await (supabase as any).from("appointments").insert({
       barbershop_id: barbershop.id,
       client_name: form.client_name,
       client_whatsapp: form.client_whatsapp || null,
@@ -706,7 +706,7 @@ const AgendamentosPage = () => {
   };
 
   const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("appointments")
       .update({ status })
       .eq("id", id);
@@ -966,7 +966,7 @@ const ProfissionaisPage = () => {
 
     if (authError) {
       // Fallback: insert without auth user
-      const { error } = await supabase.from("professionals").insert({
+      const { error } = await (supabase as any).from("professionals").insert({
         barbershop_id: barbershop.id,
         name: form.name,
         email: form.email || null,
@@ -1145,7 +1145,7 @@ const ServicosPage = () => {
     }
     setSaving(true);
     if (editingId) {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("services")
         .update({
           name: form.name,
@@ -1162,7 +1162,7 @@ const ServicosPage = () => {
       toast.success(`"${form.name}" atualizado!`);
       setEditingId(null);
     } else {
-      const { error } = await supabase.from("services").insert({
+      const { error } = await (supabase as any).from("services").insert({
         barbershop_id: barbershop.id,
         name: form.name,
         price: Number(form.price),
@@ -1651,7 +1651,7 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
     try {
       if (valorPago >= valorDivida) {
         // Paga toda a dívida
-        await supabase
+        await (supabase as any)
           .from("debts")
           .update({
             status: "paid",
@@ -1662,7 +1662,7 @@ const ReceberPagamentoRapido = ({ barbershopId }: { barbershopId: string }) => {
       } else {
         // Abate parcial
         const novoValor = valorDivida - valorPago;
-        await supabase
+        await (supabase as any)
           .from("debts")
           .update({
             amount: novoValor,
@@ -1944,7 +1944,7 @@ const AcaoEntreAmigosPage = () => {
 
   const handleCreate = async () => {
     if (!form.name || !barbershop?.id) return toast.error("Preencha o nome");
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("raffles")
       .insert([
         {
@@ -2116,7 +2116,7 @@ const AcaoEntreAmigosPage = () => {
                     variant="outline"
                     size="sm"
                     onClick={async () => {
-                      const { data, error } = await supabase
+                      const { data, error } = await (supabase as any)
                         .from("raffle_tickets")
                         .select("*, profiles(name)")
                         .eq("raffle_id", r.id);
@@ -2138,7 +2138,7 @@ const AcaoEntreAmigosPage = () => {
                         )
                       )
                         return;
-                      const { data, error } = await supabase.rpc(
+                      const { data, error } = await (supabase as any).rpc(
                         "draw_raffle_winner",
                         { _raffle_id: r.id },
                       );
@@ -2192,7 +2192,7 @@ const PixelsPage = () => {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("pixel_configurations").insert({
+    const { error } = await (supabase as any).from("pixel_configurations").insert({
       barbershop_id: barbershop.id,
       platform: form.platform,
       pixel_id: form.pixel_id,
@@ -2215,7 +2215,7 @@ const PixelsPage = () => {
   };
 
   const togglePixel = async (id: string, active: boolean) => {
-    await supabase
+    await (supabase as any)
       .from("pixel_configurations")
       .update({ is_active: !active })
       .eq("id", id);
@@ -2392,7 +2392,7 @@ const SuportePage = () => {
   }, [user]);
 
   const loadMessages = async (chatId: string) => {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("support_messages")
       .select("*")
       .eq("chat_id", chatId)
@@ -2402,7 +2402,7 @@ const SuportePage = () => {
 
   const startNewChat = async () => {
     if (!user) return;
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("support_chats")
       .insert({ user_id: user.id })
       .select()
@@ -2419,7 +2419,7 @@ const SuportePage = () => {
   const sendMessage = async () => {
     if (!newMsg.trim() || !activeChat || !user) return;
     setSending(true);
-    const { error } = await supabase.from("support_messages").insert({
+    const { error } = await (supabase as any).from("support_messages").insert({
       chat_id: activeChat.id,
       sender_id: user.id,
       message: newMsg.trim(),
@@ -2551,7 +2551,7 @@ const ConfiguracoesPage = () => {
   }, [barbershop, profile]);
 
   const updateReward = async (type: string) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("barbershops")
       .update({ affiliate_reward_type: type })
       .eq("id", barbershop.id);
@@ -2564,7 +2564,7 @@ const ConfiguracoesPage = () => {
 
   const saveShop = async () => {
     setSavingShop(true);
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("barbershops")
       .update({
         name: shopForm.name,
@@ -2584,7 +2584,7 @@ const ConfiguracoesPage = () => {
   };
 
   const saveAffiliateConfig = async () => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("barbershops")
       .update({
         affiliate_commission_pct: Number(affiliateCommission),
@@ -2601,7 +2601,7 @@ const ConfiguracoesPage = () => {
   const savePhone = async () => {
     if (!user) return;
     setSavingPhone(true);
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("profiles")
       .update({ whatsapp: phoneForm })
       .eq("user_id", user.id);
@@ -2857,7 +2857,7 @@ const AfiliadosBarbeariaPage = () => {
     affiliateId: string,
     currentActive: boolean,
   ) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("affiliates")
       .update({ is_active: !currentActive })
       .eq("id", affiliateId);
@@ -2876,7 +2876,7 @@ const AfiliadosBarbeariaPage = () => {
   const saveConfig = async () => {
     if (!barbershop?.id) return;
     setSavingConfig(true);
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("barbershops")
       .update({
         affiliate_reward_type: rewardType,

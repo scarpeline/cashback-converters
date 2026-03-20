@@ -47,7 +47,7 @@ export default function VitrinePage() {
   useEffect(() => {
     if (!barbershopId) { setNotFound(true); setLoading(false); return; }
     (async () => {
-      const { data: shop } = await supabase
+      const { data: shop } = await (supabase as any)
         .from("barbershops")
         .select("id, name, address, phone, description")
         .eq("id", barbershopId)
@@ -57,8 +57,8 @@ export default function VitrinePage() {
       setBarbershop(shop as Barbershop);
 
       const [prodsRes, rafflesRes] = await Promise.all([
-        supabase.from("stock_items").select("id, name, sell_price, quantity").eq("barbershop_id", barbershopId).eq("is_active", true).order("name"),
-        supabase.from("raffles").select("id, name, description, ticket_price, credit_award, status").eq("barbershop_id", barbershopId).eq("status", "open").order("created_at", { ascending: false }),
+        (supabase as any).from("stock_items").select("id, name, sell_price, quantity").eq("barbershop_id", barbershopId).eq("is_active", true).order("name"),
+        (supabase as any).from("raffles").select("id, name, description, ticket_price, credit_award, status").eq("barbershop_id", barbershopId).eq("status", "open").order("created_at", { ascending: false }),
       ]);
 
       setProducts((prodsRes.data || []) as Product[]);

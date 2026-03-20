@@ -310,7 +310,7 @@ const ReceberDividaProfPage = () => {
                         const result = await processNfcPayment({ amount: Number(d.amount), description: `Dívida: ${d.client_name}` });
                         setNfcLoadingId(null);
                         if (result.success) {
-                          await supabase.from("debts").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", d.id);
+                          await (supabase as any).from("debts").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", d.id);
                           toast.success("Pagamento NFC recebido!"); reload();
                         } else { toast.error(result.error || "Falha no NFC"); }
                       }}
@@ -319,7 +319,7 @@ const ReceberDividaProfPage = () => {
                     </Button>
                   )}
                   <Button size="sm" variant="outline" onClick={() => {
-                    supabase.from("debts").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", d.id).then(() => { toast.success("Marcado como pago!"); reload(); });
+                    (supabase as any).from("debts").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", d.id).then(() => { toast.success("Marcado como pago!"); reload(); });
                   }}><CheckCircle className="w-4 h-4 mr-1" />Pago</Button>
                 </div>
               )}
@@ -433,7 +433,7 @@ const PerfilPage = () => {
   const saveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({
+    const { error } = await (supabase as any).from("profiles").update({
       name: form.name,
       whatsapp: form.whatsapp,
       pix_key: form.pix_key,

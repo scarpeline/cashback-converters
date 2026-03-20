@@ -43,7 +43,7 @@ const ContaBancariaPage = () => {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: prof } = await supabase
+      const { data: prof } = await (supabase as any)
         .from("professionals")
         .select("id, name, cpf_cnpj, whatsapp, pix_key, asaas_wallet_id")
         .eq("user_id", user.id)
@@ -104,7 +104,7 @@ const ContaBancariaPage = () => {
     };
     if (phoneDigits.length >= 10) (updatePayload as any).whatsapp = `+55${phoneDigits}`;
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("professionals")
       .update(updatePayload)
       .eq("user_id", user!.id);

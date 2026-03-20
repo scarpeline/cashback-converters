@@ -161,7 +161,7 @@ const DashboardHome = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("affiliates").select("*").eq("user_id", user.id).maybeSingle().then(({ data }) => setAffiliate(data));
+    (supabase as any).from("affiliates").select("*").eq("user_id", user.id).maybeSingle().then(({ data }) => setAffiliate(data));
   }, [user]);
 
   return (
@@ -274,7 +274,7 @@ const ContaBancariaPage = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("bank_info, pix_key, cpf_cnpj, whatsapp, email").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+    (supabase as any).from("profiles").select("bank_info, pix_key, cpf_cnpj, whatsapp, email").eq("user_id", user.id).maybeSingle().then(({ data }) => {
       if (data?.bank_info) {
         setBankInfo(data.bank_info);
         setForm({ ...(data.bank_info as any), pix_key: data.pix_key || "", cpf_cnpj: data.cpf_cnpj || "" });
@@ -291,7 +291,7 @@ const ContaBancariaPage = () => {
     
     const bankData = { bank_name: form.bank_name, agency: form.agency, account: form.account, account_type: form.account_type, pix_key_type: form.pix_key_type };
 
-    const { error } = await supabase.from("profiles").update({
+    const { error } = await (supabase as any).from("profiles").update({
       bank_info: bankData, pix_key: form.pix_key, cpf_cnpj: form.cpf_cnpj,
     }).eq("user_id", user!.id);
 
@@ -406,7 +406,7 @@ const PerfilPage = () => {
   useEffect(() => {
     if (profile) setForm({ name: profile.name || "", whatsapp: profile.whatsapp || "", cpf_cnpj: profile.cpf_cnpj || "", pix_key: profile.pix_key || "" });
     if (user) {
-      supabase.from("profiles").select("bank_info").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      (supabase as any).from("profiles").select("bank_info").eq("user_id", user.id).maybeSingle().then(({ data }) => {
         if (data?.bank_info) setBankInfo(data.bank_info);
       });
     }
@@ -415,7 +415,7 @@ const PerfilPage = () => {
   const saveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({ name: form.name, whatsapp: form.whatsapp || null, cpf_cnpj: form.cpf_cnpj || null, pix_key: form.pix_key || null }).eq("user_id", user.id);
+    const { error } = await (supabase as any).from("profiles").update({ name: form.name, whatsapp: form.whatsapp || null, cpf_cnpj: form.cpf_cnpj || null, pix_key: form.pix_key || null }).eq("user_id", user.id);
     setSaving(false);
     if (error) { toast.error("Erro: " + error.message); return; }
     toast.success("Perfil atualizado!"); setEditing(false);

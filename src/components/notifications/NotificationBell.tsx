@@ -43,7 +43,7 @@ export const NotificationBell = () => {
       // Buscar detalhes dos agendamentos
       const notificationsWithDetails = await Promise.all(
         notificationsData.map(async (notification) => {
-          const { data: appointment } = await supabase
+          const { data: appointment } = await (supabase as any)
             .from("appointments")
             .select(`
               client_name,

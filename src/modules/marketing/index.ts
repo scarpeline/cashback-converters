@@ -142,7 +142,7 @@ export async function runEmptySlotsCampaign(barbershopId: string, discount: numb
   const today = new Date().toISOString().split('T')[0];
   const now = new Date().getHours();
 
-  const { data: appointments } = await supabase
+  const { data: appointments } = await (supabase as any)
     .from('appointments')
     .select('scheduled_at')
     .eq('barbershop_id', barbershopId)
@@ -150,7 +150,7 @@ export async function runEmptySlotsCampaign(barbershopId: string, discount: numb
     .lte('scheduled_at', `${today}T20:00:00`)
     .in('status', ['scheduled', 'confirmed']);
 
-  const { data: professionals } = await supabase
+  const { data: professionals } = await (supabase as any)
     .from('professionals')
     .select('id')
     .eq('barbershop_id', barbershopId)

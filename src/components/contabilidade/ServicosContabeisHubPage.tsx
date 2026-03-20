@@ -45,7 +45,7 @@ export function ServicosContabeisHubPage({ barbershopId }: Props) {
     if (!barbershopId) return;
     
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("accountant_barbershop_links")
         .select(`
           *,
