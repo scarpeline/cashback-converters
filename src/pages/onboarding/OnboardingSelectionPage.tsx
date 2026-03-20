@@ -95,7 +95,7 @@ const OnboardingSelectionPage = () => {
 
   const fetchSectorPresets = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("sector_presets")
       .select("*")
       .order("sector")
@@ -138,7 +138,7 @@ const OnboardingSelectionPage = () => {
       }
 
       // Update barbershop with selected sector/specialty and onboarding status
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from("barbershops")
         .update({
           sector: selectedSector,
@@ -159,7 +159,7 @@ const OnboardingSelectionPage = () => {
           description: service.description,
           is_active: true,
         }));
-        const { error: servicesError } = await supabase
+        const { error: servicesError } = await (supabase as any)
           .from("services")
           .insert(servicesToInsert);
         if (servicesError) throw servicesError;

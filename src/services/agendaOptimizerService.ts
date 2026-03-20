@@ -68,7 +68,7 @@ export async function analyzeDay(barbershopId: string, date: string): Promise<Da
     const dayStart = `${date}T00:00:00`;
     const dayEnd = `${date}T23:59:59`;
 
-    const { data: appointments } = await supabase
+    const { data: appointments } = await (supabase as any)
       .from('appointments')
       .select('*, services(price), professionals(name)')
       .eq('barbershop_id', barbershopId)
@@ -134,7 +134,7 @@ export async function getHourlyOccupancy(barbershopId: string, days: number = 30
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const { data: appointments } = await supabase
+    const { data: appointments } = await (supabase as any)
       .from('appointments')
       .select('scheduled_at')
       .eq('barbershop_id', barbershopId)
@@ -233,7 +233,7 @@ export async function predictCancellation(barbershopId: string): Promise<Cancell
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-    const { data: appointments } = await supabase
+    const { data: appointments } = await (supabase as any)
       .from('appointments')
       .select('*, clients:client_user_id(name, email)')
       .eq('barbershop_id', barbershopId)
@@ -243,7 +243,7 @@ export async function predictCancellation(barbershopId: string): Promise<Cancell
 
     const predictions: CancellationPrediction[] = [];
 
-    const { data: history } = await supabase
+    const { data: history } = await (supabase as any)
       .from('appointments')
       .select('client_user_id, status')
       .eq('barbershop_id', barbershopId)
@@ -301,7 +301,7 @@ export async function getAgendaMetrics(barbershopId: string, days: number = 30):
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const { data: appointments } = await supabase
+    const { data: appointments } = await (supabase as any)
       .from('appointments')
       .select('*, services(price)')
       .eq('barbershop_id', barbershopId)

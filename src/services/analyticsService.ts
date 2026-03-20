@@ -141,7 +141,7 @@ export async function getRevenueMetrics(barbershopId: string, days: number = 30)
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const { data: appointments } = await supabase
+    const { data: appointments } = await (supabase as any)
       .from('appointments')
       .select('*, services(name), professionals(name)')
       .eq('barbershop_id', barbershopId)
@@ -184,12 +184,12 @@ export async function getClientMetrics(barbershopId: string): Promise<ClientMetr
   try {
     const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    const { data: clients } = await supabase
+    const { data: clients } = await (supabase as any)
       .from('clients')
       .select('*')
       .eq('barbershop_id', barbershopId);
 
-    const { data: appointments } = await supabase
+    const { data: appointments } = await (supabase as any)
       .from('appointments')
       .select('client_user_id, scheduled_at')
       .eq('barbershop_id', barbershopId)
@@ -235,13 +235,13 @@ export async function getRetentionRate(barbershopId: string, days: number = 30):
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days * 2);
 
-    const { data: currentPeriod } = await supabase
+    const { data: currentPeriod } = await (supabase as any)
       .from('appointments')
       .select('client_user_id')
       .eq('barbershop_id', barbershopId)
       .gte('scheduled_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
 
-    const { data: lastPeriod } = await supabase
+    const { data: lastPeriod } = await (supabase as any)
       .from('appointments')
       .select('client_user_id')
       .eq('barbershop_id', barbershopId)
@@ -268,7 +268,7 @@ export async function getCancellationRate(barbershopId: string, days: number = 3
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const { data: appointments } = await supabase
+    const { data: appointments } = await (supabase as any)
       .from('appointments')
       .select('status')
       .eq('barbershop_id', barbershopId)
@@ -289,7 +289,7 @@ export async function getProfessionalRanking(barbershopId: string, days: number 
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const { data: appointments } = await supabase
+    const { data: appointments } = await (supabase as any)
       .from('appointments')
       .select('professionals(name), total_price, status')
       .eq('barbershop_id', barbershopId)
@@ -321,7 +321,7 @@ export async function getServiceRanking(barbershopId: string, days: number = 30)
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const { data: appointments } = await supabase
+    const { data: appointments } = await (supabase as any)
       .from('appointments')
       .select('services(name), total_price, status')
       .eq('barbershop_id', barbershopId)
@@ -353,7 +353,7 @@ export async function getHourlyOccupancyAnalytics(barbershopId: string, days: nu
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const { data: appointments } = await supabase
+    const { data: appointments } = await (supabase as any)
       .from('appointments')
       .select('scheduled_at')
       .eq('barbershop_id', barbershopId)
