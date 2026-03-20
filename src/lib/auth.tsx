@@ -235,6 +235,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = "/login";
   };
 
+  const hasRole = useCallback((role: AppRole): boolean => {
+    return roles.includes(role);
+  }, [roles]);
+
+  const refreshSession = useCallback(async () => {
+    const { data: { session: s } } = await supabase.auth.refreshSession();
+    if (s) {
+      setSession(s);
+      setUser(s.user);
+    }
+  }, []);
+
   const getPrimaryRole = useCallback((): AppRole | null => {
     if (roles.length === 0) return null;
     const sortedRoles = [...roles].sort((a, b) => ROLE_PRIORITY[a] - ROLE_PRIORITY[b]);
