@@ -34,7 +34,7 @@ export async function createAlert(params: CreateAlertParams): Promise<{
   error?: string;
 }> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('blocked_numbers_alerts')
       .insert({
         whatsapp_number_id: params.whatsappNumberId || '00000000-0000-0000-0000-000000000000',
@@ -59,7 +59,7 @@ export async function createAlert(params: CreateAlertParams): Promise<{
 
 async function notifySuperAdmins(alertId: string): Promise<void> {
   try {
-    const { data: alert } = await supabase
+    const { data: alert } = await (supabase as any)
       .from('blocked_numbers_alerts')
       .select('*')
       .eq('id', alertId)
@@ -67,12 +67,12 @@ async function notifySuperAdmins(alertId: string): Promise<void> {
 
     if (!alert) return;
 
-    const { data: superAdmins } = await supabase
+    const { data: superAdmins } = await (supabase as any)
       .from('authorized_super_admins')
       .select('email')
       .eq('is_active', true);
 
-    const { data: numberInfo } = await supabase
+    const { data: numberInfo } = await (supabase as any)
       .from('whatsapp_numbers')
       .select('phone_number, whatsapp_accounts(barbershop_id, barbershops(name))')
       .eq('id', alert.whatsapp_number_id)
@@ -103,7 +103,7 @@ export async function getAlerts(params: {
   limit?: number;
 }): Promise<BlockedAlert[]> {
   try {
-    let query = supabase
+    let query = (supabase as any)
       .from('blocked_numbers_alerts')
       .select('*')
       .order('created_at', { ascending: false });
@@ -127,7 +127,7 @@ export async function getAlerts(params: {
     let alerts = data || [];
 
     if (params.barbershopId) {
-      const { data: numberIds } = await supabase
+      const { data: numberIds } = await (supabase as any)
         .from('whatsapp_numbers')
         .select('id')
         .eq('whatsapp_accounts.barbershop_id', params.barbershopId);
@@ -150,7 +150,7 @@ export async function getUnresolvedAlerts(barbershopId?: string): Promise<Blocke
 
 export async function getCriticalAlerts(): Promise<BlockedAlert[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('blocked_numbers_alerts')
       .select('*')
       .eq('is_resolved', false)
@@ -170,7 +170,7 @@ export async function resolveAlert(
   resolvedByUserId: string
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('blocked_numbers_alerts')
       .update({
         is_resolved: true,
@@ -192,14 +192,14 @@ export async function resolveAllAlerts(
   resolvedByUserId: string
 ): Promise<number> {
   try {
-    const { data: numberIds } = await supabase
+    const { data: numberIds } = await (supabase as any)
       .from('whatsapp_numbers')
       .select('id')
       .eq('whatsapp_accounts.barbershop_id', barbershopId);
 
     const validIds = numberIds?.map(n => n.id) || [];
 
-    const { error, count } = await supabase
+    const { error, count } = await (supabase as any)
       .from('blocked_numbers_alerts')
       .update({
         is_resolved: true,
@@ -219,7 +219,7 @@ export async function resolveAllAlerts(
 
 export async function deleteAlert(alertId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('blocked_numbers_alerts')
       .delete()
       .eq('id', alertId);
@@ -272,7 +272,7 @@ export async function autoResolveOldAlerts(daysOld: number = 30): Promise<number
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
-    const { error, count } = await supabase
+    const { error, count } = await (supabase as any)
       .from('blocked_numbers_alerts')
       .update({
         is_resolved: true,
