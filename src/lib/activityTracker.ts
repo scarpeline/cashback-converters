@@ -12,7 +12,7 @@ export type InactivityTrigger = "1d" | "3d" | "7d";
  */
 export async function trackActivity(userId: string, action: string): Promise<void> {
   try {
-    await supabase.from("notifications").insert({
+    await (supabase as any).from("notifications").insert({
       user_id: userId,
       title: "activity",
       message: action,
@@ -29,7 +29,7 @@ export async function trackActivity(userId: string, action: string): Promise<voi
  */
 export async function getDaysSinceLastActivity(userId: string): Promise<number> {
   try {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("notifications")
       .select("created_at")
       .eq("user_id", userId)

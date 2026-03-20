@@ -518,7 +518,7 @@ class WaitlistManager {
     }
   ): Promise<WaitlistEntry[]> {
     try {
-      let query = supabase
+      let query = (supabase as any)
         .from("waitlist_queue")
         .select(`
           *,

@@ -106,7 +106,7 @@ export async function addAlertJob(params: {
 
 export async function getJob(jobId: string): Promise<Job | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('job_queue')
       .select('*')
       .eq('id', jobId)
@@ -124,7 +124,7 @@ export async function getJobsByStatus(
   limit: number = 50
 ): Promise<Job[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('job_queue')
       .select('*')
       .eq('status', status)
@@ -142,7 +142,7 @@ export async function getJobsByStatus(
 
 export async function getPendingJobs(limit: number = 10): Promise<Job[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('job_queue')
       .select('*')
       .eq('status', 'pendente')
@@ -162,7 +162,7 @@ export async function getPendingJobs(limit: number = 10): Promise<Job[]> {
 
 export async function getScheduledJobs(limit: number = 50): Promise<Job[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('job_queue')
       .select('*')
       .eq('status', 'pendente')
@@ -184,7 +184,7 @@ export async function getJobsByType(
   limit: number = 50
 ): Promise<Job[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('job_queue')
       .select('*')
       .eq('job_type', jobType)
@@ -207,7 +207,7 @@ export async function getJobStats(): Promise<{
   total: number;
 }> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('job_queue')
       .select('status');
 
@@ -229,7 +229,7 @@ export async function getJobStats(): Promise<{
 
 export async function markJobAsProcessing(jobId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('job_queue')
       .update({
         status: 'processando',
@@ -247,7 +247,7 @@ export async function markJobAsProcessing(jobId: string): Promise<boolean> {
 
 export async function markJobAsComplete(jobId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('job_queue')
       .update({
         status: 'completo',
@@ -270,7 +270,7 @@ export async function markJobAsFailed(
   maxAttempts: number = 3
 ): Promise<boolean> {
   try {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('job_queue')
       .select('attempts')
       .eq('id', jobId)
@@ -278,7 +278,7 @@ export async function markJobAsFailed(
 
     const newStatus = (data?.attempts || 0) >= maxAttempts - 1 ? 'falhou' : 'pendente';
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('job_queue')
       .update({
         status: newStatus,
@@ -297,7 +297,7 @@ export async function markJobAsFailed(
 
 export async function cancelJob(jobId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('job_queue')
       .update({
         status: 'cancelado',
@@ -315,7 +315,7 @@ export async function cancelJob(jobId: string): Promise<boolean> {
 
 export async function retryJob(jobId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('job_queue')
       .update({
         status: 'pendente',
@@ -338,7 +338,7 @@ export async function clearCompletedJobs(olderThanDays: number = 7): Promise<num
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
 
-    const { error, count } = await supabase
+    const { error, count } = await (supabase as any)
       .from('job_queue')
       .delete()
       .eq('status', 'completo')
@@ -357,7 +357,7 @@ export async function clearFailedJobs(olderThanDays: number = 30): Promise<numbe
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
 
-    const { error, count } = await supabase
+    const { error, count } = await (supabase as any)
       .from('job_queue')
       .delete()
       .eq('status', 'falhou')
@@ -373,7 +373,7 @@ export async function clearFailedJobs(olderThanDays: number = 30): Promise<numbe
 
 export async function getRecentJobs(limit: number = 20): Promise<Job[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('job_queue')
       .select('*')
       .in('status', ['pendente', 'processando', 'completo', 'falhou'])

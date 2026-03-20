@@ -73,7 +73,7 @@ export async function sendNotification(payload: NotificationPayload): Promise<{ 
 
     // Registrar na tabela de notificações
     if (payload.user_id) {
-      await supabase.from('notifications').insert({
+      await (supabase as any).from('notifications').insert({
         user_id: payload.user_id,
         title: payload.title,
         message: payload.body,
@@ -104,7 +104,7 @@ export async function sendBulkNotification(params: {
     userIds = params.target;
   } else {
     // Buscar clientes pelo filtro
-    let query = supabase
+    let query = (supabase as any)
       .from('appointments')
       .select('client_user_id')
       .eq('barbershop_id', params.barbershop_id)
@@ -142,7 +142,7 @@ export async function scheduleAppointmentReminders(barbershopId: string): Promis
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-  const { data: appointments } = await supabase
+  const { data: appointments } = await (supabase as any)
     .from('appointments')
     .select('id, client_user_id, client_name, scheduled_at, service_id')
     .eq('barbershop_id', barbershopId)

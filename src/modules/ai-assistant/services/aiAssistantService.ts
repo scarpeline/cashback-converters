@@ -72,7 +72,7 @@ export async function getAvailableSlots(params: {
 
   try {
     // Buscar profissionais ativos
-    let proQuery = supabase
+    let proQuery = (supabase as any)
       .from('professionals')
       .select('id, name')
       .eq('barbershop_id', barbershopId)
@@ -89,7 +89,7 @@ export async function getAvailableSlots(params: {
     const dayStart = `${targetDate}T00:00:00`;
     const dayEnd = `${targetDate}T23:59:59`;
 
-    const { data: appointments } = await supabase
+    const { data: appointments } = await (supabase as any)
       .from('appointments')
       .select('professional_id, scheduled_at, service_id')
       .eq('barbershop_id', barbershopId)
@@ -100,7 +100,7 @@ export async function getAvailableSlots(params: {
     // Buscar duração do serviço
     let serviceDuration = 30;
     if (serviceId) {
-      const { data: service } = await supabase
+      const { data: service } = await (supabase as any)
         .from('services')
         .select('duration_minutes')
         .eq('id', serviceId)
@@ -153,7 +153,7 @@ export async function createAIBooking(params: {
   const { barbershopId, professionalId, serviceId, clientPhone, clientName, scheduledAt } = params;
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments')
       .insert({
         barbershop_id: barbershopId,
@@ -182,7 +182,7 @@ export async function createAIBooking(params: {
 
 export async function cancelAIBooking(appointmentId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('appointments')
       .update({ status: 'cancelled', notes: 'Cancelado via IA WhatsApp' })
       .eq('id', appointmentId);
@@ -256,7 +256,7 @@ export async function logAIInteraction(interaction: {
   processing_time_ms: number;
 }): Promise<void> {
   try {
-    await supabase.from('ai_interactions' as any).insert(interaction);
+    await (supabase as any).from('ai_interactions' as any).insert(interaction);
   } catch (err) {
     console.warn('[AIAssistant] Erro ao logar interação:', err);
   }

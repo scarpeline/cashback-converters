@@ -40,7 +40,7 @@ export async function getCostSplitConfig(
   professionalId: string
 ): Promise<CostSplit | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('message_cost_splits')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -68,7 +68,7 @@ export async function setCostSplit(params: {
       return { success: false, error: 'Percentuais devem somar 100%' };
     }
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('message_cost_splits')
       .upsert({
         barbershop_id: params.barbershop_id,
@@ -122,7 +122,7 @@ export async function disableCostSplit(
 
 export async function getAllCostSplits(barbershopId: string): Promise<CostSplitConfig[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('message_cost_splits')
       .select(`
         *,
@@ -154,7 +154,7 @@ export async function getProfessionalCostShare(
   endDate?: Date
 ): Promise<number> {
   try {
-    let query = supabase
+    let query = (supabase as any)
       .from('message_usage')
       .select('professional_cost_share')
       .eq('barbershop_id', barbershopId)
@@ -184,7 +184,7 @@ export async function getOwnerCostShare(
   endDate?: Date
 ): Promise<number> {
   try {
-    let query = supabase
+    let query = (supabase as any)
       .from('message_usage')
       .select('owner_cost_share')
       .eq('barbershop_id', barbershopId);
@@ -271,7 +271,7 @@ export async function calculateCostSplit(params: {
 
 export async function resetCostLimits(barbershopId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('message_cost_splits')
       .update({
         owner_cost_limit: null,

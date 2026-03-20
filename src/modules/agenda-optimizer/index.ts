@@ -47,7 +47,7 @@ export interface AgendaOptimizationReport {
 export async function detectOccupancyGaps(barbershopId: string, date?: string): Promise<OccupancyGap[]> {
   const targetDate = date || new Date().toISOString().split('T')[0];
 
-  const { data: professionals } = await supabase
+  const { data: professionals } = await (supabase as any)
     .from('professionals')
     .select('id, name')
     .eq('barbershop_id', barbershopId)
@@ -55,7 +55,7 @@ export async function detectOccupancyGaps(barbershopId: string, date?: string): 
 
   if (!professionals?.length) return [];
 
-  const { data: appointments } = await supabase
+  const { data: appointments } = await (supabase as any)
     .from('appointments')
     .select('professional_id, scheduled_at, service_id')
     .eq('barbershop_id', barbershopId)
@@ -121,7 +121,7 @@ export async function predictCancellations(barbershopId: string): Promise<Cancel
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-  const { data: appointments } = await supabase
+  const { data: appointments } = await (supabase as any)
     .from('appointments')
     .select('id, client_user_id, client_name, scheduled_at, service_id')
     .eq('barbershop_id', barbershopId)
@@ -135,7 +135,7 @@ export async function predictCancellations(barbershopId: string): Promise<Cancel
 
   for (const appt of appointments) {
     // Buscar histórico de cancelamentos do cliente
-    const { data: history } = await supabase
+    const { data: history } = await (supabase as any)
       .from('appointments')
       .select('status')
       .eq('client_user_id', appt.client_user_id)
@@ -210,7 +210,7 @@ export async function generateOptimizationReport(barbershopId: string): Promise<
   }
 
   // Taxa de ocupação
-  const totalSlots = 24 * (await supabase.from('professionals').select('id').eq('barbershop_id', barbershopId).eq('is_active', true)).data?.length || 1;
+  const totalSlots = 24 * (await (supabase as any).from('professionals').select('id').eq('barbershop_id', barbershopId).eq('is_active', true)).data?.length || 1;
   const occupiedSlots = totalSlots - gaps.reduce((sum, g) => sum + Math.floor(g.gap_minutes / 30), 0);
   const occupancyRate = Math.max(0, Math.min(100, (occupiedSlots / totalSlots) * 100));
 

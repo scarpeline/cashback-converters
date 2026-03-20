@@ -17,7 +17,7 @@ export async function enqueueJob(params: {
   scheduled_for?: string;
 }): Promise<{ success: boolean; jobId?: string; error?: string }> {
   try {
-    const { data, error } = await supabase.from('queue_jobs' as any).insert({
+    const { data, error } = await (supabase as any).from('queue_jobs' as any).insert({
       type: params.type,
       payload: params.payload,
       priority: params.priority || 'normal',
@@ -105,7 +105,7 @@ export async function getQueueStats(): Promise<QueueStats> {
   try {
     const today = new Date().toISOString().split('T')[0];
 
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('queue_jobs' as any)
       .select('status')
       .gte('created_at', `${today}T00:00:00`);

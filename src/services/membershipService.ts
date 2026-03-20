@@ -49,7 +49,7 @@ export interface MembershipTransaction {
 
 export async function getPlans(barbershopId: string): Promise<MembershipPlan[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('membership_plans')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -66,7 +66,7 @@ export async function getPlans(barbershopId: string): Promise<MembershipPlan[]> 
 
 export async function getClientMembership(clientUserId: string): Promise<Membership | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('memberships')
       .select('*, plan:membership_plans(*)')
       .eq('client_user_id', clientUserId)
@@ -91,7 +91,7 @@ export async function subscribeToPlan(params: {
       return { success: false, error: 'Você já possui uma assinatura ativa' };
     }
 
-    const { data: plan } = await supabase
+    const { data: plan } = await (supabase as any)
       .from('membership_plans')
       .select('*')
       .eq('id', params.plan_id)
@@ -120,7 +120,7 @@ export async function subscribeToPlan(params: {
       periodEnd.setFullYear(periodEnd.getFullYear() + 1);
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('memberships')
       .insert({
         client_user_id: params.client_user_id,
@@ -145,7 +145,7 @@ export async function subscribeToPlan(params: {
 
 export async function cancelMembership(membershipId: string, reason?: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('memberships')
       .update({
         status: 'cancelled',
@@ -164,7 +164,7 @@ export async function cancelMembership(membershipId: string, reason?: string): P
 
 export async function pauseMembership(membershipId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('memberships')
       .update({
         status: 'paused',
@@ -182,7 +182,7 @@ export async function pauseMembership(membershipId: string): Promise<boolean> {
 
 export async function resumeMembership(membershipId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('memberships')
       .update({
         status: 'active',
@@ -200,7 +200,7 @@ export async function resumeMembership(membershipId: string): Promise<boolean> {
 
 export async function getTransactions(membershipId: string): Promise<MembershipTransaction[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('membership_transactions')
       .select('*')
       .eq('membership_id', membershipId)
@@ -240,7 +240,7 @@ export async function addCashback(params: {
   order_id?: string;
 }): Promise<boolean> {
   try {
-    const { error } = await supabase.rpc('credit_cashback', {
+    const { error } = await (supabase as any).rpc('credit_cashback', {
       p_membership_id: params.membership_id,
       p_amount: params.amount,
       p_description: params.description,
@@ -261,7 +261,7 @@ export async function redeemCashback(params: {
   description: string;
 }): Promise<{ success: boolean; error?: string }> {
   try {
-    const { data, error } = await supabase.rpc('redeem_cashback', {
+    const { data, error } = await (supabase as any).rpc('redeem_cashback', {
       p_membership_id: params.membership_id,
       p_amount: params.amount,
       p_description: params.description,
@@ -276,7 +276,7 @@ export async function redeemCashback(params: {
 
 export async function useReferralCode(referralCode: string, newUserId: string): Promise<{ success: boolean; bonus?: number; error?: string }> {
   try {
-    const { data: referrer, error: referrerError } = await supabase
+    const { data: referrer, error: referrerError } = await (supabase as any)
       .from('memberships')
       .select('*')
       .eq('referral_code', referralCode)
@@ -287,7 +287,7 @@ export async function useReferralCode(referralCode: string, newUserId: string): 
       return { success: false, error: 'Código de indicação inválido' };
     }
 
-    const { data: plan } = await supabase
+    const { data: plan } = await (supabase as any)
       .from('membership_plans')
       .select('cashback_percentage')
       .eq('id', referrer.plan_id)
@@ -295,14 +295,14 @@ export async function useReferralCode(referralCode: string, newUserId: string): 
 
     const bonus = plan?.cashback_percentage || 10;
 
-    await supabase.from('membership_referrals').insert({
+    await (supabase as any).from('membership_referrals').insert({
       referrer_membership_id: referrer.id,
       referred_user_id: newUserId,
       referral_code_used: referralCode,
       bonus_awarded: bonus,
     });
 
-    await supabase
+    await (supabase as any)
       .from('memberships')
       .update({ referral_count: referrer.referral_count + 1 })
       .eq('id', referrer.id);
@@ -321,7 +321,7 @@ export async function useReferralCode(referralCode: string, newUserId: string): 
 
 export async function getMembershipBenefits(membershipId: string): Promise<any[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('membership_benefits')
       .select('*')
       .eq('membership_id', membershipId)
@@ -338,7 +338,7 @@ export async function getMembershipBenefits(membershipId: string): Promise<any[]
 
 export async function useBenefit(benefitId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('membership_benefits')
       .update({ is_used: true, used_at: new Date().toISOString() })
       .eq('id', benefitId);
@@ -358,12 +358,12 @@ export async function getMembershipStats(barbershopId: string): Promise<{
   revenue: number;
 }> {
   try {
-    const { data: memberships } = await supabase
+    const { data: memberships } = await (supabase as any)
       .from('memberships')
       .select('*')
       .eq('barbershop_id', barbershopId);
 
-    const { data: transactions } = await supabase
+    const { data: transactions } = await (supabase as any)
       .from('membership_transactions')
       .select('amount, transaction_type')
       .eq('memberships.barbershop_id', barbershopId);

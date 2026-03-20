@@ -75,7 +75,7 @@ export const FinalizarAtendimentoModal = ({
 
     try {
       // 1. Atualizar status do agendamento
-      const { error: appointmentError } = await supabase
+      const { error: appointmentError } = await (supabase as any)
         .from("appointments")
         .update({ 
           status: "completed",
@@ -103,7 +103,7 @@ export const FinalizarAtendimentoModal = ({
         paymentData.paid_at = new Date().toISOString();
       }
 
-      const { data: payment, error: paymentError } = await supabase
+      const { data: payment, error: paymentError } = await (supabase as any)
         .from("payments")
         .insert(paymentData)
         .select()
@@ -166,7 +166,7 @@ export const FinalizarAtendimentoModal = ({
         setPixGenerated(true);
 
         // Atualizar pagamento com dados do PIX
-        await supabase
+        await (supabase as any)
           .from("payments")
           .update({
             asaas_payment_id: pixResponse.paymentId,
@@ -206,7 +206,7 @@ export const FinalizarAtendimentoModal = ({
 
       if (statusResponse.status === 'CONFIRMED' || statusResponse.status === 'RECEIVED') {
         // Atualizar pagamento como confirmado
-        await supabase
+        await (supabase as any)
           .from("payments")
           .update({
             status: "paid",

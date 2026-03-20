@@ -71,7 +71,7 @@ function calculateStatus(daysSinceLastVisit: number, avgFrequencyDays: number): 
 // ==================== PERFIL DE CLIENTES ====================
 
 export async function getClientProfiles(barbershopId: string): Promise<ClientProfile[]> {
-  const { data: appointments } = await supabase
+  const { data: appointments } = await (supabase as any)
     .from('appointments')
     .select('client_user_id, client_name, client_whatsapp, scheduled_at, status, service_id, professional_id')
     .eq('barbershop_id', barbershopId)
@@ -81,7 +81,7 @@ export async function getClientProfiles(barbershopId: string): Promise<ClientPro
   if (!appointments?.length) return [];
 
   // Buscar pagamentos
-  const { data: payments } = await supabase
+  const { data: payments } = await (supabase as any)
     .from('payments')
     .select('amount, appointment_id')
     .eq('barbershop_id', barbershopId)

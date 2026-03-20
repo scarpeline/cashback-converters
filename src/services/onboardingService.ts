@@ -22,7 +22,7 @@ const AUTOMATION_TYPE_MAP: Record<string, { trigger_type: string; action_type: s
 };
 
 export const getSectorPresets = async (): Promise<SectorPreset[]> => {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("sector_presets")
     .select("*")
     .order("sector")
@@ -45,7 +45,7 @@ export const applyInitialPreset = async (
 ) => {
   try {
     // 1. Update barbershop with selected sector/specialty, policies and onboarding status
-    const { error: updateError } = await supabase
+    const { error: updateError } = await (supabase as any)
       .from("barbershops")
       .update({
         sector: sector,
@@ -67,7 +67,7 @@ export const applyInitialPreset = async (
         description: service.description,
         is_active: true,
       }));
-      const { error: servicesError } = await supabase
+      const { error: servicesError } = await (supabase as any)
         .from("services")
         .insert(servicesToInsert);
       if (servicesError) throw servicesError;
@@ -93,7 +93,7 @@ export const applyInitialPreset = async (
           priority: 0,
         };
       });
-      const { error: automationsError } = await supabase
+      const { error: automationsError } = await (supabase as any)
         .from("automations")
         .insert(automationsToInsert);
       if (automationsError) throw automationsError;
@@ -111,7 +111,7 @@ export const applyInitialPreset = async (
         color: resource.color || "#6366f1",
         metadata: resource.metadata || {},
       }));
-      const { error: resourcesError } = await supabase
+      const { error: resourcesError } = await (supabase as any)
         .from("resources")
         .insert(resourcesToInsert);
       if (resourcesError) throw resourcesError;
@@ -131,7 +131,7 @@ export const updateBookingPolicies = async (
   policies: any,
 ) => {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("barbershops")
       .update({ booking_policies: policies })
       .eq("id", barbershopId);
@@ -146,7 +146,7 @@ export const updateBookingPolicies = async (
 
 export const getBookingPolicies = async (barbershopId: string) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("barbershops")
       .select("booking_policies")
       .eq("id", barbershopId)

@@ -37,7 +37,7 @@ export async function verificarAgendamentoSemanaAtual(
     weekEnd.setHours(23, 59, 59, 999);
 
     // Buscar agendamentos do cliente na semana atual
-    let query = supabase
+    let query = (supabase as any)
       .from('appointments')
       .select('*')
       .eq('client_user_id', clientId)

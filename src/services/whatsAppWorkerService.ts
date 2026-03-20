@@ -47,7 +47,7 @@ export async function processNextJob(): Promise<{
   error?: string;
 }> {
   try {
-    const { data: jobs, error } = await supabase
+    const { data: jobs, error } = await (supabase as any)
       .from('job_queue')
       .select('*')
       .eq('status', 'pendente')
@@ -267,7 +267,7 @@ async function logSendAttempt(params: {
   errorReason?: string;
 }): Promise<void> {
   try {
-    await supabase.from('message_sending_logs').insert({
+    await (supabase as any).from('message_sending_logs').insert({
       whatsapp_account_id: params.whatsappAccountId || null,
       phone_number: params.phoneNumber,
       recipient_phone: params.recipientPhone,

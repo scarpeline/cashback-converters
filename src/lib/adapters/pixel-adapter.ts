@@ -20,7 +20,7 @@ class PixelAdapterImpl implements PixelAdapter {
     if (this.loaded) return;
     try {
       // Load platform-level pixels (public-facing, loaded without auth)
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("pixel_configurations")
         .select("platform, pixel_id, events, is_active")
         .eq("is_active", true)
