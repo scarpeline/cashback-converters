@@ -59,7 +59,7 @@ export const AgendaProfissional = ({ professionalId }: AgendaProfissionalProps) 
 
     setLoading(true);
     try {
-      const query = supabase
+      const query = (supabase as any)
         .from("appointments")
         .select(`
           *,
@@ -109,7 +109,7 @@ export const AgendaProfissional = ({ professionalId }: AgendaProfissionalProps) 
 
   const handleCancelarAtendimento = async (appointment: Appointment) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("appointments")
         .update({
           status: "cancelled",

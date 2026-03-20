@@ -352,9 +352,9 @@ const DashboardHome = () => {
   });
   useEffect(() => {
     Promise.all([
-      supabase.from("profiles").select("id", { count: "exact", head: true }),
-      supabase.from("barbershops").select("id", { count: "exact", head: true }),
-      supabase.from("affiliates").select("id", { count: "exact", head: true }),
+      (supabase as any).from("profiles").select("id", { count: "exact", head: true }),
+      (supabase as any).from("barbershops").select("id", { count: "exact", head: true }),
+      (supabase as any).from("affiliates").select("id", { count: "exact", head: true }),
     ]).then(([p, b, a]) =>
       setStats({
         users: p.count || 0,
@@ -540,7 +540,7 @@ const SuporteAdminPage = () => {
   }, []);
 
   const loadMessages = async (chatId: string) => {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("support_messages")
       .select("*")
       .eq("chat_id", chatId)
@@ -556,7 +556,7 @@ const SuporteAdminPage = () => {
   const sendMessage = async () => {
     if (!newMsg.trim() || !activeChat || !user) return;
     setSending(true);
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("support_messages")
       .insert({
         chat_id: activeChat.id,
@@ -574,7 +574,7 @@ const SuporteAdminPage = () => {
   };
 
   const updateStatus = async (chatId: string, status: string) => {
-    await supabase
+    await (supabase as any)
       .from("support_chats")
       .update({ status, assigned_to: user?.id })
       .eq("id", chatId);
@@ -755,13 +755,13 @@ const NotificacoesAdminPage = () => {
 
     let userIds: string[] = [];
     if (roleFilter) {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("user_roles")
         .select("user_id")
         .eq("role", roleFilter as any);
       userIds = data?.map((r) => r.user_id) || [];
     } else {
-      const { data } = await supabase.from("profiles").select("user_id");
+      const { data } = await (supabase as any).from("profiles").select("user_id");
       userIds = data?.map((r) => r.user_id) || [];
     }
 
@@ -778,10 +778,10 @@ const NotificacoesAdminPage = () => {
       type: "info" as const,
       priority: "normal" as const,
     }));
-    await supabase.from("notifications").insert(notifications);
+    await (supabase as any).from("notifications").insert(notifications);
 
     if (channel === "sms" || channel === "whatsapp") {
-      const { data: profiles } = await supabase
+      const { data: profiles } = await (supabase as any)
         .from("profiles")
         .select("whatsapp")
         .in("user_id", userIds);
@@ -953,7 +953,7 @@ const ProdutosPage = () => {
   const [formData, setFormData] = useState({ name: '', description: '', price: '', gateway_product_id: '', gateway_price_id: '' });
 
   useEffect(() => {
-    supabase.from('products').select('*').then(({ data }) => {
+    (supabase as any).from('products').select('*').then(({ data }) => {
       setProducts(data || []);
       setLoading(false);
     });
@@ -966,21 +966,21 @@ const ProdutosPage = () => {
     }
     setCreating(true);
     const { error } = editingProduct
-      ? await supabase.from('products').update(formData).eq('id', editingProduct.id)
-      : await supabase.from('products').insert([formData]);
+      ? await (supabase as any).from('products').update(formData).eq('id', editingProduct.id)
+      : await (supabase as any).from('products').insert([formData]);
     setCreating(false);
     if (error) toast.error(error.message);
     else {
       toast.success(editingProduct ? 'Produto atualizado' : 'Produto criado');
       setFormData({ name: '', description: '', price: '', gateway_product_id: '', gateway_price_id: '' });
       setEditingProduct(null);
-      supabase.from('products').select('*').then(({ data }) => setProducts(data || []));
+      (supabase as any).from('products').select('*').then(({ data }) => setProducts(data || []));
     }
   };
 
   const deleteProduct = async (id: string) => {
     if (!confirm('Tem certeza?')) return;
-    const { error } = await supabase.from('products').delete().eq('id', id);
+    const { error } = await (supabase as any).from('products').delete().eq('id', id);
     if (error) toast.error(error.message);
     else {
       toast.success('Produto deletado');
@@ -1110,7 +1110,7 @@ const BarbeariasPage = () => {
     setSaving(true);
     const endsAt = new Date();
     endsAt.setDate(endsAt.getDate() + parseInt(accessDays));
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("barbershops")
       .update({
         subscription_status: "active",
@@ -1351,7 +1351,7 @@ const BarbeariasPage = () => {
                 size="sm"
                 onClick={async () => {
                   const newBlocked = !s.blocked;
-                  const { error } = await supabase
+                  const { error } = await (supabase as any)
                     .from("barbershops")
                     .update({ blocked: newBlocked } as any)
                     .eq("id", s.id);
@@ -1413,7 +1413,7 @@ const AfiliadosPage = () => {
 
   const generateInviteLink = async () => {
     setCreating(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("affiliate_invites" as any)
       .insert([
         {
@@ -1444,7 +1444,7 @@ const AfiliadosPage = () => {
 
   const saveCommission = async () => {
     if (!editingAffiliate) return;
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("affiliates")
       .update({
         commission_first: commissions.first,
@@ -1597,7 +1597,7 @@ const AfiliadosPage = () => {
                 size="sm"
                 onClick={async () => {
                   const newBlocked = !a.blocked;
-                  const { error } = await supabase
+                  const { error } = await (supabase as any)
                     .from("affiliates")
                     .update({ blocked: newBlocked } as any)
                     .eq("id", a.id);
@@ -1837,7 +1837,7 @@ const ServicosContabeisAdminPage = () => {
           proposed_at: null,
           updated_at: new Date().toISOString(),
         };
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("fiscal_service_types")
       .update(update as any)
       .eq("id", id);
@@ -2272,7 +2272,7 @@ const PixelsPage = () => {
 
   const handleAddPixel = async () => {
     if (!newPixel.pixel_id) return toast.error("Insira o ID do Pixel");
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("pixels")
       .insert([
         { ...newPixel, owner_type: "system", pixel_type: newPixel.platform },
@@ -2287,7 +2287,7 @@ const PixelsPage = () => {
   };
 
   const togglePixel = async (id: string, active: boolean) => {
-    await supabase.from("pixels").update({ active }).eq("id", id);
+    await (supabase as any).from("pixels").update({ active }).eq("id", id);
     setPixels(pixels.map((p) => (p.id === id ? { ...p, active } : p)));
     toast.success("Status atualizado");
   };
@@ -2405,7 +2405,7 @@ const MensagensSistemaPage = () => {
 
   const handlePost = async () => {
     if (!title || !body) return toast.error("Preencha tudo");
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("internal_system_messages" as any)
       .insert([{ title, body, target_role: role === "all" ? null : role }])
       .select();
@@ -2680,7 +2680,7 @@ const GatewayManager = () => {
   useEffect(() => {
     const load = async () => {
       const keys = ["gateway_primary", "gateway_secondary", "gateway_tertiary"];
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("integration_settings")
         .select("*")
         .in("service_name", keys);
@@ -2735,7 +2735,7 @@ const GatewayManager = () => {
       },
     ];
     for (const entry of entries) {
-      await supabase
+      await (supabase as any)
         .from("integration_settings")
         .upsert(entry, { onConflict: "service_name,environment" });
     }
@@ -2925,7 +2925,7 @@ const ConfiguracoesPage = () => {
 
   const saveSupportPhone = async () => {
     setSaving(true);
-    const { error } = await supabase.from("integration_settings").upsert(
+    const { error } = await (supabase as any).from("integration_settings").upsert(
       {
         service_name: "support_phone",
         environment: "production",
@@ -2941,7 +2941,7 @@ const ConfiguracoesPage = () => {
 
   const saveSaasFeeConfig = async () => {
     setSavingFee(true);
-    const { error } = await supabase.from("integration_settings").upsert(
+    const { error } = await (supabase as any).from("integration_settings").upsert(
       {
         service_name: "saas_fee",
         environment: "production",
@@ -2957,7 +2957,7 @@ const ConfiguracoesPage = () => {
 
   const savePlan = async () => {
     if (!editingPlan) return;
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("subscription_plans" as any)
       .update({
         name: editingPlan.name,
@@ -2980,7 +2980,7 @@ const ConfiguracoesPage = () => {
       toast.error("Preencha todos os campos.");
       return;
     }
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("messaging_packages")
       .insert({
         name: pkgForm.name,
@@ -3000,7 +3000,7 @@ const ConfiguracoesPage = () => {
 
   const savePackage = async () => {
     if (!editPkg) return;
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("messaging_packages")
       .update({
         name: editPkg.name,
@@ -3027,7 +3027,7 @@ const ConfiguracoesPage = () => {
     )
       return;
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("messaging_packages")
       .delete()
       .eq("id", pkgId);
@@ -3042,7 +3042,7 @@ const ConfiguracoesPage = () => {
     planId: string,
     showOnLanding: boolean,
   ) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("subscription_plans" as any)
       .update({
         show_on_landing: showOnLanding,
@@ -3603,7 +3603,7 @@ const LandingVisibilidadePage = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("integration_settings")
       .upsert(
         {

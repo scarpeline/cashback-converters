@@ -137,7 +137,7 @@ export const SmartMessagingPanel = () => {
 
   const loadSavedRules = async () => {
     if (!barbershop?.id) return;
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("barbershops")
       .select("automation_schedule")
       .eq("id", barbershop.id)
@@ -159,21 +159,21 @@ export const SmartMessagingPanel = () => {
     const d2 = new Date(now); d2.setDate(d2.getDate() - 2);
 
     const [newNoApt, i30, i60, i90] = await Promise.all([
-      supabase.from("profiles").select("user_id", { count: "exact", head: true })
+      (supabase as any).from("profiles").select("user_id", { count: "exact", head: true })
         .eq("role", "cliente")
         .lt("created_at", d2.toISOString())
         .not("user_id", "in",
           `(SELECT DISTINCT client_user_id FROM appointments WHERE barbershop_id='${barbershop.id}' AND client_user_id IS NOT NULL)`
         ),
-      supabase.from("appointments").select("client_user_id", { count: "exact", head: true })
+      (supabase as any).from("appointments").select("client_user_id", { count: "exact", head: true })
         .eq("barbershop_id", barbershop.id)
         .lt("scheduled_at", d30.toISOString())
         .gte("scheduled_at", d60.toISOString()),
-      supabase.from("appointments").select("client_user_id", { count: "exact", head: true })
+      (supabase as any).from("appointments").select("client_user_id", { count: "exact", head: true })
         .eq("barbershop_id", barbershop.id)
         .lt("scheduled_at", d60.toISOString())
         .gte("scheduled_at", d90.toISOString()),
-      supabase.from("appointments").select("client_user_id", { count: "exact", head: true })
+      (supabase as any).from("appointments").select("client_user_id", { count: "exact", head: true })
         .eq("barbershop_id", barbershop.id)
         .lt("scheduled_at", d90.toISOString()),
     ]);
@@ -214,7 +214,7 @@ export const SmartMessagingPanel = () => {
     }, {} as Record<string, any>);
 
     const current = (barbershop as any).automation_schedule || {};
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("barbershops")
       .update({ automation_schedule: { ...current, smart_messages: saved } })
       .eq("id", barbershop.id);
@@ -227,7 +227,7 @@ export const SmartMessagingPanel = () => {
     if (!barbershop?.id) return;
     setSending(rule.id);
     try {
-      const { data: clients } = await supabase
+      const { data: clients } = await (supabase as any)
         .from("profiles")
         .select("user_id, name")
         .eq("role", "cliente")
@@ -236,7 +236,7 @@ export const SmartMessagingPanel = () => {
       let sent = 0;
       for (const c of clients || []) {
         const msg = rule.message.replace("{nome}", c.name || "Cliente");
-        await supabase.from("notifications").insert({
+        await (supabase as any).from("notifications").insert({
           user_id: c.user_id,
           title: rule.label,
           message: msg,

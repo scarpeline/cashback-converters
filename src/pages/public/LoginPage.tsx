@@ -531,7 +531,7 @@ const LoginPage = () => {
                           }
                           setLoading(true);
                           const norm = formData.whatsapp.replace(/\D/g, '');
-                          const { data } = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: norm });
+                          const { data } = await (supabase as any).rpc("get_email_by_whatsapp", { _whatsapp: norm });
                           setLoading(false);
                           if (!data) {
                             toast.error(t("auth.error_account_not_found"));

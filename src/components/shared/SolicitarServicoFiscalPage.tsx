@@ -166,7 +166,7 @@ export default function SolicitarServicoFiscalPage() {
 
   const fetchRequests = async () => {
     if (!user) return;
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("fiscal_service_requests")
       .select("*")
       .eq("client_user_id", user.id)
@@ -250,7 +250,7 @@ export default function SolicitarServicoFiscalPage() {
       }
     }
 
-    const { error } = await supabase.from("fiscal_service_requests").insert({
+    const { error } = await (supabase as any).from("fiscal_service_requests").insert({
       client_user_id: user.id,
       requested_by_user_id: user.id,
       requested_by_role: requestedByRole,

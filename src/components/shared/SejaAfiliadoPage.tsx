@@ -158,7 +158,7 @@ const SejaAfiliadoPage = () => {
 
       toast.success("Conta de afiliado criada com sucesso!");
       // Reload affiliate data
-      const { data: aff } = await supabase
+      const { data: aff } = await (supabase as any)
         .from("affiliates")
         .select("*")
         .eq("user_id", user.id)

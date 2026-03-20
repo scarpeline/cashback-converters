@@ -114,8 +114,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUserData = useCallback(async (userId: string) => {
     try {
       const [profileRes, rolesRes, barbershopRes] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", userId),
+        (supabase as any).from("profiles").select("*").eq("user_id", userId).maybeSingle(),
+        (supabase as any).from("user_roles").select("role").eq("user_id", userId),
         (supabase as any).from("barbershops").select("*").eq("owner_user_id", userId).maybeSingle(),
       ]);
 
@@ -213,7 +213,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithWhatsApp = async (whatsapp: string, password: string) => {
     const norm = whatsapp.replace(/\D/g, "");
-    const { data: email } = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: norm });
+    const { data: email } = await (supabase as any).rpc("get_email_by_whatsapp", { _whatsapp: norm });
     if (!email) return { error: new Error("WhatsApp não encontrado") };
     return signIn(email, password);
   };

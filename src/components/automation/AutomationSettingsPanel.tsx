@@ -114,7 +114,7 @@ export const AutomationSettingsPanel = () => {
         ...settings
       };
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('barbershops')
         .update({ automation_schedule: newSchedule })
         .eq('id', barbershop.id);

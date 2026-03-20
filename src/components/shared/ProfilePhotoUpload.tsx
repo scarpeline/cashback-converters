@@ -25,7 +25,7 @@ export function ProfilePhotoUpload({ userId, avatarUrl, onUpdate, size = "md" }:
     const url = await uploadImage(file, "avatars", userId.slice(0, 8));
     setUploading(false);
     if (url) {
-      const { error } = await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", userId);
+      const { error } = await (supabase as any).from("profiles").update({ avatar_url: url }).eq("user_id", userId);
       if (error) { toast.error("Erro ao salvar foto."); return; }
       onUpdate(url);
       toast.success("Foto atualizada!");

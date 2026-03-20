@@ -33,8 +33,8 @@ const DadosBancariosPage = () => {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("barbershops").select("id, name, asaas_customer_id, asaas_wallet_id").eq("owner_user_id", user.id).limit(1).maybeSingle(),
-      supabase.from("profiles").select("name, cpf_cnpj, whatsapp, pix_key, bank_info").eq("user_id", user.id).maybeSingle(),
+      (supabase as any).from("barbershops").select("id, name, asaas_customer_id, asaas_wallet_id").eq("owner_user_id", user.id).limit(1).maybeSingle(),
+      (supabase as any).from("profiles").select("name, cpf_cnpj, whatsapp, pix_key, bank_info").eq("user_id", user.id).maybeSingle(),
     ]).then(([shop, prof]) => {
       setBarbershop(shop.data);
       const w = (prof.data as any)?.whatsapp || "";
@@ -73,7 +73,7 @@ const DadosBancariosPage = () => {
     const cleanCpfCnpj = form.cpf_cnpj.replace(/\D/g, "");
 
     // Update profile
-    const { error: profileError } = await supabase
+    const { error: profileError } = await (supabase as any)
       .from("profiles")
       .update({
         name: form.name,
