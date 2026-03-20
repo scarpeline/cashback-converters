@@ -116,11 +116,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const [profileRes, rolesRes, barbershopRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", userId),
-        supabase.from("barbershops").select("*").eq("owner_id", userId).maybeSingle(),
+        (supabase as any).from("barbershops").select("*").eq("owner_user_id", userId).maybeSingle(),
       ]);
 
       if (profileRes.data) setProfile(profileRes.data as Profile);
-      if (barbershopRes.data) setBarbershop(barbershopRes.data as Barbershop);
+      if (barbershopRes.data) setBarbershop(barbershopRes.data as unknown as Barbershop);
       
       const fetchedRoles = rolesRes.data?.map(r => r.role as AppRole) || [];
       setRoles(fetchedRoles);
