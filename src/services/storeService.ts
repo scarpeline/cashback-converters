@@ -55,6 +55,8 @@ export interface Package {
   original_price?: number;
   validity_days: number;
   is_active: boolean;
+  sales_count?: number;
+  [key: string]: any;
 }
 
 export interface ClientPackage {

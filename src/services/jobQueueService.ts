@@ -9,7 +9,8 @@ export type JobStatus = 'pendente' | 'processando' | 'completo' | 'falhou' | 'ca
 export interface Job {
   id: string;
   job_type: JobType;
-  job_priority: number;
+  job_priority?: number;
+  priority?: number;
   payload: Record<string, any>;
   status: JobStatus;
   attempts: number;
@@ -19,6 +20,8 @@ export interface Job {
   started_at?: string;
   completed_at?: string;
   created_at: string;
+  updated_at?: string;
+  [key: string]: any;
 }
 
 export interface JobResult {
