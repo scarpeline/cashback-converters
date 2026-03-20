@@ -42,6 +42,7 @@ import SejaAfiliadoPage from "@/components/shared/SejaAfiliadoPage";
 import { SocialProofManager } from "@/components/social-proof/SocialProofManager";
 import { SocialProofPopup } from "@/components/social-proof/SocialProofPopup";
 import { DonoOnboarding } from "@/components/onboarding/DonoOnboarding";
+import BookingPoliciesPanel from "@/components/settings/BookingPoliciesPanel";
 import {
   Card,
   CardContent,
@@ -73,6 +74,7 @@ import {
   CheckCircle,
   Check,
   Clock,
+  CalendarCheck,
   ChevronRight,
   Phone,
   Send,
@@ -183,6 +185,7 @@ const DonoDashboard = () => {
       href: `${basePath}/configuracoes`,
       icon: Settings,
     },
+    { name: "Políticas de Agendamento", href: `${basePath}/politicas-agendamento`, icon: CalendarCheck },
     { name: "WhatsApp", href: `${basePath}/whatsapp-contas`, icon: MessageCircle },
     { name: "Pacotes de Mensagens", href: `${basePath}/whatsapp-pacotes`, icon: Package },
     { name: "Divisão de Custos", href: `${basePath}/whatsapp-custos`, icon: Percent },
@@ -340,6 +343,7 @@ const DonoDashboard = () => {
             <Route path="suporte" element={<SuportePage />} />
             <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
+            <Route path="politicas-agendamento" element={<BookingPoliciesPanel />} />
             <Route path="whatsapp-contas" element={
               <WhatsAppAccountsPanel barbershopId={mainBarbershop?.id || ""} />
             } />
