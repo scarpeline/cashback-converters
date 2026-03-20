@@ -328,27 +328,27 @@ export async function getSendingStats(barbershopId: string): Promise<{
       { data: blockedNumbers },
       { data: activeNumbers },
     ] = await Promise.all([
-      supabase
+      (supabase as any)
         .from('message_sending_logs')
         .select('*', { count: 'exact', head: true })
         .eq('whatsapp_accounts.barbershop_id', barbershopId)
         .gte('created_at', oneDayAgo.toISOString()),
-      supabase
+      (supabase as any)
         .from('message_sending_logs')
         .select('*', { count: 'exact', head: true })
         .eq('whatsapp_accounts.barbershop_id', barbershopId)
         .gte('created_at', oneHourAgo.toISOString()),
-      supabase
+      (supabase as any)
         .from('message_sending_logs')
         .select('*', { count: 'exact', head: true })
         .eq('whatsapp_accounts.barbershop_id', barbershopId)
         .gte('created_at', oneMinuteAgo.toISOString()),
-      supabase
+      (supabase as any)
         .from('whatsapp_numbers')
         .select('id', { count: 'exact', head: true })
         .eq('whatsapp_accounts.barbershop_id', barbershopId)
         .eq('is_blocked', true),
-      supabase
+      (supabase as any)
         .from('whatsapp_numbers')
         .select('id', { count: 'exact', head: true })
         .eq('whatsapp_accounts.barbershop_id', barbershopId)

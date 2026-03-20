@@ -37,7 +37,7 @@ export async function addJob(
   scheduledFor?: Date
 ): Promise<JobResult> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .rpc('add_job_to_queue', {
         p_job_type: jobType,
         p_payload: payload,
@@ -47,7 +47,7 @@ export async function addJob(
       .single();
 
     if (error) throw error;
-    return { success: true, jobId: data };
+    return { success: true, jobId: (data as any)?.id || String(data) };
   } catch (error: any) {
     console.error('Erro ao adicionar job:', error);
     return { success: false, error: error.message };
