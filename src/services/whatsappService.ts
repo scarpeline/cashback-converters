@@ -21,6 +21,13 @@ export interface WhatsAppConfig {
   business_id: string;
 }
 
+interface SendResult {
+  success: boolean;
+  message_id?: string;
+  error?: string;
+  ai_response?: string;
+}
+
 /**
  * Enviar mensagem via WhatsApp
  */
@@ -28,16 +35,14 @@ export async function sendWhatsAppMessage(
   to: string,
   message: string,
   type: 'text' | 'audio' = 'text'
-): Promise<{ success: boolean; message_id?: string; error?: string }> {
+): Promise<SendResult> {
   try {
-    // Validar número (remover formatação)
     const cleanNumber = to.replace(/\D/g, '');
     
     if (cleanNumber.length < 10) {
       return { success: false, error: 'Número inválido' };
     }
 
-    // Buscar configuração do WhatsApp
     const { data: config, error: configError } = await (supabase as any)
       .from('integration_settings')
       .select('*')
@@ -54,7 +59,6 @@ export async function sendWhatsAppMessage(
       };
     }
 
-    // Enviar mensagem via API (ex: Z-API, Evolution API)
     const response = await fetch(`${config.api_url}/messages`, {
       method: 'POST',
       headers: {
@@ -75,7 +79,6 @@ export async function sendWhatsAppMessage(
 
     const data = await response.json();
     
-    // Salvar no histórico
     await (supabase as any).from('whatsapp_messages').insert({
       from: config.phone_id,
       to: cleanNumber,
@@ -85,7 +88,7 @@ export async function sendWhatsAppMessage(
       ai_response: data.response,
     });
 
-    return { success: true, message_id: data.message_id };
+    return { success: true, message_id: data.message_id, ai_response: data.ai_response };
   } catch (error: any) {
     console.error('Erro ao enviar mensagem:', error);
     return { success: false, error: error.message || 'Erro desconhecido' };
@@ -101,7 +104,6 @@ export async function sendWhatsAppWithAI(
   clientId: string
 ): Promise<{ success: boolean; ai_response?: string }> {
   try {
-    // Buscar configuração do WhatsApp
     const { data: config } = await (supabase as any)
       .from('integration_settings')
       .select('*')
@@ -115,22 +117,20 @@ export async function sendWhatsAppWithAI(
       };
     }
 
-    // Enviar mensagem
     const result = await sendWhatsAppMessage(to, message, 'text');
 
     if (result.success) {
-      // Salvar na memória da IA
       await (supabase as any).from('ai_memory').insert({
         client_id: clientId,
         message: message,
-        response: (result as any).ai_response || message,
+        response: result.ai_response || message,
         intent: 'whatsapp_response',
       });
     }
 
     return { 
       success: result.success, 
-      ai_response: (result as any).ai_response 
+      ai_response: result.ai_response 
     };
   } catch (error) {
     console.error('Erro ao enviar com IA:', error);
@@ -144,16 +144,14 @@ export async function sendWhatsAppWithAI(
 export async function receiveWhatsAppMessage(
   from: string,
   message: string,
-  type: 'text' | 'audio' = 'text'
+  _type: 'text' | 'audio' = 'text'
 ): Promise<{ response: string; ai_response?: string }> {
   try {
-    // Buscar ou criar cliente
     let clientId = from;
     
-    // Buscar cliente por telefone
     const { data: profile } = await (supabase as any)
       .from('profiles')
-      .select('id, user_id')
+      .select('id, user_id, name')
       .eq('whatsapp', from)
       .single();
 
@@ -161,16 +159,11 @@ export async function receiveWhatsAppMessage(
       clientId = profile.user_id;
     }
 
-    // Processar com IA (inline)
-    const processarMensagemAprimorada = async (client: any, msg: string) => ({ message: 'Olá! Como posso ajudar?', personalized: false });
-    const response = await processarMensagemAprimorada(
-      { id: clientId, name: profile?.name || 'Cliente' },
-      message
-    );
+    const responseMsg = 'Olá! Como posso ajudar?';
 
     return {
-      response: (response as any).message,
-      ai_response: response,
+      response: responseMsg,
+      ai_response: responseMsg,
     };
   } catch (error) {
     console.error('Erro ao receber mensagem:', error);
@@ -186,10 +179,9 @@ export async function receiveWhatsAppMessage(
 export async function sendAudioMessage(
   to: string,
   text: string,
-  voice: 'pt-BR' | 'pt-PT' = 'pt-BR'
+  _voice: 'pt-BR' | 'pt-PT' = 'pt-BR'
 ): Promise<{ success: boolean; message_id?: string }> {
   try {
-    // Buscar configuração do WhatsApp
     const { data: config } = await (supabase as any)
       .from('integration_settings')
       .select('*')
@@ -203,7 +195,6 @@ export async function sendAudioMessage(
       };
     }
 
-    // Enviar mensagem de áudio
     const response = await fetch(`${config.api_url}/messages`, {
       method: 'POST',
       headers: {
@@ -214,7 +205,7 @@ export async function sendAudioMessage(
         phone: to.replace(/\D/g, ''),
         message: text,
         type: 'audio',
-        voice: voice,
+        voice: _voice,
       }),
     });
 
@@ -244,8 +235,8 @@ export async function checkMessageStatus(messageId: string): Promise<{
       .eq('message_id', messageId)
       .single();
 
-    if (error) {
-      return { status: 'unknown' as any };
+    if (error || !data) {
+      return { status: 'failed' };
     }
 
     return {
@@ -254,7 +245,7 @@ export async function checkMessageStatus(messageId: string): Promise<{
     };
   } catch (error) {
     console.error('Erro ao verificar status:', error);
-    return { status: 'unknown' as any };
+    return { status: 'failed' };
   }
 }
 
@@ -293,7 +284,6 @@ export async function setupWebhook(
   verifyToken: string
 ): Promise<{ success: boolean; message?: string }> {
   try {
-    // Buscar configuração do WhatsApp
     const { data: config, error } = await (supabase as any)
       .from('integration_settings')
       .select('*')
@@ -301,10 +291,9 @@ export async function setupWebhook(
       .single();
 
     if (error || !config) {
-      return { success: false } as any; // message: 'WhatsApp não configurado' };
+      return { success: false, message: 'WhatsApp não configurado' };
     }
 
-    // Enviar configuração do webhook para a API do WhatsApp
     const response = await fetch(`${config.api_url}/webhook`, {
       method: 'POST',
       headers: {
@@ -319,13 +308,13 @@ export async function setupWebhook(
     });
 
     if (!response.ok) {
-      return { success: false } as any; // message: 'Erro ao configurar webhook' };
+      return { success: false, message: 'Erro ao configurar webhook' };
     }
 
     return { success: true };
   } catch (error) {
     console.error('Erro ao configurar webhook:', error);
-    return { success: false } as any; // message: 'Erro ao configurar webhook' };
+    return { success: false, message: 'Erro ao configurar webhook' };
   }
 }
 
@@ -335,9 +324,8 @@ export async function setupWebhook(
 export async function sendReactivationMessage(
   clientId: string,
   message: string
-): Promise<{ success: boolean }> {
+): Promise<{ success: boolean; message?: string }> {
   try {
-    // Buscar telefone do cliente
     const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('whatsapp')
@@ -345,10 +333,11 @@ export async function sendReactivationMessage(
       .single();
 
     if (!profile?.whatsapp) {
-      return { success: false } as any; // message: 'Telefone não encontrado' };
+      return { success: false, message: 'Telefone não encontrado' };
     }
 
-    return await sendWhatsAppMessage(profile.whatsapp, message);
+    const result = await sendWhatsAppMessage(profile.whatsapp, message);
+    return { success: result.success, message: result.error };
   } catch (error) {
     console.error('Erro ao enviar mensagem de reativação:', error);
     return { success: false };
@@ -361,9 +350,8 @@ export async function sendReactivationMessage(
 export async function sendAppointmentReminder(
   appointmentId: string,
   clientId: string
-): Promise<{ success: boolean }> {
+): Promise<{ success: boolean; message?: string }> {
   try {
-    // Buscar dados do agendamento
     const { data: appointment } = await (supabase as any)
       .from('appointments')
       .select('*, services(name), professionals(name)')
@@ -371,10 +359,9 @@ export async function sendAppointmentReminder(
       .single();
 
     if (!appointment) {
-      return { success: false } as any; // message: 'Agendamento não encontrado' };
+      return { success: false, message: 'Agendamento não encontrado' };
     }
 
-    // Buscar telefone do cliente
     const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('whatsapp')
@@ -382,7 +369,7 @@ export async function sendAppointmentReminder(
       .single();
 
     if (!profile?.whatsapp) {
-      return { success: false } as any; // message: 'Telefone não encontrado' };
+      return { success: false, message: 'Telefone não encontrado' };
     }
 
     const dataHora = new Date(appointment.scheduled_at);
@@ -392,9 +379,10 @@ export async function sendAppointmentReminder(
       minute: '2-digit' 
     });
 
-    const message = `Olá! Lembrete do seu agendamento 📅\n\n📅 Data: ${dataFormatada}\n⏰ Hora: ${horaFormatada}\n💈 Serviço: ${appointment.services?.name}\n✂️ Profissional: ${appointment.professionals?.name}\n\nAté logo!`;
+    const reminderMessage = `Olá! Lembrete do seu agendamento 📅\n\n📅 Data: ${dataFormatada}\n⏰ Hora: ${horaFormatada}\n💈 Serviço: ${appointment.services?.name}\n✂️ Profissional: ${appointment.professionals?.name}\n\nAté logo!`;
 
-    return await sendWhatsAppMessage(profile.whatsapp, message);
+    const result = await sendWhatsAppMessage(profile.whatsapp, reminderMessage);
+    return { success: result.success, message: result.error };
   } catch (error) {
     console.error('Erro ao enviar lembrete:', error);
     return { success: false };
