@@ -16,7 +16,7 @@ export function ProtectedRoute({
   allowedRoles,
   redirectTo,
 }: ProtectedRouteProps) {
-  const { user, roles, getPrimaryRole, authResolved, profileLoading } =
+  const { user, roles, getPrimaryRole, authResolved, profileLoading, barbershop } =
     useAuth();
   const location = useLocation();
   const [rolesTimeout, setRolesTimeout] = useState(false);
@@ -48,77 +48,44 @@ export function ProtectedRoute({
     !authResolved ||
     (user && profileLoading && roles.length === 0 && !globalTimeout)
   ) {
-    return <LoadingScreen message="Carregando ambiente seguro..." />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
-  // Debug log for routing decisions
-  // STEP 2: Sem sessão → login
+  // STEP 2: Redirecionar para login se não autenticado
   if (!user) {
     const loginPath = redirectTo || getLoginForRoute(location.pathname);
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
-  // STEP 3: Sessão OK mas sem roles → aguardar brevemente (com timeout)
-  if (roles.length === 0) {
-    if (globalTimeout || rolesTimeout) {
-      // Se ainda estiver carregando perfil, esperamos o globalTimeout
-      if (profileLoading && !globalTimeout) {
-        return <LoadingScreen message="Sincronizando permissões..." />;
+  // STEP 3: Redirecionar para onboarding se for dono e status for 'pending'
+  if (
+    barbershop &&
+    barbershop.onboarding_status === "pending" &&
+    roles.includes("dono") &&
+    location.pathname !== "/onboarding"
+  ) {
+    return <Navigate to="/onboarding" state={{ from: location }} replace />;
+  }
+
+  // STEP 4: Redirecionar para o dashboard principal se não houver roles ou roles inválidas
+  if (roles.length === 0 || (allowedRoles && !roles.some((r) => allowedRoles.includes(r)))) {
+    const primaryRole = getPrimaryRole();
+    if (primaryRole) {
+      const dashboardPath = getDashboardForRole(primaryRole);
+      if (dashboardPath && dashboardPath !== location.pathname) {
+        return <Navigate to={dashboardPath} replace />;
       }
-
-      // Em vez de expulsar para o login, mostramos uma tela de erro com opção de retry
-      // Isso quebra o loop Dashboard -> Login -> Dashboard
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
-          <div className="max-w-md w-full text-center space-y-6 bg-card p-8 rounded-2xl border shadow-lg">
-            <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">
-                Perfil não localizado
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Sua sessão está ativa, mas não conseguimos carregar suas
-                permissões de acesso. Isso pode ser uma instabilidade
-                temporária.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Button
-                onClick={() => window.location.reload()}
-                className="w-full"
-              >
-                Tentar Novamente
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => (window.location.href = "/login")}
-                className="w-full"
-              >
-                Voltar para o Login
-              </Button>
-            </div>
-            <p className="text-[10px] text-muted-foreground italic">
-              ID: {user.id.substring(0, 8)}...
-            </p>
-          </div>
-        </div>
-      );
     }
-    return <LoadingScreen message="Validando permissões de acesso..." />;
+    // Se não houver role primária ou dashboard, redireciona para o login
+    const loginPath = redirectTo || getLoginForRoute(location.pathname);
+    return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
-  // STEP 4: Verificar permissão
-  if (allowedRoles && allowedRoles.length > 0) {
-    const hasPermission = allowedRoles.some((r) => roles.includes(r as any));
-
-    if (!hasPermission) {
-      const primaryRole = getPrimaryRole();
-      const correctPath = getDashboardForRole(primaryRole);
-
-      return <Navigate to={correctPath} replace />;
-    }
-  }
-
-  // STEP 5: Autorizado
+  // STEP 5: Renderizar o conteúdo protegido
   return <>{children}</>;
 }
 

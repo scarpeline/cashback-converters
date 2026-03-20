@@ -61,6 +61,12 @@ const PartnerDashboard = lazy(
 const NotificationsPage = lazy(
   () => import("./pages/partners/NotificationsPage"),
 );
+const LandingPageB2B = lazy(
+  () => import("./components/landing/LandingPageB2B"),
+);
+const OnboardingSelectionPage = lazy(
+  () => import("./pages/onboarding/OnboardingSelectionPage"),
+);
 
 /**
  * QueryClient configurado para produção:
@@ -103,6 +109,8 @@ function AppRoutes() {
         <Route path="/install" element={<InstallPage />} />
         <Route path="/analise-custos" element={<CostAnalysisPage />} />
         <Route path="/v/:barbershopId" element={<VitrinePage />} />
+        <Route path="/para-empresas" element={<LandingPageB2B />} />
+        <Route path="/onboarding" element={<OnboardingSelectionPage />} />
 
         {/* ========== LOGIN (AuthGuard: se logado, vai pro dashboard) ========== */}
         <Route

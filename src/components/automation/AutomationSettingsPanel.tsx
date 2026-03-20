@@ -150,90 +150,6 @@ export const AutomationSettingsPanel = () => {
 
   return (
     <div className="space-y-6">
-      {/* Configurações Principais */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Configurações de Automação
-          </CardTitle>
-          <CardDescription>
-            Controle quando as automações devem ser enviadas para evitar spam em clientes já agendados
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
-            <div className="flex items-center gap-3">
-              <Shield className="w-5 h-5 text-blue-600" />
-              <div>
-                <Label className="font-medium">Bloquear automações para clientes com agendamento na semana</Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Evita enviar campanhas e lembretes para clientes que já têm horário marcado
-                </p>
-              </div>
-            </div>
-            <Switch
-              checked={settings.blockIfHasAppointment}
-              onCheckedChange={(checked) => setSettings({ ...settings, blockIfHasAppointment: checked })}
-            />
-          </div>
-
-          {settings.blockIfHasAppointment && (
-            <div className="flex items-center justify-between p-4 border rounded-lg bg-orange-50">
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-orange-600" />
-                <div>
-                  <Label className="font-medium">Bloquear apenas agendamentos confirmados</Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Clientes com agendamentos pendentes ainda receberão automações
-                  </p>
-                </div>
-              </div>
-              <Switch
-                checked={settings.blockOnlyConfirmed}
-                onCheckedChange={(checked) => setSettings({ ...settings, blockOnlyConfirmed: checked })}
-              />
-            </div>
-          )}
-
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div className="flex items-center gap-3">
-              <BarChart3 className="w-5 h-5 text-green-600" />
-              <div>
-                <Label className="font-medium">Registrar logs de bloqueio</Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Salva histórico de quando automações foram bloqueadas para análise
-                </p>
-              </div>
-            </div>
-            <Switch
-              checked={settings.enableLogging}
-              onCheckedChange={(checked) => setSettings({ ...settings, enableLogging: checked })}
-            />
-          </div>
-
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div className="flex items-center gap-3">
-              <Bell className="w-5 h-5 text-purple-600" />
-              <div>
-                <Label className="font-medium">Notificar sobre bloqueios</Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Receba alertas quando automações forem bloqueadas
-                </p>
-              </div>
-            </div>
-            <Switch
-              checked={settings.notifyOnBlock}
-              onCheckedChange={(checked) => setSettings({ ...settings, notifyOnBlock: checked })}
-            />
-          </div>
-
-          <Button onClick={saveSettings} disabled={saving} className="w-full">
-            {saving ? 'Salvando...' : 'Salvar Configurações'}
-          </Button>
-        </CardContent>
-      </Card>
-
       {/* Estatísticas de Bloqueio */}
       {settings.blockIfHasAppointment && (
         <Card>
@@ -357,6 +273,89 @@ export const AutomationSettingsPanel = () => {
               <li>• Disparos em massa</li>
             </ul>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            Configurações de Automação
+          </CardTitle>
+          <CardDescription>
+            Controle quando as automações devem ser enviadas para evitar spam em clientes já agendados
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5 text-blue-600" />
+              <div>
+                <Label className="font-medium">Bloquear automações para clientes com agendamento na semana</Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Evita enviar campanhas e lembretes para clientes que já têm horário marcado
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={settings.blockIfHasAppointment}
+              onCheckedChange={(checked) => setSettings({ ...settings, blockIfHasAppointment: checked })}
+            />
+          </div>
+
+          {settings.blockIfHasAppointment && (
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-orange-50">
+              <div className="flex items-center gap-3">
+                <Calendar className="w-5 h-5 text-orange-600" />
+                <div>
+                  <Label className="font-medium">Bloquear apenas agendamentos confirmados</Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Clientes com agendamentos pendentes ainda receberão automações
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={settings.blockOnlyConfirmed}
+                onCheckedChange={(checked) => setSettings({ ...settings, blockOnlyConfirmed: checked })}
+              />
+            </div>
+          )}
+
+          <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center gap-3">
+              <BarChart3 className="w-5 h-5 text-green-600" />
+              <div>
+                <Label className="font-medium">Registrar logs de bloqueio</Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Salva histórico de quando automações foram bloqueadas para análise
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={settings.enableLogging}
+              onCheckedChange={(checked) => setSettings({ ...settings, enableLogging: checked })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center gap-3">
+              <Bell className="w-5 h-5 text-purple-600" />
+              <div>
+                <Label className="font-medium">Notificar sobre bloqueios</Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Receba alertas quando automações forem bloqueadas
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={settings.notifyOnBlock}
+              onCheckedChange={(checked) => setSettings({ ...settings, notifyOnBlock: checked })}
+            />
+          </div>
+
+          <Button onClick={saveSettings} disabled={saving} className="w-full">
+            {saving ? 'Salvando...' : 'Salvar Configurações'}
+          </Button>
         </CardContent>
       </Card>
     </div>

@@ -55,6 +55,16 @@ interface Profile {
   avatar_url: string | null;
 }
 
+interface Barbershop {
+  id: string;
+  name: string;
+  owner_id: string;
+  sector: string | null;
+  specialty: string | null;
+  onboarding_status: string;
+  // Adicione outros campos relevantes da barbershop/empresa aqui
+}
+
 interface SignUpMetadata {
   name: string;
   whatsapp?: string;
@@ -67,6 +77,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  barbershop: Barbershop | null;
   roles: AppRole[];
   loading: boolean;
   profileLoading: boolean;
@@ -89,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [barbershop, setBarbershop] = useState<Barbershop | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -99,12 +111,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserData = useCallback(async (userId: string) => {
     try {
-      const [profileRes, rolesRes] = await Promise.all([
+      const [profileRes, rolesRes, barbershopRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", userId),
+        supabase.from("barbershops").select("*").eq("owner_id", userId).maybeSingle(),
       ]);
 
       if (profileRes.data) setProfile(profileRes.data as Profile);
+      if (barbershopRes.data) setBarbershop(barbershopRes.data as Barbershop);
       
       const fetchedRoles = rolesRes.data?.map(r => r.role as AppRole) || [];
       setRoles(fetchedRoles);
@@ -152,6 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setProfile(null);
         setRoles([]);
+        setBarbershop(null);
       }
     });
 
@@ -206,27 +221,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = "/login";
   };
 
-  const hasRole = (role: AppRole) => roles.includes(role);
-  const getPrimaryRole = () => {
-    for (const r of ROLE_PRIORITY) if (roles.includes(r)) return r;
-    return null;
+  const getPrimaryRole = useCallback((): AppRole | null => {
+    if (roles.length === 0) return null;
+    const sortedRoles = [...roles].sort((a, b) => ROLE_PRIORITY[a] - ROLE_PRIORITY[b]);
+    return sortedRoles[0];
+  }, [roles]);
+
+  const value = {
+    user,
+    session,
+    profile,
+    barbershop,
+    roles,
+    loading,
+    profileLoading,
+    initialLoadComplete,
+    authResolved,
+    signUp,
+    signIn,
+    signInWithWhatsApp,
+    signInWithMagicLink,
+    sendPasswordResetEmail,
+    signOut,
+    hasRole,
+    getPrimaryRole,
+    refreshSession,
   };
 
-  return (
-    <AuthContext.Provider value={{
-      user, session, profile, roles, loading, profileLoading, initialLoadComplete, authResolved,
-      signUp, signIn, signInWithWhatsApp, signOut, hasRole, getPrimaryRole,
-      refreshSession: async () => {}, signInWithMagicLink: async () => ({ error: null }),
-      sendPasswordResetEmail: async () => ({ error: null })
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
   return context;
 }
 

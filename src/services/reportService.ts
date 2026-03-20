@@ -33,69 +33,51 @@ export async function generateFinancialReport(
   endDate: Date
 ): Promise<ReportData> {
   try {
-    // Buscar pagamentos
-    const { data: payments, error: paymentsError } = await (supabase as any)
+    const { data: payments, error: paymentsError } = await supabase
       .from('payments')
       .select('*')
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString());
 
-    // Buscar comissões
-    const { data: commissions, error: commissionsError } = await (supabase as any)
+    if (paymentsError) {
+      console.warn('Erro ao buscar pagamentos:', paymentsError.message);
+    }
+
+    const { data: commissions, error: commissionsError } = await supabase
       .from('commissions')
       .select('*')
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString());
 
-    // Buscar parceiros
-    const { data: partners, error: partnersError } = await (supabase as any)
+    if (commissionsError) {
+      console.warn('Erro ao buscar comissões:', commissionsError.message);
+    }
+
+    const { data: partners } = await supabase
       .from('partners')
       .select('*');
 
-    // Buscar agendamentos
-    const { data: appointments, error: appointmentsError } = await (supabase as any)
+    const { data: appointments } = await supabase
       .from('appointments')
       .select('*')
       .gte('scheduled_at', startDate.toISOString())
       .lte('scheduled_at', endDate.toISOString());
 
-    // Buscar clientes únicos
-    const { data: clients, error: clientsError } = await (supabase as any)
+    const { data: clients } = await supabase
       .from('profiles')
       .select('id');
 
-    if (paymentsError || commissionsError || partnersError || appointmentsError || clientsError) {
-      throw new Error('Erro ao gerar relatório');
-    }
-
-    // Calcular métricas
-    const totalRevenue = (payments || []).reduce((acc, p: any) => acc + Number(p.amount), 0);
-    const totalCommissions = (commissions || []).reduce((acc, c: any) => acc + Number(c.amount), 0);
+    const totalRevenue = (payments || []).reduce((acc, p) => acc + Number(p.amount || 0), 0);
+    const totalCommissions = (commissions || []).reduce((acc, c) => acc + Number(c.amount || 0), 0);
     const netProfit = totalRevenue - totalCommissions;
     const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
 
-    // Quebrar por tipo de parceiro
-    const byType: Record<string, number> = {};
-    for (const c of commissions || []) {
-      // Buscar tipo do parceiro
-      const { data: partner } = await (supabase as any)
-        .from('partners')
-        .select('type')
-        .eq('id', c.partner_id)
-        .single();
-
-      if (partner?.type) {
-        byType[partner.type] = (byType[partner.type] || 0) + Number(c.amount);
-      }
-    }
-
-    // Quebrar por parceiro
-    const byPartner = (commissions || []).reduce((acc: any[], c: any) => {
+    const byPartner = (commissions || []).reduce((acc: any[], c) => {
       const existing = acc.find(p => p.partner_id === c.partner_id);
       if (existing) {
-        existing.amount += Number(c.amount);
+        existing.amount += Number(c.amount || 0);
       } else {
-        acc.push({ partner_id: c.partner_id, name: 'Parceiro', amount: Number(c.amount) });
+        acc.push({ partner_id: c.partner_id, name: 'Parceiro', amount: Number(c.amount || 0) });
       }
       return acc;
     }, []);
@@ -110,21 +92,21 @@ export async function generateFinancialReport(
         totalCommissions,
         netProfit,
         profitMargin,
-        activePartners: (partners || []).filter((p: any) => p.status === 'ativo').length,
+        activePartners: (partners || []).filter((p) => p.status === 'ativo').length,
         totalPartners: partners?.length || 0,
-        newPartners: (partners || []).filter((p: any) => 
+        newPartners: (partners || []).filter((p) => 
           new Date(p.created_at) >= startDate && new Date(p.created_at) <= endDate
         ).length,
         totalAppointments: appointments?.length || 0,
         totalClients: clients?.length || 0,
       },
       breakdown: {
-        byType,
+        byType: {},
         byPartner,
       },
     };
   } catch (error) {
-    console.error('Erro ao gerar relatório:', error);
+    console.error('Erro ao gerar relatório financeiro:', error);
     return {
       period: {
         start: startDate.toISOString(),
@@ -205,7 +187,7 @@ export async function generateAppointmentReport(
   endDate: Date
 ) {
   try {
-    const { data: appointments, error } = await (supabase as any)
+    const { data: appointments, error } = await supabase
       .from('appointments')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -214,22 +196,17 @@ export async function generateAppointmentReport(
       .order('scheduled_at', { ascending: false });
 
     if (error) {
-      console.error('Erro ao gerar relatório de agendamentos:', error);
-      return null;
+      console.warn('Erro ao buscar agendamentos:', error.message);
     }
 
     const total = appointments?.length || 0;
-    const confirmados = (appointments || []).filter((a: any) => a.status === 'scheduled').length;
-    const concluidos = (appointments || []).filter((a: any) => a.status === 'completed').length;
-    const cancelados = (appointments || []).filter((a: any) => a.status === 'cancelled').length;
+    const confirmados = (appointments || []).filter((a) => a.status === 'scheduled').length;
+    const concluidos = (appointments || []).filter((a) => a.status === 'completed').length;
+    const cancelados = (appointments || []).filter((a) => a.status === 'cancelled').length;
 
-    // Calcular receita
-    const { data: payments, error: paymentsError } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .in('appointment_id', appointments?.map((a: any) => a.id) || []);
-
-    const revenue = (payments || []).reduce((acc, p: any) => acc + Number(p.amount), 0);
+    const revenue = (appointments || [])
+      .filter((a) => a.total_price)
+      .reduce((acc, a) => acc + Number(a.total_price || 0), 0);
 
     return {
       barbershopId,
@@ -237,16 +214,28 @@ export async function generateAppointmentReport(
         start: startDate.toISOString(),
         end: endDate.toISOString(),
       },
-      total,
-      confirmados,
-      concluidos,
-      cancelados,
+      totalAppointments: total,
+      scheduledAppointments: confirmados,
+      completedAppointments: concluidos,
+      cancelledAppointments: cancelados,
       revenue,
       appointments: appointments || [],
     };
   } catch (error) {
     console.error('Erro ao gerar relatório de agendamentos:', error);
-    return null;
+    return {
+      barbershopId,
+      period: {
+        start: startDate.toISOString(),
+        end: endDate.toISOString(),
+      },
+      totalAppointments: 0,
+      scheduledAppointments: 0,
+      completedAppointments: 0,
+      cancelledAppointments: 0,
+      revenue: 0,
+      appointments: [],
+    };
   }
 }
 
@@ -259,32 +248,27 @@ export async function generateClientReport(
   endDate: Date
 ) {
   try {
-    // Buscar clientes únicos
-    const { data: appointments, error: appointmentsError } = await (supabase as any)
+    const { data: appointments, error } = await supabase
       .from('appointments')
       .select('client_user_id, client_name')
       .eq('barbershop_id', barbershopId)
       .gte('scheduled_at', startDate.toISOString())
       .lte('scheduled_at', endDate.toISOString());
 
-    if (appointmentsError) {
-      console.error('Erro ao gerar relatório de clientes:', appointmentsError);
-      return null;
+    if (error) {
+      console.warn('Erro ao buscar clientes:', error.message);
     }
 
-    // Contar clientes únicos
-    const uniqueClients = new Set((appointments || []).map((a: any) => a.client_user_id));
+    const uniqueClients = new Set((appointments || []).map((a) => a.client_user_id).filter(Boolean));
     const totalClients = uniqueClients.size;
 
-    // Contar visitas por cliente
     const visitsByClient: Record<string, number> = {};
-    (appointments || []).forEach((a: any) => {
+    (appointments || []).forEach((a) => {
       if (a.client_user_id) {
         visitsByClient[a.client_user_id] = (visitsByClient[a.client_user_id] || 0) + 1;
       }
     });
 
-    // Encontrar clientes mais frequentes
     const frequentClients = Object.entries(visitsByClient)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 10)
@@ -302,7 +286,16 @@ export async function generateClientReport(
     };
   } catch (error) {
     console.error('Erro ao gerar relatório de clientes:', error);
-    return null;
+    return {
+      barbershopId,
+      period: {
+        start: startDate.toISOString(),
+        end: endDate.toISOString(),
+      },
+      totalClients: 0,
+      visitsByClient: {},
+      frequentClients: [],
+    };
   }
 }
 

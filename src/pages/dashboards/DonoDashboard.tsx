@@ -13,7 +13,13 @@ import {
 } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-// useBarbershop is defined locally below
+import {
+  WhatsAppAccountsPanel,
+  MessagePackagesPanel,
+  CostSplitConfigPanel,
+  MessageReportsPanel,
+  WhatsAppMonitoringPanel,
+} from "@/components/whatsapp";
 import SolicitarServicoFiscalPage from "@/components/shared/SolicitarServicoFiscalPage";
 import { AccountingDocumentsPanel } from "@/components/shared/AccountingDocumentsPanel";
 import { AccountingLinksPanel } from "@/components/shared/AccountingLinksPanel";
@@ -22,7 +28,7 @@ import { AccountingMessagesPanel } from "@/components/shared/AccountingMessagesP
 import { FiscalAutomationPanel } from "@/components/fiscal/FiscalAutomationPanel";
 import { AutomationSettingsPanel } from "@/components/automation/AutomationSettingsPanel";
 import { SmartMessagingPanel } from "@/components/automation/SmartMessagingPanel";
-import { AgendaIntelligencePanel } from "@/components/waitlist/AgendaIntelligencePanel";
+import { AgendaIntelligencePanel } from "@/components/agenda/AgendaIntelligencePanel";
 import InteligenciaAgendaPage from "@/pages/dashboards/InteligenciaAgendaPage";
 import MarketingEmpresarial from "@/components/marketing/MarketingEmpresarial";
 import { RecurringAppointmentPanel } from "@/components/recurring/RecurringAppointmentPanel";
@@ -85,8 +91,9 @@ import {
   Calculator,
   Video,
   Zap,
+  Percent,
+  Activity,
 } from "lucide-react";
-import { Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import { formatWhatsAppBR, onlyDigits } from "@/lib/input-masks";
@@ -172,11 +179,15 @@ const DonoDashboard = () => {
     { name: "Nota Fiscal", href: `${basePath}/nota-fiscal`, icon: FileText },
     { name: "Seja Afiliado", href: `${basePath}/seja-afiliado`, icon: Share2 },
     { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
-    {
-      name: "Configurações",
+    { name: "Configurações",
       href: `${basePath}/configuracoes`,
       icon: Settings,
     },
+    { name: "WhatsApp", href: `${basePath}/whatsapp-contas`, icon: MessageCircle },
+    { name: "Pacotes de Mensagens", href: `${basePath}/whatsapp-pacotes`, icon: Package },
+    { name: "Divisão de Custos", href: `${basePath}/whatsapp-custos`, icon: Percent },
+    { name: "Relatório WhatsApp", href: `${basePath}/whatsapp-relatorios`, icon: TrendingUp },
+    { name: "Monitoramento", href: `${basePath}/whatsapp-monitor`, icon: Activity },
   ];
 
   const isActive = useCallback(
@@ -329,6 +340,21 @@ const DonoDashboard = () => {
             <Route path="suporte" element={<SuportePage />} />
             <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
+            <Route path="whatsapp-contas" element={
+              <WhatsAppAccountsPanel barbershopId={mainBarbershop?.id || ""} />
+            } />
+            <Route path="whatsapp-pacotes" element={
+              <MessagePackagesPanel barbershopId={mainBarbershop?.id || ""} />
+            } />
+            <Route path="whatsapp-custos" element={
+              <CostSplitConfigPanel barbershopId={mainBarbershop?.id || ""} />
+            } />
+            <Route path="whatsapp-relatorios" element={
+              <MessageReportsPanel barbershopId={mainBarbershop?.id || ""} />
+            } />
+            <Route path="whatsapp-monitor" element={
+              <WhatsAppMonitoringPanel barbershopId={mainBarbershop?.id || ""} />
+            } />
           </Routes>
           <SocialProofPopup currentPage="painel-dono" />
         </main>
