@@ -19,6 +19,8 @@ interface SectorPreset {
   specialty: string;
   description: string;
   icon: string;
+  default_services?: any[];
+  [key: string]: any;
 }
 
 const SECTORS = [
