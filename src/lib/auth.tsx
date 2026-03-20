@@ -62,7 +62,7 @@ interface Barbershop {
   sector: string | null;
   specialty: string | null;
   onboarding_status: string;
-  // Adicione outros campos relevantes da barbershop/empresa aqui
+  booking_policies: any;
 }
 
 interface SignUpMetadata {

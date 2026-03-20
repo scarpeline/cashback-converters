@@ -13,6 +13,14 @@ interface SectorPreset {
   icon: string;
 }
 
+const AUTOMATION_TYPE_MAP: Record<string, { trigger_type: string; action_type: string }> = {
+  reminder: { trigger_type: "reminder_before", action_type: "send_whatsapp" },
+  confirmation: { trigger_type: "booking_created", action_type: "send_whatsapp" },
+  cancellation: { trigger_type: "booking_cancelled", action_type: "send_whatsapp" },
+  rebook: { trigger_type: "client_inactive", action_type: "send_whatsapp" },
+  feedback: { trigger_type: "booking_completed", action_type: "send_whatsapp" },
+};
+
 export const getSectorPresets = async (): Promise<SectorPreset[]> => {
   const { data, error } = await supabase
     .from("sector_presets")
@@ -30,18 +38,19 @@ export const getSectorPresets = async (): Promise<SectorPreset[]> => {
 
 export const applyInitialPreset = async (
   userId: string,
-  barbershopId: string, // Assuming barbershopId is the ID of the business
+  barbershopId: string,
   sector: string,
   specialty: string,
   preset: SectorPreset,
 ) => {
   try {
-    // 1. Update barbershop with selected sector/specialty and onboarding status
+    // 1. Update barbershop with selected sector/specialty, policies and onboarding status
     const { error: updateError } = await supabase
       .from("barbershops")
       .update({
         sector: sector,
         specialty: specialty,
+        booking_policies: preset.default_policies || {},
         onboarding_status: "configured",
       })
       .eq("id", barbershopId);
@@ -64,56 +73,89 @@ export const applyInitialPreset = async (
       if (servicesError) throw servicesError;
     }
 
-    // 3. Apply default automations from preset (example, adjust to your schema)
+    // 3. Apply default automations from preset
     if (preset.default_automations && preset.default_automations.length > 0) {
-      // Assuming an 'automations' table exists with barbershop_id and config JSONB
-      const automationsToInsert = preset.default_automations.map((auto: any) => ({
-        barbershop_id: barbershopId,
-        type: auto.type,
-        event: auto.event,
-        message_template: auto.message,
-        is_active: true,
-      }));
+      const automationsToInsert = preset.default_automations.map((auto: any) => {
+        const typeMapping = AUTOMATION_TYPE_MAP[auto.type] || {
+          trigger_type: auto.event || "booking_created",
+          action_type: "send_whatsapp",
+        };
+        return {
+          barbershop_id: barbershopId,
+          name: `${auto.type.charAt(0).toUpperCase() + auto.type.slice(1)} - ${auto.event}`,
+          description: `Automação de ${auto.type} para evento ${auto.event}`,
+          trigger_type: typeMapping.trigger_type,
+          trigger_hours_before: auto.type === "reminder" ? 24 : null,
+          action_type: typeMapping.action_type,
+          action_config: {},
+          template_message: auto.message,
+          is_active: true,
+          priority: 0,
+        };
+      });
       const { error: automationsError } = await supabase
-        .from("automations") // Replace with your actual automations table name
+        .from("automations")
         .insert(automationsToInsert);
-      if (automationsError) console.warn("Could not insert default automations:", automationsError.message);
+      if (automationsError) throw automationsError;
     }
 
-    // 4. Apply default policies from preset (example, adjust to your schema)
-    if (preset.default_policies) {
-      // Assuming 'barbershops' table can store policy JSONB or a 'policies' table exists
-      const { error: policiesError } = await supabase
-        .from("barbershops") // Or a dedicated 'policies' table
-        .update({
-          booking_policies: preset.default_policies, // Assuming a JSONB column for policies
-        })
-        .eq("id", barbershopId);
-      if (policiesError) console.warn("Could not update default policies:", policiesError.message);
-    }
-
-    // 5. Apply default resources from preset (example, adjust to your schema)
+    // 4. Apply default resources from preset
     if (preset.default_resources && preset.default_resources.length > 0) {
-        // Assuming a 'resources' table exists
-        const resourcesToInsert = preset.default_resources.map((resource: any) => ({
-            barbershop_id: barbershopId,
-            name: resource.name,
-            type: resource.type, // e.g., 'room', 'equipment', 'assistant'
-            capacity: resource.capacity || 1,
-            is_active: true,
-        }));
-        const { error: resourcesError } = await supabase
-            .from("resources") // Replace with your actual resources table name
-            .insert(resourcesToInsert);
-        if (resourcesError) console.warn("Could not insert default resources:", resourcesError.message);
+      const resourcesToInsert = preset.default_resources.map((resource: any) => ({
+        barbershop_id: barbershopId,
+        name: resource.name,
+        resource_type: resource.type || "other",
+        description: resource.description || null,
+        capacity: resource.capacity || 1,
+        is_active: true,
+        color: resource.color || "#6366f1",
+        metadata: resource.metadata || {},
+      }));
+      const { error: resourcesError } = await supabase
+        .from("resources")
+        .insert(resourcesToInsert);
+      if (resourcesError) throw resourcesError;
     }
-
 
     toast.success("Configuração inicial aplicada com sucesso!");
     return { success: true };
   } catch (error: any) {
     console.error("Erro ao aplicar preset:", error);
     toast.error("Erro ao aplicar configuração inicial: " + error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+export const updateBookingPolicies = async (
+  barbershopId: string,
+  policies: any,
+) => {
+  try {
+    const { error } = await supabase
+      .from("barbershops")
+      .update({ booking_policies: policies })
+      .eq("id", barbershopId);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    console.error("Erro ao atualizar políticas:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const getBookingPolicies = async (barbershopId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from("barbershops")
+      .select("booking_policies")
+      .eq("id", barbershopId)
+      .single();
+
+    if (error) throw error;
+    return { success: true, policies: data?.booking_policies };
+  } catch (error: any) {
+    console.error("Erro ao buscar políticas:", error);
     return { success: false, error: error.message };
   }
 };
