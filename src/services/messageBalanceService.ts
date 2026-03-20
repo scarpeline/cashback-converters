@@ -75,7 +75,7 @@ export async function registerUsage(
   errorReason?: string
 ): Promise<void> {
   try {
-    await supabase.rpc('register_whatsapp_number_usage', {
+    await (supabase as any).rpc('register_whatsapp_number_usage', {
       p_whatsapp_number_id: whatsappNumberId,
       p_success: success,
       p_error_reason: errorReason,

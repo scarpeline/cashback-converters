@@ -82,7 +82,7 @@ async function notifySuperAdmins(alertId: string): Promise<void> {
     const phoneNumber = numberInfo?.phone_number || 'N/A';
 
     for (const admin of superAdmins || []) {
-      await supabase.from('notifications').insert({
+      await (supabase as any).from('notifications').insert({
         user_id: admin.email,
         title: `⚠️ Alerta de Bloqueio WhatsApp`,
         message: `Barbearia: ${barbershopName}\nNúmero: ${phoneNumber}\nTipo: ${alert.alert_type}\nMensagem: ${alert.message}\nSugestão: ${alert.suggested_action || 'N/A'}`,

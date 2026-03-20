@@ -66,12 +66,12 @@ export async function getDashboardMetrics(barbershopId: string): Promise<Dashboa
     const lastMonthAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     const [todayAppointments, weekAppointments, monthAppointments, lastMonthAppointments, clients, allAppointments] = await Promise.all([
-      supabase.from('appointments').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId).gte('scheduled_at', `${today}T00:00:00`).lte('scheduled_at', `${today}T23:59:59`),
-      supabase.from('appointments').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId).gte('scheduled_at', `${weekAgo}T00:00:00`),
-      supabase.from('appointments').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId).gte('scheduled_at', `${monthAgo}T00:00:00`),
-      supabase.from('appointments').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId).gte('scheduled_at', `${lastMonthAgo}T00:00:00`).lt('scheduled_at', `${monthAgo}T00:00:00`),
-      supabase.from('clients').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId),
-      supabase.from('appointments').select('*').eq('barbershop_id', barbershopId).gte('scheduled_at', `${monthAgo}T00:00:00`),
+      (supabase as any).from('appointments').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId).gte('scheduled_at', `${today}T00:00:00`).lte('scheduled_at', `${today}T23:59:59`),
+      (supabase as any).from('appointments').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId).gte('scheduled_at', `${weekAgo}T00:00:00`),
+      (supabase as any).from('appointments').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId).gte('scheduled_at', `${monthAgo}T00:00:00`),
+      (supabase as any).from('appointments').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId).gte('scheduled_at', `${lastMonthAgo}T00:00:00`).lt('scheduled_at', `${monthAgo}T00:00:00`),
+      (supabase as any).from('clients').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId),
+      (supabase as any).from('appointments').select('*').eq('barbershop_id', barbershopId).gte('scheduled_at', `${monthAgo}T00:00:00`),
     ]);
 
     const completed = allAppointments.data?.filter((a: any) => a.status === 'completed').length || 0;
