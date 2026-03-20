@@ -484,7 +484,7 @@ export async function getHighPotentialClients(barbershopId: string): Promise<Cli
         total_visits: 0,
         total_spent: 0,
         average_ticket: 0,
-        frequency: 'medium',
+        frequency: 'medium' as const,
         recency: 'active',
         score: 0,
         tags: ['high-potential'],
