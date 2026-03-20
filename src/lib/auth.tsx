@@ -58,11 +58,13 @@ interface Profile {
 interface Barbershop {
   id: string;
   name: string;
-  owner_id: string;
-  sector: string | null;
-  specialty: string | null;
-  onboarding_status: string;
-  booking_policies: any;
+  owner_user_id: string;
+  owner_id?: string;
+  sector?: string | null;
+  specialty?: string | null;
+  onboarding_status?: string;
+  booking_policies?: any;
+  [key: string]: any;
 }
 
 interface SignUpMetadata {
