@@ -216,6 +216,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return signIn(email, password);
   };
 
+  const signInWithMagicLink = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({ email });
+    return { error };
+  };
+
+  const sendPasswordResetEmail = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
