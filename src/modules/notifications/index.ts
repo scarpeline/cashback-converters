@@ -116,7 +116,7 @@ export async function sendBulkNotification(params: {
     }
 
     const { data } = await query;
-    userIds = [...new Set((data || []).map((d: any) => d.client_user_id).filter(Boolean))];
+    userIds = [...new Set((data || []).map((d: any) => d.client_user_id).filter(Boolean))] as string[];
   }
 
   let sent = 0, failed = 0;
