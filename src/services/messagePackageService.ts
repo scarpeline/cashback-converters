@@ -64,7 +64,7 @@ export async function createDefaultPackages(barbershopId: string): Promise<void>
       is_active: true,
     }));
 
-    await supabase.from('message_packages').insert(packagesToInsert);
+    await (supabase as any).from('message_packages').insert(packagesToInsert);
 
     await ensureBalanceExists(barbershopId);
   } catch (error) {
@@ -74,7 +74,7 @@ export async function createDefaultPackages(barbershopId: string): Promise<void>
 
 export async function getPackages(barbershopId: string): Promise<MessagePackage[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('message_packages')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -100,7 +100,7 @@ export async function createPackage(params: {
   try {
     const totalPrice = Number((params.quantity_messages * params.price_per_message).toFixed(2));
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('message_packages')
       .insert({
         barbershop_id: params.barbershop_id,
@@ -137,7 +137,7 @@ export async function updatePackage(params: {
     if (params.price_per_message) updates.price_per_message = params.price_per_message;
     if (params.is_active !== undefined) updates.is_active = params.is_active;
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('message_packages')
       .update(updates)
       .eq('id', params.packageId);
@@ -161,7 +161,7 @@ export async function purchasePackage(params: {
   payment_method?: 'pix' | 'card' | 'bank_transfer';
 }): Promise<{ success: boolean; purchase?: MessagePurchase; error?: string }> {
   try {
-    const { data: pkg, error: pkgError } = await supabase
+    const { data: pkg, error: pkgError } = await (supabase as any)
       .from('message_packages')
       .select('*')
       .eq('id', params.package_id)
@@ -175,7 +175,7 @@ export async function purchasePackage(params: {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + pkg.validity_days);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('message_purchases')
       .insert({
         barbershop_id: params.barbershop_id,
@@ -202,7 +202,7 @@ export async function confirmPurchase(params: {
   payment_id?: string;
 }): Promise<boolean> {
   try {
-    const { data: purchase, error: fetchError } = await supabase
+    const { data: purchase, error: fetchError } = await (supabase as any)
       .from('message_purchases')
       .select('*')
       .eq('id', params.purchase_id)
@@ -210,7 +210,7 @@ export async function confirmPurchase(params: {
 
     if (fetchError || !purchase) return false;
 
-    await supabase
+    await (supabase as any)
       .from('message_purchases')
       .update({
         payment_status: 'paid',
@@ -230,14 +230,14 @@ export async function confirmPurchase(params: {
 
 export async function addMessagesToBalance(barbershopId: string, quantity: number): Promise<boolean> {
   try {
-    const { data: existing } = await supabase
+    const { data: existing } = await (supabase as any)
       .from('message_balance')
       .select('*')
       .eq('barbershop_id', barbershopId)
       .single();
 
     if (existing) {
-      await supabase
+      await (supabase as any)
         .from('message_balance')
         .update({
           total_messages: existing.total_messages + quantity,
@@ -245,7 +245,7 @@ export async function addMessagesToBalance(barbershopId: string, quantity: numbe
         })
         .eq('barbershop_id', barbershopId);
     } else {
-      await supabase.from('message_balance').insert({
+      await (supabase as any).from('message_balance').insert({
         barbershop_id: barbershopId,
         total_messages: quantity,
         used_messages: 0,
@@ -262,14 +262,14 @@ export async function addMessagesToBalance(barbershopId: string, quantity: numbe
 
 export async function ensureBalanceExists(barbershopId: string): Promise<void> {
   try {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('message_balance')
       .select('*')
       .eq('barbershop_id', barbershopId)
       .single();
 
     if (!data) {
-      await supabase.from('message_balance').insert({
+      await (supabase as any).from('message_balance').insert({
         barbershop_id: barbershopId,
         total_messages: 0,
         used_messages: 0,
@@ -285,7 +285,7 @@ export async function getBalance(barbershopId: string): Promise<MessageBalance |
   try {
     await ensureBalanceExists(barbershopId);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('message_balance')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -316,21 +316,21 @@ export async function useMessages(barbershopId: string, quantity: number): Promi
       return false;
     }
 
-    const { error } = await supabase.rpc('update_message_balance', {
+    const { error } = await (supabase as any).rpc('update_message_balance', {
       p_barbershop_id: barbershopId,
       p_messages_used: quantity,
       p_messages_expired: 0,
     });
 
     if (error) {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('message_balance')
         .select('*')
         .eq('barbershop_id', barbershopId)
         .single();
 
       if (data) {
-        await supabase
+        await (supabase as any)
           .from('message_balance')
           .update({
             used_messages: data.used_messages + quantity,
@@ -349,7 +349,7 @@ export async function useMessages(barbershopId: string, quantity: number): Promi
 
 export async function getPurchaseHistory(barbershopId: string, limit: number = 20): Promise<MessagePurchase[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('message_purchases')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -366,7 +366,7 @@ export async function getPurchaseHistory(barbershopId: string, limit: number = 2
 
 export async function checkAndExpireMessages(): Promise<number> {
   try {
-    const { data: purchases } = await supabase
+    const { data: purchases } = await (supabase as any)
       .from('message_purchases')
       .select('*')
       .eq('payment_status', 'paid')
@@ -377,7 +377,7 @@ export async function checkAndExpireMessages(): Promise<number> {
     let expired = 0;
 
     for (const purchase of purchases) {
-      const { data: balance } = await supabase
+      const { data: balance } = await (supabase as any)
         .from('message_balance')
         .select('*')
         .eq('barbershop_id', purchase.barbershop_id)
@@ -387,7 +387,7 @@ export async function checkAndExpireMessages(): Promise<number> {
         const remaining = purchase.quantity_messages - Math.min(purchase.quantity_messages, balance.used_messages);
 
         if (remaining > 0) {
-          await supabase
+          await (supabase as any)
             .from('message_balance')
             .update({
               expired_messages: balance.expired_messages + remaining,
@@ -399,7 +399,7 @@ export async function checkAndExpireMessages(): Promise<number> {
         expired += remaining;
       }
 
-      await supabase
+      await (supabase as any)
         .from('message_purchases')
         .update({ payment_status: 'expired' })
         .eq('id', purchase.id);

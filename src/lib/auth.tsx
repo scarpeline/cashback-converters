@@ -58,11 +58,13 @@ interface Profile {
 interface Barbershop {
   id: string;
   name: string;
-  owner_id: string;
-  sector: string | null;
-  specialty: string | null;
-  onboarding_status: string;
-  booking_policies: any;
+  owner_user_id: string;
+  owner_id?: string;
+  sector?: string | null;
+  specialty?: string | null;
+  onboarding_status?: string;
+  booking_policies?: any;
+  [key: string]: any;
 }
 
 interface SignUpMetadata {
@@ -112,13 +114,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUserData = useCallback(async (userId: string) => {
     try {
       const [profileRes, rolesRes, barbershopRes] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", userId),
-        supabase.from("barbershops").select("*").eq("owner_id", userId).maybeSingle(),
+        (supabase as any).from("profiles").select("*").eq("user_id", userId).maybeSingle(),
+        (supabase as any).from("user_roles").select("role").eq("user_id", userId),
+        (supabase as any).from("barbershops").select("*").eq("owner_user_id", userId).maybeSingle(),
       ]);
 
       if (profileRes.data) setProfile(profileRes.data as Profile);
-      if (barbershopRes.data) setBarbershop(barbershopRes.data as Barbershop);
+      if (barbershopRes.data) setBarbershop(barbershopRes.data as unknown as Barbershop);
       
       const fetchedRoles = rolesRes.data?.map(r => r.role as AppRole) || [];
       setRoles(fetchedRoles);
@@ -211,15 +213,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithWhatsApp = async (whatsapp: string, password: string) => {
     const norm = whatsapp.replace(/\D/g, "");
-    const { data: email } = await supabase.rpc("get_email_by_whatsapp", { _whatsapp: norm });
+    const { data: email } = await (supabase as any).rpc("get_email_by_whatsapp", { _whatsapp: norm });
     if (!email) return { error: new Error("WhatsApp não encontrado") };
     return signIn(email, password);
+  };
+
+  const signInWithMagicLink = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({ email });
+    return { error };
+  };
+
+  const sendPasswordResetEmail = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return { error };
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
   };
+
+  const hasRole = useCallback((role: AppRole): boolean => {
+    return roles.includes(role);
+  }, [roles]);
+
+  const refreshSession = useCallback(async () => {
+    const { data: { session: s } } = await supabase.auth.refreshSession();
+    if (s) {
+      setSession(s);
+      setUser(s.user);
+    }
+  }, []);
 
   const getPrimaryRole = useCallback((): AppRole | null => {
     if (roles.length === 0) return null;

@@ -71,7 +71,7 @@ export function WhatsAppAccountsPanel({ barbershopId }: WhatsAppAccountsPanelPro
 
   const loadProfessionals = async () => {
     try {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('professionals')
         .select('id, name')
         .eq('barbershop_id', barbershopId)

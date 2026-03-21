@@ -70,7 +70,7 @@ export function PedidoContabilPanel({ barbershopId }: Props) {
 
   const fetchPedidos = async () => {
     if (!user) return;
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("pedidos_contabeis")
       .select("id, nome_servico, valor, status, pagamento_status, pix_copy_paste, payment_link, data_pedido")
       .eq("usuario_id", user.id)
@@ -79,7 +79,7 @@ export function PedidoContabilPanel({ barbershopId }: Props) {
   };
 
   const fetchServicos = async () => {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("fiscal_service_types")
       .select("id, service_type, label, price, required_fields")
       .eq("status", "approved")
@@ -101,7 +101,7 @@ export function PedidoContabilPanel({ barbershopId }: Props) {
     const camposInit: Record<string, string> = {};
     s.required_fields.forEach((f) => { camposInit[f.key] = ""; });
     setCampos(camposInit);
-    const { data } = await supabase.rpc("calcular_split_comissao", { _valor: s.price });
+    const { data } = await (supabase as any).rpc("calcular_split_comissao", { _valor: s.price });
     if (data && data[0]) setSplit(data[0] as any);
     setStep("preencher");
   };
@@ -116,7 +116,7 @@ export function PedidoContabilPanel({ barbershopId }: Props) {
       return;
     }
     setLoading(true);
-    const { data: pedido, error: pedErr } = await supabase
+    const { data: pedido, error: pedErr } = await (supabase as any)
       .from("pedidos_contabeis")
       .insert({
         usuario_id: user.id,
@@ -148,7 +148,7 @@ export function PedidoContabilPanel({ barbershopId }: Props) {
     if (chargeErr) {
       toast.error("Pedido criado, mas houve erro ao gerar cobrança. Tente novamente.");
     } else if (charge) {
-      await supabase.from("pedidos_contabeis").update({
+      await (supabase as any).from("pedidos_contabeis").update({
         asaas_payment_id: charge.payment_id,
         pix_qr_code: charge.pix_qr_code,
         pix_copy_paste: charge.pix_copy_paste,

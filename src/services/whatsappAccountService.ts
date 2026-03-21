@@ -61,7 +61,7 @@ export async function registerWhatsAppAccount(params: {
   try {
     const phoneFormatted = formatPhoneNumber(params.phone_number);
 
-    const { data: existing } = await supabase
+    const { data: existing } = await (supabase as any)
       .from('whatsapp_accounts')
       .select('id')
       .eq('phone_number', phoneFormatted)
@@ -75,7 +75,7 @@ export async function registerWhatsAppAccount(params: {
     const verificationCode = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('whatsapp_accounts')
       .insert({
         barbershop_id: params.barbershop_id,
@@ -108,7 +108,7 @@ export async function verifyPhoneNumber(params: {
   twilio_auth_token?: string;
 }): Promise<VerificationResult> {
   try {
-    const { data: account, error } = await supabase
+    const { data: account, error } = await (supabase as any)
       .from('whatsapp_accounts')
       .select('*')
       .eq('id', params.account_id)
@@ -140,7 +140,7 @@ export async function verifyPhoneNumber(params: {
     if (params.twilio_sid) updates.twilio_sid = params.twilio_sid;
     if (params.twilio_auth_token) updates.twilio_auth_token = params.twilio_auth_token;
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await (supabase as any)
       .from('whatsapp_accounts')
       .update(updates)
       .eq('id', params.account_id);
@@ -159,7 +159,7 @@ export async function resendVerificationCode(accountId: string): Promise<Verific
     const newCode = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('whatsapp_accounts')
       .update({
         verification_code: newCode,
@@ -179,7 +179,7 @@ export async function resendVerificationCode(accountId: string): Promise<Verific
 
 export async function getWhatsAppAccounts(barbershopId: string): Promise<WhatsAppAccount[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('whatsapp_accounts')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -197,7 +197,7 @@ export async function getWhatsAppAccounts(barbershopId: string): Promise<WhatsAp
 
 export async function getWhatsAppAccountsWithProfessional(barbershopId: string): Promise<AccountWithProfessional[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('whatsapp_accounts')
       .select(`
         *,
@@ -217,7 +217,7 @@ export async function getWhatsAppAccountsWithProfessional(barbershopId: string):
 
 export async function getAccountById(accountId: string): Promise<WhatsAppAccount | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('whatsapp_accounts')
       .select('*')
       .eq('id', accountId)
@@ -232,7 +232,7 @@ export async function getAccountById(accountId: string): Promise<WhatsAppAccount
 
 export async function getVerifiedAccountForProfessional(professionalId: string): Promise<WhatsAppAccount | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('whatsapp_accounts')
       .select('*')
       .eq('professional_id', professionalId)
@@ -249,13 +249,13 @@ export async function getVerifiedAccountForProfessional(professionalId: string):
 
 export async function setPrimaryAccount(accountId: string, barbershopId: string): Promise<boolean> {
   try {
-    await supabase
+    await (supabase as any)
       .from('whatsapp_accounts')
       .update({ is_primary: false })
       .eq('barbershop_id', barbershopId)
       .eq('is_primary', true);
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('whatsapp_accounts')
       .update({ is_primary: true })
       .eq('id', accountId);
@@ -280,7 +280,7 @@ export async function updateAccountCredentials(params: {
     if (params.twilio_auth_token) updates.twilio_auth_token = params.twilio_auth_token;
     if (params.twilio_messaging_service_sid) updates.twilio_messaging_service_sid = params.twilio_messaging_service_sid;
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('whatsapp_accounts')
       .update(updates)
       .eq('id', params.accountId);
@@ -295,7 +295,7 @@ export async function updateAccountCredentials(params: {
 
 export async function deleteWhatsAppAccount(accountId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('whatsapp_accounts')
       .update({ is_active: false })
       .eq('id', accountId);
@@ -310,7 +310,7 @@ export async function deleteWhatsAppAccount(accountId: string): Promise<boolean>
 
 export async function getBarbershopPrimaryAccount(barbershopId: string): Promise<WhatsAppAccount | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('whatsapp_accounts')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -320,7 +320,7 @@ export async function getBarbershopPrimaryAccount(barbershopId: string): Promise
       .single();
 
     if (error) {
-      const { data: anyAccount } = await supabase
+      const { data: anyAccount } = await (supabase as any)
         .from('whatsapp_accounts')
         .select('*')
         .eq('barbershop_id', barbershopId)

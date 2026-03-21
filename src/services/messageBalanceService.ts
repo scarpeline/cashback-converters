@@ -38,7 +38,7 @@ export async function getNextAvailableNumber(barbershopId: string): Promise<{
   error?: string;
 }> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .rpc('get_next_available_whatsapp_number', { p_barbershop_id: barbershopId })
       .single();
 
@@ -75,7 +75,7 @@ export async function registerUsage(
   errorReason?: string
 ): Promise<void> {
   try {
-    await supabase.rpc('register_whatsapp_number_usage', {
+    await (supabase as any).rpc('register_whatsapp_number_usage', {
       p_whatsapp_number_id: whatsappNumberId,
       p_success: success,
       p_error_reason: errorReason,
@@ -87,7 +87,7 @@ export async function registerUsage(
 
 export async function getNumbersByBarbershop(barbershopId: string): Promise<WhatsAppNumber[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('whatsapp_numbers')
       .select('*')
       .eq('whatsapp_accounts.barbershop_id', barbershopId)
@@ -105,7 +105,7 @@ export async function getNumbersByBarbershop(barbershopId: string): Promise<What
 
 export async function getNumberById(numberId: string): Promise<WhatsAppNumber | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('whatsapp_numbers')
       .select('*')
       .eq('id', numberId)
@@ -124,7 +124,7 @@ export async function blockNumber(
   reason: string
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('whatsapp_numbers')
       .update({
         is_blocked: true,
@@ -143,7 +143,7 @@ export async function blockNumber(
 
 export async function unblockNumber(numberId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('whatsapp_numbers')
       .update({
         is_blocked: false,
@@ -164,7 +164,7 @@ export async function updateNumberPriority(
   priority: number
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('whatsapp_numbers')
       .update({ priority })
       .eq('id', numberId);
@@ -179,7 +179,7 @@ export async function updateNumberPriority(
 
 export async function resetNumberStats(numberId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('whatsapp_numbers')
       .update({
         usage_count: 0,
@@ -199,7 +199,7 @@ export async function resetNumberStats(numberId: string): Promise<boolean> {
 
 export async function getSendingPolicy(barbershopId: string): Promise<SendingPolicy | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('sending_policies')
       .select('*')
       .eq('barbershop_id', barbershopId)
@@ -229,7 +229,7 @@ export async function updateSendingPolicy(
   policy: Partial<SendingPolicy>
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('sending_policies')
       .update({ ...policy, updated_at: new Date().toISOString() })
       .eq('barbershop_id', barbershopId);
@@ -256,7 +256,7 @@ export async function checkRateLimit(barbershopId: string): Promise<{
     const oneHourAgo = new Date(now.getTime() - 3600000);
     const oneDayAgo = new Date(now.getTime() - 86400000);
 
-    const { data: recentMessages } = await supabase
+    const { data: recentMessages } = await (supabase as any)
       .from('message_sending_logs')
       .select('created_at')
       .eq('whatsapp_accounts.barbershop_id', barbershopId)
@@ -271,7 +271,7 @@ export async function checkRateLimit(barbershopId: string): Promise<{
       };
     }
 
-    const { data: hourMessages } = await supabase
+    const { data: hourMessages } = await (supabase as any)
       .from('message_sending_logs')
       .select('created_at')
       .eq('whatsapp_accounts.barbershop_id', barbershopId)
@@ -286,7 +286,7 @@ export async function checkRateLimit(barbershopId: string): Promise<{
       };
     }
 
-    const { data: dayMessages } = await supabase
+    const { data: dayMessages } = await (supabase as any)
       .from('message_sending_logs')
       .select('created_at')
       .eq('whatsapp_accounts.barbershop_id', barbershopId)
@@ -328,27 +328,27 @@ export async function getSendingStats(barbershopId: string): Promise<{
       { data: blockedNumbers },
       { data: activeNumbers },
     ] = await Promise.all([
-      supabase
+      (supabase as any)
         .from('message_sending_logs')
         .select('*', { count: 'exact', head: true })
         .eq('whatsapp_accounts.barbershop_id', barbershopId)
         .gte('created_at', oneDayAgo.toISOString()),
-      supabase
+      (supabase as any)
         .from('message_sending_logs')
         .select('*', { count: 'exact', head: true })
         .eq('whatsapp_accounts.barbershop_id', barbershopId)
         .gte('created_at', oneHourAgo.toISOString()),
-      supabase
+      (supabase as any)
         .from('message_sending_logs')
         .select('*', { count: 'exact', head: true })
         .eq('whatsapp_accounts.barbershop_id', barbershopId)
         .gte('created_at', oneMinuteAgo.toISOString()),
-      supabase
+      (supabase as any)
         .from('whatsapp_numbers')
         .select('id', { count: 'exact', head: true })
         .eq('whatsapp_accounts.barbershop_id', barbershopId)
         .eq('is_blocked', true),
-      supabase
+      (supabase as any)
         .from('whatsapp_numbers')
         .select('id', { count: 'exact', head: true })
         .eq('whatsapp_accounts.barbershop_id', barbershopId)

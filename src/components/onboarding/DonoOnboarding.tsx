@@ -69,7 +69,7 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
         description: form.description || null,
       };
 
-      const { data: existingList, error: existingError } = await supabase
+      const { data: existingList, error: existingError } = await (supabase as any)
         .from("barbershops")
         .select("id, slug")
         .eq("owner_user_id", user.id)
@@ -85,7 +85,7 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
       const existing = existingList?.[0];
 
       if (existing) {
-        const { error: updateError } = await supabase
+        const { error: updateError } = await (supabase as any)
           .from("barbershops")
           .update({
             ...payload,
@@ -102,7 +102,7 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
         let slugToUse = baseSlug;
 
         const insertOnce = async (slug: string) =>
-          supabase.from("barbershops").insert({
+          (supabase as any).from("barbershops").insert({
             ...payload,
             slug,
           });
@@ -123,7 +123,7 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
       }
 
       if (form.cpf_cnpj) {
-        await supabase
+        await (supabase as any)
           .from("profiles")
           .update({ cpf_cnpj: form.cpf_cnpj })
           .eq("user_id", user.id);

@@ -190,7 +190,7 @@ export function detectSuspiciousLogin(params: {
 export async function logSecurityEvent(event: Omit<SecurityLog, 'id' | 'created_at'>): Promise<void> {
   try {
     // Usa RPC para inserir no security_logs (se a tabela existir)
-    const { error } = await supabase.from('security_logs' as any).insert({
+    const { error } = await (supabase as any).from('security_logs' as any).insert({
       event_type: event.event_type,
       severity: event.severity,
       source_ip: event.source_ip || null,
@@ -218,7 +218,7 @@ export async function getSecurityLogs(params?: {
   limit?: number;
 }): Promise<SecurityLog[]> {
   try {
-    let query = supabase
+    let query = (supabase as any)
       .from('security_logs' as any)
       .select('*')
       .order('created_at', { ascending: false })
