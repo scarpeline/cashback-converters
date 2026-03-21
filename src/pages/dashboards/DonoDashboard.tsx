@@ -43,6 +43,8 @@ import { SocialProofManager } from "@/components/social-proof/SocialProofManager
 import { SocialProofPopup } from "@/components/social-proof/SocialProofPopup";
 import { DonoOnboarding } from "@/components/onboarding/DonoOnboarding";
 import BookingPoliciesPanel from "@/components/settings/BookingPoliciesPanel";
+import ResourcesPanel from "@/components/settings/ResourcesPanel";
+import { ProfessionalWaitlistPanel } from "@/components/waitlist/ProfessionalWaitlistPanel";
 import {
   Card,
   CardContent,
@@ -95,6 +97,7 @@ import {
   Zap,
   Percent,
   Activity,
+  Briefcase,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -135,6 +138,7 @@ const DonoDashboard = () => {
       href: `${basePath}/agendamentos-recorrentes`,
       icon: Repeat,
     },
+    { name: "Fila de Espera", href: `${basePath}/fila-espera`, icon: Clock },
     { name: "Profissionais", href: `${basePath}/profissionais`, icon: Users },
     { name: "Serviços", href: `${basePath}/servicos`, icon: Scissors },
     { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
@@ -186,6 +190,7 @@ const DonoDashboard = () => {
       icon: Settings,
     },
     { name: "Políticas de Agendamento", href: `${basePath}/politicas-agendamento`, icon: CalendarCheck },
+    { name: "Recursos", href: `${basePath}/recursos`, icon: Briefcase },
     { name: "WhatsApp", href: `${basePath}/whatsapp-contas`, icon: MessageCircle },
     { name: "Pacotes de Mensagens", href: `${basePath}/whatsapp-pacotes`, icon: Package },
     { name: "Divisão de Custos", href: `${basePath}/whatsapp-custos`, icon: Percent },
@@ -294,6 +299,9 @@ const DonoDashboard = () => {
             <Route path="relatorios" element={
               <ReportsPanel barbershopId={mainBarbershop?.id || ""} />
             } />
+            <Route path="fila-espera" element={
+              <ProfessionalWaitlistPanel barbershopId={mainBarbershop?.id || ""} />
+            } />
             <Route path="meu-plano" element={
               <div className="space-y-6">
                 <SubscriptionStatus />
@@ -344,6 +352,7 @@ const DonoDashboard = () => {
             <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
             <Route path="politicas-agendamento" element={<BookingPoliciesPanel />} />
+            <Route path="recursos" element={<ResourcesPanel />} />
             <Route path="whatsapp-contas" element={
               <WhatsAppAccountsPanel barbershopId={mainBarbershop?.id || ""} />
             } />
