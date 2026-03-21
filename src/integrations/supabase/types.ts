@@ -383,6 +383,53 @@ export type Database = {
         }
         Relationships: []
       }
+      automations: {
+        Row: {
+          action_type: string
+          barbershop_id: string
+          config: Json | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          trigger_event: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          action_type?: string
+          barbershop_id: string
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          trigger_event?: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          barbershop_id?: string
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          trigger_event?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automations_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       barbershops: {
         Row: {
           address: string | null
@@ -392,6 +439,7 @@ export type Database = {
           asaas_customer_id: string | null
           asaas_wallet_id: string | null
           automation_schedule: Json | null
+          booking_policies: Json | null
           cashback_percentage: number | null
           created_at: string
           description: string | null
@@ -399,9 +447,12 @@ export type Database = {
           is_active: boolean | null
           logo_url: string | null
           name: string
+          onboarding_status: string | null
           owner_user_id: string
           phone: string | null
+          sector: string | null
           slug: string | null
+          specialty: string | null
           subscription_ends_at: string | null
           subscription_status: string | null
           updated_at: string
@@ -414,6 +465,7 @@ export type Database = {
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
           automation_schedule?: Json | null
+          booking_policies?: Json | null
           cashback_percentage?: number | null
           created_at?: string
           description?: string | null
@@ -421,9 +473,12 @@ export type Database = {
           is_active?: boolean | null
           logo_url?: string | null
           name: string
+          onboarding_status?: string | null
           owner_user_id: string
           phone?: string | null
+          sector?: string | null
           slug?: string | null
+          specialty?: string | null
           subscription_ends_at?: string | null
           subscription_status?: string | null
           updated_at?: string
@@ -436,6 +491,7 @@ export type Database = {
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
           automation_schedule?: Json | null
+          booking_policies?: Json | null
           cashback_percentage?: number | null
           created_at?: string
           description?: string | null
@@ -443,9 +499,12 @@ export type Database = {
           is_active?: boolean | null
           logo_url?: string | null
           name?: string
+          onboarding_status?: string | null
           owner_user_id?: string
           phone?: string | null
+          sector?: string | null
           slug?: string | null
+          specialty?: string | null
           subscription_ends_at?: string | null
           subscription_status?: string | null
           updated_at?: string
@@ -489,6 +548,112 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "cashback_credits_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_referrals: {
+        Row: {
+          barbershop_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          referral_code: string
+          referred_user_id: string | null
+          referrer_user_id: string
+          reward_amount: number | null
+          reward_type: string | null
+          status: string | null
+        }
+        Insert: {
+          barbershop_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_user_id?: string | null
+          referrer_user_id: string
+          reward_amount?: number | null
+          reward_type?: string | null
+          status?: string | null
+        }
+        Update: {
+          barbershop_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_user_id?: string | null
+          referrer_user_id?: string
+          reward_amount?: number | null
+          reward_type?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_referrals_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          barbershop_id: string
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean | null
+          last_visit_at: string | null
+          name: string
+          notes: string | null
+          tags: string[] | null
+          total_spent: number | null
+          total_visits: number | null
+          updated_at: string
+          user_id: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          barbershop_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_visit_at?: string | null
+          name: string
+          notes?: string | null
+          tags?: string[] | null
+          total_spent?: number | null
+          total_visits?: number | null
+          updated_at?: string
+          user_id?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          barbershop_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_visit_at?: string | null
+          name?: string
+          notes?: string | null
+          tags?: string[] | null
+          total_spent?: number | null
+          total_visits?: number | null
+          updated_at?: string
+          user_id?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_barbershop_id_fkey"
             columns: ["barbershop_id"]
             isOneToOne: false
             referencedRelation: "barbershops"
@@ -873,6 +1038,142 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      membership_plans: {
+        Row: {
+          barbershop_id: string
+          benefits: Json | null
+          cashback_bonus: number | null
+          created_at: string
+          description: string | null
+          duration_days: number | null
+          id: string
+          is_active: boolean | null
+          max_members: number | null
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          benefits?: Json | null
+          cashback_bonus?: number | null
+          created_at?: string
+          description?: string | null
+          duration_days?: number | null
+          id?: string
+          is_active?: boolean | null
+          max_members?: number | null
+          name: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          benefits?: Json | null
+          cashback_bonus?: number | null
+          created_at?: string
+          description?: string | null
+          duration_days?: number | null
+          id?: string
+          is_active?: boolean | null
+          max_members?: number | null
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_plans_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      membership_subscriptions: {
+        Row: {
+          barbershop_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          plan_id: string
+          started_at: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          barbershop_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          plan_id: string
+          started_at?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          barbershop_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          plan_id?: string
+          started_at?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_subscriptions_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_balance: {
+        Row: {
+          barbershop_id: string
+          channel: string
+          id: string
+          total_credits: number | null
+          updated_at: string
+          used_credits: number | null
+        }
+        Insert: {
+          barbershop_id: string
+          channel?: string
+          id?: string
+          total_credits?: number | null
+          updated_at?: string
+          used_credits?: number | null
+        }
+        Update: {
+          barbershop_id?: string
+          channel?: string
+          id?: string
+          total_credits?: number | null
+          updated_at?: string
+          used_credits?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_balance_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messaging_credits: {
         Row: {
@@ -1305,6 +1606,89 @@ export type Database = {
         }
         Relationships: []
       }
+      resources: {
+        Row: {
+          barbershop_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_available: boolean | null
+          metadata: Json | null
+          name: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_available?: boolean | null
+          metadata?: Json | null
+          name: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_available?: boolean | null
+          metadata?: Json | null
+          name?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resources_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sector_presets: {
+        Row: {
+          created_at: string
+          default_automations: Json | null
+          default_policies: Json | null
+          default_resources: Json | null
+          default_services: Json | null
+          display_name: string
+          icon: string | null
+          id: string
+          sector: string
+          specialty: string
+        }
+        Insert: {
+          created_at?: string
+          default_automations?: Json | null
+          default_policies?: Json | null
+          default_resources?: Json | null
+          default_services?: Json | null
+          display_name: string
+          icon?: string | null
+          id?: string
+          sector: string
+          specialty: string
+        }
+        Update: {
+          created_at?: string
+          default_automations?: Json | null
+          default_policies?: Json | null
+          default_resources?: Json | null
+          default_services?: Json | null
+          display_name?: string
+          icon?: string | null
+          id?: string
+          sector?: string
+          specialty?: string
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           barbershop_id: string
@@ -1437,6 +1821,113 @@ export type Database = {
           },
         ]
       }
+      store_orders: {
+        Row: {
+          barbershop_id: string
+          client_user_id: string | null
+          created_at: string
+          id: string
+          payment_method: string | null
+          product_id: string | null
+          quantity: number | null
+          status: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          client_user_id?: string | null
+          created_at?: string
+          id?: string
+          payment_method?: string | null
+          product_id?: string | null
+          quantity?: number | null
+          status?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          client_user_id?: string | null
+          created_at?: string
+          id?: string
+          payment_method?: string | null
+          product_id?: string | null
+          quantity?: number | null
+          status?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_orders_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_products: {
+        Row: {
+          barbershop_id: string
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          price: number
+          sales_count: number | null
+          stock_quantity: number | null
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          price?: number
+          sales_count?: number | null
+          stock_quantity?: number | null
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          sales_count?: number | null
+          stock_quantity?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_products_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans: {
         Row: {
           asaas_checkout_id: string | null
@@ -1556,6 +2047,95 @@ export type Database = {
         }
         Relationships: []
       }
+      waiting_list: {
+        Row: {
+          barbershop_id: string
+          client_id: string | null
+          client_user_id: string | null
+          confirmed_at: string | null
+          created_at: string
+          expired_at: string | null
+          id: string
+          notes: string | null
+          notified_at: string | null
+          preferred_date: string | null
+          preferred_time_end: string | null
+          preferred_time_start: string | null
+          priority: number | null
+          professional_id: string | null
+          service_id: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          client_id?: string | null
+          client_user_id?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          expired_at?: string | null
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          preferred_date?: string | null
+          preferred_time_end?: string | null
+          preferred_time_start?: string | null
+          priority?: number | null
+          professional_id?: string | null
+          service_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          client_id?: string | null
+          client_user_id?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          expired_at?: string | null
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          preferred_date?: string | null
+          preferred_time_end?: string | null
+          preferred_time_start?: string | null
+          priority?: number | null
+          professional_id?: string | null
+          service_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waiting_list_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waiting_list_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waiting_list_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waiting_list_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhooks_log: {
         Row: {
           created_at: string
@@ -1596,6 +2176,139 @@ export type Database = {
             columns: ["integration_id"]
             isOneToOne: false
             referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_accounts: {
+        Row: {
+          barbershop_id: string
+          created_at: string
+          daily_limit: number | null
+          display_name: string | null
+          id: string
+          is_active: boolean | null
+          last_reset_at: string | null
+          messages_sent_today: number | null
+          phone_number: string
+          professional_id: string | null
+          provider: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          created_at?: string
+          daily_limit?: number | null
+          display_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_reset_at?: string | null
+          messages_sent_today?: number | null
+          phone_number: string
+          professional_id?: string | null
+          provider?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          created_at?: string
+          daily_limit?: number | null
+          display_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_reset_at?: string | null
+          messages_sent_today?: number | null
+          phone_number?: string
+          professional_id?: string | null
+          provider?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_accounts_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_accounts_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_messages: {
+        Row: {
+          account_id: string | null
+          barbershop_id: string | null
+          client_id: string | null
+          content: string | null
+          created_at: string
+          direction: string
+          error_message: string | null
+          external_id: string | null
+          id: string
+          message_type: string | null
+          metadata: Json | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          barbershop_id?: string | null
+          client_id?: string | null
+          content?: string | null
+          created_at?: string
+          direction?: string
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          message_type?: string | null
+          metadata?: Json | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          barbershop_id?: string | null
+          client_id?: string | null
+          content?: string | null
+          created_at?: string
+          direction?: string
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          message_type?: string | null
+          metadata?: Json | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
