@@ -200,10 +200,8 @@ const LoginPage = () => {
 
         if (isBusinessUser) {
           toast.success(t("auth.signup_success_business"));
-          setTimeout(() => {
-            window.open("https://www.asaas.com/r/4095742a-0dd1-4fb7-b9ce-61431bb4f632", "_blank", "noopener,noreferrer");
-          }, 1000);
-          setTimeout(() => setMode("login"), 1500);
+          // Redirect to onboarding page for business users
+          navigate("/onboarding", { replace: true });
         } else {
           toast.success(t("auth.signup_success_client"));
           setMode("login");

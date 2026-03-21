@@ -1,420 +1,133 @@
-// Serviço de Automação Inteligente
-// Integração com IA e sistema de parceiros
-
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface Automation {
   id: string;
-  type: 'reativacao' | 'abandono' | 'agenda_vazia' | 'pagamento' | 'comissao';
-  channel: 'sms' | 'whatsapp' | 'email' | 'push';
-  active: boolean;
-  template: string;
+  barbershop_id: string;
+  name: string;
+  description: string | null;
+  trigger_type: string;
+  trigger_hours_before: number | null;
+  trigger_days_inactive: number | null;
+  action_type: string;
+  action_config: any;
+  template_message: string | null;
+  is_active: boolean;
+  priority: number;
   created_at: string;
+  updated_at: string;
 }
 
-export interface AutomationQueueItem {
-  id: string;
-  client_id: string;
-  automation_id: string;
-  message: string;
-  status: 'pendente' | 'enviado' | 'erro';
-  scheduled_at: string;
-  sent_at?: string;
-  error_message?: string;
-}
-
-/**
- * Buscar automações ativas
- */
-export async function getActiveAutomations(): Promise<Automation[]> {
+export const getAutomations = async (barbershopId: string): Promise<Automation[]> => {
   try {
-    const { data, error } = await (supabase as any)
-      .from('automations')
-      .select('*')
-      .eq('active', true)
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from("automations")
+      .select("*")
+      .eq("barbershop_id", barbershopId)
+      .order("priority", { ascending: false })
+      .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error('Erro ao buscar automações:', error);
-      return [];
-    }
-
+    if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Erro ao buscar automações:', error);
+    console.error("Erro ao buscar automações:", error);
+    toast.error("Erro ao carregar automações.");
     return [];
   }
-}
+};
 
-/**
- * Buscar automação por tipo e canal
- */
-export async function getAutomationByType(
-  type: Automation['type'],
-  channel: Automation['channel']
-): Promise<Automation | null> {
+export const createAutomation = async (
+  barbershopId: string,
+  automation: Partial<Automation>,
+): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { data, error } = await (supabase as any)
-      .from('automations')
-      .select('*')
-      .eq('type', type)
-      .eq('channel', channel)
-      .eq('active', true)
-      .single();
+    const { error } = await supabase.from("automations").insert({
+      barbershop_id: barbershopId,
+      ...automation,
+    });
 
-    if (error) {
-      console.error('Erro ao buscar automação:', error);
-      return null;
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Erro ao buscar automação:', error);
-    return null;
+    if (error) throw error;
+    toast.success("Automação criada com sucesso!");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Erro ao criar automação:", error);
+    toast.error("Erro ao criar automação: " + error.message);
+    return { success: false, error: error.message };
   }
-}
+};
 
-/**
- * Adicionar item à fila de automação
- */
-export async function addToAutomationQueue(
-  clientId: string,
+export const updateAutomation = async (
   automationId: string,
-  message: string,
-  scheduledAt?: Date
-): Promise<AutomationQueueItem | null> {
+  updates: Partial<Automation>,
+): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { data, error } = await (supabase as any)
-      .from('automation_queue')
-      .insert({
-        client_id: clientId,
-        automation_id: automationId,
-        message: message.substring(0, 1000), // Limitar tamanho
-        status: 'pendente',
-        scheduled_at: scheduledAt || new Date(),
-      })
-      .select()
-      .single();
+    const { error } = await supabase
+      .from("automations")
+      .update(updates)
+      .eq("id", automationId);
 
-    if (error) {
-      console.error('Erro ao adicionar à fila:', error);
-      return null;
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Erro ao adicionar à fila:', error);
-    return null;
+    if (error) throw error;
+    toast.success("Automação atualizada com sucesso!");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Erro ao atualizar automação:", error);
+    toast.error("Erro ao atualizar automação: " + error.message);
+    return { success: false, error: error.message };
   }
-}
+};
 
-/**
- * Processar fila de automação
- */
-export async function processAutomationQueue(): Promise<number> {
+export const deleteAutomation = async (
+  automationId: string,
+): Promise<{ success: boolean; error?: string }> => {
   try {
-    // Buscar itens pendentes
-    const { data: queueItems, error } = await (supabase as any)
-      .from('automation_queue')
-      .select('*')
-      .eq('status', 'pendente')
-      .lt('scheduled_at', new Date().toISOString())
-      .limit(50); // Processar até 50 por vez
-
-    if (error) {
-      console.error('Erro ao buscar fila:', error);
-      return 0;
-    }
-
-    if (!queueItems || queueItems.length === 0) {
-      return 0;
-    }
-
-    let processed = 0;
-
-    for (const item of queueItems) {
-      try {
-        // Aqui você implementaria o envio real da mensagem
-        // Exemplo: enviar via WhatsApp, SMS, Email, Push
-        
-        // Atualizar status para enviado
-        await (supabase as any)
-          .from('automation_queue')
-          .update({
-            status: 'enviado',
-            sent_at: new Date().toISOString(),
-          })
-          .eq('id', item.id);
-
-        processed++;
-      } catch (itemError) {
-        console.error('Erro ao processar item:', itemError);
-        
-        // Atualizar status para erro
-        await (supabase as any)
-          .from('automation_queue')
-          .update({
-            status: 'erro',
-            error_message: String(itemError),
-          })
-          .eq('id', item.id);
-      }
-    }
-
-    return processed;
-  } catch (error) {
-    console.error('Erro ao processar fila:', error);
-    return 0;
-  }
-}
-
-/**
- * Automação de reativação de clientes
- */
-export async function reativarClientesInativos(): Promise<number> {
-  try {
-    // Buscar clientes inativos há mais de 15 dias
-    const { data: appointments, error } = await (supabase as any)
-      .from('appointments')
-      .select('client_user_id, client_name, client_whatsapp')
-      .eq('status', 'completed')
-      .lt('scheduled_at', new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString())
-      .order('scheduled_at', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar clientes:', error);
-      return 0;
-    }
-
-    // Agrupar por cliente (único)
-    const clientesUnicos = new Map();
-    appointments?.forEach(apt => {
-      if (apt.client_user_id && !clientesUnicos.has(apt.client_user_id)) {
-        clientesUnicos.set(apt.client_user_id, {
-          id: apt.client_user_id,
-          name: apt.client_name,
-          whatsapp: apt.client_whatsapp,
-        });
-      }
-    });
-
-    let enviados = 0;
-
-    for (const [clientId, cliente] of clientesUnicos) {
-      try {
-        // Buscar automação de reativação
-        const automation = await getAutomationByType('reativacao', 'whatsapp');
-        
-        if (automation) {
-          const mensagem = automation.template.replace('{nome}', cliente.name || 'Cliente');
-          
-          await addToAutomationQueue(clientId, automation.id, mensagem);
-          enviados++;
-        }
-      } catch (error) {
-        console.error('Erro ao processar cliente:', error);
-      }
-    }
-
-    return enviados;
-  } catch (error) {
-    console.error('Erro na automação de reativação:', error);
-    return 0;
-  }
-}
-
-/**
- * Automação de agenda vazia
- */
-export async function preencherAgendaVazia(): Promise<number> {
-  try {
-    // Buscar horários vazios hoje
-    const hoje = new Date();
-    const amanha = new Date();
-    amanha.setDate(amanha.getDate() + 1);
-
-    const { data: horariosVazios, error } = await (supabase as any)
-      .from('appointments')
-      .select('*')
-      .gte('scheduled_at', hoje.toISOString())
-      .lt('scheduled_at', amanha.toISOString())
-      .eq('status', 'scheduled');
-
-    if (error) {
-      console.error('Erro ao buscar horários:', error);
-      return 0;
-    }
-
-    // Buscar automação de agenda vazia
-    const automation = await getAutomationByType('agenda_vazia', 'whatsapp');
-    
-    if (!automation) {
-      return 0;
-    }
-
-    let enviados = 0;
-
-    // Enviar para clientes preferenciais (simplificado)
-    const { data: clientes } = await (supabase as any)
-      .from('profiles')
-      .select('id, name, whatsapp')
-      .limit(10);
-
-    clientes?.forEach(cliente => {
-      const mensagem = automation.template
-        .replace('{nome}', cliente.name || 'Cliente')
-        .replace('{horario}', '14:00');
-      
-      addToAutomationQueue(cliente.id, automation.id, mensagem);
-      enviados++;
-    });
-
-    return enviados;
-  } catch (error) {
-    console.error('Erro na automação de agenda:', error);
-    return 0;
-  }
-}
-
-/**
- * Automação de comissão gerada
- */
-export async function notificarComissaoGerada(
-  partnerId: string,
-  amount: number,
-  type: 'adesao' | 'recorrente'
-): Promise<void> {
-  try {
-    // Buscar automação de comissão
-    const automation = await getAutomationByType('comissao', 'email');
-    
-    if (automation) {
-      const mensagem = automation.template
-        .replace('{valor}', amount.toFixed(2))
-        .replace('{tipo}', type === 'adesao' ? 'adesão' : 'recorrente');
-
-      // Buscar email do parceiro
-      const { data: partner, error } = await (supabase as any)
-        .from('partners')
-        .select('user_id')
-        .eq('id', partnerId)
-        .single();
-
-      if (error || !partner) {
-        console.error('Erro ao buscar parceiro:', error);
-        return;
-      }
-
-      // Buscar email do usuário
-      const { data: user, error: userError } = await (supabase as any)
-        .from('profiles')
-        .select('email')
-        .eq('user_id', partner.user_id)
-        .single();
-
-      if (userError || !user) {
-        console.error('Erro ao buscar email:', userError);
-        return;
-      }
-
-      // Adicionar à fila (em produção, enviar email real)
-      await addToAutomationQueue(partner.user_id, automation.id, mensagem);
-    }
-  } catch (error) {
-    console.error('Erro ao notificar comissão:', error);
-  }
-}
-
-/**
- * Agendar reativação para cliente específico
- */
-export async function agendarReativacaoCliente(
-  clientId: string,
-  diasParaReativacao: number = 15
-): Promise<boolean> {
-  try {
-    const automation = await getAutomationByType('reativacao', 'whatsapp');
-    
-    if (!automation) {
-      return false;
-    }
-
-    const dataAgendada = new Date();
-    dataAgendada.setDate(dataAgendada.getDate() + diasParaReativacao);
-
-    const mensagem = automation.template.replace('{nome}', 'Cliente');
-
-    await addToAutomationQueue(clientId, automation.id, mensagem, dataAgendada);
-    
-    return true;
-  } catch (error) {
-    console.error('Erro ao agendar reativação:', error);
-    return false;
-  }
-}
-
-/**
- * Verificar status da automação
- */
-export async function getAutomationStatus(): Promise<{
-  totalQueue: number;
-  pending: number;
-  sent: number;
-  errored: number;
-  lastProcessed: string;
-}> {
-  try {
-    const { count: totalQueue, error: countError } = await (supabase as any)
-      .from('automation_queue')
-      .select('*', { count: 'exact', head: true });
-
-    const { data: pending, error: pendingError } = await (supabase as any)
-      .from('automation_queue')
-      .select('id')
-      .eq('status', 'pendente');
-
-    const { data: sent, error: sentError } = await (supabase as any)
-      .from('automation_queue')
-      .select('id')
-      .eq('status', 'enviado');
-
-    const { data: errored, error: erroredError } = await (supabase as any)
-      .from('automation_queue')
-      .select('id')
-      .eq('status', 'erro');
-
-    return {
-      totalQueue: totalQueue || 0,
-      pending: pending?.length || 0,
-      sent: sent?.length || 0,
-      errored: errored?.length || 0,
-      lastProcessed: new Date().toISOString(),
-    };
-  } catch (error) {
-    console.error('Erro ao verificar status:', error);
-    return {
-      totalQueue: 0,
-      pending: 0,
-      sent: 0,
-      errored: 0,
-      lastProcessed: new Date().toISOString(),
-    };
-  }
-}
-
-/**
- * Limpar fila antiga (manutenção)
- */
-export async function cleanupOldQueue(daysToKeep: number = 30): Promise<void> {
-  try {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-
-    await (supabase as any)
-      .from('automation_queue')
+    const { error } = await supabase
+      .from("automations")
       .delete()
-      .lt('created_at', cutoffDate.toISOString());
-  } catch (error) {
-    console.error('Erro ao limpar fila:', error);
+      .eq("id", automationId);
+
+    if (error) throw error;
+    toast.success("Automação deletada com sucesso!");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Erro ao deletar automação:", error);
+    toast.error("Erro ao deletar automação: " + error.message);
+    return { success: false, error: error.message };
   }
-}
+};
+
+export const toggleAutomation = async (
+  automationId: string,
+  isActive: boolean,
+): Promise<{ success: boolean; error?: string }> => {
+  return updateAutomation(automationId, { is_active: isActive });
+};
+
+export const TRIGGER_TYPES = [
+  { value: "booking_created", label: "Agendamento Criado" },
+  { value: "booking_confirmed", label: "Agendamento Confirmado" },
+  { value: "booking_cancelled", label: "Agendamento Cancelado" },
+  { value: "booking_completed", label: "Agendamento Concluído" },
+  { value: "reminder_before", label: "Lembrete (X horas antes)" },
+  { value: "no_show", label: "Cliente Não Compareceu" },
+  { value: "client_inactive", label: "Cliente Inativo (X dias)" },
+  { value: "payment_received", label: "Pagamento Recebido" },
+  { value: "payment_overdue", label: "Pagamento Atrasado" },
+];
+
+export const ACTION_TYPES = [
+  { value: "send_whatsapp", label: "Enviar WhatsApp" },
+  { value: "send_email", label: "Enviar Email" },
+  { value: "send_sms", label: "Enviar SMS" },
+  { value: "create_booking", label: "Criar Agendamento" },
+  { value: "update_status", label: "Atualizar Status" },
+  { value: "add_tag", label: "Adicionar Tag" },
+  { value: "send_notification", label: "Enviar Notificação" },
+];
+
+export const getTriggerLabel = (triggerType: string): string => {
+  return TRIGGER_TYPES.find((t) => t.value === triggerType)?.label || triggerType;
+};
+
+export const getActionLabel = (actionType: string): string => {
+  return ACTION_TYPES.find((a) => a.value === actionType)?.label || actionType;
+};

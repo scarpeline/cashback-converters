@@ -71,4 +71,55 @@ INSERT INTO public.sector_presets (sector, specialty, description, icon, default
         {"type": "confirmation", "event": "booking_created", "message": "Olá {client_name}, seu agendamento de {service_name} com {professional_name} foi confirmado para {date} às {time}."}
     ]',
     '{"deposit_required": true, "deposit_percentage": 30, "cancellation_window_hours": 48}'
+),
+-- Adicionando mais presets para beleza_estetica
+('beleza_estetica', 'salao_de_beleza', 'Configurações padrão para salões de beleza (cabelo, unhas, estética)', 'salon',
+    '[
+        {"name": "Corte Feminino", "duration": 60, "price": 80.00, "description": "Corte de cabelo feminino com lavagem e secagem."},
+        {"name": "Coloração", "duration": 120, "price": 150.00, "description": "Aplicação de coloração completa."},
+        {"name": "Penteado", "duration": 90, "price": 100.00, "description": "Penteado para festas e eventos."}
+    ]',
+    '[
+        {"type": "reminder", "event": "24h_before", "message": "Olá {client_name}, lembrete do seu agendamento de {service_name} amanhã às {time} com {professional_name}."},
+        {"type": "confirmation", "event": "booking_created", "message": "Olá {client_name}, seu agendamento de {service_name} com {professional_name} foi confirmado para {date} às {time}."}
+    ]',
+    '{"deposit_required": false, "cancellation_window_hours": 24}'
+),
+-- Adicionando presets para saude_bem_estar
+('saude_bem_estar', 'massagista', 'Configurações padrão para massagistas e terapeutas corporais', 'massage',
+    '[
+        {"name": "Massagem Relaxante", "duration": 60, "price": 90.00, "description": "Massagem para alívio de tensões e relaxamento."},
+        {"name": "Drenagem Linfática", "duration": 90, "price": 120.00, "description": "Massagem para redução de inchaço e melhora da circulação."},
+        {"name": "Massagem Terapêutica", "duration": 60, "price": 100.00, "description": "Massagem focada em pontos de dor e recuperação muscular."}
+    ]',
+    '[
+        {"type": "reminder", "event": "24h_before", "message": "Olá {client_name}, lembrete do seu agendamento de {service_name} amanhã às {time} com {professional_name}."},
+        {"type": "confirmation", "event": "booking_created", "message": "Olá {client_name}, seu agendamento de {service_name} com {professional_name} foi confirmado para {date} às {time}."}
+    ]',
+    '{"deposit_required": false, "cancellation_window_hours": 12}'
+),
+('saude_bem_estar', 'fisioterapeuta', 'Configurações padrão para fisioterapeutas e clínicas de reabilitação', 'physio',
+    '[
+        {"name": "Avaliação Fisioterapêutica", "duration": 60, "price": 150.00, "description": "Primeira consulta para diagnóstico e plano de tratamento."},
+        {"name": "Sessão de Fisioterapia", "duration": 45, "price": 100.00, "description": "Sessão individual de tratamento fisioterapêutico."},
+        {"name": "Reabilitação Postural", "duration": 60, "price": 120.00, "description": "Sessões focadas na correção postural."}
+    ]',
+    '[
+        {"type": "reminder", "event": "24h_before", "message": "Olá {client_name}, lembrete do seu agendamento de {service_name} amanhã às {time} com {professional_name}."},
+        {"type": "confirmation", "event": "booking_created", "message": "Olá {client_name}, seu agendamento de {service_name} com {professional_name} foi confirmado para {date} às {time}."}
+    ]',
+    '{"deposit_required": false, "cancellation_window_hours": 24}'
+),
+-- Adicionando presets para servicos_profissionais
+('servicos_profissionais', 'consultor', 'Configurações padrão para consultores e coaches', 'consultant',
+    '[
+        {"name": "Consulta Inicial", "duration": 60, "price": 200.00, "description": "Primeira reunião para entender as necessidades do cliente."},
+        {"name": "Sessão de Coaching", "duration": 90, "price": 300.00, "description": "Sessão individual de coaching."},
+        {"name": "Mentoria Empresarial", "duration": 120, "price": 500.00, "description": "Sessão de mentoria para desenvolvimento de negócios."}
+    ]',
+    '[
+        {"type": "reminder", "event": "24h_before", "message": "Olá {client_name}, lembrete do seu agendamento de {service_name} amanhã às {time} com {professional_name}."},
+        {"type": "confirmation", "event": "booking_created", "message": "Olá {client_name}, seu agendamento de {service_name} com {professional_name} foi confirmado para {date} às {time}."}
+    ]',
+    '{"deposit_required": true, "deposit_percentage": 20, "cancellation_window_hours": 48}'
 );
