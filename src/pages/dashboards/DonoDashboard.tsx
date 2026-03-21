@@ -3369,6 +3369,22 @@ const NotificacoesDonoPage = () => (
       <h1 className="font-display text-2xl font-bold">Automação & Notificações</h1>
       <p className="text-muted-foreground text-sm">Configure lembretes e mensagens automáticas</p>
     </div>
+    <Card className="border-primary/20 bg-primary/5">
+      <CardHeader className="flex items-center justify-between sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="w-5 h-5 text-primary" />
+            Potencialize com Inteligência de Agenda
+          </CardTitle>
+          <CardDescription>
+            Ative fila de espera, antecipação automática e regras inteligentes para preencher horários vagos.
+          </CardDescription>
+        </div>
+        <Link to="/painel-dono/inteligencia-agenda" className="mt-3 sm:mt-0">
+          <Button variant="default">Abrir Inteligência de Agenda</Button>
+        </Link>
+      </CardHeader>
+    </Card>
     <SmartMessagingPanel />
     <AutomationSettingsPanel />
   </div>
