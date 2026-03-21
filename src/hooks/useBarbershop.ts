@@ -21,6 +21,7 @@ interface Barbershop {
   asaas_customer_id: string | null;
   asaas_wallet_id: string | null;
   automation_schedule: any;
+  sector: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Rocket } from "lucide-react";
+import { useNiche } from "@/hooks/useNiche";
 
 const CTA = () => {
+  const { nicheLabelPlural } = useNiche();
   return (
     <section className="py-24 px-4 relative overflow-hidden" style={{ background: "linear-gradient(180deg, hsl(222 30% 10%) 0%, hsl(222 47% 6%) 100%)" }}>
       <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(to right, transparent, hsl(42 100% 50% / 0.3), transparent)" }} />
@@ -19,7 +21,7 @@ const CTA = () => {
           </h2>
           
           <p className="text-lg mb-8 max-w-2xl mx-auto" style={{ color: "hsl(220 9% 60%)" }}>
-            Junte-se a 500+ barbearias que já faturam mais usando nosso sistema.
+            Junte-se a 500+ {nicheLabelPlural} que já faturam mais usando nosso sistema.
             Comece hoje e tenha uma agenda cheia em 7 dias.
           </p>
 
@@ -56,7 +58,7 @@ const CTA = () => {
 
           <div className="flex flex-wrap items-center justify-center gap-8 mt-12 pt-8" style={{ borderTop: "1px solid hsl(222 20% 18%)" }}>
             {[
-              { value: "500+", label: "Barbearias Ativas" },
+              { value: "500+", label: `${nicheLabelPlural.charAt(0).toUpperCase() + nicheLabelPlural.slice(1)} Ativas` },
               { value: "R$2M+", label: "Faturados pelos Clientes" },
               { value: "24/7", label: "Suporte Prioritário" },
               { value: "7 dias", label: "Teste Grátis" },

@@ -1,73 +1,63 @@
 import {
   Calendar, CreditCard, Gift, MessageSquare, PieChart, Shield, Smartphone, Users, Zap, Briefcase, FileText
 } from "lucide-react";
-
-const features = [
-  {
-    icon: Calendar,
-    title: "Agendamento Inteligente",
-    description: "Seus clientes agendam online, 24h. Você só foca em realizar o atendimento."
-  },
-  {
-    icon: CreditCard,
-    title: "PIX, Cartão e NFC",
-    description: "Receba de qualquer forma com taxas integradas (Gateway + App) a partir de 1,49%. Split automático."
-  },
-  {
-    icon: Gift,
-    title: "Cashback Automático",
-    description: "O cliente consome, ganha crédito e sempre retorna de forma orgânica."
-  },
-  {
-    icon: Users,
-    title: "Afiliados que Vendem",
-    description: "Seus clientes indicam amigos e ganham. Você escala seu negócio no piloto automático."
-  },
-  {
-    icon: MessageSquare,
-    title: "WhatsApp Automático",
-    description: "Lembretes, confirmações e promoções. Tudo sincronizado sem esforço manual."
-  },
-  {
-    icon: PieChart,
-    title: "Gestão Financeira",
-    description: "Dashboard completo para donos. Saiba exatamente quanto entra, sai e sobra no caixa."
-  },
-  {
-    icon: Briefcase,
-    title: "Múltiplos Perfis",
-    description: "Acessos separados para Donos do Salão, Profissionais (barbeiros), Clientes e Afiliados."
-  },
-  {
-    icon: FileText,
-    title: "Acesso para Contadores",
-    description: "Integração simplificada para seu contador extrair relatórios e faturamentos com um clique."
-  },
-  {
-    icon: Zap,
-    title: "Setup Rápido",
-    description: "Sem implantações demoradas. Crie sua conta e comece a escalar imediatamente."
-  }
-];
+import { useNiche } from "@/hooks/useNiche";
+import { useTranslation } from "react-i18next";
 
 const Features = () => {
+  const { nicheLabel } = useNiche();
+  const { t } = useTranslation();
+
+  const features = [
+    {
+      title: t("integrated_payments"),
+      description: t("integrated_payments_desc"),
+      icon: CreditCard,
+    },
+    {
+      title: t("online_booking"),
+      description: t("online_booking_desc"),
+      icon: Calendar,
+    },
+    {
+      title: t("auto_cashback"),
+      description: t("auto_cashback_desc"),
+      icon: Gift,
+    },
+    {
+      title: t("whatsapp_reminders"),
+      description: t("whatsapp_reminders_desc"),
+      icon: MessageSquare,
+    },
+    {
+      title: t("integrated_management"),
+      description: t("integrated_management_desc"),
+      icon: Smartphone,
+    },
+    {
+      title: t("affiliate_system"),
+      description: t("affiliate_system_desc"),
+      icon: Users,
+    },
+  ];
+
   return (
-    <section id="features" className="py-24 px-2 sm:px-4 relative overflow-hidden" style={{ background: "linear-gradient(180deg, hsl(222 30% 10%) 0%, hsl(222 47% 6%) 100%)" }}>
+    <section id="features" className="py-24 px-2 sm:px-4 relative overflow-hidden" style={{ background: "linear-gradient(180deg, hsl(222 47% 6%) 0%, hsl(222 47% 8%) 100%)" }}>
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-px" style={{ background: "linear-gradient(to right, transparent, hsl(42 100% 50% / 0.3), transparent)" }} />
 
       <div className="container relative z-10 mx-auto px-2 sm:px-0">
         <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
           <span className="inline-block px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-medium mb-3 sm:mb-4" style={{ background: "hsl(42 100% 50% / 0.1)", color: "hsl(42 100% 55%)" }}>
-            <span className="text-xs sm:text-sm">Funcionalidades</span>
+            <span className="text-xs sm:text-sm">{t("features_title")}</span>
           </span>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-5xl font-bold mb-3 sm:mb-4" style={{ color: "hsl(0 0% 98%)" }}>
-            <span className="text-2xl sm:text-3xl lg:text-5xl">Tudo que você precisa</span>
+            <span className="text-2xl sm:text-3xl lg:text-5xl">{t("everything_you_need")}</span>
             <br className="sm:hidden" />
             <span className="text-2xl sm:text-3xl lg:text-5xl">{" "}</span>
-            <span className="text-gradient-gold text-2xl sm:text-3xl lg:text-5xl">em um só lugar</span>
+            <span className="text-gradient-gold text-2xl sm:text-3xl lg:text-5xl">{t("in_one_place")}</span>
           </h2>
           <p className="text-base sm:text-lg" style={{ color: "hsl(220 9% 60%)" }}>
-            <span className="text-sm sm:text-base">Automatize vendas, agendamentos e pagamentos. Foque no que importa: seu cliente.</span>
+            <span className="text-sm sm:text-base">{t("features_subtitle")}</span>
           </p>
         </div>
 

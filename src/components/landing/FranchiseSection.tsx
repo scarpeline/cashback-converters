@@ -4,13 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, Crown, Users, TrendingUp, Target, Rocket, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useNiche } from '@/hooks/useNiche';
 
 export function FranchiseSection() {
   const [activeTab, setActiveTab] = useState<'franchise' | 'master'>('franchise');
+  const { nicheLabelPlural } = useNiche();
 
   const franchiseBenefits = [
-    'Gestão completa de barbearias na sua região',
-    'Comissão de 15% sobre todas as barbearias cadastradas',
+    `Gestão completa de ${nicheLabelPlural} na sua região`,
+    `Comissão de 15% sobre todas as ${nicheLabelPlural} cadastradas`,
     'Acesso a dashboard avançado com métricas',
     'Suporte prioritário e treinamento exclusivo',
     'Marketing automatizado para seus franqueados',
@@ -31,19 +33,19 @@ export function FranchiseSection() {
   ];
 
   const franchiseEarnings = [
-    { barbershops: 5, monthly: 295, description: '5 barbearias = R$295/mês' },
-    { barbershops: 10, monthly: 590, description: '10 barbearias = R$590/mês' },
-    { barbershops: 25, monthly: 1475, description: '25 barbearias = R$1.475/mês' },
-    { barbershops: 50, monthly: 2950, description: '50 barbearias = R$2.950/mês' },
-    { barbershops: 100, monthly: 5900, description: '100 barbearias = R$5.900/mês' }
+    { barbershops: 5, monthly: 295, description: `5 ${nicheLabelPlural} = R$295/mês` },
+    { barbershops: 10, monthly: 590, description: `10 ${nicheLabelPlural} = R$590/mês` },
+    { barbershops: 25, monthly: 1475, description: `25 ${nicheLabelPlural} = R$1.475/mês` },
+    { barbershops: 50, monthly: 2950, description: `50 ${nicheLabelPlural} = R$2.950/mês` },
+    { barbershops: 100, monthly: 5900, description: `100 ${nicheLabelPlural} = R$5.900/mês` }
   ];
 
   const masterEarnings = [
-    { franchises: 3, barbershops: 30, monthly: 885, description: '3 franqueados • 30 barbearias' },
-    { franchises: 5, barbershops: 50, monthly: 1475, description: '5 franqueados • 50 barbearias' },
-    { franchises: 10, barbershops: 100, monthly: 2950, description: '10 franqueados • 100 barbearias' },
-    { franchises: 20, barbershops: 200, monthly: 5900, description: '20 franqueados • 200 barbearias' },
-    { franchises: 50, barbershops: 500, monthly: 14750, description: '50 franqueados • 500 barbearias' }
+    { franchises: 3, barbershops: 30, monthly: 885, description: `3 franqueados • 30 ${nicheLabelPlural}` },
+    { franchises: 5, barbershops: 50, monthly: 1475, description: `5 franqueados • 50 ${nicheLabelPlural}` },
+    { franchises: 10, barbershops: 100, monthly: 2950, description: `10 franqueados • 100 ${nicheLabelPlural}` },
+    { franchises: 20, barbershops: 200, monthly: 5900, description: `20 franqueados • 200 ${nicheLabelPlural}` },
+    { franchises: 50, barbershops: 500, monthly: 14750, description: `50 franqueados • 500 ${nicheLabelPlural}` }
   ];
 
   return (
@@ -102,7 +104,7 @@ export function FranchiseSection() {
                   Seja um Franqueado
                 </h3>
                 <p className="text-lg text-muted-foreground mb-6">
-                  Ganhe dinheiro gerenciando barbearias na sua região com nosso sistema completo de gestão
+                  Ganhe dinheiro gerenciando {nicheLabelPlural} na sua região com nosso sistema completo de gestão
                 </p>
               </div>
 
@@ -140,7 +142,7 @@ export function FranchiseSection() {
                     Seus Ganhos Potenciais
                   </CardTitle>
                   <CardDescription className="text-orange-100">
-                    15% de comissão sobre barbearias ativas
+                    15% de comissão sobre {nicheLabelPlural} ativas
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -148,7 +150,7 @@ export function FranchiseSection() {
                     <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-white/10 backdrop-blur">
                       <div>
                         <div className="text-white font-medium">{earning.description}</div>
-                        <div className="text-orange-100 text-sm">{earning.barbershops} barbearias na rede</div>
+                        <div className="text-orange-100 text-sm">{earning.barbershops} {nicheLabelPlural} na rede</div>
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-white">R$ {earning.monthly.toLocaleString('pt-BR')}</div>
@@ -243,7 +245,7 @@ export function FranchiseSection() {
                     <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-white/10 backdrop-blur">
                       <div>
                         <div className="text-white font-medium">{earning.description}</div>
-                        <div className="text-orange-100 text-sm">{earning.barbershops} barbearias totais</div>
+                        <div className="text-orange-100 text-sm">{earning.barbershops} {nicheLabelPlural} totais</div>
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-white">R$ {earning.monthly.toLocaleString('pt-BR')}</div>

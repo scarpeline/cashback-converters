@@ -1,8 +1,10 @@
+```typescript
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   Card,
   CardContent,
@@ -11,12 +13,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
+import { LanguageSelector } from "@/components/layout/LanguageSelector";
 
 interface SectorPreset {
   id: string;
   sector: string;
   specialty: string;
+  display_name: string;
   description: string;
   icon: string;
   default_services?: any[];
@@ -27,54 +31,55 @@ const SECTORS = [
   {
     key: "beleza_estetica",
     label: "Beleza & Estética",
-    icon: "scissors",
+    icon: "✂️",
     description: "Salões, barbearias, nail designers, maquiadoras, esteticistas.",
   },
   {
     key: "saude_bem_estar",
     label: "Saúde & Bem-Estar",
-    icon: "heart",
+    icon: "❤️",
     description: "Clínicas, fisioterapeutas, psicólogos, massagistas, nutricionistas.",
   },
   {
     key: "educacao_mentorias",
     label: "Educação & Mentorias",
-    icon: "book",
+    icon: "📚",
     description: "Professores particulares, consultores, coaches, escolas de idiomas.",
   },
   {
     key: "automotivo",
     label: "Automotivo",
-    icon: "car",
+    icon: "🚗",
     description: "Oficinas mecânicas, lava-rápidos, centros de estética automotiva.",
   },
   {
     key: "pets",
     label: "Pets",
-    icon: "paw_print",
+    icon: "🐾",
     description: "Pet shops, veterinários, adestradores, cuidadores de animais.",
   },
   {
     key: "servicos_domiciliares",
     label: "Serviços Domiciliares",
-    icon: "home",
+    icon: "🏠",
     description: "Eletricistas, encanadores, diaristas, montadores de móveis.",
   },
   {
     key: "juridico_financeiro",
     label: "Jurídico & Financeiro",
-    icon: "briefcase",
+    icon: "💼",
     description: "Advogados, contadores, consultores financeiros.",
   },
   {
     key: "espacos_locacao",
     label: "Espaços & Locação",
-    icon: "key",
+    icon: "🔑",
     description: "Salas de reunião, estúdios, quadras esportivas, coworking.",
   },
 ];
 
 const OnboardingSelectionPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
@@ -97,24 +102,29 @@ const OnboardingSelectionPage = () => {
 
   const fetchSectorPresets = async () => {
     setLoading(true);
-    const { data, error } = await (supabase as any)
-      .from("sector_presets")
-      .select("*")
-      .order("sector")
-      .order("specialty");
+    try {
+      const { data, error } = await supabase
+        .from("sector_presets")
+        .select("*")
+        .order("sector")
+        .order("specialty");
 
-    if (error) {
-      toast.error("Erro ao carregar presets: " + error.message);
-      console.error("Erro ao carregar presets:", error);
-    } else {
-      setAvailableSpecialties(data || []);
+      if (error) {
+        toast.error(t("onboarding.error_loading_presets") + ": " + error.message);
+        console.error("Erro ao carregar presets:", error);
+      } else {
+        setAvailableSpecialties(data || []);
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSelectSector = (sectorKey: string) => {
     setSelectedSector(sectorKey);
-    setSelectedSpecialty(null); // Reset specialty when sector changes
+    setSelectedSpecialty(null);
   };
 
   const handleSelectSpecialty = (specialtyKey: string) => {
@@ -123,7 +133,7 @@ const OnboardingSelectionPage = () => {
 
   const applyPreset = async () => {
     if (!user?.id || !selectedSector || !selectedSpecialty) {
-      toast.error("Selecione um setor e especialidade para continuar.");
+      toast.error(t("onboarding.select_sector_specialty"));
       return;
     }
 
@@ -134,46 +144,56 @@ const OnboardingSelectionPage = () => {
       );
 
       if (!preset) {
-        toast.error("Preset não encontrado para o setor/especialidade selecionado.");
+        toast.error(t("onboarding.preset_not_found"));
         setApplyingPreset(false);
         return;
       }
 
-      // Update barbershop with selected sector/specialty and onboarding status
-      const { error: updateError } = await (supabase as any)
+      // Update barbershop metadata
+      const { error: updateError } = await supabase
         .from("barbershops")
         .update({
           sector: selectedSector,
           specialty: selectedSpecialty,
-          onboarding_status: "configured", // Mark as configured after applying preset
+          onboarding_status: "configured",
         })
-        .eq("owner_id", user.id); // Assuming owner_id links to auth.users.id
+        .eq("owner_user_id", user.id);
 
       if (updateError) throw updateError;
 
-      // Apply default services from preset
-      if (preset.default_services && preset.default_services.length > 0) {
-        const servicesToInsert = preset.default_services.map((service: any) => ({
-          barbershop_id: user.id, // Assuming barbershop_id is user.id for now
-          name: service.name,
-          duration: service.duration,
-          price: service.price,
-          description: service.description,
-          is_active: true,
-        }));
-        const { error: servicesError } = await (supabase as any)
-          .from("services")
-          .insert(servicesToInsert);
-        if (servicesError) throw servicesError;
+      // Apply default services
+      if (preset.default_services && Array.isArray(preset.default_services)) {
+        // First get the barbershop id
+        const { data: bshop } = await supabase
+          .from("barbershops")
+          .select("id")
+          .eq("owner_user_id", user.id)
+          .single();
+
+        if (bshop) {
+          const servicesToInsert = preset.default_services.map((service: any) => ({
+            barbershop_id: bshop.id,
+            name: service.name,
+            duration_minutes: service.duration_minutes || service.duration || 30, // Normalize duration
+            price: service.price,
+            description: service.description,
+            is_active: true,
+          }));
+          
+          const { error: servicesError } = await supabase
+            .from("services")
+            .insert(servicesToInsert);
+          if (servicesError) console.error("Error inserting services:", servicesError);
+        }
       }
 
       // TODO: Implement logic to apply default automations, policies, resources
       // This would involve inserting into respective tables based on preset.default_automations, etc.
 
-      toast.success("Configuração inicial aplicada com sucesso!");
-      navigate("/painel-dono"); // Redirect to dashboard after onboarding
+      toast.success(t("onboarding.setup_success"));
+      navigate("/painel-dono"); 
     } catch (error: any) {
-      toast.error("Erro ao aplicar configuração: " + error.message);
+      toast.error(t("onboarding.apply_error") + ": " + error.message);
       console.error("Erro ao aplicar preset:", error);
     } finally {
       setApplyingPreset(false);
@@ -188,98 +208,128 @@ const OnboardingSelectionPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="ml-2 text-muted-foreground">Carregando opções...</p>
+        <p className="ml-2 text-muted-foreground">{t("common.loading")}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-3xl">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Bem-vindo(a)!</CardTitle>
-          <CardDescription>
-            Para começar, selecione o setor e a especialidade da sua empresa.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Step 1: Select Sector */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3">1. Selecione seu Setor</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {SECTORS.map((sector) => (
-                <Button
-                  key={sector.key}
-                  variant={selectedSector === sector.key ? "default" : "outline"}
-                  onClick={() => handleSelectSector(sector.key)}
-                  className="flex flex-col h-auto py-4 items-center justify-center text-center"
-                >
-                  <span className="text-3xl mb-2">{sector.icon === "scissors" ? "✂️" : sector.icon === "heart" ? "❤️" : sector.icon === "book" ? "📚" : sector.icon === "car" ? "🚗" : sector.icon === "paw_print" ? "🐾" : sector.icon === "home" ? "🏠" : sector.icon === "briefcase" ? "💼" : sector.icon === "key" ? "🔑" : "✨"}</span>
-                  <span className="font-medium">{sector.label}</span>
-                  <span className="text-xs text-muted-foreground mt-1">
-                    {sector.description}
-                  </span>
-                </Button>
-              ))}
-            </div>
+    <div className="min-h-screen flex flex-col bg-background">
+      <header className="w-full p-4 flex justify-between items-center border-b">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-xl leading-none">A</span>
           </div>
-
-          {/* Step 2: Select Specialty (conditionally rendered) */}
-          {selectedSector && (
-            <div>
-              <h3 className="text-lg font-semibold mb-3">
-                2. Selecione sua Especialidade em {SECTORS.find(s => s.key === selectedSector)?.label}
+          <h1 className="text-xl font-bold">Agenda App</h1>
+        </div>
+        <LanguageSelector />
+      </header>
+      
+      <main className="flex-1 flex flex-col items-center justify-center p-4">
+        <Card className="w-full max-w-3xl border-none shadow-premium bg-card/50 backdrop-blur-sm">
+          <CardHeader className="text-center">
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+              {t("onboarding.welcome_title")}
+            </CardTitle>
+            <CardDescription className="text-lg">
+              {t("onboarding.welcome_description")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-8">
+            {/* Step 1: Select Sector */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold flex items-center gap-2">
+                <span className="w-6 h-6 flex items-center justify-center bg-primary/20 text-primary rounded-full text-sm">1</span>
+                {t("onboarding.select_sector")}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredSpecialties.length > 0 ? (
-                  filteredSpecialties.map((preset) => (
-                    <Button
-                      key={preset.id}
-                      variant={
-                        selectedSpecialty === preset.specialty
-                          ? "default"
-                          : "outline"
-                      }
-                      onClick={() => handleSelectSpecialty(preset.specialty)}
-                      className="flex flex-col h-auto py-4 items-center justify-center text-center"
-                    >
-                      <span className="text-3xl mb-2">{preset.icon === "scissors" ? "✂️" : preset.icon === "nail_polish" ? "💅" : preset.icon === "palette" ? "🎨" : "✨"}</span>
-                      <span className="font-medium">{preset.specialty}</span>
-                      <span className="text-xs text-muted-foreground mt-1">
-                        {preset.description}
-                      </span>
-                    </Button>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground col-span-full text-center">
-                    Nenhuma especialidade disponível para este setor ainda.
-                  </p>
-                )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {SECTORS.map((sector) => (
+                  <Button
+                    key={sector.key}
+                    variant={selectedSector === sector.key ? "default" : "outline"}
+                    onClick={() => handleSelectSector(sector.key)}
+                    className={`flex flex-col h-auto py-6 items-center justify-center text-center transition-all duration-300 ${
+                      selectedSector === sector.key 
+                      ? "ring-2 ring-primary ring-offset-2 scale-105 shadow-lg" 
+                      : "hover:border-primary/50 hover:bg-primary/5"
+                    }`}
+                  >
+                    <span className="text-4xl mb-3">{sector.icon}</span>
+                    <span className="font-bold text-base">{sector.label}</span>
+                    <span className="text-xs text-muted-foreground mt-2 px-2 leading-relaxed">
+                      {sector.description}
+                    </span>
+                  </Button>
+                ))}
               </div>
             </div>
-          )}
 
-          {/* Step 3: Apply Configuration */}
-          {selectedSpecialty && (
-            <div className="text-center">
-              <Button
-                onClick={applyPreset}
-                disabled={applyingPreset}
-                className="w-full max-w-xs"
-              >
-                {applyingPreset ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <ArrowRight className="w-4 h-4 mr-2" />
-                )}
-                {applyingPreset ? "Aplicando..." : "Aplicar Configuração Inicial"}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            {/* Step 2: Select Specialty (conditionally rendered) */}
+            {selectedSector && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                <h3 className="text-xl font-semibold flex items-center gap-2">
+                  <span className="w-6 h-6 flex items-center justify-center bg-primary/20 text-primary rounded-full text-sm">2</span>
+                  {t("onboarding.select_specialty", {
+                    sector: SECTORS.find(s => s.key === selectedSector)?.label
+                  })}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredSpecialties.length > 0 ? (
+                    filteredSpecialties.map((preset) => (
+                      <Button
+                        key={preset.id}
+                        variant={
+                          selectedSpecialty === preset.specialty
+                            ? "default"
+                            : "outline"
+                        }
+                        onClick={() => handleSelectSpecialty(preset.specialty)}
+                        className={`flex flex-col h-auto py-6 items-center justify-center text-center transition-all duration-300 ${
+                          selectedSpecialty === preset.specialty
+                          ? "ring-2 ring-primary ring-offset-2 scale-105 shadow-lg" 
+                          : "hover:border-primary/50 hover:bg-primary/5"
+                        }`}
+                      >
+                        <span className="text-4xl mb-3">{preset.icon || "✨"}</span>
+                        <span className="font-bold text-base">{preset.display_name || preset.specialty}</span>
+                        <span className="text-xs text-muted-foreground mt-2 px-2 leading-relaxed">
+                          {preset.description}
+                        </span>
+                      </Button>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground col-span-full text-center py-8 border-2 border-dashed rounded-xl">
+                      {t("onboarding.no_specialties_available")}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Apply Configuration */}
+            {selectedSpecialty && (
+              <div className="text-center pt-4 animate-in zoom-in duration-300">
+                <Button
+                  onClick={applyPreset}
+                  disabled={applyingPreset}
+                  size="lg"
+                  className="w-full max-w-sm h-14 text-lg font-bold shadow-xl shadow-primary/20 transition-all hover:scale-105"
+                >
+                  {applyingPreset ? (
+                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                  ) : (
+                    <ArrowRight className="w-5 h-5 mr-3" />
+                  )}
+                  {applyingPreset ? t("common.applying") : t("onboarding.apply_preset_button")}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
 };
 
 export default OnboardingSelectionPage;
+```
