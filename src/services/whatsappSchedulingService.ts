@@ -1,0 +1,424 @@
+import { supabase } from "@/integrations/supabase/client";
+import {
+  getConversation,
+  createConversation,
+  updateConversation,
+  endConversation,
+  getMessageTemplate,
+  formatMessage,
+  WhatsappConversation,
+} from "./whatsappConversationService";
+import { toast } from "sonner";
+
+// Importar serviços existentes para interagir com o banco de dados
+// Ex: getServices, getProfessionals, createBooking, getClientByWhatsapp, createClient, etc.
+// Mock para simular a interação com outros serviços
+const mockServices = {
+  getServices: async (barbershopId: string) => {
+    // Simula a busca de serviços
+    return [
+      { id: "svc1", name: "Corte de Cabelo", duration: 30, price: 50.00 },
+      { id: "svc2", name: "Barba", duration: 20, price: 30.00 },
+      { id: "svc3", name: "Corte + Barba", duration: 50, price: 75.00 },
+    ];
+  },
+  getProfessionals: async (barbershopId: string, serviceId?: string) => {
+    // Simula a busca de profissionais
+    return [
+      { id: "prof1", name: "João" },
+      { id: "prof2", name: "Maria" },
+    ];
+  },
+  findAvailableSlots: async (barbershopId: string, serviceId: string, professionalId: string, date: string) => {
+    // Simula a busca de horários disponíveis
+    // Retorna alguns horários mock para teste
+    const today = new Date().toISOString().split('T')[0];
+    if (date === today) {
+      return ["10:00", "11:00", "14:00"];
+    }
+    return ["09:00", "10:00", "11:00", "14:00", "15:00"];
+  },
+  createBooking: async (barbershopId: string, bookingDetails: any) => {
+    // Simula a criação de um agendamento
+    console.log("Agendamento criado (mock):", bookingDetails);
+    return { success: true, bookingId: "bk123" };
+  },
+  getClientByWhatsapp: async (barbershopId: string, whatsapp: string) => {
+    // Simula a busca de cliente
+    if (whatsapp === "+5511987654321") {
+      return { id: "client1", name: "João Silva", whatsapp: whatsapp };
+    }
+    return null;
+  },
+  createClient: async (barbershopId: string, clientDetails: any) => {
+    // Simula a criação de cliente
+    console.log("Cliente criado (mock):", clientDetails);
+    return { id: "client2", name: clientDetails.name, whatsapp: clientDetails.whatsapp };
+  },
+  getUpcomingBookings: async (barbershopId: string, clientId: string) => {
+    // Simula busca de agendamentos futuros
+    if (clientId === "client1") {
+      return [
+        { id: "bk1", service_name: "Corte de Cabelo", professional_name: "João", date: "2026-03-25", time: "10:00" },
+        { id: "bk2", service_name: "Barba", professional_name: "Maria", date: "2026-03-26", time: "14:00" },
+      ];
+    }
+    return [];
+  },
+  cancelBooking: async (barbershopId: string, bookingId: string) => {
+    // Simula cancelamento
+    console.log("Agendamento cancelado (mock):", bookingId);
+    return { success: true };
+  },
+};
+
+
+export const handleIncomingWhatsappMessage = async (
+  barbershopId: string,
+  clientWhatsapp: string,
+  messageBody: string
+): Promise<string> => {
+  let conversation = await getConversation(barbershopId, clientWhatsapp);
+  let responseMessage = "";
+  let clientName = conversation?.conversation_state?.client_name || "Cliente";
+
+  // Se não há conversa ativa, ou se a conversa expirou, iniciar uma nova
+  if (!conversation || !conversation.is_active || (new Date().getTime() - new Date(conversation.last_message_at).getTime() > 30 * 60 * 1000)) { // 30 minutos de inatividade
+    conversation = await createConversation(barbershopId, clientWhatsapp);
+    if (!conversation) {
+      return "Desculpe, não consegui iniciar a conversa. Por favor, tente novamente mais tarde.";
+    }
+    const welcomeTemplate = await getMessageTemplate(barbershopId, "welcome_message");
+    responseMessage = formatMessage(welcomeTemplate?.template_content || "Olá {client_name}! Bem-vindo(a). Como posso ajudar?\n1. Agendar\n2. Ver Agendamentos\n3. Cancelar", { client_name: clientName });
+    await updateConversation(conversation.id, { current_step: "initial", conversation_state: { client_name: clientName } });
+    return responseMessage;
+  }
+
+  // Atualizar last_message_at
+  await updateConversation(conversation.id, { last_message_at: new Date().toISOString() });
+
+  // Processar a mensagem com base no current_step
+  switch (conversation.current_step) {
+    case "initial":
+      responseMessage = await handleInitialStep(conversation, messageBody);
+      break;
+    case "ask_service":
+      responseMessage = await handleAskServiceStep(conversation, messageBody);
+      break;
+    case "ask_date":
+      responseMessage = await handleAskDateStep(conversation, messageBody);
+      break;
+    case "ask_time":
+      responseMessage = await handleAskTimeStep(conversation, messageBody);
+      break;
+    case "ask_professional":
+      responseMessage = await handleAskProfessionalStep(conversation, messageBody);
+      break;
+    case "confirm_booking":
+      responseMessage = await handleConfirmBookingStep(conversation, messageBody);
+      break;
+    case "view_bookings":
+      responseMessage = await handleViewBookingsStep(conversation, messageBody);
+      break;
+    case "cancel_booking_select":
+      responseMessage = await handleCancelBookingSelectStep(conversation, messageBody);
+      break;
+    case "cancel_booking_confirm":
+      responseMessage = await handleCancelBookingConfirmStep(conversation, messageBody);
+      break;
+    default:
+      const invalidInputTemplate = await getMessageTemplate(barbershopId, "invalid_input");
+      responseMessage = formatMessage(invalidInputTemplate?.template_content || "Desculpe, não entendi. Tente novamente.", { client_name: clientName });
+      await updateConversation(conversation.id, { current_step: "initial" }); // Resetar para o início em caso de erro
+      break;
+  }
+
+  return responseMessage;
+};
+
+const handleInitialStep = async (conversation: WhatsappConversation, messageBody: string): Promise<string> => {
+  const barbershopId = conversation.barbershop_id;
+  const clientName = conversation.conversation_state?.client_name || "Cliente";
+
+  switch (messageBody.trim()) {
+    case "1": // Agendar um serviço
+      const services = await mockServices.getServices(barbershopId);
+      const serviceList = services.map((s, i) => `${i + 1}. ${s.name}`).join("\n");
+      await updateConversation(conversation.id, {
+        current_step: "ask_service",
+        conversation_state: { ...conversation.conversation_state, services, client_name: clientName },
+      });
+      const askServiceTemplate = await getMessageTemplate(barbershopId, "ask_service");
+      return formatMessage(askServiceTemplate?.template_content || "Qual serviço você gostaria de agendar?\n{service_list}", { client_name: clientName, service_list: serviceList });
+    case "2": // Ver meus agendamentos
+      await updateConversation(conversation.id, { current_step: "view_bookings" });
+      return handleViewBookingsStep(conversation, messageBody); // Chamar a função diretamente
+    case "3": // Cancelar um agendamento
+      await updateConversation(conversation.id, { current_step: "cancel_booking_select" });
+      return handleCancelBookingSelectStep(conversation, messageBody); // Chamar a função diretamente
+    case "4": // Falar com um atendente
+      await endConversation(conversation.id);
+      return "Ok, {client_name}. Um de nossos atendentes entrará em contato em breve.".replace("{client_name}", clientName);
+    default:
+      const invalidInputTemplate = await getMessageTemplate(barbershopId, "invalid_input");
+      return formatMessage(invalidInputTemplate?.template_content || "Desculpe, não entendi. Tente novamente.", { client_name: clientName });
+  }
+};
+
+const handleAskServiceStep = async (conversation: WhatsappConversation, messageBody: string): Promise<string> => {
+  const barbershopId = conversation.barbershop_id;
+  const clientName = conversation.conversation_state?.client_name || "Cliente";
+  const services = conversation.conversation_state?.services || [];
+  const serviceIndex = parseInt(messageBody.trim()) - 1;
+
+  if (serviceIndex >= 0 && serviceIndex < services.length) {
+    const selectedService = services[serviceIndex];
+    await updateConversation(conversation.id, {
+      current_step: "ask_date",
+      conversation_state: { ...conversation.conversation_state, selectedService },
+    });
+    const askDateTemplate = await getMessageTemplate(barbershopId, "ask_date");
+    return formatMessage(askDateTemplate?.template_content || "Para qual data, {client_name}? (Ex: DD/MM/AAAA)", { client_name: clientName });
+  } else {
+    const invalidInputTemplate = await getMessageTemplate(barbershopId, "invalid_input");
+    return formatMessage(invalidInputTemplate?.template_content || "Serviço inválido. Por favor, escolha um número da lista.", { client_name: clientName });
+  }
+};
+
+const handleAskDateStep = async (conversation: WhatsappConversation, messageBody: string): Promise<string> => {
+  const barbershopId = conversation.barbershop_id;
+  const clientName = conversation.conversation_state?.client_name || "Cliente";
+  const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/; // DD/MM/AAAA
+
+  if (dateRegex.test(messageBody.trim())) {
+    const [day, month, year] = messageBody.trim().split('/').map(Number);
+    const date = new Date(year, month - 1, day); // Mês é 0-indexado
+
+    if (isNaN(date.getTime())) {
+      const invalidInputTemplate = await getMessageTemplate(barbershopId, "invalid_input");
+      return formatMessage(invalidInputTemplate?.template_content || "Data inválida. Por favor, use o formato DD/MM/AAAA.", { client_name: clientName });
+    }
+
+    await updateConversation(conversation.id, {
+      current_step: "ask_time",
+      conversation_state: { ...conversation.conversation_state, selectedDate: date.toISOString().split('T')[0] },
+    });
+    const askTimeTemplate = await getMessageTemplate(barbershopId, "ask_time");
+    return formatMessage(askTimeTemplate?.template_content || "E qual horário, {client_name}? (Ex: HH:MM)", { client_name: clientName });
+  } else {
+    const invalidInputTemplate = await getMessageTemplate(barbershopId, "invalid_input");
+    return formatMessage(invalidInputTemplate?.template_content || "Data inválida. Por favor, use o formato DD/MM/AAAA.", { client_name: clientName });
+  }
+};
+
+const handleAskTimeStep = async (conversation: WhatsappConversation, messageBody: string): Promise<string> => {
+  const barbershopId = conversation.barbershop_id;
+  const clientName = conversation.conversation_state?.client_name || "Cliente";
+  const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/; // HH:MM
+
+  if (timeRegex.test(messageBody.trim())) {
+    const selectedTime = messageBody.trim();
+    await updateConversation(conversation.id, {
+      current_step: "ask_professional",
+      conversation_state: { ...conversation.conversation_state, selectedTime },
+    });
+    const askProfessionalTemplate = await getMessageTemplate(barbershopId, "ask_professional");
+    return formatMessage(askProfessionalTemplate?.template_content || "Com qual profissional, {client_name}? (Se tiver preferência)", { client_name: clientName });
+  } else {
+    const invalidInputTemplate = await getMessageTemplate(barbershopId, "invalid_input");
+    return formatMessage(invalidInputTemplate?.template_content || "Horário inválido. Por favor, use o formato HH:MM.", { client_name: clientName });
+  }
+};
+
+const handleAskProfessionalStep = async (conversation: WhatsappConversation, messageBody: string): Promise<string> => {
+  const barbershopId = conversation.barbershop_id;
+  const clientName = conversation.conversation_state?.client_name || "Cliente";
+  const { selectedService, selectedDate, selectedTime } = conversation.conversation_state;
+
+  // Aqui você pode listar profissionais e pedir para o cliente escolher
+  // Por enquanto, vamos assumir que o cliente pode digitar o nome ou pular
+  const professionalName = messageBody.trim();
+  let selectedProfessional = null;
+
+  if (professionalName && professionalName.toLowerCase() !== "pular") {
+    const professionals = await mockServices.getProfessionals(barbershopId);
+    selectedProfessional = professionals.find(p => p.name.toLowerCase() === professionalName.toLowerCase());
+    if (!selectedProfessional) {
+      // Se o profissional não for encontrado, podemos pedir para tentar novamente ou listar
+      const invalidInputTemplate = await getMessageTemplate(barbershopId, "invalid_input");
+      return formatMessage(invalidInputTemplate?.template_content || "Profissional não encontrado. Por favor, digite o nome correto ou 'pular'.", { client_name: clientName });
+    }
+  }
+
+  // Verificar disponibilidade e confirmar
+  const availableSlots = await mockServices.findAvailableSlots(
+    barbershopId,
+    selectedService.id,
+    selectedProfessional?.id || "",
+    selectedDate
+  );
+
+  if (availableSlots.includes(selectedTime)) {
+    await updateConversation(conversation.id, {
+      current_step: "confirm_booking",
+      conversation_state: { ...conversation.conversation_state, selectedProfessional, availableSlots },
+    });
+    const confirmationTemplate = await getMessageTemplate(barbershopId, "booking_confirmation");
+    return formatMessage(
+      confirmationTemplate?.template_content || "Confirma seu agendamento de {service_name} com {professional_name} para {date} às {time}? (Sim/Não)",
+      {
+        client_name: clientName,
+        service_name: selectedService.name,
+        professional_name: selectedProfessional?.name || "qualquer profissional",
+        date: selectedDate,
+        time: selectedTime,
+      }
+    );
+  } else {
+    const noSlotsTemplate = await getMessageTemplate(barbershopId, "no_slots_available");
+    await endConversation(conversation.id); // Encerrar conversa se não houver slot
+    return formatMessage(noSlotsTemplate?.template_content || "Desculpe, não há horários disponíveis para {service_name} com {professional_name} em {date} às {time}. Gostaria de tentar outra data/horário?", {
+      client_name: clientName,
+      service_name: selectedService.name,
+      professional_name: selectedProfessional?.name || "o profissional escolhido",
+      date: selectedDate,
+      time: selectedTime,
+    });
+  }
+};
+
+const handleConfirmBookingStep = async (conversation: WhatsappConversation, messageBody: string): Promise<string> => {
+  const barbershopId = conversation.barbershop_id;
+  const clientWhatsapp = conversation.client_whatsapp;
+  const clientName = conversation.conversation_state?.client_name || "Cliente";
+  const { selectedService, selectedDate, selectedTime, selectedProfessional } = conversation.conversation_state;
+
+  if (messageBody.trim().toLowerCase() === "sim") {
+    // Primeiro, tentar encontrar o cliente ou criar um novo
+    let client = await mockServices.getClientByWhatsapp(barbershopId, clientWhatsapp);
+    if (!client) {
+      // Se não encontrou, criar um cliente básico. Em um sistema real, pediríamos mais dados.
+      client = await mockServices.createClient(barbershopId, { name: clientName, whatsapp: clientWhatsapp });
+    }
+
+    if (!client) {
+      await endConversation(conversation.id);
+      return "Desculpe, {client_name}, não foi possível criar seu cadastro. Por favor, tente novamente.".replace("{client_name}", clientName);
+    }
+
+    const bookingDetails = {
+      client_id: client.id,
+      barbershop_id: barbershopId,
+      service_id: selectedService.id,
+      professional_id: selectedProfessional?.id || null,
+      date: selectedDate,
+      time: selectedTime,
+      status: "confirmed",
+    };
+    const { success } = await mockServices.createBooking(barbershopId, bookingDetails);
+
+    if (success) {
+      await endConversation(conversation.id);
+      const confirmationTemplate = await getMessageTemplate(barbershopId, "booking_confirmation");
+      return formatMessage(confirmationTemplate?.template_content || "Seu agendamento de {service_name} com {professional_name} para {date} às {time} foi confirmado. Te esperamos!", {
+        client_name: clientName,
+        service_name: selectedService.name,
+        professional_name: selectedProfessional?.name || "qualquer profissional",
+        date: selectedDate,
+        time: selectedTime,
+      });
+    } else {
+      await endConversation(conversation.id);
+      return "Desculpe, {client_name}, houve um erro ao confirmar seu agendamento. Por favor, tente novamente mais tarde.".replace("{client_name}", clientName);
+    }
+  } else if (messageBody.trim().toLowerCase() === "não") {
+    await endConversation(conversation.id);
+    return "Agendamento cancelado. {client_name}, se precisar de algo mais, é só chamar!".replace("{client_name}", clientName);
+  } else {
+    const invalidInputTemplate = await getMessageTemplate(barbershopId, "invalid_input");
+    return formatMessage(invalidInputTemplate?.template_content || "Por favor, responda 'Sim' ou 'Não'.", { client_name: clientName });
+  }
+};
+
+const handleViewBookingsStep = async (conversation: WhatsappConversation, messageBody: string): Promise<string> => {
+  const barbershopId = conversation.barbershop_id;
+  const clientWhatsapp = conversation.client_whatsapp;
+  const clientName = conversation.conversation_state?.client_name || "Cliente";
+
+  let client = await mockServices.getClientByWhatsapp(barbershopId, clientWhatsapp);
+  if (!client) {
+    await endConversation(conversation.id);
+    return "Olá {client_name}, não encontramos nenhum agendamento para este número. Você já se cadastrou?".replace("{client_name}", clientName);
+  }
+
+  const bookings = await mockServices.getUpcomingBookings(barbershopId, client.id);
+
+  if (bookings.length === 0) {
+    await endConversation(conversation.id);
+    return "Olá {client_name}, você não possui agendamentos futuros.".replace("{client_name}", clientName);
+  }
+
+  const bookingList = bookings.map((b: any, i: number) =>
+    `${i + 1}. ${b.service_name} com ${b.professional_name} em ${b.date} às ${b.time}`
+  ).join("\n");
+
+  await endConversation(conversation.id); // Encerrar após mostrar
+  return `Olá {client_name}, seus próximos agendamentos são:\n${bookingList}\n\nSe precisar cancelar ou alterar, envie "3" para cancelar ou "1" para agendar novamente.`.replace("{client_name}", clientName);
+};
+
+const handleCancelBookingSelectStep = async (conversation: WhatsappConversation, messageBody: string): Promise<string> => {
+  const barbershopId = conversation.barbershop_id;
+  const clientWhatsapp = conversation.client_whatsapp;
+  const clientName = conversation.conversation_state?.client_name || "Cliente";
+
+  let client = await mockServices.getClientByWhatsapp(barbershopId, clientWhatsapp);
+  if (!client) {
+    await endConversation(conversation.id);
+    return "Olá {client_name}, não encontramos nenhum agendamento para este número. Você já se cadastrou?".replace("{client_name}", clientName);
+  }
+
+  const bookings = await mockServices.getUpcomingBookings(barbershopId, client.id);
+  if (bookings.length === 0) {
+    await endConversation(conversation.id);
+    return "Olá {client_name}, você não possui agendamentos futuros para cancelar.".replace("{client_name}", clientName);
+  }
+
+  const bookingList = bookings.map((b: any, i: number) =>
+    `${i + 1}. ${b.service_name} com ${b.professional_name} em ${b.date} às ${b.time}`
+  ).join("\n");
+
+  await updateConversation(conversation.id, {
+    current_step: "cancel_booking_confirm",
+    conversation_state: { ...conversation.conversation_state, client, bookings },
+  });
+  return `Olá {client_name}, qual agendamento você gostaria de cancelar?\n${bookingList}\n\nResponda com o número do agendamento.`.replace("{client_name}", clientName);
+};
+
+const handleCancelBookingConfirmStep = async (conversation: WhatsappConversation, messageBody: string): Promise<string> => {
+  const barbershopId = conversation.barbershop_id;
+  const clientName = conversation.conversation_state?.client_name || "Cliente";
+  const bookings = conversation.conversation_state?.bookings || [];
+  const bookingIndex = parseInt(messageBody.trim()) - 1;
+
+  if (bookingIndex >= 0 && bookingIndex < bookings.length) {
+    const bookingToCancel = bookings[bookingIndex];
+    const { success } = await mockServices.cancelBooking(barbershopId, bookingToCancel.id);
+
+    if (success) {
+      await endConversation(conversation.id);
+      const cancellationTemplate = await getMessageTemplate(barbershopId, "booking_cancellation_success");
+      return formatMessage(cancellationTemplate?.template_content || "Seu agendamento de {service_name} para {date} às {time} foi cancelado com sucesso, {client_name}.", {
+        client_name: clientName,
+        service_name: bookingToCancel.service_name,
+        date: bookingToCancel.date,
+        time: bookingToCancel.time,
+      });
+    } else {
+      await endConversation(conversation.id);
+      return "Desculpe, {client_name}, houve um erro ao cancelar seu agendamento. Por favor, tente novamente mais tarde.".replace("{client_name}", clientName);
+    }
+  } else {
+    const invalidInputTemplate = await getMessageTemplate(barbershopId, "invalid_input");
+    return formatMessage(invalidInputTemplate?.template_content || "Número de agendamento inválido. Por favor, escolha um número da lista.", { client_name: clientName });
+  }
+};
