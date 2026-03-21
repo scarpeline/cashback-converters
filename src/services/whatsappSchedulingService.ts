@@ -11,66 +11,10 @@ import {
 import { toast } from "sonner";
 
 // Importar serviços existentes para interagir com o banco de dados
-// Ex: getServices, getProfessionals, createBooking, getClientByWhatsapp, createClient, etc.
-// Mock para simular a interação com outros serviços
-const mockServices = {
-  getServices: async (barbershopId: string) => {
-    // Simula a busca de serviços
-    return [
-      { id: "svc1", name: "Corte de Cabelo", duration: 30, price: 50.00 },
-      { id: "svc2", name: "Barba", duration: 20, price: 30.00 },
-      { id: "svc3", name: "Corte + Barba", duration: 50, price: 75.00 },
-    ];
-  },
-  getProfessionals: async (barbershopId: string, serviceId?: string) => {
-    // Simula a busca de profissionais
-    return [
-      { id: "prof1", name: "João" },
-      { id: "prof2", name: "Maria" },
-    ];
-  },
-  findAvailableSlots: async (barbershopId: string, serviceId: string, professionalId: string, date: string) => {
-    // Simula a busca de horários disponíveis
-    // Retorna alguns horários mock para teste
-    const today = new Date().toISOString().split('T')[0];
-    if (date === today) {
-      return ["10:00", "11:00", "14:00"];
-    }
-    return ["09:00", "10:00", "11:00", "14:00", "15:00"];
-  },
-  createBooking: async (barbershopId: string, bookingDetails: any) => {
-    // Simula a criação de um agendamento
-    console.log("Agendamento criado (mock):", bookingDetails);
-    return { success: true, bookingId: "bk123" };
-  },
-  getClientByWhatsapp: async (barbershopId: string, whatsapp: string) => {
-    // Simula a busca de cliente
-    if (whatsapp === "+5511987654321") {
-      return { id: "client1", name: "João Silva", whatsapp: whatsapp };
-    }
-    return null;
-  },
-  createClient: async (barbershopId: string, clientDetails: any) => {
-    // Simula a criação de cliente
-    console.log("Cliente criado (mock):", clientDetails);
-    return { id: "client2", name: clientDetails.name, whatsapp: clientDetails.whatsapp };
-  },
-  getUpcomingBookings: async (barbershopId: string, clientId: string) => {
-    // Simula busca de agendamentos futuros
-    if (clientId === "client1") {
-      return [
-        { id: "bk1", service_name: "Corte de Cabelo", professional_name: "João", date: "2026-03-25", time: "10:00" },
-        { id: "bk2", service_name: "Barba", professional_name: "Maria", date: "2026-03-26", time: "14:00" },
-      ];
-    }
-    return [];
-  },
-  cancelBooking: async (barbershopId: string, bookingId: string) => {
-    // Simula cancelamento
-    console.log("Agendamento cancelado (mock):", bookingId);
-    return { success: true };
-  },
-};
+import { getClientByWhatsapp, createClient, Client } from "@/services/clientService";
+import { getServices, Service } from "@/services/serviceService";
+import { getProfessionals, Professional } from "@/services/professionalService";
+import { createAppointment, getUpcomingAppointments, cancelAppointment, getAvailableSlotsForDate } from "@/services/schedulingService";
 
 
 export const handleIncomingWhatsappMessage = async (
@@ -142,7 +86,7 @@ const handleInitialStep = async (conversation: WhatsappConversation, messageBody
 
   switch (messageBody.trim()) {
     case "1": // Agendar um serviço
-      const services = await mockServices.getServices(barbershopId);
+      const services = await getServices(barbershopId);
       const serviceList = services.map((s, i) => `${i + 1}. ${s.name}`).join("\n");
       await updateConversation(conversation.id, {
         current_step: "ask_service",
@@ -241,7 +185,7 @@ const handleAskProfessionalStep = async (conversation: WhatsappConversation, mes
   let selectedProfessional = null;
 
   if (professionalName && professionalName.toLowerCase() !== "pular") {
-    const professionals = await mockServices.getProfessionals(barbershopId);
+    const professionals = await getProfessionals(barbershopId);
     selectedProfessional = professionals.find(p => p.name.toLowerCase() === professionalName.toLowerCase());
     if (!selectedProfessional) {
       // Se o profissional não for encontrado, podemos pedir para tentar novamente ou listar
@@ -251,11 +195,10 @@ const handleAskProfessionalStep = async (conversation: WhatsappConversation, mes
   }
 
   // Verificar disponibilidade e confirmar
-  const availableSlots = await mockServices.findAvailableSlots(
+  const availableSlots = await getAvailableSlotsForDate(
     barbershopId,
-    selectedService.id,
     selectedProfessional?.id || "",
-    selectedDate
+    new Date(selectedDate)
   );
 
   if (availableSlots.includes(selectedTime)) {
@@ -295,10 +238,10 @@ const handleConfirmBookingStep = async (conversation: WhatsappConversation, mess
 
   if (messageBody.trim().toLowerCase() === "sim") {
     // Primeiro, tentar encontrar o cliente ou criar um novo
-    let client = await mockServices.getClientByWhatsapp(barbershopId, clientWhatsapp);
+    let client = await getClientByWhatsapp(barbershopId, clientWhatsapp);
     if (!client) {
       // Se não encontrou, criar um cliente básico. Em um sistema real, pediríamos mais dados.
-      client = await mockServices.createClient(barbershopId, { name: clientName, whatsapp: clientWhatsapp });
+      client = await createClient(barbershopId, { name: clientName, whatsapp: clientWhatsapp });
     }
 
     if (!client) {
@@ -307,15 +250,16 @@ const handleConfirmBookingStep = async (conversation: WhatsappConversation, mess
     }
 
     const bookingDetails = {
-      client_id: client.id,
+      client_user_id: client.id,
       barbershop_id: barbershopId,
       service_id: selectedService.id,
       professional_id: selectedProfessional?.id || null,
-      date: selectedDate,
-      time: selectedTime,
-      status: "confirmed",
+      scheduled_at: `${selectedDate}T${selectedTime}:00Z`, // Formato ISO
+      status: "scheduled",
+      client_name: client.name,
+      client_whatsapp: client.whatsapp,
     };
-    const { success } = await mockServices.createBooking(barbershopId, bookingDetails);
+    const { success } = await createAppointment(bookingDetails);
 
     if (success) {
       await endConversation(conversation.id);
@@ -345,13 +289,13 @@ const handleViewBookingsStep = async (conversation: WhatsappConversation, messag
   const clientWhatsapp = conversation.client_whatsapp;
   const clientName = conversation.conversation_state?.client_name || "Cliente";
 
-  let client = await mockServices.getClientByWhatsapp(barbershopId, clientWhatsapp);
+  let client = await getClientByWhatsapp(barbershopId, clientWhatsapp);
   if (!client) {
     await endConversation(conversation.id);
     return "Olá {client_name}, não encontramos nenhum agendamento para este número. Você já se cadastrou?".replace("{client_name}", clientName);
   }
 
-  const bookings = await mockServices.getUpcomingBookings(barbershopId, client.id);
+  const bookings = await getUpcomingAppointments(barbershopId, client.id);
 
   if (bookings.length === 0) {
     await endConversation(conversation.id);
@@ -371,13 +315,13 @@ const handleCancelBookingSelectStep = async (conversation: WhatsappConversation,
   const clientWhatsapp = conversation.client_whatsapp;
   const clientName = conversation.conversation_state?.client_name || "Cliente";
 
-  let client = await mockServices.getClientByWhatsapp(barbershopId, clientWhatsapp);
+  let client = await getClientByWhatsapp(barbershopId, clientWhatsapp);
   if (!client) {
     await endConversation(conversation.id);
     return "Olá {client_name}, não encontramos nenhum agendamento para este número. Você já se cadastrou?".replace("{client_name}", clientName);
   }
 
-  const bookings = await mockServices.getUpcomingBookings(barbershopId, client.id);
+  const bookings = await getUpcomingAppointments(barbershopId, client.id);
   if (bookings.length === 0) {
     await endConversation(conversation.id);
     return "Olá {client_name}, você não possui agendamentos futuros para cancelar.".replace("{client_name}", clientName);
@@ -402,7 +346,7 @@ const handleCancelBookingConfirmStep = async (conversation: WhatsappConversation
 
   if (bookingIndex >= 0 && bookingIndex < bookings.length) {
     const bookingToCancel = bookings[bookingIndex];
-    const { success } = await mockServices.cancelBooking(barbershopId, bookingToCancel.id);
+    const { success } = await cancelAppointment(barbershopId, bookingToCancel.id);
 
     if (success) {
       await endConversation(conversation.id);
