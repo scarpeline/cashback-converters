@@ -63,11 +63,11 @@ export default function ResourcesPanel() {
       setEditingResource(resource);
       setFormData({
         name: resource.name,
-        resource_type: resource.resource_type,
+        resource_type: resource.type,
         description: resource.description || "",
-        capacity: resource.capacity,
-        is_active: resource.is_active,
-        color: resource.color,
+        capacity: 1,
+        is_active: resource.is_available,
+        color: "#000000",
       });
     } else {
       setEditingResource(null);
