@@ -18,20 +18,23 @@ i18n
       es: { common: commonEs },
       fr: { common: commonFr },
     },
-    fallbackLng: 'pt',
-    lng: undefined, // deixa o LanguageDetector decidir
+    fallbackLng: 'pt-BR',
     ns: ['common'],
     defaultNS: 'common',
     interpolation: {
       escapeValue: false,
     },
     detection: {
-      order: ['querystring', 'cookie', 'localStorage', 'navigator', 'htmlTag'],
+      // Prioriza 'navigator' para detecção automática por região (Regra Global)
+      order: ['localStorage', 'navigator', 'querystring', 'cookie', 'htmlTag'],
       lookupQuerystring: 'lng',
       lookupCookie: 'i18next',
       lookupLocalStorage: 'i18nextLng',
       caches: ['localStorage', 'cookie'],
     },
+    // Suporte para detecção de pt-BR automaticamente e outras variantes
+    supportedLngs: ['pt-BR', 'en', 'es', 'fr'],
+    nonExplicitSupportedLngs: true,
     // Garante init síncrono (recursos já estão em memória)
     initImmediate: false,
   });

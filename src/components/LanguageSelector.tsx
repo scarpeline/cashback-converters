@@ -1,1 +1,2 @@
-export { LanguageSelector } from "./layout/LanguageSelector";
+import { LanguageSelector } from "./layout/LanguageSelector";
+export default LanguageSelector;

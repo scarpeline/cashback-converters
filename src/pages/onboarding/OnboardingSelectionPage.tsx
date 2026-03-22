@@ -1,335 +1,164 @@
-```typescript
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
-import { toast } from "sonner";
-import { useTranslation } from "react-i18next";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { 
+  Building2, 
+  Scissors, 
+  Sparkles, 
+  ChevronRight,
+  ArrowRight,
+  ShieldCheck,
+  Zap,
+  Globe
+} from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowRight } from "lucide-react";
-import { LanguageSelector } from "@/components/layout/LanguageSelector";
-
-interface SectorPreset {
-  id: string;
-  sector: string;
-  specialty: string;
-  display_name: string;
-  description: string;
-  icon: string;
-  default_services?: any[];
-  [key: string]: any;
-}
-
-const SECTORS = [
-  {
-    key: "beleza_estetica",
-    label: "Beleza & Estética",
-    icon: "✂️",
-    description: "Salões, barbearias, nail designers, maquiadoras, esteticistas.",
-  },
-  {
-    key: "saude_bem_estar",
-    label: "Saúde & Bem-Estar",
-    icon: "❤️",
-    description: "Clínicas, fisioterapeutas, psicólogos, massagistas, nutricionistas.",
-  },
-  {
-    key: "educacao_mentorias",
-    label: "Educação & Mentorias",
-    icon: "📚",
-    description: "Professores particulares, consultores, coaches, escolas de idiomas.",
-  },
-  {
-    key: "automotivo",
-    label: "Automotivo",
-    icon: "🚗",
-    description: "Oficinas mecânicas, lava-rápidos, centros de estética automotiva.",
-  },
-  {
-    key: "pets",
-    label: "Pets",
-    icon: "🐾",
-    description: "Pet shops, veterinários, adestradores, cuidadores de animais.",
-  },
-  {
-    key: "servicos_domiciliares",
-    label: "Serviços Domiciliares",
-    icon: "🏠",
-    description: "Eletricistas, encanadores, diaristas, montadores de móveis.",
-  },
-  {
-    key: "juridico_financeiro",
-    label: "Jurídico & Financeiro",
-    icon: "💼",
-    description: "Advogados, contadores, consultores financeiros.",
-  },
-  {
-    key: "espacos_locacao",
-    label: "Espaços & Locação",
-    icon: "🔑",
-    description: "Salas de reunião, estúdios, quadras esportivas, coworking.",
-  },
-];
+import { Card, CardContent } from "@/components/ui/card";
+import { useOnboarding } from "@/contexts/OnboardingContext";
+import LanguageSelector from '@/components/LanguageSelector';
 
 const OnboardingSelectionPage = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [selectedSector, setSelectedSector] = useState<string | null>(null);
-  const [availableSpecialties, setAvailableSpecialties] = useState<
-    SectorPreset[]
-  >([]);
-  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(
-    null,
-  );
-  const [loading, setLoading] = useState(false);
-  const [applyingPreset, setApplyingPreset] = useState(false);
+  const { t } = useTranslation();
+  const { setType } = useOnboarding();
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    fetchSectorPresets();
-  }, [user, navigate]);
-
-  const fetchSectorPresets = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("sector_presets")
-        .select("*")
-        .order("sector")
-        .order("specialty");
-
-      if (error) {
-        toast.error(t("onboarding.error_loading_presets") + ": " + error.message);
-        console.error("Erro ao carregar presets:", error);
-      } else {
-        setAvailableSpecialties(data || []);
-      }
-    } catch (err) {
-      console.error("Unexpected error:", err);
-    } finally {
-      setLoading(false);
+  const handleSelect = (type: 'owner' | 'barber') => {
+    setType(type);
+    if (type === 'owner') {
+      navigate('/onboarding/owner');
+    } else {
+      navigate('/onboarding/barber');
     }
   };
-
-  const handleSelectSector = (sectorKey: string) => {
-    setSelectedSector(sectorKey);
-    setSelectedSpecialty(null);
-  };
-
-  const handleSelectSpecialty = (specialtyKey: string) => {
-    setSelectedSpecialty(specialtyKey);
-  };
-
-  const applyPreset = async () => {
-    if (!user?.id || !selectedSector || !selectedSpecialty) {
-      toast.error(t("onboarding.select_sector_specialty"));
-      return;
-    }
-
-    setApplyingPreset(true);
-    try {
-      const preset = availableSpecialties.find(
-        (p) => p.sector === selectedSector && p.specialty === selectedSpecialty,
-      );
-
-      if (!preset) {
-        toast.error(t("onboarding.preset_not_found"));
-        setApplyingPreset(false);
-        return;
-      }
-
-      // Update barbershop metadata
-      const { error: updateError } = await supabase
-        .from("barbershops")
-        .update({
-          sector: selectedSector,
-          specialty: selectedSpecialty,
-          onboarding_status: "configured",
-        })
-        .eq("owner_user_id", user.id);
-
-      if (updateError) throw updateError;
-
-      // Apply default services
-      if (preset.default_services && Array.isArray(preset.default_services)) {
-        // First get the barbershop id
-        const { data: bshop } = await supabase
-          .from("barbershops")
-          .select("id")
-          .eq("owner_user_id", user.id)
-          .single();
-
-        if (bshop) {
-          const servicesToInsert = preset.default_services.map((service: any) => ({
-            barbershop_id: bshop.id,
-            name: service.name,
-            duration_minutes: service.duration_minutes || service.duration || 30, // Normalize duration
-            price: service.price,
-            description: service.description,
-            is_active: true,
-          }));
-          
-          const { error: servicesError } = await supabase
-            .from("services")
-            .insert(servicesToInsert);
-          if (servicesError) console.error("Error inserting services:", servicesError);
-        }
-      }
-
-      // TODO: Implement logic to apply default automations, policies, resources
-      // This would involve inserting into respective tables based on preset.default_automations, etc.
-
-      toast.success(t("onboarding.setup_success"));
-      navigate("/painel-dono"); 
-    } catch (error: any) {
-      toast.error(t("onboarding.apply_error") + ": " + error.message);
-      console.error("Erro ao aplicar preset:", error);
-    } finally {
-      setApplyingPreset(false);
-    }
-  };
-
-  const filteredSpecialties = availableSpecialties.filter(
-    (preset) => preset.sector === selectedSector,
-  );
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="ml-2 text-muted-foreground">{t("common.loading")}</p>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="w-full p-4 flex justify-between items-center border-b">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xl leading-none">A</span>
-          </div>
-          <h1 className="text-xl font-bold">Agenda App</h1>
-        </div>
+    <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4 overflow-hidden relative">
+      {/* Background Glow */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[128px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[128px] pointer-events-none" />
+
+      {/* Language Selector in Corner */}
+      <div className="absolute top-4 right-4 z-50">
         <LanguageSelector />
-      </header>
-      
-      <main className="flex-1 flex flex-col items-center justify-center p-4">
-        <Card className="w-full max-w-3xl border-none shadow-premium bg-card/50 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-              {t("onboarding.welcome_title")}
-            </CardTitle>
-            <CardDescription className="text-lg">
-              {t("onboarding.welcome_description")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-8">
-            {/* Step 1: Select Sector */}
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold flex items-center gap-2">
-                <span className="w-6 h-6 flex items-center justify-center bg-primary/20 text-primary rounded-full text-sm">1</span>
-                {t("onboarding.select_sector")}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {SECTORS.map((sector) => (
-                  <Button
-                    key={sector.key}
-                    variant={selectedSector === sector.key ? "default" : "outline"}
-                    onClick={() => handleSelectSector(sector.key)}
-                    className={`flex flex-col h-auto py-6 items-center justify-center text-center transition-all duration-300 ${
-                      selectedSector === sector.key 
-                      ? "ring-2 ring-primary ring-offset-2 scale-105 shadow-lg" 
-                      : "hover:border-primary/50 hover:bg-primary/5"
-                    }`}
-                  >
-                    <span className="text-4xl mb-3">{sector.icon}</span>
-                    <span className="font-bold text-base">{sector.label}</span>
-                    <span className="text-xs text-muted-foreground mt-2 px-2 leading-relaxed">
-                      {sector.description}
-                    </span>
-                  </Button>
-                ))}
-              </div>
-            </div>
+      </div>
 
-            {/* Step 2: Select Specialty (conditionally rendered) */}
-            {selectedSector && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                <h3 className="text-xl font-semibold flex items-center gap-2">
-                  <span className="w-6 h-6 flex items-center justify-center bg-primary/20 text-primary rounded-full text-sm">2</span>
-                  {t("onboarding.select_specialty", {
-                    sector: SECTORS.find(s => s.key === selectedSector)?.label
-                  })}
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredSpecialties.length > 0 ? (
-                    filteredSpecialties.map((preset) => (
-                      <Button
-                        key={preset.id}
-                        variant={
-                          selectedSpecialty === preset.specialty
-                            ? "default"
-                            : "outline"
-                        }
-                        onClick={() => handleSelectSpecialty(preset.specialty)}
-                        className={`flex flex-col h-auto py-6 items-center justify-center text-center transition-all duration-300 ${
-                          selectedSpecialty === preset.specialty
-                          ? "ring-2 ring-primary ring-offset-2 scale-105 shadow-lg" 
-                          : "hover:border-primary/50 hover:bg-primary/5"
-                        }`}
-                      >
-                        <span className="text-4xl mb-3">{preset.icon || "✨"}</span>
-                        <span className="font-bold text-base">{preset.display_name || preset.specialty}</span>
-                        <span className="text-xs text-muted-foreground mt-2 px-2 leading-relaxed">
-                          {preset.description}
-                        </span>
-                      </Button>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground col-span-full text-center py-8 border-2 border-dashed rounded-xl">
-                      {t("onboarding.no_specialties_available")}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
+      <div className="w-full max-w-4xl relative z-10 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+        <header className="text-center space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium mb-4">
+            <Sparkles className="w-3 h-3" />
+            <span>Agenda AI Premium v2.0</span>
+          </div>
+          <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tight">
+            Bem-vindo ao <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Futuro do Agendamento</span>
+          </h1>
+          <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto">
+            Escolha como você deseja utilizar nossa plataforma potencializada por Inteligência Artificial.
+          </p>
+        </header>
 
-            {/* Step 3: Apply Configuration */}
-            {selectedSpecialty && (
-              <div className="text-center pt-4 animate-in zoom-in duration-300">
-                <Button
-                  onClick={applyPreset}
-                  disabled={applyingPreset}
-                  size="lg"
-                  className="w-full max-w-sm h-14 text-lg font-bold shadow-xl shadow-primary/20 transition-all hover:scale-105"
-                >
-                  {applyingPreset ? (
-                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                  ) : (
-                    <ArrowRight className="w-5 h-5 mr-3" />
-                  )}
-                  {applyingPreset ? t("common.applying") : t("onboarding.apply_preset_button")}
-                </Button>
+        <div className="grid md:grid-cols-2 gap-6 pt-8">
+          {/* Card Dono */}
+          <Card 
+            className="group relative overflow-hidden bg-slate-900/50 border-white/5 hover:border-blue-500/30 transition-all duration-500 cursor-pointer"
+            onClick={() => handleSelect('owner')}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-8 space-y-6">
+              <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                <Building2 className="w-8 h-8 text-blue-400" />
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold text-white group-hover:text-blue-400 transition-colors">Dono de Estabelecimento</h2>
+                <p className="text-slate-400 leading-relaxed">
+                  Gerencie sua equipe, financeiro, marketing automático e fidelização de clientes em um só lugar.
+                </p>
+              </div>
+              <ul className="space-y-3 text-sm text-slate-500">
+                <li className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-blue-500/50" />
+                  <span>Dashboard Administrativo Completo</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-blue-500/50" />
+                  <span>IA para Campanhas de Marketing</span>
+                </li>
+              </ul>
+              <Button className="w-full bg-blue-600 hover:bg-blue-500 text-white border-none group-hover:gap-4 transition-all">
+                Começar agora
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Card Profissional */}
+          <Card 
+            className="group relative overflow-hidden bg-slate-900/50 border-white/5 hover:border-indigo-500/30 transition-all duration-500 cursor-pointer"
+            onClick={() => handleSelect('barber')}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-8 space-y-6">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                <Scissors className="w-8 h-8 text-indigo-400" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold text-white group-hover:text-indigo-400 transition-colors">Profissional / Autônomo</h2>
+                <p className="text-slate-400 leading-relaxed">
+                  Organize sua agenda pessoal, acompanhe seus ganhos e tenha um link exclusivo de agendamento.
+                </p>
+              </div>
+              <ul className="space-y-3 text-sm text-slate-500">
+                <li className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-indigo-500/50" />
+                  <span>Agenda Digital Inteligente</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-indigo-500/50" />
+                  <span>Link de Agendamento Online</span>
+                </li>
+              </ul>
+              <Button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white border-none group-hover:gap-4 transition-all">
+                Começar agora
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="pt-8 flex flex-col md:flex-row items-center justify-center gap-8 text-slate-500 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            Sistemas Online via Cloud
+          </div>
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4" />
+            Criptografia de Ponta-a-Ponta
+          </div>
+        </div>
+      </div>
+
+      <footer className="relative z-10 py-8 text-center text-slate-500 text-sm border-t border-white/5">
+        &copy; {new Date().getFullYear()} Agenda AI Premium. Todos os direitos reservados.
+      </footer>
     </div>
   );
 };
 
+// Componente Lock não estava importado, corrigindo
+const Lock = ({ className }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="24" 
+    height="24" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
 export default OnboardingSelectionPage;
-```

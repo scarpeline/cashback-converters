@@ -30,8 +30,8 @@ export interface ClientScore {
  */
 export async function getClients(barbershopId: string, limit: number = 50): Promise<Client[]> {
   try {
-    const { data, error } = await (supabase as any)
-      .from('profiles')
+    const { data, error } = await supabase
+      .from('clients')
       .select('*')
       .eq('barbershop_id', barbershopId)
       .order('created_at', { ascending: false })
@@ -42,7 +42,11 @@ export async function getClients(barbershopId: string, limit: number = 50): Prom
       return [];
     }
 
-    return data || [];
+    // Adaptar campos se necessário (ex: last_visit_at para last_visit)
+    return (data || []).map(client => ({
+      ...client,
+      last_visit: client.last_visit_at
+    })) as any;
   } catch (error) {
     console.error('Erro ao buscar clientes:', error);
     return [];
@@ -54,10 +58,10 @@ export async function getClients(barbershopId: string, limit: number = 50): Prom
  */
 export async function getClientById(clientId: string): Promise<Client | null> {
   try {
-    const { data, error } = await (supabase as any)
-      .from('profiles')
+    const { data, error } = await supabase
+      .from('clients')
       .select('*')
-      .eq('user_id', clientId)
+      .eq('id', clientId)
       .single();
 
     if (error) {
@@ -65,7 +69,10 @@ export async function getClientById(clientId: string): Promise<Client | null> {
       return null;
     }
 
-    return data;
+    return {
+      ...data,
+      last_visit: data.last_visit_at
+    } as any;
   } catch (error) {
     console.error('Erro ao buscar cliente:', error);
     return null;
@@ -77,18 +84,21 @@ export async function getClientById(clientId: string): Promise<Client | null> {
  */
 export async function getClientByWhatsApp(whatsapp: string): Promise<Client | null> {
   try {
-    const { data, error } = await (supabase as any)
-      .from('profiles')
+    const { data, error } = await supabase
+      .from('clients')
       .select('*')
       .eq('whatsapp', whatsapp)
-      .single();
+      .maybeSingle();
 
     if (error) {
-      console.error('Erro ao buscar cliente:', error);
+      console.error('Erro ao buscar cliente por WHATSAPP:', error);
       return null;
     }
 
-    return data;
+    return data ? {
+      ...data,
+      last_visit: data.last_visit_at
+    } as any : null;
   } catch (error) {
     console.error('Erro ao buscar cliente:', error);
     return null;
@@ -99,16 +109,16 @@ export async function getClientByWhatsApp(whatsapp: string): Promise<Client | nu
  * Criar novo cliente
  */
 export async function createClient(clientData: {
-  user_id: string;
+  user_id?: string;
   name: string;
-  phone: string;
+  phone?: string;
   whatsapp: string;
-  email: string;
-  barbershop_id?: string;
+  email?: string;
+  barbershop_id: string;
 }): Promise<Client | null> {
   try {
-    const { data, error } = await (supabase as any)
-      .from('profiles')
+    const { data, error } = await supabase
+      .from('clients')
       .insert({
         user_id: clientData.user_id,
         name: clientData.name,
@@ -125,7 +135,10 @@ export async function createClient(clientData: {
       return null;
     }
 
-    return data;
+    return {
+      ...data,
+      last_visit: data.last_visit_at
+    } as any;
   } catch (error) {
     console.error('Erro ao criar cliente:', error);
     return null;
@@ -140,10 +153,10 @@ export async function updateClient(
   updates: Partial<Client>
 ): Promise<Client | null> {
   try {
-    const { data, error } = await (supabase as any)
-      .from('profiles')
-      .update(updates)
-      .eq('user_id', clientId)
+    const { data, error } = await supabase
+      .from('clients')
+      .update(updates as any)
+      .eq('id', clientId)
       .select()
       .single();
 
@@ -152,7 +165,10 @@ export async function updateClient(
       return null;
     }
 
-    return data;
+    return {
+      ...data,
+      last_visit: data.last_visit_at
+    } as any;
   } catch (error) {
     console.error('Erro ao atualizar cliente:', error);
     return null;
@@ -216,43 +232,29 @@ export async function searchClientsByWhatsApp(
 }
 
 /**
- * Buscar clientes ativos (últimos 30 dias)
+ * Buscar clientes ativos (últimos dias)
  */
-export async function getActiveClients(barbershopId: string, days: number = 30): Promise<Client[]> {
+export async function getActiveClients(barbershopId: string, days: number = 60): Promise<Client[]> {
   try {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
-    const { data: appointments, error: appointmentsError } = await (supabase as any)
-      .from('appointments')
-      .select('client_user_id')
-      .eq('barbershop_id', barbershopId)
-      .gte('scheduled_at', cutoffDate.toISOString())
-      .distinct('client_user_id');
-
-    if (appointmentsError) {
-      console.error('Erro ao buscar clientes ativos:', appointmentsError);
-      return [];
-    }
-
-    const clientIds = appointments?.map((a: any) => a.client_user_id) || [];
-    
-    if (clientIds.length === 0) {
-      return [];
-    }
-
-    const { data, error } = await (supabase as any)
-      .from('profiles')
+    const { data, error } = await supabase
+      .from('clients')
       .select('*')
       .eq('barbershop_id', barbershopId)
-      .in('user_id', clientIds);
+      .gte('last_visit_at', cutoffDate.toISOString())
+      .order('last_visit_at', { ascending: false });
 
     if (error) {
       console.error('Erro ao buscar clientes ativos:', error);
       return [];
     }
 
-    return data || [];
+    return (data || []).map(client => ({
+      ...client,
+      last_visit: client.last_visit_at
+    })) as any;
   } catch (error) {
     console.error('Erro ao buscar clientes ativos:', error);
     return [];
@@ -260,39 +262,29 @@ export async function getActiveClients(barbershopId: string, days: number = 30):
 }
 
 /**
- * Buscar clientes inativos (mais de 30 dias)
+ * Buscar clientes inativos (mais de X dias)
  */
-export async function getInactiveClients(barbershopId: string, days: number = 30): Promise<Client[]> {
+export async function getInactiveClients(barbershopId: string, days: number = 60): Promise<Client[]> {
   try {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
-    const { data: appointments, error: appointmentsError } = await (supabase as any)
-      .from('appointments')
-      .select('client_user_id')
-      .eq('barbershop_id', barbershopId)
-      .gte('scheduled_at', cutoffDate.toISOString())
-      .distinct('client_user_id');
-
-    if (appointmentsError) {
-      console.error('Erro ao buscar clientes inativos:', appointmentsError);
-      return [];
-    }
-
-    const activeClientIds = appointments?.map((a: any) => a.client_user_id) || [];
-    
-    const { data, error } = await (supabase as any)
-      .from('profiles')
+    const { data, error } = await supabase
+      .from('clients')
       .select('*')
       .eq('barbershop_id', barbershopId)
-      .not('user_id', 'in', `(${activeClientIds.map(id => `'${id}'`).join(',')})`);
+      .or(`last_visit_at.lt.${cutoffDate.toISOString()},last_visit_at.is.null`)
+      .order('last_visit_at', { ascending: false });
 
     if (error) {
       console.error('Erro ao buscar clientes inativos:', error);
       return [];
     }
 
-    return data || [];
+    return (data || []).map(client => ({
+      ...client,
+      last_visit: client.last_visit_at
+    })) as any;
   } catch (error) {
     console.error('Erro ao buscar clientes inativos:', error);
     return [];

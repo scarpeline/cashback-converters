@@ -31,6 +31,10 @@ export const clientKeys = {
   inactive: (barbershopId: string, days: number) => [...clientKeys.all, 'inactive', barbershopId, days] as const,
   top: (barbershopId: string) => [...clientKeys.all, 'top', barbershopId] as const,
   score: (clientId: string) => [...clientKeys.all, 'score', clientId] as const,
+  byScore: (barbershopId: string, min: number, max: number) => [...clientKeys.all, 'byScore', barbershopId, min, max] as const,
+  byRecency: (barbershopId: string, recency: string) => [...clientKeys.all, 'byRecency', barbershopId, recency] as const,
+  bySpending: (barbershopId: string, min: number, max: number) => [...clientKeys.all, 'bySpending', barbershopId, min, max] as const,
+  byFrequency: (barbershopId: string, min: number, max: number) => [...clientKeys.all, 'byFrequency', barbershopId, min, max] as const,
 };
 
 /**
@@ -61,7 +65,7 @@ export function useClient(clientId: string) {
  */
 export function useClientByWhatsApp(whatsapp: string) {
   return useQuery({
-    queryKey: clientKeys.detail(whatsapp),
+    queryKey: ['clients', 'whatsapp', whatsapp],
     queryFn: () => getClientByWhatsApp(whatsapp),
     enabled: !!whatsapp,
     staleTime: 5 * 60 * 1000,
@@ -91,9 +95,11 @@ export function useUpdateClient() {
   return useMutation({
     mutationFn: ({ clientId, updates }: { clientId: string; updates: Partial<Client> }) =>
       updateClient(clientId, updates),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: clientKeys.detail(variables.clientId) });
-      queryClient.invalidateQueries({ queryKey: clientKeys.list('') });
+    onSuccess: (data) => {
+      if (data) {
+        queryClient.invalidateQueries({ queryKey: clientKeys.detail(data.id) });
+        queryClient.invalidateQueries({ queryKey: clientKeys.list(data.barbershop_id) });
+      }
     },
   });
 }
@@ -101,7 +107,7 @@ export function useUpdateClient() {
 /**
  * Hook para buscar clientes ativos
  */
-export function useActiveClients(barbershopId: string, days: number = 30) {
+export function useActiveClients(barbershopId: string, days: number = 60) {
   return useQuery({
     queryKey: clientKeys.active(barbershopId, days),
     queryFn: () => getActiveClients(barbershopId, days),
@@ -112,7 +118,7 @@ export function useActiveClients(barbershopId: string, days: number = 30) {
 /**
  * Hook para buscar clientes inativos
  */
-export function useInactiveClients(barbershopId: string, days: number = 30) {
+export function useInactiveClients(barbershopId: string, days: number = 60) {
   return useQuery({
     queryKey: clientKeys.inactive(barbershopId, days),
     queryFn: () => getInactiveClients(barbershopId, days),
@@ -172,7 +178,7 @@ export function useTopClients(barbershopId: string) {
  */
 export function useClientsByScore(barbershopId: string, minScore: number, maxScore: number = 100) {
   return useQuery({
-    queryKey: clientKeys.all,
+    queryKey: clientKeys.byScore(barbershopId, minScore, maxScore),
     queryFn: () => getClientsByScore(barbershopId, minScore, maxScore),
     staleTime: 10 * 60 * 1000,
   });
@@ -183,7 +189,7 @@ export function useClientsByScore(barbershopId: string, minScore: number, maxSco
  */
 export function useClientsByRecency(barbershopId: string, recency: 'recent' | 'active' | 'inactive' | 'dormant') {
   return useQuery({
-    queryKey: clientKeys.all,
+    queryKey: clientKeys.byRecency(barbershopId, recency),
     queryFn: () => getClientsByRecency(barbershopId, recency),
     staleTime: 10 * 60 * 1000,
   });
@@ -194,7 +200,7 @@ export function useClientsByRecency(barbershopId: string, recency: 'recent' | 'a
  */
 export function useClientsBySpending(barbershopId: string, minSpent: number, maxSpent: number = 10000) {
   return useQuery({
-    queryKey: clientKeys.all,
+    queryKey: clientKeys.bySpending(barbershopId, minSpent, maxSpent),
     queryFn: () => getClientsBySpending(barbershopId, minSpent, maxSpent),
     staleTime: 10 * 60 * 1000,
   });
@@ -205,7 +211,7 @@ export function useClientsBySpending(barbershopId: string, minSpent: number, max
  */
 export function useClientsByFrequency(barbershopId: string, minVisits: number, maxVisits: number = 100) {
   return useQuery({
-    queryKey: clientKeys.all,
+    queryKey: clientKeys.byFrequency(barbershopId, minVisits, maxVisits),
     queryFn: () => getClientsByFrequency(barbershopId, minVisits, maxVisits),
     staleTime: 10 * 60 * 1000,
   });
@@ -215,12 +221,13 @@ export function useClientsByFrequency(barbershopId: string, minVisits: number, m
  * Hook para dashboard de clientes
  */
 export function useClientDashboard(barbershopId: string) {
-  const { data: clients, isLoading: loadingClients } = useClients(barbershopId);
-  const { data: active, isLoading: loadingActive } = useActiveClients(barbershopId, 30);
-  const { data: inactive, isLoading: loadingInactive } = useInactiveClients(barbershopId, 30);
-  const { data: top, isLoading: loadingTop } = useTopClients(barbershopId);
+  const { data: clients, isLoading: loadingClients, error: errorClients } = useClients(barbershopId);
+  const { data: active, isLoading: loadingActive, error: errorActive } = useActiveClients(barbershopId, 30);
+  const { data: inactive, isLoading: loadingInactive, error: errorInactive } = useInactiveClients(barbershopId, 30);
+  const { data: top, isLoading: loadingTop, error: errorTop } = useTopClients(barbershopId);
 
   const loading = loadingClients || loadingActive || loadingInactive || loadingTop;
+  const error = errorClients || errorActive || errorInactive || errorTop;
 
   return {
     clients: clients || [],
@@ -228,5 +235,6 @@ export function useClientDashboard(barbershopId: string) {
     inactiveClients: inactive || [],
     topClients: top || [],
     loading,
+    error,
   };
 }
