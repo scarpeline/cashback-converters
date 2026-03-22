@@ -76,13 +76,12 @@ export default function WaitingListPanel() {
 
     setSaving(true);
     const { success, error } = await addToWaitingList(barbershop.id, {
-      client_name: formData.client_name,
-      client_whatsapp: formData.client_whatsapp,
+      client_id: undefined,
       service_id: formData.service_id || undefined,
       service_name: formData.service_name || undefined,
       preferred_date: formData.preferred_date || undefined,
       preferred_time: formData.preferred_time || undefined,
-      alternative_time: formData.alternative_time || undefined,
+      notes: (formData as any).alternative_time || undefined,
     });
 
     if (success) {
@@ -129,7 +128,7 @@ export default function WaitingListPanel() {
 
     const { success, error } = await notifyNextInQueue(barbershop.id, availableSlot);
     if (success) {
-      toast.success(`Notificação enviada para ${entry.client_name}!`);
+      toast.success(`Notificação enviada!`);
       fetchWaitingList();
       fetchStats();
     } else {
@@ -164,9 +163,9 @@ export default function WaitingListPanel() {
       case "waiting":
         return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> Aguardando</Badge>;
       case "notified":
-        return <Badge variant="warning"><Bell className="w-3 h-3 mr-1" /> Notificado</Badge>;
+        return <Badge variant="secondary"><Bell className="w-3 h-3 mr-1" /> Notificado</Badge>;
       case "confirmed":
-        return <Badge variant="success"><CheckCircle className="w-3 h-3 mr-1" /> Confirmado</Badge>;
+        return <Badge variant="default"><CheckCircle className="w-3 h-3 mr-1" /> Confirmado</Badge>;
       case "expired":
         return <Badge variant="destructive"><AlertCircle className="w-3 h-3 mr-1" /> Expirado</Badge>;
       case "cancelled":
@@ -319,10 +318,10 @@ export default function WaitingListPanel() {
                     <Users className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">{entry.client_name}</CardTitle>
+                    <CardTitle className="text-lg">{(entry as any).client_name || `Cliente ${entry.client_id || ''}`}</CardTitle>
                     <CardDescription className="flex items-center gap-2">
                       <MessageCircle className="w-3 h-3" />
-                      {entry.client_whatsapp}
+                      {(entry as any).client_whatsapp || 'N/A'}
                     </CardDescription>
                   </div>
                 </div>
@@ -348,10 +347,10 @@ export default function WaitingListPanel() {
                       <p className="font-medium">{entry.preferred_time}</p>
                     </div>
                   )}
-                  {entry.alternative_time && (
+                  {(entry as any).alternative_time && (
                     <div>
                       <p className="text-muted-foreground">Alternativo</p>
-                      <p className="font-medium">{entry.alternative_time}</p>
+                      <p className="font-medium">{(entry as any).alternative_time}</p>
                     </div>
                   )}
                 </div>

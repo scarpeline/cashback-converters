@@ -19,10 +19,10 @@ import LanguageSelector from '@/components/LanguageSelector';
 const OnboardingSelectionPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { setType } = useOnboarding();
+  const { setSelectedSector } = useOnboarding();
 
   const handleSelect = (type: 'owner' | 'barber') => {
-    setType(type);
+    setSelectedSector(type);
     if (type === 'owner') {
       navigate('/onboarding/owner');
     } else {
