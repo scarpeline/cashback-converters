@@ -63,11 +63,11 @@ export default function ResourcesPanel() {
       setEditingResource(resource);
       setFormData({
         name: resource.name,
-        resource_type: resource.type,
+        resource_type: resource.resource_type,
         description: resource.description || "",
-        capacity: 1,
-        is_active: resource.is_available,
-        color: "#000000",
+        capacity: resource.capacity,
+        is_active: resource.is_active,
+        color: resource.color,
       });
     } else {
       setEditingResource(null);
@@ -130,7 +130,7 @@ export default function ResourcesPanel() {
   };
 
   const handleToggle = async (resource: Resource) => {
-    await toggleResource(resource.id, !resource.is_available);
+    await toggleResource(resource.id, !resource.is_active);
     fetchResources();
   };
 
@@ -194,30 +194,30 @@ export default function ResourcesPanel() {
                 <div
                   key={resource.id}
                   className={`flex items-center justify-between p-4 border rounded-lg ${
-                    resource.is_available ? "bg-card" : "bg-muted/50"
+                    resource.is_active ? "bg-card" : "bg-muted/50"
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-full ${resource.is_available ? "bg-primary/10" : "bg-muted"}`}>
-                      {getResourceIcon(resource.type)}
+                    <div className={`p-2 rounded-full ${resource.is_active ? "bg-primary/10" : "bg-muted"}`}>
+                      {getResourceIcon(resource.resource_type)}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className={`font-medium ${!resource.is_available ? "text-muted-foreground" : ""}`}>
+                        <p className={`font-medium ${!resource.is_active ? "text-muted-foreground" : ""}`}>
                           {resource.name}
                         </p>
                         <Badge variant="outline" className="text-xs">
-                          {getResourceTypeLabel(resource.type)}
+                          {getResourceTypeLabel(resource.resource_type)}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {resource.description || "Sem descrição"}
+                        Capacidade: {resource.capacity} | {resource.description || "Sem descrição"}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
-                      checked={resource.is_available}
+                      checked={resource.is_active}
                       onCheckedChange={() => handleToggle(resource)}
                     />
                     <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(resource)}>

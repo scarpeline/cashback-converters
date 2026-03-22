@@ -5,11 +5,15 @@ export interface Automation {
   id: string;
   barbershop_id: string;
   name: string;
-  type: string;
-  trigger_event: string;
+  description: string | null;
+  trigger_type: string;
+  trigger_hours_before: number | null;
+  trigger_days_inactive: number | null;
   action_type: string;
-  config: any;
+  action_config: any;
+  template_message: string | null;
   is_active: boolean;
+  priority: number;
   created_at: string;
   updated_at: string;
 }
@@ -20,10 +24,11 @@ export const getAutomations = async (barbershopId: string): Promise<Automation[]
       .from("automations")
       .select("*")
       .eq("barbershop_id", barbershopId)
+      .order("priority", { ascending: false })
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return (data || []) as Automation[];
+    return data || [];
   } catch (error) {
     console.error("Erro ao buscar automações:", error);
     toast.error("Erro ao carregar automações.");
@@ -36,14 +41,9 @@ export const createAutomation = async (
   automation: Partial<Automation>,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { error } = await (supabase.from("automations") as any).insert({
+    const { error } = await supabase.from("automations").insert({
       barbershop_id: barbershopId,
-      name: automation.name,
-      type: automation.type || 'reminder',
-      trigger_event: automation.trigger_event || 'appointment_created',
-      action_type: automation.action_type || 'send_whatsapp',
-      config: automation.config || {},
-      is_active: automation.is_active ?? true,
+      ...automation,
     });
 
     if (error) throw error;
@@ -61,8 +61,8 @@ export const updateAutomation = async (
   updates: Partial<Automation>,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { error } = await (supabase
-      .from("automations") as any)
+    const { error } = await supabase
+      .from("automations")
       .update(updates)
       .eq("id", automationId);
 

@@ -98,7 +98,7 @@ export function useUpdateClient() {
     onSuccess: (data) => {
       if (data) {
         queryClient.invalidateQueries({ queryKey: clientKeys.detail(data.id) });
-        queryClient.invalidateQueries({ queryKey: clientKeys.all });
+        queryClient.invalidateQueries({ queryKey: clientKeys.list(data.barbershop_id) });
       }
     },
   });

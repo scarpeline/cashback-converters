@@ -11,10 +11,10 @@ import {
 import { toast } from "sonner";
 
 // Importar serviços existentes para interagir com o banco de dados
-import { getClientByWhatsApp, createClient, Client } from "@/services/clientService";
+import { getClientByWhatsapp, createClient, Client } from "@/services/clientService";
 import { getServices, Service } from "@/services/serviceService";
 import { getProfessionals, Professional } from "@/services/professionalService";
-import { createAppointment, getClientAppointments, cancelAppointment, getAvailableSlots as getAvailableSlotsForDate } from "@/services/schedulingService";
+import { createAppointment, getUpcomingAppointments, cancelAppointment, getAvailableSlotsForDate } from "@/services/schedulingService";
 
 
 export const handleIncomingWhatsappMessage = async (
@@ -238,9 +238,10 @@ const handleConfirmBookingStep = async (conversation: WhatsappConversation, mess
 
   if (messageBody.trim().toLowerCase() === "sim") {
     // Primeiro, tentar encontrar o cliente ou criar um novo
-    let client = await getClientByWhatsApp(clientWhatsapp);
+    let client = await getClientByWhatsapp(barbershopId, clientWhatsapp);
     if (!client) {
-      client = await createClient({ name: clientName, whatsapp: clientWhatsapp, barbershop_id: barbershopId });
+      // Se não encontrou, criar um cliente básico. Em um sistema real, pediríamos mais dados.
+      client = await createClient(barbershopId, { name: clientName, whatsapp: clientWhatsapp });
     }
 
     if (!client) {
@@ -258,9 +259,9 @@ const handleConfirmBookingStep = async (conversation: WhatsappConversation, mess
       client_name: client.name,
       client_whatsapp: client.whatsapp,
     };
-    const result = await createAppointment(barbershopId, selectedProfessional?.id || '', selectedService.id, client.id, client.name, client.whatsapp, new Date(`${selectedDate}T${selectedTime}:00Z`));
+    const { success } = await createAppointment(bookingDetails);
 
-    if (result) {
+    if (success) {
       await endConversation(conversation.id);
       const confirmationTemplate = await getMessageTemplate(barbershopId, "booking_confirmation");
       return formatMessage(confirmationTemplate?.template_content || "Seu agendamento de {service_name} com {professional_name} para {date} às {time} foi confirmado. Te esperamos!", {
@@ -288,13 +289,13 @@ const handleViewBookingsStep = async (conversation: WhatsappConversation, messag
   const clientWhatsapp = conversation.client_whatsapp;
   const clientName = conversation.conversation_state?.client_name || "Cliente";
 
-  let client = await getClientByWhatsApp(clientWhatsapp);
+  let client = await getClientByWhatsapp(barbershopId, clientWhatsapp);
   if (!client) {
     await endConversation(conversation.id);
     return "Olá {client_name}, não encontramos nenhum agendamento para este número. Você já se cadastrou?".replace("{client_name}", clientName);
   }
 
-  const bookings = await getClientAppointments(client.id);
+  const bookings = await getUpcomingAppointments(barbershopId, client.id);
 
   if (bookings.length === 0) {
     await endConversation(conversation.id);
@@ -314,13 +315,13 @@ const handleCancelBookingSelectStep = async (conversation: WhatsappConversation,
   const clientWhatsapp = conversation.client_whatsapp;
   const clientName = conversation.conversation_state?.client_name || "Cliente";
 
-  let client = await getClientByWhatsApp(clientWhatsapp);
+  let client = await getClientByWhatsapp(barbershopId, clientWhatsapp);
   if (!client) {
     await endConversation(conversation.id);
     return "Olá {client_name}, não encontramos nenhum agendamento para este número. Você já se cadastrou?".replace("{client_name}", clientName);
   }
 
-  const bookings = await getClientAppointments(client.id);
+  const bookings = await getUpcomingAppointments(barbershopId, client.id);
   if (bookings.length === 0) {
     await endConversation(conversation.id);
     return "Olá {client_name}, você não possui agendamentos futuros para cancelar.".replace("{client_name}", clientName);
@@ -345,9 +346,9 @@ const handleCancelBookingConfirmStep = async (conversation: WhatsappConversation
 
   if (bookingIndex >= 0 && bookingIndex < bookings.length) {
     const bookingToCancel = bookings[bookingIndex];
-    const cancelResult = await cancelAppointment(bookingToCancel.id);
+    const { success } = await cancelAppointment(barbershopId, bookingToCancel.id);
 
-    if (cancelResult) {
+    if (success) {
       await endConversation(conversation.id);
       const cancellationTemplate = await getMessageTemplate(barbershopId, "booking_cancellation_success");
       return formatMessage(cancellationTemplate?.template_content || "Seu agendamento de {service_name} para {date} às {time} foi cancelado com sucesso, {client_name}.", {

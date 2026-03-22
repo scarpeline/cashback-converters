@@ -28,26 +28,27 @@ export const getConversation = async (
   barbershopId: string,
   clientWhatsapp: string
 ): Promise<WhatsappConversation | null> => {
-  const { data, error } = await (supabase
-    .from("whatsapp_conversations" as any) as any)
+  const { data, error } = await supabase
+    .from("whatsapp_conversations")
     .select("*")
     .eq("barbershop_id", barbershopId)
     .eq("client_whatsapp", clientWhatsapp)
     .eq("is_active", true)
     .single();
 
-  if (error && error.code !== "PGRST116") {
+  if (error && error.code !== "PGRST116") { // PGRST116 means no rows found
     console.error("Erro ao buscar conversa:", error);
+    // toast.error("Erro ao buscar conversa."); // Avoid toast in background service
   }
-  return (data as WhatsappConversation) || null;
+  return data || null;
 };
 
 export const createConversation = async (
   barbershopId: string,
   clientWhatsapp: string
 ): Promise<WhatsappConversation | null> => {
-  const { data, error } = await (supabase
-    .from("whatsapp_conversations" as any) as any)
+  const { data, error } = await supabase
+    .from("whatsapp_conversations")
     .insert({
       barbershop_id: barbershopId,
       client_whatsapp: clientWhatsapp,
@@ -60,16 +61,17 @@ export const createConversation = async (
 
   if (error) {
     console.error("Erro ao criar conversa:", error);
+    // toast.error("Erro ao criar conversa.");
   }
-  return (data as WhatsappConversation) || null;
+  return data || null;
 };
 
 export const updateConversation = async (
   conversationId: string,
   updates: Partial<Omit<WhatsappConversation, "id" | "barbershop_id" | "client_whatsapp" | "created_at">>
 ): Promise<WhatsappConversation | null> => {
-  const { data, error } = await (supabase
-    .from("whatsapp_conversations" as any) as any)
+  const { data, error } = await supabase
+    .from("whatsapp_conversations")
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq("id", conversationId)
     .select()
@@ -77,20 +79,22 @@ export const updateConversation = async (
 
   if (error) {
     console.error("Erro ao atualizar conversa:", error);
+    // toast.error("Erro ao atualizar conversa.");
   }
-  return (data as WhatsappConversation) || null;
+  return data || null;
 };
 
 export const endConversation = async (
   conversationId: string
 ): Promise<boolean> => {
-  const { error } = await (supabase
-    .from("whatsapp_conversations" as any) as any)
+  const { error } = await supabase
+    .from("whatsapp_conversations")
     .update({ is_active: false, updated_at: new Date().toISOString() })
     .eq("id", conversationId);
 
   if (error) {
     console.error("Erro ao encerrar conversa:", error);
+    // toast.error("Erro ao encerrar conversa.");
     return false;
   }
   return true;
@@ -100,8 +104,8 @@ export const getMessageTemplate = async (
   barbershopId: string,
   templateName: string
 ): Promise<WhatsappMessageTemplate | null> => {
-  const { data, error } = await (supabase
-    .from("whatsapp_message_templates" as any) as any)
+  const { data, error } = await supabase
+    .from("whatsapp_message_templates")
     .select("*")
     .eq("barbershop_id", barbershopId)
     .eq("template_name", templateName)
@@ -111,14 +115,14 @@ export const getMessageTemplate = async (
   if (error && error.code !== "PGRST116") {
     console.error("Erro ao buscar template de mensagem:", error);
   }
-  return (data as WhatsappMessageTemplate) || null;
+  return data || null;
 };
 
 export const getAllMessageTemplates = async (
   barbershopId: string
 ): Promise<WhatsappMessageTemplate[]> => {
-  const { data, error } = await (supabase
-    .from("whatsapp_message_templates" as any) as any)
+  const { data, error } = await supabase
+    .from("whatsapp_message_templates")
     .select("*")
     .eq("barbershop_id", barbershopId)
     .order("template_name");
@@ -128,15 +132,15 @@ export const getAllMessageTemplates = async (
     toast.error("Erro ao carregar templates de mensagem.");
     return [];
   }
-  return (data as WhatsappMessageTemplate[]) || [];
+  return data || [];
 };
 
 export const updateMessageTemplate = async (
   templateId: string,
   updates: Partial<Omit<WhatsappMessageTemplate, "id" | "barbershop_id" | "created_at">>
 ): Promise<WhatsappMessageTemplate | null> => {
-  const { data, error } = await (supabase
-    .from("whatsapp_message_templates" as any) as any)
+  const { data, error } = await supabase
+    .from("whatsapp_message_templates")
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq("id", templateId)
     .select()
@@ -146,15 +150,15 @@ export const updateMessageTemplate = async (
     console.error("Erro ao atualizar template de mensagem:", error);
     toast.error("Erro ao atualizar template de mensagem.");
   }
-  return (data as WhatsappMessageTemplate) || null;
+  return data || null;
 };
 
 export const createMessageTemplate = async (
   barbershopId: string,
   template: Omit<WhatsappMessageTemplate, "id" | "created_at" | "updated_at">
 ): Promise<WhatsappMessageTemplate | null> => {
-  const { data, error } = await (supabase
-    .from("whatsapp_message_templates" as any) as any)
+  const { data, error } = await supabase
+    .from("whatsapp_message_templates")
     .insert({ ...template, barbershop_id: barbershopId })
     .select()
     .single();
@@ -163,14 +167,14 @@ export const createMessageTemplate = async (
     console.error("Erro ao criar template de mensagem:", error);
     toast.error("Erro ao criar template de mensagem.");
   }
-  return (data as WhatsappMessageTemplate) || null;
+  return data || null;
 };
 
 export const deleteMessageTemplate = async (
   templateId: string
 ): Promise<boolean> => {
-  const { error } = await (supabase
-    .from("whatsapp_message_templates" as any) as any)
+  const { error } = await supabase
+    .from("whatsapp_message_templates")
     .delete()
     .eq("id", templateId);
 

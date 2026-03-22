@@ -5,9 +5,11 @@ export interface Resource {
   id: string;
   barbershop_id: string;
   name: string;
-  type: string;
+  resource_type: string;
   description: string | null;
-  is_available: boolean;
+  capacity: number;
+  is_active: boolean;
+  color: string;
   metadata: any;
   created_at: string;
   updated_at: string;
@@ -22,7 +24,7 @@ export const getResources = async (barbershopId: string): Promise<Resource[]> =>
       .order("name", { ascending: true });
 
     if (error) throw error;
-    return (data || []) as Resource[];
+    return data || [];
   } catch (error) {
     console.error("Erro ao buscar recursos:", error);
     toast.error("Erro ao carregar recursos.");
@@ -35,13 +37,9 @@ export const createResource = async (
   resource: Partial<Resource>,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { error } = await (supabase.from("resources") as any).insert({
+    const { error } = await supabase.from("resources").insert({
       barbershop_id: barbershopId,
-      name: resource.name,
-      type: resource.type || 'room',
-      description: resource.description || null,
-      is_available: resource.is_available ?? true,
-      metadata: resource.metadata || {},
+      ...resource,
     });
 
     if (error) throw error;
@@ -59,8 +57,8 @@ export const updateResource = async (
   updates: Partial<Resource>,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { error } = await (supabase
-      .from("resources") as any)
+    const { error } = await supabase
+      .from("resources")
       .update(updates)
       .eq("id", resourceId);
 
@@ -95,9 +93,9 @@ export const deleteResource = async (
 
 export const toggleResource = async (
   resourceId: string,
-  isAvailable: boolean,
+  isActive: boolean,
 ): Promise<{ success: boolean; error?: string }> => {
-  return updateResource(resourceId, { is_available: isAvailable });
+  return updateResource(resourceId, { is_active: isActive });
 };
 
 export const RESOURCE_TYPES = [

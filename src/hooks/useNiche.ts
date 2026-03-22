@@ -3,10 +3,10 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 
 export function useNiche() {
   const { t } = useTranslation();
-  const { selectedSector, selectedSpecialty } = useOnboarding();
+  const { type, sector } = useOnboarding();
 
   // Determina o setor atual baseado no onboarding ou no padrão
-  const currentSector = selectedSector || 'barbershop';
+  const currentSector = sector || (type === 'barber' ? 'barbershop' : 'business');
 
   // Labels dinâmicas
   const nicheLabel = t(`niche.${currentSector}.label`, { defaultValue: t('niche.barbershop.label') });
@@ -16,7 +16,9 @@ export function useNiche() {
     currentNiche: currentSector,
     nicheLabel,
     nicheLabelPlural,
+    type,
     sector: currentSector,
-    specialty: selectedSpecialty,
+    isBarber: type === 'barber',
+    isOwner: type === 'owner'
   };
 }

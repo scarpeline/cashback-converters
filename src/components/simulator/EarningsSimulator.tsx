@@ -102,7 +102,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
 
   const { t, i18n } = useTranslation();
   const { currentNiche } = useNiche();
-  const nLabel = currentNiche;
+  const nLabel = currentNiche.label;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat(i18n.language === 'en' ? 'en-US' : (i18n.language === 'es' ? 'es-ES' : 'pt-BR'), {

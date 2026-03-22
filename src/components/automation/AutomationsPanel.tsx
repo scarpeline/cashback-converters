@@ -67,13 +67,13 @@ export default function AutomationsPanel() {
       setEditingAutomation(automation);
       setFormData({
         name: automation.name,
-        description: (automation as any).description || "",
-        trigger_type: automation.trigger_event,
-        trigger_hours_before: (automation.config as any)?.trigger_hours_before || 24,
+        description: automation.description || "",
+        trigger_type: automation.trigger_type,
+        trigger_hours_before: automation.trigger_hours_before || 24,
         action_type: automation.action_type,
-        template_message: (automation.config as any)?.template_message || "",
+        template_message: automation.template_message || "",
         is_active: automation.is_active,
-        priority: (automation.config as any)?.priority || 0,
+        priority: automation.priority,
       });
     } else {
       setEditingAutomation(null);
@@ -164,10 +164,10 @@ export default function AutomationsPanel() {
                         </Badge>
                       </CardHeader>
                       <CardContent className="space-y-2">
-                        <p className="text-sm text-muted-foreground">{(automation as any).description}</p>
+                        <p className="text-sm text-muted-foreground">{automation.description}</p>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Zap className="mr-1 h-4 w-4" />
-                          <span>Gatilho: {getTriggerLabel(automation.trigger_event)}</span>
+                          <span>Gatilho: {getTriggerLabel(automation.trigger_type)}</span>
                         </div>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <ZapOff className="mr-1 h-4 w-4" />
