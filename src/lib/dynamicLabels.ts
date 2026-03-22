@@ -133,7 +133,7 @@ export function getDynamicLabel(key: string): string {
     if (typeof sectorConfig === 'object' && sectorConfig !== null) {
       return sectorConfig[barbershop.specialty] || sectorConfig.default || config.default;
     }
-    return sectorConfig || config.default;
+    return (typeof sectorConfig === 'string' ? sectorConfig : config.default);
   }
 
   return config.default;
