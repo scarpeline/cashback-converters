@@ -5,17 +5,21 @@ export interface Automation {
   id: string;
   barbershop_id: string;
   name: string;
-  description: string | null;
-  trigger_type: string;
-  trigger_hours_before: number | null;
-  trigger_days_inactive: number | null;
+  type: string;
+  trigger_event: string;
   action_type: string;
-  action_config: any;
-  template_message: string | null;
+  config: any;
   is_active: boolean;
-  priority: number;
   created_at: string;
   updated_at: string;
+  // Extended fields (mapped from config)
+  description?: string | null;
+  trigger_type?: string;
+  trigger_hours_before?: number | null;
+  trigger_days_inactive?: number | null;
+  action_config?: any;
+  template_message?: string | null;
+  priority?: number;
 }
 
 export const getAutomations = async (barbershopId: string): Promise<Automation[]> => {
@@ -43,7 +47,12 @@ export const createAutomation = async (
   try {
     const { error } = await supabase.from("automations").insert({
       barbershop_id: barbershopId,
-      ...automation,
+      name: automation.name || 'Nova Automação',
+      type: automation.type || 'reminder',
+      trigger_event: automation.trigger_event || automation.trigger_type || 'appointment_created',
+      action_type: automation.action_type || 'send_whatsapp',
+      config: automation.config || automation.action_config || {},
+      is_active: automation.is_active ?? true,
     });
 
     if (error) throw error;
@@ -61,9 +70,16 @@ export const updateAutomation = async (
   updates: Partial<Automation>,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.type !== undefined) dbUpdates.type = updates.type;
+    if (updates.trigger_event !== undefined) dbUpdates.trigger_event = updates.trigger_event;
+    if (updates.action_type !== undefined) dbUpdates.action_type = updates.action_type;
+    if (updates.config !== undefined) dbUpdates.config = updates.config;
+    if (updates.is_active !== undefined) dbUpdates.is_active = updates.is_active;
     const { error } = await supabase
       .from("automations")
-      .update(updates)
+      .update(dbUpdates)
       .eq("id", automationId);
 
     if (error) throw error;

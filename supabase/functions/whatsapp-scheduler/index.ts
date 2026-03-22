@@ -1,17 +1,53 @@
 import { serve } from "https://deno.land/std@0.178.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.0";
-import { handleIncomingWhatsappMessage } from "../services/whatsappSchedulingService.ts";
 
 // Configuração do Twilio (variáveis de ambiente)
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
-const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER"); // Seu número Twilio para enviar mensagens
+const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
 
 // Inicializa o cliente Supabase
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
   Deno.env.get("SUPABASE_ANON_KEY") ?? ""
 );
+
+async function handleIncomingWhatsappMessage(
+  barbershopId: string,
+  clientWhatsapp: string,
+  messageBody: string
+): Promise<string> {
+  // Buscar serviços disponíveis
+  const { data: services } = await supabase
+    .from("services")
+    .select("id, name, duration, price")
+    .eq("barbershop_id", barbershopId)
+    .eq("is_active", true);
+
+  // Buscar profissionais disponíveis
+  const { data: professionals } = await supabase
+    .from("professionals")
+    .select("id, name")
+    .eq("barbershop_id", barbershopId)
+    .eq("is_active", true);
+
+  const lowerMsg = messageBody.toLowerCase().trim();
+
+  if (lowerMsg === "agendar" || lowerMsg === "1") {
+    const serviceList = services?.map((s: any, i: number) => `${i + 1}. ${s.name} - R$${s.price}`).join("\n") || "Nenhum serviço disponível";
+    return `📋 *Serviços disponíveis:*\n\n${serviceList}\n\nResponda com o número do serviço desejado.`;
+  }
+
+  if (lowerMsg === "horarios" || lowerMsg === "2") {
+    return "📅 Para ver horários disponíveis, primeiro escolha um serviço respondendo 'agendar'.";
+  }
+
+  if (lowerMsg === "cancelar" || lowerMsg === "3") {
+    return "❌ Para cancelar um agendamento, entre em contato diretamente com o estabelecimento.";
+  }
+
+  return `👋 Olá! Bem-vindo ao nosso sistema de agendamento!\n\nEscolha uma opção:\n1️⃣ Agendar\n2️⃣ Ver horários\n3️⃣ Cancelar agendamento\n\nOu digite sua mensagem para falar com a gente.`;
+}
 
 serve(async (req) => {
   if (req.method !== "POST") {
@@ -20,15 +56,15 @@ serve(async (req) => {
 
   try {
     const formData = await req.formData();
-    const from = formData.get("From") as string; // Número do cliente (ex: whatsapp:+5511999999999)
-    const body = formData.get("Body") as string; // Conteúdo da mensagem
-    const barbershopId = formData.get("barbershopId") as string; // ID da barbearia (precisa ser enviado pelo Twilio ou inferido)
+    const from = formData.get("From") as string;
+    const body = formData.get("Body") as string;
+    const barbershopId = formData.get("barbershopId") as string;
 
     if (!from || !body || !barbershopId) {
       return new Response("Missing required parameters", { status: 400 });
     }
 
-    const clientWhatsapp = from.replace("whatsapp:", ""); // Limpar o prefixo "whatsapp:"
+    const clientWhatsapp = from.replace("whatsapp:", "");
 
     // Processar a mensagem usando o serviço de agendamento
     const responseText = await handleIncomingWhatsappMessage(
@@ -64,6 +100,6 @@ serve(async (req) => {
     return new Response("Message processed", { status: 200 });
   } catch (error) {
     console.error("Erro na Edge Function:", error);
-    return new Response(`Internal Server Error: ${error.message}`, { status: 500 });
+    return new Response(`Internal Server Error: ${(error as Error).message}`, { status: 500 });
   }
 });

@@ -5,9 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface Client {
   id: string;
+  barbershop_id: string;
   user_id: string;
   name: string;
-  phone: string;
+  phone?: string;
   whatsapp: string;
   email: string;
   last_visit?: string;

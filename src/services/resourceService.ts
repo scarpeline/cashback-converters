@@ -5,14 +5,17 @@ export interface Resource {
   id: string;
   barbershop_id: string;
   name: string;
-  resource_type: string;
+  type: string;
   description: string | null;
-  capacity: number;
-  is_active: boolean;
-  color: string;
+  is_available: boolean;
   metadata: any;
   created_at: string;
   updated_at: string;
+  // Extended aliases
+  resource_type?: string;
+  capacity?: number;
+  is_active?: boolean;
+  color?: string;
 }
 
 export const getResources = async (barbershopId: string): Promise<Resource[]> => {
@@ -39,7 +42,11 @@ export const createResource = async (
   try {
     const { error } = await supabase.from("resources").insert({
       barbershop_id: barbershopId,
-      ...resource,
+      name: resource.name || 'Novo Recurso',
+      type: resource.resource_type || resource.type || 'room',
+      description: resource.description || null,
+      is_available: resource.is_active ?? resource.is_available ?? true,
+      metadata: resource.metadata || {},
     });
 
     if (error) throw error;
@@ -57,9 +64,16 @@ export const updateResource = async (
   updates: Partial<Resource>,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.type !== undefined || updates.resource_type !== undefined) dbUpdates.type = updates.type || updates.resource_type;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    if (updates.is_available !== undefined) dbUpdates.is_available = updates.is_available;
+    if (updates.is_active !== undefined) dbUpdates.is_available = updates.is_active;
+    if (updates.metadata !== undefined) dbUpdates.metadata = updates.metadata;
     const { error } = await supabase
       .from("resources")
-      .update(updates)
+      .update(dbUpdates)
       .eq("id", resourceId);
 
     if (error) throw error;
@@ -95,7 +109,7 @@ export const toggleResource = async (
   resourceId: string,
   isActive: boolean,
 ): Promise<{ success: boolean; error?: string }> => {
-  return updateResource(resourceId, { is_active: isActive });
+  return updateResource(resourceId, { is_available: isActive });
 };
 
 export const RESOURCE_TYPES = [
