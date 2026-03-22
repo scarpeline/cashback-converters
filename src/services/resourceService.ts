@@ -42,7 +42,11 @@ export const createResource = async (
   try {
     const { error } = await supabase.from("resources").insert({
       barbershop_id: barbershopId,
-      ...resource,
+      name: resource.name || 'Novo Recurso',
+      type: resource.resource_type || resource.type || 'room',
+      description: resource.description || null,
+      is_available: resource.is_active ?? resource.is_available ?? true,
+      metadata: resource.metadata || {},
     });
 
     if (error) throw error;
