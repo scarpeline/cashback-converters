@@ -164,10 +164,10 @@ export default function AutomationsPanel() {
                         </Badge>
                       </CardHeader>
                       <CardContent className="space-y-2">
-                        <p className="text-sm text-muted-foreground">{automation.description}</p>
+                        <p className="text-sm text-muted-foreground">{(automation as any).description}</p>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Zap className="mr-1 h-4 w-4" />
-                          <span>Gatilho: {getTriggerLabel(automation.trigger_type)}</span>
+                          <span>Gatilho: {getTriggerLabel(automation.trigger_event)}</span>
                         </div>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <ZapOff className="mr-1 h-4 w-4" />

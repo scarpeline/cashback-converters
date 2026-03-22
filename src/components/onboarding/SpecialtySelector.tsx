@@ -55,17 +55,17 @@ export const SpecialtySelector = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {specialties.map((spec) => (
           <Button
-            key={spec.id || spec.value}
-            variant={selectedSpecialty === spec.value ? "default" : "outline"}
-            onClick={() => setSelectedSpecialty(spec.value)}
+            key={spec.id || spec.specialty}
+            variant={selectedSpecialty === spec.specialty ? "default" : "outline"}
+            onClick={() => setSelectedSpecialty(spec.specialty)}
             className={`h-auto py-4 px-6 relative transition-all duration-300 ${
-              selectedSpecialty === spec.value
+              selectedSpecialty === spec.specialty
                 ? "ring-2 ring-primary ring-offset-2 scale-105 shadow-md"
                 : "hover:border-primary/40 hover:bg-primary/5"
             }`}
           >
-            <span className="font-medium">{spec.label}</span>
-            {selectedSpecialty === spec.value && (
+            <span className="font-medium">{spec.display_name}</span>
+            {selectedSpecialty === spec.specialty && (
               <div className="absolute -top-2 -right-2 bg-primary text-white p-1 rounded-full shadow-lg">
                 <Check className="w-3 h-3" />
               </div>

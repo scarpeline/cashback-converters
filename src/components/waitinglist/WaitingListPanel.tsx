@@ -347,10 +347,10 @@ export default function WaitingListPanel() {
                       <p className="font-medium">{entry.preferred_time}</p>
                     </div>
                   )}
-                  {entry.alternative_time && (
+                  {(entry as any).alternative_time && (
                     <div>
                       <p className="text-muted-foreground">Alternativo</p>
-                      <p className="font-medium">{entry.alternative_time}</p>
+                      <p className="font-medium">{(entry as any).alternative_time}</p>
                     </div>
                   )}
                 </div>
