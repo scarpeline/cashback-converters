@@ -64,9 +64,16 @@ export const updateResource = async (
   updates: Partial<Resource>,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.type !== undefined || updates.resource_type !== undefined) dbUpdates.type = updates.type || updates.resource_type;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    if (updates.is_available !== undefined) dbUpdates.is_available = updates.is_available;
+    if (updates.is_active !== undefined) dbUpdates.is_available = updates.is_active;
+    if (updates.metadata !== undefined) dbUpdates.metadata = updates.metadata;
     const { error } = await supabase
       .from("resources")
-      .update(updates)
+      .update(dbUpdates)
       .eq("id", resourceId);
 
     if (error) throw error;
