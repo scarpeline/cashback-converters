@@ -3306,8 +3306,29 @@ const CashbackPage = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // --- Configuração de % de Cashback ---
+  const [cashbackPct, setCashbackPct] = useState<string>("5");
+  const [savingPct, setSavingPct] = useState(false);
+
+  // --- Níveis VIP ---
+  const [vipLevels, setVipLevels] = useState<any[]>([]);
+  const [loadingVip, setLoadingVip] = useState(true);
+  const [showVipForm, setShowVipForm] = useState(false);
+  const [editingVip, setEditingVip] = useState<any>(null);
+  const [vipForm, setVipForm] = useState({
+    level_name: "",
+    min_visits: "0",
+    min_spent: "0",
+    discount_percentage: "0",
+    cashback_multiplier: "1.0",
+    benefits: "",
+  });
+
   useEffect(() => {
     if (!barbershop?.id) return;
+    // Carregar % de cashback atual
+    setCashbackPct(String(barbershop.cashback_percentage ?? 5));
+    // Carregar histórico de transações
     supabase
       .from("cashback_transactions")
       .select("*, profiles:client_id(name)")
@@ -3315,17 +3336,89 @@ const CashbackPage = () => {
       .order("created_at", { ascending: false })
       .limit(50)
       .then(({ data }) => { setTransactions(data || []); setLoading(false); });
+    // Carregar níveis VIP
+    supabase
+      .from("vip_levels")
+      .select("*")
+      .eq("barbershop_id", barbershop.id)
+      .order("min_visits", { ascending: true })
+      .then(({ data }) => { setVipLevels(data || []); setLoadingVip(false); });
   }, [barbershop?.id]);
 
   const totalDistribuido = transactions.filter((t) => t.type === "earned").reduce((s, t) => s + Number(t.amount || 0), 0);
   const totalResgatado = transactions.filter((t) => t.type === "redeemed").reduce((s, t) => s + Number(t.amount || 0), 0);
 
+  const saveCashbackPct = async () => {
+    if (!barbershop?.id) return;
+    const pct = parseFloat(cashbackPct);
+    if (isNaN(pct) || pct < 0 || pct > 100) { toast.error("Percentual inválido (0–100)"); return; }
+    setSavingPct(true);
+    const { error } = await supabase.from("barbershops").update({ cashback_percentage: pct }).eq("id", barbershop.id);
+    setSavingPct(false);
+    if (error) { toast.error("Erro ao salvar: " + error.message); } else { toast.success("% de cashback atualizado!"); }
+  };
+
+  const openNewVip = () => {
+    setEditingVip(null);
+    setVipForm({ level_name: "", min_visits: "0", min_spent: "0", discount_percentage: "0", cashback_multiplier: "1.0", benefits: "" });
+    setShowVipForm(true);
+  };
+
+  const openEditVip = (level: any) => {
+    setEditingVip(level);
+    setVipForm({
+      level_name: level.level_name || "",
+      min_visits: String(level.min_visits ?? 0),
+      min_spent: String(level.min_spent ?? 0),
+      discount_percentage: String(level.discount_percentage ?? 0),
+      cashback_multiplier: String(level.cashback_multiplier ?? 1),
+      benefits: Array.isArray(level.benefits) ? level.benefits.join(", ") : (level.benefits || ""),
+    });
+    setShowVipForm(true);
+  };
+
+  const saveVipLevel = async () => {
+    if (!barbershop?.id) return;
+    if (!vipForm.level_name.trim()) { toast.error("Informe o nome do nível"); return; }
+    const payload = {
+      barbershop_id: barbershop.id,
+      level_name: vipForm.level_name.trim(),
+      min_visits: parseInt(vipForm.min_visits) || 0,
+      min_spent: parseFloat(vipForm.min_spent) || 0,
+      discount_percentage: parseFloat(vipForm.discount_percentage) || 0,
+      cashback_multiplier: parseFloat(vipForm.cashback_multiplier) || 1,
+      benefits: vipForm.benefits ? vipForm.benefits.split(",").map(b => b.trim()).filter(Boolean) : [],
+    };
+    let error;
+    if (editingVip) {
+      ({ error } = await supabase.from("vip_levels").update(payload).eq("id", editingVip.id));
+    } else {
+      ({ error } = await supabase.from("vip_levels").insert(payload));
+    }
+    if (error) { toast.error("Erro: " + error.message); return; }
+    toast.success(editingVip ? "Nível atualizado!" : "Nível criado!");
+    setShowVipForm(false);
+    setLoadingVip(true);
+    supabase.from("vip_levels").select("*").eq("barbershop_id", barbershop.id).order("min_visits", { ascending: true })
+      .then(({ data }) => { setVipLevels(data || []); setLoadingVip(false); });
+  };
+
+  const deleteVipLevel = async (id: string) => {
+    if (!confirm("Excluir este nível VIP?")) return;
+    const { error } = await supabase.from("vip_levels").delete().eq("id", id);
+    if (error) { toast.error("Erro ao excluir: " + error.message); return; }
+    toast.success("Nível excluído.");
+    setVipLevels(prev => prev.filter(v => v.id !== id));
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-bold">Cashback</h1>
-        <p className="text-muted-foreground text-sm">Programa de fidelidade da sua barbearia</p>
+        <h1 className="font-display text-2xl font-bold">Cashback & Fidelidade</h1>
+        <p className="text-muted-foreground text-sm">Configure seu programa de recompensas e níveis VIP</p>
       </div>
+
+      {/* Métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card className="bg-gradient-card border-primary/20">
           <CardHeader className="pb-2"><CardDescription>Total Distribuído</CardDescription><CardTitle className="text-2xl text-gradient-gold">R$ {totalDistribuido.toFixed(2)}</CardTitle></CardHeader>
@@ -3334,6 +3427,125 @@ const CashbackPage = () => {
           <CardHeader className="pb-2"><CardDescription>Total Resgatado</CardDescription><CardTitle className="text-2xl">R$ {totalResgatado.toFixed(2)}</CardTitle></CardHeader>
         </Card>
       </div>
+
+      {/* Configuração de % de Cashback */}
+      <Card className="border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Percent className="w-5 h-5 text-primary" />Percentual de Cashback Global</CardTitle>
+          <CardDescription>Define quanto % do valor do serviço é devolvido ao cliente como cashback em cada atendimento.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-end gap-4">
+          <div className="flex-1 max-w-xs">
+            <Label htmlFor="cashback-pct" className="text-sm">Porcentagem (%)</Label>
+            <Input
+              id="cashback-pct"
+              type="number"
+              min="0"
+              max="100"
+              step="0.5"
+              value={cashbackPct}
+              onChange={(e) => setCashbackPct(e.target.value)}
+              className="mt-1"
+              placeholder="Ex: 5"
+            />
+          </div>
+          <Button variant="gold" onClick={saveCashbackPct} disabled={savingPct} className="gap-2">
+            {savingPct ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+            Salvar
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Níveis VIP */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2"><TrendingUp className="w-5 h-5 text-primary" />Níveis de Fidelidade VIP</CardTitle>
+            <CardDescription>Crie níveis baseados em visitas ou valor gasto para recompensar seus melhores clientes.</CardDescription>
+          </div>
+          {!showVipForm && (
+            <Button variant="gold" size="sm" onClick={openNewVip} className="gap-2 shrink-0">
+              <Plus className="w-4 h-4" />Novo Nível
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Formulário de criação/edição */}
+          {showVipForm && (
+            <div className="border rounded-xl p-4 bg-muted/30 space-y-4">
+              <p className="font-semibold text-sm">{editingVip ? "Editar Nível" : "Novo Nível VIP"}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>Nome do Nível *</Label>
+                  <Input value={vipForm.level_name} onChange={e => setVipForm({ ...vipForm, level_name: e.target.value })} placeholder="Ex: Bronze, Prata, Ouro" className="mt-1" />
+                </div>
+                <div>
+                  <Label>Visitas mínimas</Label>
+                  <Input type="number" min="0" value={vipForm.min_visits} onChange={e => setVipForm({ ...vipForm, min_visits: e.target.value })} className="mt-1" />
+                </div>
+                <div>
+                  <Label>Valor gasto mínimo (R$)</Label>
+                  <Input type="number" min="0" step="0.01" value={vipForm.min_spent} onChange={e => setVipForm({ ...vipForm, min_spent: e.target.value })} className="mt-1" />
+                </div>
+                <div>
+                  <Label>Desconto adicional (%)</Label>
+                  <Input type="number" min="0" max="100" step="0.5" value={vipForm.discount_percentage} onChange={e => setVipForm({ ...vipForm, discount_percentage: e.target.value })} className="mt-1" />
+                </div>
+                <div>
+                  <Label>Multiplicador de Cashback</Label>
+                  <Input type="number" min="1" step="0.1" value={vipForm.cashback_multiplier} onChange={e => setVipForm({ ...vipForm, cashback_multiplier: e.target.value })} className="mt-1" placeholder="Ex: 1.5 = 50% a mais" />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Benefícios (separados por vírgula)</Label>
+                  <Input value={vipForm.benefits} onChange={e => setVipForm({ ...vipForm, benefits: e.target.value })} placeholder="Ex: Agendamento prioritário, Desconto em produtos" className="mt-1" />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button variant="gold" onClick={saveVipLevel} className="gap-2"><CheckCircle className="w-4 h-4" />{editingVip ? "Atualizar" : "Criar Nível"}</Button>
+                <Button variant="outline" onClick={() => setShowVipForm(false)}>Cancelar</Button>
+              </div>
+            </div>
+          )}
+
+          {/* Lista de níveis */}
+          {loadingVip ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+          ) : vipLevels.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground">
+              <TrendingUp className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Nenhum nível VIP criado ainda.</p>
+              <p className="text-xs mt-1">Crie níveis para recompensar seus clientes mais fiéis.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {vipLevels.map((level) => (
+                <div key={level.id} className="flex items-center justify-between p-4 border rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-base">{level.level_name}</p>
+                    <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
+                      <span>🏆 Mín. {level.min_visits} visitas</span>
+                      <span>💰 Mín. R$ {Number(level.min_spent || 0).toFixed(2)} gastos</span>
+                      {level.discount_percentage > 0 && <span>🎟️ {level.discount_percentage}% desconto</span>}
+                      {level.cashback_multiplier > 1 && <span>✨ {level.cashback_multiplier}x cashback</span>}
+                    </div>
+                    {Array.isArray(level.benefits) && level.benefits.length > 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">Benefícios: {level.benefits.join(" • ")}</p>
+                    )}
+                  </div>
+                  <div className="flex gap-2 ml-4 shrink-0">
+                    <Button variant="outline" size="sm" onClick={() => openEditVip(level)}><Edit className="w-4 h-4" /></Button>
+                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => deleteVipLevel(level.id)}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Histórico de Transações */}
       <Card>
         <CardHeader><CardTitle>Histórico de Transações</CardTitle></CardHeader>
         <CardContent>
