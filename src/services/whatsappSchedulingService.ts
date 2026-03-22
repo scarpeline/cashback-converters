@@ -260,7 +260,7 @@ const handleConfirmBookingStep = async (conversation: WhatsappConversation, mess
     };
     const result = await createAppointment(barbershopId, selectedProfessional?.id || '', selectedService.id, client.id, client.name, client.whatsapp, new Date(`${selectedDate}T${selectedTime}:00Z`));
 
-    if (success) {
+    if (result) {
       await endConversation(conversation.id);
       const confirmationTemplate = await getMessageTemplate(barbershopId, "booking_confirmation");
       return formatMessage(confirmationTemplate?.template_content || "Seu agendamento de {service_name} com {professional_name} para {date} às {time} foi confirmado. Te esperamos!", {
