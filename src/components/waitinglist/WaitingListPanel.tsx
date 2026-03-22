@@ -164,9 +164,9 @@ export default function WaitingListPanel() {
       case "waiting":
         return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> Aguardando</Badge>;
       case "notified":
-        return <Badge variant="warning"><Bell className="w-3 h-3 mr-1" /> Notificado</Badge>;
+        return <Badge variant="outline" className="border-yellow-500 text-yellow-600"><Bell className="w-3 h-3 mr-1" /> Notificado</Badge>;
       case "confirmed":
-        return <Badge variant="success"><CheckCircle className="w-3 h-3 mr-1" /> Confirmado</Badge>;
+        return <Badge variant="outline" className="border-green-500 text-green-600"><CheckCircle className="w-3 h-3 mr-1" /> Confirmado</Badge>;
       case "expired":
         return <Badge variant="destructive"><AlertCircle className="w-3 h-3 mr-1" /> Expirado</Badge>;
       case "cancelled":

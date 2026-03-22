@@ -70,9 +70,16 @@ export const updateAutomation = async (
   updates: Partial<Automation>,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.type !== undefined) dbUpdates.type = updates.type;
+    if (updates.trigger_event !== undefined) dbUpdates.trigger_event = updates.trigger_event;
+    if (updates.action_type !== undefined) dbUpdates.action_type = updates.action_type;
+    if (updates.config !== undefined) dbUpdates.config = updates.config;
+    if (updates.is_active !== undefined) dbUpdates.is_active = updates.is_active;
     const { error } = await supabase
       .from("automations")
-      .update(updates)
+      .update(dbUpdates)
       .eq("id", automationId);
 
     if (error) throw error;

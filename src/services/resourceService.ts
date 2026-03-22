@@ -109,7 +109,7 @@ export const toggleResource = async (
   resourceId: string,
   isActive: boolean,
 ): Promise<{ success: boolean; error?: string }> => {
-  return updateResource(resourceId, { is_active: isActive });
+  return updateResource(resourceId, { is_available: isActive });
 };
 
 export const RESOURCE_TYPES = [

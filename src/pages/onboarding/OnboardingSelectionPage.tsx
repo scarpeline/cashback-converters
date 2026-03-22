@@ -22,7 +22,7 @@ const OnboardingSelectionPage = () => {
   const { setSelectedSector } = useOnboarding();
 
   const handleSelect = (type: 'owner' | 'barber') => {
-    setType(type);
+    setSelectedSector(type === 'barber' ? 'barbearia' : 'business');
     if (type === 'owner') {
       navigate('/onboarding/owner');
     } else {
