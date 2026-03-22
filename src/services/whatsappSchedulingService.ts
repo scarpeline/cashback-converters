@@ -11,10 +11,10 @@ import {
 import { toast } from "sonner";
 
 // Importar serviços existentes para interagir com o banco de dados
-import { getClientByWhatsapp, createClient, Client } from "@/services/clientService";
+import { getClientByWhatsApp, createClient, Client } from "@/services/clientService";
 import { getServices, Service } from "@/services/serviceService";
 import { getProfessionals, Professional } from "@/services/professionalService";
-import { createAppointment, getUpcomingAppointments, cancelAppointment, getAvailableSlotsForDate } from "@/services/schedulingService";
+import { createAppointment, getClientAppointments, cancelAppointment, getAvailableSlots as getAvailableSlotsForDate } from "@/services/schedulingService";
 
 
 export const handleIncomingWhatsappMessage = async (
