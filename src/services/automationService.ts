@@ -47,7 +47,12 @@ export const createAutomation = async (
   try {
     const { error } = await supabase.from("automations").insert({
       barbershop_id: barbershopId,
-      ...automation,
+      name: automation.name || 'Nova Automação',
+      type: automation.type || 'reminder',
+      trigger_event: automation.trigger_event || automation.trigger_type || 'appointment_created',
+      action_type: automation.action_type || 'send_whatsapp',
+      config: automation.config || automation.action_config || {},
+      is_active: automation.is_active ?? true,
     });
 
     if (error) throw error;
