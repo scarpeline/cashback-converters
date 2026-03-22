@@ -76,13 +76,12 @@ export default function WaitingListPanel() {
 
     setSaving(true);
     const { success, error } = await addToWaitingList(barbershop.id, {
-      client_name: formData.client_name,
-      client_whatsapp: formData.client_whatsapp,
+      client_id: undefined,
       service_id: formData.service_id || undefined,
       service_name: formData.service_name || undefined,
       preferred_date: formData.preferred_date || undefined,
       preferred_time: formData.preferred_time || undefined,
-      alternative_time: formData.alternative_time || undefined,
+      notes: (formData as any).alternative_time || undefined,
     });
 
     if (success) {
