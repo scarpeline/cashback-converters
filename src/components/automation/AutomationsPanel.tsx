@@ -67,13 +67,13 @@ export default function AutomationsPanel() {
       setEditingAutomation(automation);
       setFormData({
         name: automation.name,
-        description: automation.description || "",
-        trigger_type: automation.trigger_type,
-        trigger_hours_before: automation.trigger_hours_before || 24,
+        description: (automation as any).description || "",
+        trigger_type: automation.trigger_event,
+        trigger_hours_before: (automation.config as any)?.trigger_hours_before || 24,
         action_type: automation.action_type,
-        template_message: automation.template_message || "",
+        template_message: (automation.config as any)?.template_message || "",
         is_active: automation.is_active,
-        priority: automation.priority,
+        priority: (automation.config as any)?.priority || 0,
       });
     } else {
       setEditingAutomation(null);
