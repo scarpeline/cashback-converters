@@ -5,14 +5,17 @@ export interface Resource {
   id: string;
   barbershop_id: string;
   name: string;
-  resource_type: string;
+  type: string;
   description: string | null;
-  capacity: number;
-  is_active: boolean;
-  color: string;
+  is_available: boolean;
   metadata: any;
   created_at: string;
   updated_at: string;
+  // Extended aliases
+  resource_type?: string;
+  capacity?: number;
+  is_active?: boolean;
+  color?: string;
 }
 
 export const getResources = async (barbershopId: string): Promise<Resource[]> => {
