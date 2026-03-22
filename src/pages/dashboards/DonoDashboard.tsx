@@ -113,6 +113,7 @@ import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus
 import { ReportsPanel } from "@/components/shared/ReportsPanel";
 import { AIChat } from "@/components/AIChat";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { LanguageSelector } from "@/components/layout/LanguageSelector";
 
 const DonoDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -278,6 +279,7 @@ const DonoDashboard = () => {
           </button>
           <div className="flex-1 lg:flex-none" />
           <div className="flex items-center gap-4">
+            <LanguageSelector />
             <NotificationBell />
           </div>
         </header>
