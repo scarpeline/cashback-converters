@@ -318,10 +318,10 @@ export default function WaitingListPanel() {
                     <Users className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">{entry.client_name}</CardTitle>
+                    <CardTitle className="text-lg">{(entry as any).client_name || `Cliente ${entry.client_id || ''}`}</CardTitle>
                     <CardDescription className="flex items-center gap-2">
                       <MessageCircle className="w-3 h-3" />
-                      {entry.client_whatsapp}
+                      {(entry as any).client_whatsapp || 'N/A'}
                     </CardDescription>
                   </div>
                 </div>
