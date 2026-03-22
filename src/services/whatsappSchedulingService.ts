@@ -345,9 +345,9 @@ const handleCancelBookingConfirmStep = async (conversation: WhatsappConversation
 
   if (bookingIndex >= 0 && bookingIndex < bookings.length) {
     const bookingToCancel = bookings[bookingIndex];
-    const { success } = await cancelAppointment(barbershopId, bookingToCancel.id);
+    const cancelResult = await cancelAppointment(bookingToCancel.id);
 
-    if (success) {
+    if (cancelResult) {
       await endConversation(conversation.id);
       const cancellationTemplate = await getMessageTemplate(barbershopId, "booking_cancellation_success");
       return formatMessage(cancellationTemplate?.template_content || "Seu agendamento de {service_name} para {date} às {time} foi cancelado com sucesso, {client_name}.", {
