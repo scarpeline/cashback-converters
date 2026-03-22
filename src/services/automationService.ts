@@ -5,17 +5,21 @@ export interface Automation {
   id: string;
   barbershop_id: string;
   name: string;
-  description: string | null;
-  trigger_type: string;
-  trigger_hours_before: number | null;
-  trigger_days_inactive: number | null;
+  type: string;
+  trigger_event: string;
   action_type: string;
-  action_config: any;
-  template_message: string | null;
+  config: any;
   is_active: boolean;
-  priority: number;
   created_at: string;
   updated_at: string;
+  // Extended fields (mapped from config)
+  description?: string | null;
+  trigger_type?: string;
+  trigger_hours_before?: number | null;
+  trigger_days_inactive?: number | null;
+  action_config?: any;
+  template_message?: string | null;
+  priority?: number;
 }
 
 export const getAutomations = async (barbershopId: string): Promise<Automation[]> => {
