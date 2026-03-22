@@ -130,7 +130,7 @@ export default function ResourcesPanel() {
   };
 
   const handleToggle = async (resource: Resource) => {
-    await toggleResource(resource.id, !resource.is_active);
+    await toggleResource(resource.id, !resource.is_available);
     fetchResources();
   };
 
