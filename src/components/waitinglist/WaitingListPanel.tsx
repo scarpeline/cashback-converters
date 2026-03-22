@@ -128,7 +128,7 @@ export default function WaitingListPanel() {
 
     const { success, error } = await notifyNextInQueue(barbershop.id, availableSlot);
     if (success) {
-      toast.success(`Notificação enviada para ${entry.client_name}!`);
+      toast.success(`Notificação enviada!`);
       fetchWaitingList();
       fetchStats();
     } else {
