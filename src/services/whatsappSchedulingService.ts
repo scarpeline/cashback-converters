@@ -288,13 +288,13 @@ const handleViewBookingsStep = async (conversation: WhatsappConversation, messag
   const clientWhatsapp = conversation.client_whatsapp;
   const clientName = conversation.conversation_state?.client_name || "Cliente";
 
-  let client = await getClientByWhatsapp(barbershopId, clientWhatsapp);
+  let client = await getClientByWhatsApp(clientWhatsapp);
   if (!client) {
     await endConversation(conversation.id);
     return "Olá {client_name}, não encontramos nenhum agendamento para este número. Você já se cadastrou?".replace("{client_name}", clientName);
   }
 
-  const bookings = await getUpcomingAppointments(barbershopId, client.id);
+  const bookings = await getClientAppointments(client.id);
 
   if (bookings.length === 0) {
     await endConversation(conversation.id);
