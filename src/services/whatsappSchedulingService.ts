@@ -238,10 +238,9 @@ const handleConfirmBookingStep = async (conversation: WhatsappConversation, mess
 
   if (messageBody.trim().toLowerCase() === "sim") {
     // Primeiro, tentar encontrar o cliente ou criar um novo
-    let client = await getClientByWhatsapp(barbershopId, clientWhatsapp);
+    let client = await getClientByWhatsApp(clientWhatsapp);
     if (!client) {
-      // Se não encontrou, criar um cliente básico. Em um sistema real, pediríamos mais dados.
-      client = await createClient(barbershopId, { name: clientName, whatsapp: clientWhatsapp });
+      client = await createClient({ name: clientName, whatsapp: clientWhatsapp, barbershop_id: barbershopId });
     }
 
     if (!client) {
