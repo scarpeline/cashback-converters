@@ -18,6 +18,7 @@ import {
   Zap,
   Lightbulb,
   AlertCircle,
+  UserX,
 } from 'lucide-react';
 import {
   getAgendaMetrics,
@@ -26,11 +27,17 @@ import {
   predictCancellation,
   generateOptimizationSuggestions,
   getAvailableSlotsForPromotion,
-  AgendaMetrics,
-  DayAnalysis,
-  CancellationPrediction,
-  OptimizationSuggestion,
+  type AgendaMetrics,
+  type DayAnalysis,
+  type CancellationPrediction,
+  type OptimizationSuggestion,
 } from '@/services/agendaOptimizerService';
+import {
+  detectOccupancyGaps,
+  predictCancellations,
+  type OccupancyGap,
+  type CancellationPrediction as ModuleCancellationPrediction,
+} from '@/modules/agenda-optimizer';
 
 interface AgendaIntelligencePanelProps {
   barbershopId: string;
@@ -44,6 +51,8 @@ export function AgendaIntelligencePanel({ barbershopId }: AgendaIntelligencePane
   const [predictions, setPredictions] = useState<CancellationPrediction[]>([]);
   const [suggestions, setSuggestions] = useState<OptimizationSuggestion[]>([]);
   const [promoSlots, setPromoSlots] = useState<any[]>([]);
+  const [occupancyGaps, setOccupancyGaps] = useState<OccupancyGap[]>([]);
+  const [cancellationRisks, setCancellationRisks] = useState<ModuleCancellationPrediction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -53,13 +62,15 @@ export function AgendaIntelligencePanel({ barbershopId }: AgendaIntelligencePane
   const loadData = async () => {
     setLoading(true);
     try {
-      const [metricsData, today, tomorrow, predictionsData, suggestionsData, promo] = await Promise.all([
+      const [metricsData, today, tomorrow, predictionsData, suggestionsData, promo, gaps, risks] = await Promise.all([
         getAgendaMetrics(barbershopId, 30),
         analyzeDay(barbershopId, new Date().toISOString().split('T')[0]),
         analyzeDay(barbershopId, new Date(Date.now() + 86400000).toISOString().split('T')[0]),
         predictCancellation(barbershopId),
         generateOptimizationSuggestions(barbershopId),
         getAvailableSlotsForPromotion(barbershopId, 7, 50),
+        detectOccupancyGaps(barbershopId),
+        predictCancellations(barbershopId),
       ]);
 
       setMetrics(metricsData);
@@ -68,6 +79,8 @@ export function AgendaIntelligencePanel({ barbershopId }: AgendaIntelligencePane
       setPredictions(predictionsData.slice(0, 5));
       setSuggestions(suggestionsData);
       setPromoSlots(promo.slice(0, 10));
+      setOccupancyGaps(gaps);
+      setCancellationRisks(risks.slice(0, 5));
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       toast({ title: 'Erro', description: 'Falha ao carregar análise', variant: 'destructive' });
@@ -96,18 +109,17 @@ export function AgendaIntelligencePanel({ barbershopId }: AgendaIntelligencePane
         </Button>
       </div>
 
+      {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Occupancy Médio</CardTitle>
+            <CardTitle className="text-sm font-medium">Ocupação Média</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics?.averageOccupancy || 0}%</div>
             <Progress value={metrics?.averageOccupancy || 0} className="mt-2" />
-            <p className="text-xs text-muted-foreground mt-1">
-              Meta: 70%
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">Meta: 70%</p>
           </CardContent>
         </Card>
 
@@ -119,9 +131,7 @@ export function AgendaIntelligencePanel({ barbershopId }: AgendaIntelligencePane
           <CardContent>
             <div className="text-2xl font-bold">{metrics?.cancellationRate || 0}%</div>
             <Progress value={metrics?.cancellationRate || 0} className="mt-2" />
-            <p className="text-xs text-muted-foreground mt-1">
-              Meta: abaixo de 10%
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">Meta: abaixo de 10%</p>
           </CardContent>
         </Card>
 
@@ -132,9 +142,7 @@ export function AgendaIntelligencePanel({ barbershopId }: AgendaIntelligencePane
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">R$ {metrics?.averageTicket?.toFixed(2) || '0.00'}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Últimos 30 dias
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">Últimos 30 dias</p>
           </CardContent>
         </Card>
 
@@ -145,9 +153,7 @@ export function AgendaIntelligencePanel({ barbershopId }: AgendaIntelligencePane
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">R$ {metrics?.predictedLoss?.toFixed(2) || '0.00'}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Cancelamentos e no-shows
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">Cancelamentos e no-shows</p>
           </CardContent>
         </Card>
       </div>
@@ -155,11 +161,18 @@ export function AgendaIntelligencePanel({ barbershopId }: AgendaIntelligencePane
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="gaps">
+            Gaps na Agenda
+            {occupancyGaps.length > 0 && (
+              <Badge variant="destructive" className="ml-2 text-xs">{occupancyGaps.length}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="predictions">Previsões</TabsTrigger>
           <TabsTrigger value="suggestions">Sugestões</TabsTrigger>
-          <TabsTrigger value="slots">Slots para Promoção</TabsTrigger>
+          <TabsTrigger value="slots">Slots p/ Promoção</TabsTrigger>
         </TabsList>
 
+        {/* Overview Tab */}
         <TabsContent value="overview">
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
@@ -239,6 +252,110 @@ export function AgendaIntelligencePanel({ barbershopId }: AgendaIntelligencePane
           </div>
         </TabsContent>
 
+        {/* Gaps Tab - NEW */}
+        <TabsContent value="gaps">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  Horários Vazios Hoje
+                </CardTitle>
+                <CardDescription>
+                  Buracos na agenda que podem ser preenchidos com promoções ou ofertas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {occupancyGaps.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Target className="w-12 h-12 mx-auto mb-4 text-green-500" />
+                    <p className="text-muted-foreground">Nenhum gap significativo detectado hoje. Agenda bem ocupada!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {occupancyGaps.map((gap, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full ${
+                            gap.gap_minutes >= 180 ? 'bg-red-500' :
+                            gap.gap_minutes >= 120 ? 'bg-orange-500' : 'bg-yellow-500'
+                          }`} />
+                          <div>
+                            <p className="font-medium">{gap.professional_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {gap.start_time} - {gap.end_time} ({gap.gap_minutes} min)
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant={
+                          gap.suggestion === 'send_promo_to_inactive' ? 'destructive' :
+                          gap.suggestion === 'offer_discount' ? 'secondary' : 'outline'
+                        }>
+                          {gap.suggestion === 'send_promo_to_inactive' ? '📩 Enviar promo' :
+                           gap.suggestion === 'offer_discount' ? '💰 Oferecer desconto' :
+                           '✅ Sem ação'}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Cancellation risks from module */}
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserX className="w-5 h-5 text-red-500" />
+                  Risco de Cancelamento (Amanhã)
+                </CardTitle>
+                <CardDescription>
+                  Agendamentos com risco de cancelamento baseado no histórico do cliente
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {cancellationRisks.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Target className="w-12 h-12 mx-auto mb-4 text-green-500" />
+                    <p className="text-muted-foreground">Nenhum risco de cancelamento detectado</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {cancellationRisks.map((risk) => (
+                      <div key={risk.appointment_id} className="p-4 border rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            <span className="font-medium">{risk.client_name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Progress value={risk.risk_score} className="w-24" />
+                            <Badge variant={risk.risk_score > 60 ? 'destructive' : risk.risk_score > 40 ? 'secondary' : 'outline'}>
+                              {risk.risk_score}%
+                            </Badge>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {new Date(risk.scheduled_at).toLocaleString('pt-BR')}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {risk.risk_factors.map((factor, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {factor}
+                            </Badge>
+                          ))}
+                        </div>
+                        <p className="text-xs text-primary font-medium">{risk.recommendation}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Predictions Tab */}
         <TabsContent value="predictions">
           <Card>
             <CardHeader>
@@ -286,6 +403,7 @@ export function AgendaIntelligencePanel({ barbershopId }: AgendaIntelligencePane
           </Card>
         </TabsContent>
 
+        {/* Suggestions Tab */}
         <TabsContent value="suggestions">
           <div className="grid gap-4 md:grid-cols-2">
             {suggestions.length === 0 ? (
@@ -329,6 +447,7 @@ export function AgendaIntelligencePanel({ barbershopId }: AgendaIntelligencePane
           </div>
         </TabsContent>
 
+        {/* Promo Slots Tab */}
         <TabsContent value="slots">
           <Card>
             <CardHeader>
