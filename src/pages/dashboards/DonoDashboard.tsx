@@ -45,6 +45,10 @@ import { DonoOnboarding } from "@/components/onboarding/DonoOnboarding";
 import BookingPoliciesPanel from "@/components/settings/BookingPoliciesPanel";
 import ResourcesPanel from "@/components/settings/ResourcesPanel";
 import { ProfessionalWaitlistPanel } from "@/components/waitlist/ProfessionalWaitlistPanel";
+import { AIAudioConfigPanel } from "@/components/ai/AIAudioConfigPanel";
+import { ClientReviewsPanel } from "@/components/reviews/ClientReviewsPanel";
+import { LoyaltyPanel } from "@/components/gamification/LoyaltyPanel";
+import { WeeklySchedulePanel } from "@/components/messaging/WeeklySchedulePanel";
 import {
   Card,
   CardContent,
