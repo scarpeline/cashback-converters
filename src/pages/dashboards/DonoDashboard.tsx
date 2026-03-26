@@ -45,6 +45,10 @@ import { DonoOnboarding } from "@/components/onboarding/DonoOnboarding";
 import BookingPoliciesPanel from "@/components/settings/BookingPoliciesPanel";
 import ResourcesPanel from "@/components/settings/ResourcesPanel";
 import { ProfessionalWaitlistPanel } from "@/components/waitlist/ProfessionalWaitlistPanel";
+import { AIAudioConfigPanel } from "@/components/ai/AIAudioConfigPanel";
+import { ClientReviewsPanel } from "@/components/reviews/ClientReviewsPanel";
+import { LoyaltyPanel } from "@/components/gamification/LoyaltyPanel";
+import { WeeklySchedulePanel } from "@/components/messaging/WeeklySchedulePanel";
 import {
   Card,
   CardContent,
@@ -197,6 +201,10 @@ const DonoDashboard = () => {
     { name: "Divisão de Custos", href: `${basePath}/whatsapp-custos`, icon: Percent },
     { name: "Relatório WhatsApp", href: `${basePath}/whatsapp-relatorios`, icon: TrendingUp },
     { name: "Monitoramento", href: `${basePath}/whatsapp-monitor`, icon: Activity },
+    { name: "Assistente IA", href: `${basePath}/assistente-ia`, icon: Zap },
+    { name: "Avaliações", href: `${basePath}/avaliacoes`, icon: Users },
+    { name: "Fidelidade", href: `${basePath}/fidelidade`, icon: Gift },
+    { name: "Ciclo Mensagens", href: `${basePath}/ciclo-mensagens`, icon: Bell },
   ];
 
   const isActive = useCallback(
@@ -369,6 +377,18 @@ const DonoDashboard = () => {
             } />
             <Route path="whatsapp-monitor" element={
               <WhatsAppMonitoringPanel barbershopId={mainBarbershop?.id || ""} />
+            } />
+            <Route path="assistente-ia" element={
+              <AIAudioConfigPanel barbershopId={mainBarbershop?.id || ""} />
+            } />
+            <Route path="avaliacoes" element={
+              <ClientReviewsPanel barbershopId={mainBarbershop?.id || ""} />
+            } />
+            <Route path="fidelidade" element={
+              <LoyaltyPanel barbershopId={mainBarbershop?.id || ""} isOwner={true} />
+            } />
+            <Route path="ciclo-mensagens" element={
+              <WeeklySchedulePanel barbershopId={mainBarbershop?.id || ""} />
             } />
           </Routes>
           <SocialProofPopup currentPage="painel-dono" />
