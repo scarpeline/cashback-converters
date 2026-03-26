@@ -197,6 +197,10 @@ const DonoDashboard = () => {
     { name: "Divisão de Custos", href: `${basePath}/whatsapp-custos`, icon: Percent },
     { name: "Relatório WhatsApp", href: `${basePath}/whatsapp-relatorios`, icon: TrendingUp },
     { name: "Monitoramento", href: `${basePath}/whatsapp-monitor`, icon: Activity },
+    { name: "Assistente IA", href: `${basePath}/assistente-ia`, icon: Zap },
+    { name: "Avaliações", href: `${basePath}/avaliacoes`, icon: Users },
+    { name: "Fidelidade", href: `${basePath}/fidelidade`, icon: Gift },
+    { name: "Ciclo Mensagens", href: `${basePath}/ciclo-mensagens`, icon: Bell },
   ];
 
   const isActive = useCallback(
