@@ -56,7 +56,7 @@ export function LoyaltyPanel({ barbershopId, userId, isOwner = false }: LoyaltyP
   };
 
   const getCurrentLevel = (points: number) => {
-    return LEVELS.findLast(l => points >= l.min) || LEVELS[0];
+    return [...LEVELS].reverse().find(l => points >= l.min) || LEVELS[0];
   };
 
   const getNextLevel = (points: number) => {
