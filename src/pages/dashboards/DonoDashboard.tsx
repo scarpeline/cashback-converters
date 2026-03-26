@@ -378,6 +378,18 @@ const DonoDashboard = () => {
             <Route path="whatsapp-monitor" element={
               <WhatsAppMonitoringPanel barbershopId={mainBarbershop?.id || ""} />
             } />
+            <Route path="assistente-ia" element={
+              <AIAudioConfigPanel barbershopId={mainBarbershop?.id || ""} />
+            } />
+            <Route path="avaliacoes" element={
+              <ClientReviewsPanel barbershopId={mainBarbershop?.id || ""} />
+            } />
+            <Route path="fidelidade" element={
+              <LoyaltyPanel barbershopId={mainBarbershop?.id || ""} isOwner={true} />
+            } />
+            <Route path="ciclo-mensagens" element={
+              <WeeklySchedulePanel barbershopId={mainBarbershop?.id || ""} />
+            } />
           </Routes>
           <SocialProofPopup currentPage="painel-dono" />
         </main>
