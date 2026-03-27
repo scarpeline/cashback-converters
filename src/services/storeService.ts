@@ -351,6 +351,24 @@ export async function createPackage(pkg: Partial<Package>): Promise<{ success: b
   }
 }
 
+export async function updatePackage(packageId: string, updates: Partial<Package>): Promise<boolean> {
+  try {
+    const { error } = await (supabase as any)
+      .from('store_packages')
+      .update(updates)
+      .eq('id', packageId);
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('[storeService] updatePackage error:', error);
+    return false;
+  }
+}
+
+export async function deletePackage(packageId: string): Promise<boolean> {
+  return updatePackage(packageId, { is_active: false } as any);
+}
+
 export async function getClientPackages(clientUserId: string): Promise<ClientPackage[]> {
   try {
     const { data, error } = await (supabase as any)

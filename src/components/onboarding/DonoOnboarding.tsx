@@ -8,6 +8,18 @@ import { Store, MapPin, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { formatCpfCnpjBR, formatWhatsAppBR } from "@/lib/input-masks";
 import logo from "@/assets/logo.png";
+import { useOnboarding } from "@/contexts/OnboardingContext";
+
+const SECTOR_LABELS: Record<string, { name: string; placeholder: string }> = {
+  beleza_estetica: { name: "Salão / Barbearia", placeholder: "Ex: Salão da Maria" },
+  saude_bem_estar: { name: "Clínica / Consultório", placeholder: "Ex: Clínica Bem Viver" },
+  educacao_mentorias: { name: "Escola / Mentoria", placeholder: "Ex: Instituto Saber" },
+  automotivo: { name: "Oficina / Lava-Rápido", placeholder: "Ex: Auto Center João" },
+  pets: { name: "Pet Shop / Veterinária", placeholder: "Ex: PetLove Cuidados" },
+  servicos_domiciliares: { name: "Empresa de Serviços", placeholder: "Ex: TotalFix Reparos" },
+  juridico_financeiro: { name: "Escritório", placeholder: "Ex: Escritório Silva & Associados" },
+  espacos_locacao: { name: "Espaço / Studio", placeholder: "Ex: Studio Criativo" },
+};
 
 interface DonoOnboardingProps {
   onComplete: () => void;
@@ -30,6 +42,8 @@ const validateForm = (form: { name: string; address: string; cpf_cnpj: string })
 
 export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
   const { user, profile } = useAuth();
+  const { selectedSector, selectedSpecialty } = useOnboarding();
+  const nicheInfo = SECTOR_LABELS[selectedSector || ''] || { name: "Estabelecimento", placeholder: "Ex: Meu Negócio" };
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [step, setStep] = useState(1);
@@ -67,6 +81,8 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
         address: form.address,
         phone: form.phone || null,
         description: form.description || null,
+        sector: selectedSector || 'beleza_estetica',
+        specialty: selectedSpecialty || null,
       };
 
       const { data: existingList, error: existingError } = await (supabase as any)
@@ -129,7 +145,7 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
           .eq("user_id", user.id);
       }
 
-      toast.success("Barbearia cadastrada com sucesso! 🎉");
+      toast.success(`${nicheInfo.name} cadastrado com sucesso! 🎉`);
       onComplete();
     } catch {
       toast.error("Erro inesperado. Tente novamente.");
@@ -144,7 +160,7 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
         {/* Header */}
         <div className="text-center mb-8">
           <img src={logo} alt="SalãoCashBack" className="w-16 h-16 mx-auto mb-4" />
-          <h1 className="font-display text-2xl font-bold">Configure sua Barbearia</h1>
+          <h1 className="font-display text-2xl font-bold">Configure seu {nicheInfo.name}</h1>
           <p className="text-muted-foreground mt-2">
             Complete o cadastro para começar a usar o sistema
           </p>
@@ -181,7 +197,7 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
                 <Store className="w-5 h-5 text-primary" />
               </div>
-              <CardTitle>Dados da Barbearia</CardTitle>
+              <CardTitle>Dados do {nicheInfo.name}</CardTitle>
               <CardDescription>Informações básicas do seu negócio</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -189,7 +205,7 @@ export function DonoOnboarding({ onComplete }: DonoOnboardingProps) {
                 <label htmlFor="name" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Nome da Barbearia *</label>
                 <Input
                   id="name"
-                  placeholder="Ex: Barbearia do João"
+                  placeholder={nicheInfo.placeholder}
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className={`mt-1 ${errors.name ? "border-destructive" : ""}`}

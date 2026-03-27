@@ -47,6 +47,8 @@ import BookingPoliciesPanel from "@/components/settings/BookingPoliciesPanel";
 import ResourcesPanel from "@/components/settings/ResourcesPanel";
 import { ProfessionalWaitlistPanel } from "@/components/waitlist/ProfessionalWaitlistPanel";
 import { AIAudioConfigPanel } from "@/components/ai/AIAudioConfigPanel";
+import { MarketplacePanel } from "@/components/store/MarketplacePanel";
+import { StorageControlPanel } from "@/components/subscription/StorageControlPanel";
 import { ClientReviewsPanel } from "@/components/reviews/ClientReviewsPanel";
 import { LoyaltyPanel } from "@/components/gamification/LoyaltyPanel";
 import { WeeklySchedulePanel } from "@/components/messaging/WeeklySchedulePanel";
@@ -97,6 +99,7 @@ import {
   Percent,
   Activity,
   Briefcase,
+  HardDrive,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -152,8 +155,10 @@ const DonoDashboard = () => {
     { name: "Remunerações", href: `${basePath}/remuneracoes`, icon: DollarSign },
     { name: "Dívidas", href: `${basePath}/dividas`, icon: AlertCircle },
     { name: "Meu Plano", href: `${basePath}/meu-plano`, icon: CreditCard },
+    { name: "Armazenamento", href: `${basePath}/armazenamento`, icon: HardDrive },
     { name: "Afiliados", href: `${basePath}/afiliados`, icon: UserCheck },
     { name: "Vitrine", href: `${basePath}/vitrine`, icon: Image },
+    { name: "Marketplace", href: `${basePath}/marketplace`, icon: Package },
     { name: "Cashback", href: `${basePath}/cashback`, icon: Gift },
     { name: "Ação entre Amigos", href: `${basePath}/acao-entre-amigos`, icon: Gift },
     { name: "Prova Social", href: `${basePath}/prova-social`, icon: TrendingUp },
@@ -297,8 +302,10 @@ const DonoDashboard = () => {
             <Route path="meu-plano" element={
               <div className="space-y-6"><SubscriptionStatus /><SubscriptionPlans /></div>
             } />
+            <Route path="armazenamento" element={<StorageControlPanel barbershopId={mainBarbershop?.id || ''} />} />
             <Route path="afiliados" element={<AfiliadosBarbeariaPage />} />
             <Route path="vitrine" element={<VitrinePage />} />
+            <Route path="marketplace" element={<MarketplacePanel barbershopId={mainBarbershop?.id || ''} />} />
             <Route path="cashback" element={<CashbackPage />} />
             <Route path="acao-entre-amigos" element={<AcaoEntreAmigosPage />} />
             <Route path="rifas" element={<AcaoEntreAmigosPage />} />
