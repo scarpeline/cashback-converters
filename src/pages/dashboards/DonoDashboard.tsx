@@ -49,6 +49,7 @@ import { ProfessionalWaitlistPanel } from "@/components/waitlist/ProfessionalWai
 import { AIAudioConfigPanel } from "@/components/ai/AIAudioConfigPanel";
 import { MarketplacePanel } from "@/components/store/MarketplacePanel";
 import { StorageControlPanel } from "@/components/subscription/StorageControlPanel";
+import { TeamHierarchyPanel } from "@/components/team/TeamHierarchyPanel";
 import { ClientReviewsPanel } from "@/components/reviews/ClientReviewsPanel";
 import { LoyaltyPanel } from "@/components/gamification/LoyaltyPanel";
 import { WeeklySchedulePanel } from "@/components/messaging/WeeklySchedulePanel";
@@ -187,6 +188,7 @@ const DonoDashboard = () => {
     { name: "Recursos", href: `${basePath}/recursos`, icon: Briefcase },
     { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
     { name: "Configurações", href: `${basePath}/configuracoes`, icon: Settings },
+    { name: "Equipe e Permissões", href: `${basePath}/equipe`, icon: Users },
   ];
 
   const isActive = useCallback(
@@ -331,6 +333,7 @@ const DonoDashboard = () => {
             <Route path="suporte" element={<SuportePage />} />
             <Route path="seja-afiliado" element={<SejaAfiliadoPage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
+            <Route path="equipe" element={<TeamHierarchyPanel barbershopId={mainBarbershop?.id || ''} />} />
             <Route path="politicas-agendamento" element={<BookingPoliciesPanel />} />
             <Route path="recursos" element={<ResourcesPanel />} />
             <Route path="whatsapp-contas" element={<WhatsAppAccountsPanel barbershopId={mainBarbershop?.id || ''} />} />
