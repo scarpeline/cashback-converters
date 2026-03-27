@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
   LayoutDashboard, DollarSign, Users, Link as LinkIcon, History, User, LogOut,
-  Menu, X, Copy, TrendingUp, Wallet, Loader2, CreditCard, Building2, FileText
+  Menu, X, TrendingUp, Wallet, Loader2, CreditCard, FileText
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -20,6 +20,10 @@ import { ChatContadorPanel } from "@/components/contabilidade/ChatContadorPanel"
 import { PedidoContabilPanel } from "@/components/contabilidade/PedidoContabilPanel";
 import { AssinaturaContabilPanel } from "@/components/contabilidade/AssinaturaContabilPanel";
 import UniversalChatPanel from "@/components/shared/UniversalChatPanel";
+import CommissionsPanel from "@/components/partners/CommissionsPanel";
+import ReferralsPanel from "@/components/partners/ReferralsPanel";
+import ReferralCodeDisplay from "@/components/partners/ReferralCodeDisplay";
+import { usePartnerByUserId } from "@/hooks/usePartners";
 
 const AfiliadoDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -141,18 +145,34 @@ const ContabeisHubAfiliadoPage = () => {
   );
 };
 
+const AFFILIATE_LEVELS = [
+  { min: 0,   max: 50,   label: "Explorador",              color: "bg-slate-100 text-slate-700" },
+  { min: 51,  max: 100,  label: "Visionário",              color: "bg-blue-100 text-blue-700" },
+  { min: 101, max: 200,  label: "Estrategista Visionário", color: "bg-purple-100 text-purple-700" },
+  { min: 201, max: 400,  label: "Líder Supremo",           color: "bg-orange-100 text-orange-700" },
+  { min: 401, max: 700,  label: "Imperador Líder",         color: "bg-red-100 text-red-700" },
+  { min: 701, max: 9999, label: "Sócio PLM",               color: "bg-yellow-100 text-yellow-800" },
+];
+function getLevel(n: number) { return AFFILIATE_LEVELS.find(l => n >= l.min && n <= l.max) || AFFILIATE_LEVELS[0]; }
+
 const DashboardHome = () => {
   const { user } = useAuth();
   const [affiliate, setAffiliate] = useState<any>(null);
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("affiliates").select("*").eq("user_id", user.id).maybeSingle().then(({ data }) => setAffiliate(data));
+    (supabase as any).from("affiliates").select("*").eq("user_id", user.id).maybeSingle().then(({ data }) => setAffiliate(data));
   }, [user]);
 
   return (
     <div className="space-y-6">
-      <div><h1 className="font-display text-2xl font-bold">Dashboard do Afiliado</h1><p className="text-muted-foreground">Acompanhe seus ganhos e indicações</p></div>
+      <div><h1 className="font-display text-2xl font-bold">Dashboard do Afiliado</h1><p className="text-muted-foreground">Acompanhe seus ganhos e indicações</p>
+        {affiliate && (
+          <span className={`inline-flex items-center gap-1 mt-2 px-3 py-1 rounded-full text-sm font-medium ${getLevel(affiliate.total_referrals || 0).color}`}>
+            ⭐ {getLevel(affiliate.total_referrals || 0).label} • {affiliate.total_referrals || 0} indicações
+          </span>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-gradient-card border-primary/20">
           <CardHeader className="pb-2"><CardDescription>Ganhos Totais</CardDescription><CardTitle className="text-2xl text-gradient-gold">R$ {Number(affiliate?.total_earnings || 0).toFixed(2)}</CardTitle></CardHeader>
@@ -179,29 +199,66 @@ const DashboardHome = () => {
           </div>
         </CardContent>
       </Card>
+      <Card>
+        <CardHeader><CardTitle>Progressão de Nível</CardTitle></CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {AFFILIATE_LEVELS.map(l => {
+              const total = affiliate?.total_referrals || 0;
+              const isActive = total >= l.min && total <= l.max;
+              const isDone = total > l.max;
+              return (
+                <div key={l.label} className={`flex items-center gap-3 p-2 rounded-lg ${isActive ? 'bg-primary/10 border border-primary/30' : ''}`}>
+                  <span className={`w-3 h-3 rounded-full ${isDone ? 'bg-success' : isActive ? 'bg-primary' : 'bg-muted-foreground/30'}`} />
+                  <span className={`text-sm font-medium ${isActive ? 'text-primary' : isDone ? 'text-success' : 'text-muted-foreground'}`}>{l.label}</span>
+                  <span className="text-xs text-muted-foreground ml-auto">{l.min}–{l.max === 9999 ? '1000+' : l.max} indicações</span>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
-const IndicadosPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Meus Indicados</h1>
-    <Card><CardContent className="py-12 text-center"><Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhuma empresa indicada ainda.</p><p className="text-sm text-muted-foreground mt-2">Compartilhe seu link e comece a ganhar!</p></CardContent></Card>
-  </div>
-);
+const IndicadosPage = () => {
+  const { user } = useAuth();
+  const { data: partner } = usePartnerByUserId(user?.id || '');
 
-const ComissoesPage = () => (
-  <div className="space-y-6">
-    <h1 className="font-display text-2xl font-bold">Minhas Comissões</h1>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <Card className="bg-gradient-card border-primary/20"><CardHeader><CardDescription>Total de Comissões</CardDescription><CardTitle className="text-3xl text-gradient-gold">R$ 0,00</CardTitle></CardHeader></Card>
-      <Card><CardHeader><CardDescription>Pendente de Pagamento</CardDescription><CardTitle className="text-2xl">R$ 0,00</CardTitle></CardHeader></Card>
+  if (!partner) return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Meus Indicados</h1>
+      <Card><CardContent className="py-12 text-center"><Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Você ainda não está cadastrado como parceiro.</p></CardContent></Card>
     </div>
-    <Card><CardHeader><CardTitle>Histórico de Comissões</CardTitle></CardHeader>
-      <CardContent className="text-center py-8"><DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Nenhuma comissão registrada.</p></CardContent>
-    </Card>
-  </div>
-);
+  );
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Meus Indicados</h1>
+      <ReferralsPanel partnerId={partner.id} />
+    </div>
+  );
+};
+
+const ComissoesPage = () => {
+  const { user } = useAuth();
+  const { data: partner } = usePartnerByUserId(user?.id || '');
+
+  if (!partner) return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Minhas Comissões</h1>
+      <Card><CardContent className="py-12 text-center"><DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Você ainda não está cadastrado como parceiro.</p></CardContent></Card>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Minhas Comissões</h1>
+      <CommissionsPanel partnerId={partner.id} />
+    </div>
+  );
+};
 
 // ============ CONTA BANCÁRIA ============
 const ContaBancariaPage = () => {
@@ -217,7 +274,7 @@ const ContaBancariaPage = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("bank_info, pix_key, cpf_cnpj, whatsapp, email").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+    (supabase as any).from("profiles").select("bank_info, pix_key, cpf_cnpj, whatsapp, email").eq("user_id", user.id).maybeSingle().then(({ data }) => {
       if (data?.bank_info) {
         setBankInfo(data.bank_info);
         setForm({ ...(data.bank_info as any), pix_key: data.pix_key || "", cpf_cnpj: data.cpf_cnpj || "" });
@@ -234,7 +291,7 @@ const ContaBancariaPage = () => {
     
     const bankData = { bank_name: form.bank_name, agency: form.agency, account: form.account, account_type: form.account_type, pix_key_type: form.pix_key_type };
 
-    const { error } = await supabase.from("profiles").update({
+    const { error } = await (supabase as any).from("profiles").update({
       bank_info: bankData, pix_key: form.pix_key, cpf_cnpj: form.cpf_cnpj,
     }).eq("user_id", user!.id);
 
@@ -321,37 +378,19 @@ const HistoricoPage = () => (
 
 const LinkPage = () => {
   const { user } = useAuth();
-  const [affiliate, setAffiliate] = useState<any>(null);
+  const { data: partner } = usePartnerByUserId(user?.id || '');
 
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("affiliates").select("referral_code").eq("user_id", user.id).maybeSingle().then(({ data }) => setAffiliate(data));
-  }, [user]);
-
-  const referralCode = affiliate?.referral_code || "MEUCOD01";
-  const referralLink = `${window.location.origin}/cadastro?ref=${referralCode}`;
-
-  const copyLink = () => { navigator.clipboard.writeText(referralLink); toast.success("Link copiado!"); };
+  if (!partner) return (
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl font-bold">Meu Link de Indicação</h1>
+      <Card><CardContent className="py-12 text-center"><LinkIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Você ainda não está cadastrado como parceiro.</p></CardContent></Card>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Meu Link de Indicação</h1>
-      <Card>
-        <CardHeader><CardTitle>Compartilhe seu link</CardTitle><CardDescription>Quando alguém se cadastrar pelo seu link, você ganha comissões automaticamente.</CardDescription></CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <code className="flex-1 p-3 bg-muted rounded-lg text-sm overflow-x-auto">{referralLink}</code>
-            <Button variant="gold" onClick={copyLink}><Copy className="w-4 h-4 mr-2" />Copiar</Button>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => { const url = `https://wa.me/?text=${encodeURIComponent(`Conheça o sistema: ${referralLink}`)}`; window.open(url, '_blank'); }}>Compartilhar WhatsApp</Button>
-            <Button variant="outline" className="flex-1" onClick={() => { if (navigator.share) navigator.share({ title: "SalãoCashBack", url: referralLink }); else copyLink(); }}>Compartilhar Redes</Button>
-          </div>
-        </CardContent>
-      </Card>
-      <Card><CardHeader><CardTitle>Código de Referência</CardTitle></CardHeader>
-        <CardContent><div className="text-center p-6 bg-muted rounded-lg"><p className="text-3xl font-bold tracking-wider">{referralCode}</p></div></CardContent>
-      </Card>
+      <ReferralCodeDisplay referralCode={partner.referral_code || ''} partnerName={partner.users?.name || 'Afiliado'} />
     </div>
   );
 };
@@ -367,7 +406,7 @@ const PerfilPage = () => {
   useEffect(() => {
     if (profile) setForm({ name: profile.name || "", whatsapp: profile.whatsapp || "", cpf_cnpj: profile.cpf_cnpj || "", pix_key: profile.pix_key || "" });
     if (user) {
-      supabase.from("profiles").select("bank_info").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      (supabase as any).from("profiles").select("bank_info").eq("user_id", user.id).maybeSingle().then(({ data }) => {
         if (data?.bank_info) setBankInfo(data.bank_info);
       });
     }
@@ -376,7 +415,7 @@ const PerfilPage = () => {
   const saveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({ name: form.name, whatsapp: form.whatsapp || null, cpf_cnpj: form.cpf_cnpj || null, pix_key: form.pix_key || null }).eq("user_id", user.id);
+    const { error } = await (supabase as any).from("profiles").update({ name: form.name, whatsapp: form.whatsapp || null, cpf_cnpj: form.cpf_cnpj || null, pix_key: form.pix_key || null }).eq("user_id", user.id);
     setSaving(false);
     if (error) { toast.error("Erro: " + error.message); return; }
     toast.success("Perfil atualizado!"); setEditing(false);

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+const db = supabase as any;
 import { 
   CreditCard, 
   DollarSign, 
@@ -74,7 +75,7 @@ export const FinalizarAtendimentoModal = ({
 
     try {
       // 1. Atualizar status do agendamento
-      const { error: appointmentError } = await supabase
+      const { error: appointmentError } = await (supabase as any)
         .from("appointments")
         .update({ 
           status: "completed",
@@ -102,7 +103,7 @@ export const FinalizarAtendimentoModal = ({
         paymentData.paid_at = new Date().toISOString();
       }
 
-      const { data: payment, error: paymentError } = await supabase
+      const { data: payment, error: paymentError } = await (supabase as any)
         .from("payments")
         .insert(paymentData)
         .select()
@@ -116,7 +117,7 @@ export const FinalizarAtendimentoModal = ({
       if (appointment.professionals?.commission_percent) {
         const commissionAmount = (Number(amount) * appointment.professionals.commission_percent) / 100;
         
-        await supabase
+        await db
           .from("professional_commissions")
           .insert({
             professional_id: appointment.professional_id,
@@ -132,7 +133,7 @@ export const FinalizarAtendimentoModal = ({
 
       // 4. Atualizar métricas da barbearia
       const today = new Date().toISOString().split('T')[0];
-      await supabase.rpc('update_daily_metrics', {
+      await db.rpc('update_daily_metrics', {
         p_barbershop_id: appointment.barbershop_id,
         p_date: today,
         p_revenue: Number(amount),
@@ -165,7 +166,7 @@ export const FinalizarAtendimentoModal = ({
         setPixGenerated(true);
 
         // Atualizar pagamento com dados do PIX
-        await supabase
+        await (supabase as any)
           .from("payments")
           .update({
             asaas_payment_id: pixResponse.paymentId,
@@ -205,7 +206,7 @@ export const FinalizarAtendimentoModal = ({
 
       if (statusResponse.status === 'CONFIRMED' || statusResponse.status === 'RECEIVED') {
         // Atualizar pagamento como confirmado
-        await supabase
+        await (supabase as any)
           .from("payments")
           .update({
             status: "paid",

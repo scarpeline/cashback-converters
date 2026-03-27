@@ -1,86 +1,77 @@
-/* SalãoCashBack Design System - Light White/Gold/Blue/Black Theme */
-
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* SalãoCashBack Design System - Clean White/Orange/Blue Theme */
+
 @layer base {
   :root {
-    /* Core Brand Colors - Paleta Oficial */
-    --orange: 38 92% 50%; /* #FF7A00 */
-    --orange-light: 38 92% 60%;
-    --orange-dark: 38 92% 40%;
-    --blue: 212 78% 31%; /* #0F3D91 */
-    --blue-light: 212 78% 95%; /* #E6F0FF */
-    --blue-dark: 212 78% 21%;
+    /* Core Brand Colors - Paleta Vibrante Premium */
+    --orange: 38 100% 55%; /* #FF9500 - Mais vibrante */
+    --orange-light: 38 100% 65%;
+    --orange-dark: 38 100% 45%;
+    --blue: 222 100% 61%; /* #3891FF - Azul elétrico vibrante */
+    --blue-light: 222 100% 95%;
+    --blue-dark: 222 100% 25%;
     
-    /* Backgrounds - Clean White */
-    --background: 0 0% 100%; /* #FFFFFF */
-    --background-subtle: 212 78% 95%; /* #E6F0FF */
-    --foreground: 0 0% 7%; /* #111111 */
+    /* Backgrounds - Deep Midnight & Clean White */
+    --background: 0 0% 100%;
+    --background-subtle: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
-    /* Cards & Surfaces */
-    --card: 0 0% 100%; /* #FFFFFF */
-    --card-foreground: 0 0% 7%; /* #111111 */
-    --popover: 0 0% 100%; /* #FFFFFF */
-    --popover-foreground: 0 0% 7%; /* #111111 */
+    /* Cards & Surfaces - Glassmorphism Ready */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Primary - Azul Forte */
-    --primary: 212 78% 31%; /* #0F3D91 */
-    --primary-foreground: 0 0% 100%; /* #FFFFFF */
+    /* Primary - Electric Blue */
+    --primary: 222 100% 61%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Azul Claro */
-    --secondary: 212 78% 95%; /* #E6F0FF */
-    --secondary-foreground: 0 0% 7%; /* #111111 */
+    /* Secondary - Light Mist */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
 
     /* Muted */
-    --muted: 212 78% 96%;
-    --muted-foreground: 0 0% 46%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    /* Accent - Laranja */
-    --accent: 38 92% 50%; /* #FF7A00 */
-    --accent-foreground: 0 0% 100%; /* #FFFFFF */
-
-    /* Destructive */
-    --destructive: 0 80% 55%;
-    --destructive-foreground: 0 0% 100%;
-
-    /* Success */
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
+    /* Accent - Vibrant Orange */
+    --accent: 38 100% 55%;
+    --accent-foreground: 0 0% 100%;
 
     /* Borders & Inputs */
-    --border: 212 78% 91%;
-    --input: 212 78% 91%;
-    --ring: 38 92% 50%; /* Laranja para focus */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 38 100% 55%;
 
-    --radius: 0.75rem;
+    /* Premium Effects - Glassmorphism */
+    --glass-bg: 0 0% 100% / 0.7;
+    --glass-border: 0 0% 100% / 0.5;
+    --radius: 1rem; /* Borda mais arredondada para ar premium */
 
-    /* Gradients - Novos com paleta oficial */
-    --gradient-orange: linear-gradient(135deg, hsl(38 92% 50%), hsl(38 92% 40%));
-    --gradient-blue: linear-gradient(135deg, hsl(212 78% 31%), hsl(212 78% 41%));
-    --gradient-premium: linear-gradient(135deg, hsl(38 92% 50%), hsl(212 78% 31%));
-    --gradient-light: linear-gradient(180deg, hsl(0 0% 100%), hsl(212 78% 95%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(212 78% 97%));
-    --gradient-glow: radial-gradient(circle at center, hsl(38 92% 50% / 0.08), transparent 70%);
+    /* Gradients Vibrantes */
+    --gradient-orange: linear-gradient(135deg, hsl(38 100% 55%), hsl(25 100% 50%));
+    --gradient-blue: linear-gradient(135deg, hsl(222 100% 61%), hsl(240 100% 60%));
+    --gradient-premium: linear-gradient(135deg, hsl(38 100% 55%), hsl(222 100% 61%));
+    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
     
     /* Shadows */
-    --shadow-orange: 0 4px 20px -5px hsl(38 92% 50% / 0.25);
-    --shadow-blue: 0 4px 20px -5px hsl(212 78% 31% / 0.15);
-    --shadow-card: 0 1px 3px hsl(212 78% 91% / 0.8), 0 1px 2px hsl(212 78% 91% / 0.5);
-    --shadow-glow: 0 0 40px hsl(38 92% 50% / 0.12);
+    --shadow-premium: 0 10px 30px -10px hsl(222 100% 61% / 0.3);
+    --shadow-glow: 0 0 20px hsl(38 100% 55% / 0.2);
 
     /* Sidebar */
-    --sidebar-background: 0 0% 7%; /* #111111 */
-    --sidebar-foreground: 0 0% 100%; /* #FFFFFF */
-    --sidebar-primary: 38 92% 50%; /* #FF7A00 */
-    --sidebar-primary-foreground: 0 0% 100%; /* #FFFFFF */
-    --sidebar-accent: 212 78% 95%; /* #E6F0FF */
-    --sidebar-accent-foreground: 0 0% 7%; /* #111111 */
-    --sidebar-border: 212 78% 20%;
-    --sidebar-ring: 38 92% 50%; /* #FF7A00 */
+    --sidebar-background: 222 47% 6%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 38 100% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 100% 61%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 222 20% 18%;
+    --sidebar-ring: 38 100% 55%;
   }
 
   .dark {
@@ -153,6 +144,22 @@
 
   .bg-gradient-dark {
     background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background-subtle)) 100%);
+  }
+
+  .glass {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(8px);
+    border: 1px solid hsl(var(--glass-border));
+  }
+
+  .glass-dark {
+    background: hsl(0 0% 10% / 0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+  }
+
+  .transition-premium {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .shadow-gold { box-shadow: var(--shadow-orange); }

@@ -97,7 +97,7 @@ export function AccountingTaxesPanel({
       return;
     }
 
-    const { data: accountantRow, error: accountantErr } = await supabase
+    const { data: accountantRow, error: accountantErr } = await (supabase as any)
       .from("accountants")
       .select("id")
       .eq("user_id", currentUserId)

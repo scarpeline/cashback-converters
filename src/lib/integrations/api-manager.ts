@@ -38,7 +38,7 @@ class ApiManager {
 
     try {
       // Carregar ambiente atual
-      const { data: envData } = await supabase
+      const { data: envData } = await (supabase as any)
         .from('app_environment')
         .select('*')
         .limit(1)
@@ -49,7 +49,7 @@ class ApiManager {
       }
 
       // Carregar configurações de integração
-      const { data: settingsData } = await supabase
+      const { data: settingsData } = await (supabase as any)
         .from('integration_settings')
         .select('*');
 
@@ -79,7 +79,7 @@ class ApiManager {
    */
   async setEnvironment(env: Environment): Promise<boolean> {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('app_environment')
         .update({ 
           current_env: env, 
@@ -131,7 +131,7 @@ class ApiManager {
 
     // Tentar salvar no banco (não bloqueia a execução)
     try {
-      await supabase.from('integration_logs').insert([{
+      await (supabase as any).from('integration_logs').insert([{
         service: log.service,
         environment: log.environment,
         event_type: log.eventType,

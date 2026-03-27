@@ -3,7 +3,7 @@
  * Rotas centralizadas. Sem guards duplicados.
  */
 
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, memo } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,9 +16,10 @@ import { Loader2 } from "lucide-react";
 import ErrorBoundary from "@/components/error/ErrorBoundary";
 import { SystemDiagnostics } from "@/hooks/useSystemHealth";
 import { StabilityMonitorProvider } from "@/components/monitoring/StabilityMonitorProvider";
-// import { SubscriptionProvider } from "@/contexts/SubscriptionContext"; // Temporariamente desativado
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { startAutomationWorker } from "@/lib/automation-worker";
-import "@/styles/landing.css"; // Importar estilos da nova landing page
+import "@/styles/landing.css";
 
 // Lazy pages
 const Index = lazy(() => import("./pages/IndexNew"));
@@ -26,10 +27,14 @@ const PartnershipPage = lazy(() => import("./pages/public/PartnershipPage"));
 const DemoPage = lazy(() => import("./pages/public/DemoPage"));
 const NotFoundPage = lazy(() => import("./pages/public/NotFoundPage"));
 const PublicLoginPage = lazy(() => import("./pages/public/LoginPage"));
-const AfiliadoSaasLoginPage = lazy(() => import("./pages/afiliado-saas/LoginPage"));
+const AfiliadoSaasLoginPage = lazy(
+  () => import("./pages/afiliado-saas/LoginPage"),
+);
 const ContadorLoginPage = lazy(() => import("./pages/contador2026/LoginPage"));
 const AdminLoginPage = lazy(() => import("./pages/admin/LoginPage"));
-const ClienteDashboard = lazy(() => import("./pages/dashboards/ClienteDashboard"));
+const ClienteDashboard = lazy(
+  () => import("./pages/dashboards/ClienteDashboard"),
+);
 const DonoDashboard = lazy(() => import("./pages/dashboards/DonoDashboard"));
 const ProfissionalDashboard = lazy(() => import("./pages/dashboards/ProfissionalDashboard"));
 const AfiliadoDashboard = lazy(() => import("./pages/dashboards/AfiliadoDashboard"));
@@ -40,14 +45,52 @@ const PaymentSimulationPage = lazy(() => import("./pages/public/PaymentSimulatio
 const InstallPage = lazy(() => import("./pages/public/InstallPage"));
 const CostAnalysisPage = lazy(() => import("./pages/public/CostAnalysisPage"));
 const VitrinePage = lazy(() => import("./pages/public/VitrinePage"));
+const ClientReactivationPage = lazy(
+  () => import("./pages/dashboards/ClientReactivationPage"),
+);
+const PartnerManagementPage = lazy(
+  () => import("./pages/dashboards/PartnerManagementPage"),
+);
+const PartnerDashboard = lazy(
+  () => import("./components/partners/PartnerDashboard"),
+);
+const NotificationsPage = lazy(
+  () => import("./pages/partners/NotificationsPage"),
+);
+const BookingPoliciesPage = lazy(
+  () => import("./components/settings/BookingPoliciesPanel"),
+);
+const LandingPageB2B = lazy(
+  () => import("./components/landing/LandingPageB2B"),
+);
+const OnboardingSelectionPage = lazy(
+  () => import("./pages/onboarding/OnboardingSelectionPage"),
+);
 
-const queryClient = new QueryClient();
+/**
+ * QueryClient configurado para produção:
+ * - staleTime: 60s → não refaz fetch se dado foi buscado há menos de 60s
+ * - gcTime: 5min → mantém cache em memória por 5 minutos após componente desmontar
+ * - retry: 1 → tenta apenas 1 vez extra em caso de erro (padrão 3)
+ * - refetchOnWindowFocus: false → não refaz fetch ao focar a janela (reduz requisições)
+ */
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      gcTime: 5 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-const PageLoader = () => (
+const PageLoader = memo(() => (
   <div className="min-h-screen flex items-center justify-center bg-background">
     <Loader2 className="w-8 h-8 animate-spin text-primary" />
   </div>
-);
+));
+PageLoader.displayName = "PageLoader";
 
 function AppRoutes() {
   return (
@@ -63,8 +106,10 @@ function AppRoutes() {
           <Route path="/install" element={<InstallPage />} />
           <Route path="/analise-custos" element={<CostAnalysisPage />} />
           <Route path="/v/:barbershopId" element={<VitrinePage />} />
+          <Route path="/para-empresas" element={<LandingPageB2B />} />
+          <Route path="/onboarding" element={<OnboardingSelectionPage />} />
 
-          {/* ========== LOGIN (AuthGuard: se logado, vai pro dashboard) ========== */}
+          {/* ========== LOGIN (AuthGuard) ========== */}
           <Route path="/login" element={<AuthGuard><PublicLoginPage /></AuthGuard>} />
           <Route path="/afiliado-saas/login" element={<AuthGuard><AfiliadoSaasLoginPage /></AuthGuard>} />
           <Route path="/contador2026/login" element={<AuthGuard><ContadorLoginPage /></AuthGuard>} />
@@ -73,7 +118,7 @@ function AppRoutes() {
           {/* ========== PROTECTED ========== */}
           <Route path="/app/*" element={
             <ErrorBoundary>
-              <ProtectedRoute allowedRoles={['cliente', 'afiliado_barberia']}>
+              <ProtectedRoute allowedRoles={['cliente', 'afiliado_barberia', 'afiliado_barbearia']}>
                 <ClienteDashboard />
               </ProtectedRoute>
             </ErrorBoundary>
@@ -89,6 +134,34 @@ function AppRoutes() {
             <ErrorBoundary>
               <ProtectedRoute allowedRoles={['profissional']}>
                 <ProfissionalDashboard />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          } />
+          <Route path="/reativacao-clientes" element={
+            <ErrorBoundary>
+              <ProtectedRoute allowedRoles={['profissional', 'dono']}>
+                <ClientReactivationPage />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          } />
+          <Route path="/gestao-parceiros" element={
+            <ErrorBoundary>
+              <ProtectedRoute allowedRoles={['dono', 'super_admin']}>
+                <PartnerManagementPage />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          } />
+          <Route path="/painel-parceiro" element={
+            <ErrorBoundary>
+              <ProtectedRoute allowedRoles={['afiliado_saas', 'afiliado_barbearia']}>
+                <PartnerDashboard />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          } />
+          <Route path="/painel-parceiro/notificacoes" element={
+            <ErrorBoundary>
+              <ProtectedRoute allowedRoles={['afiliado_saas', 'afiliado_barbearia']}>
+                <NotificationsPage />
               </ProtectedRoute>
             </ErrorBoundary>
           } />
@@ -144,7 +217,6 @@ function AppRoutes() {
 }
 
 const App = () => {
-  // Iniciar worker de automação ao montar o app
   useEffect(() => {
     startAutomationWorker();
   }, []);
@@ -158,11 +230,13 @@ const App = () => {
           <BrowserRouter>
             <ErrorBoundary>
               <AuthProvider>
-                {/* <SubscriptionProvider> Temporariamente desativado */}
-                  <StabilityMonitorProvider />
-                  <AppRoutes />
-                  <SystemDiagnostics />
-                {/* </SubscriptionProvider> */}
+                <SubscriptionProvider>
+                  <OnboardingProvider>
+                    <StabilityMonitorProvider />
+                    <AppRoutes />
+                    <SystemDiagnostics />
+                  </OnboardingProvider>
+                </SubscriptionProvider>
               </AuthProvider>
             </ErrorBoundary>
           </BrowserRouter>

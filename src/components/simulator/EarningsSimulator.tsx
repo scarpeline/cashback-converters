@@ -12,6 +12,8 @@ import {
   Info,
   Rocket
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { useNiche } from "@/hooks/useNiche";
 import {
   Tooltip,
   TooltipContent,
@@ -98,10 +100,14 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
     indicacoesMes, cashbackRate
   ]);
 
+  const { t, i18n } = useTranslation();
+  const { currentNiche } = useNiche();
+  const nLabel = typeof currentNiche === 'object' && currentNiche !== null ? (currentNiche as any).label || 'Negócio' : (currentNiche || 'Negócio');
+
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat(i18n.language === 'en' ? 'en-US' : (i18n.language === 'es' ? 'es-ES' : 'pt-BR'), {
       style: 'currency',
-      currency: 'BRL',
+      currency: i18n.language === 'en' ? 'USD' : (i18n.language === 'es' ? 'EUR' : 'BRL'),
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(value);
@@ -114,12 +120,12 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
         <div className="text-center mb-10">
           <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4">
             {variant === 'afiliado' 
-              ? 'Veja como seus ganhos podem crescer conforme sua base cresce'
-              : 'Veja como sua barbearia pode faturar mais mês após mês'
+              ? t(`simulator_growth_title_${nLabel}`, { defaultValue: t("simulator_growth_title") })
+              : t(`simulator_earnings_title_${nLabel}`, { defaultValue: t("simulator_earnings_title") })
             }
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Simule cenários reais, entenda o potencial da sua rede e visualize a escala do seu negócio — sem promessas irreais.
+            {t("simulator_description")}
           </p>
         </div>
 
@@ -130,7 +136,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
               <div className="space-y-6">
                 <h3 className="font-display text-xl font-semibold flex items-center gap-2 mb-6">
                   <Rocket className="w-5 h-5 text-primary" />
-                  Ajuste os valores
+                  {t("simulator_adjust_values")}
                 </h3>
 
                 {variant === 'afiliado' ? (
@@ -140,7 +146,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium leading-none flex items-center gap-2">
                           <Building2 className="w-4 h-4 text-muted-foreground" />
-                          Barbearias ativas indicadas
+                          {t(`simulator_barbershops_${nLabel}`, { defaultValue: t("simulator_units") })}
                           <Tooltip>
                             <TooltipTrigger>
                               <Info className="w-4 h-4 text-muted-foreground" />
@@ -169,7 +175,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium leading-none flex items-center gap-2">
-                          Ticket médio mensal (R$)
+                          {t("simulator_avg_ticket")} (R$)
                           <Tooltip>
                             <TooltipTrigger>
                               <Info className="w-4 h-4 text-muted-foreground" />
@@ -195,7 +201,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium leading-none flex items-center gap-2">
                           <Percent className="w-4 h-4 text-muted-foreground" />
-                          Percentual estimado de adesão
+                          {t("simulator_adoption_rate")}
                         </span>
                         <span className="font-semibold text-primary">{adesaoPercent}%</span>
                       </div>
@@ -213,7 +219,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium leading-none flex items-center gap-2">
                           <Users className="w-4 h-4 text-muted-foreground" />
-                          Subafiliados ativos
+                          {t("simulator_subaffiliates")}
                         </span>
                         <Input
                           type="number"
@@ -233,7 +239,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                     {/* Produção Sub-afiliado */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium leading-none">Produção média mensal por subafiliado</span>
+                        <span className="text-sm font-medium leading-none">{t("simulator_subaffiliate_avg")}</span>
                         <span className="font-semibold text-primary">{formatCurrency(producaoSubAfiliado)}</span>
                       </div>
                       <Slider
@@ -252,7 +258,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium leading-none flex items-center gap-2">
                           <Users className="w-4 h-4 text-muted-foreground" />
-                          Clientes ativos mensais
+                          {t("simulator_active_customers")}
                         </span>
                         <Input
                           type="number"
@@ -272,7 +278,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                     {/* Ticket Serviço */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium leading-none">Ticket médio por serviço (R$)</span>
+                        <span className="text-sm font-medium leading-none">{t("simulator_service_ticket")}</span>
                         <span className="font-semibold text-primary">{formatCurrency(ticketServico)}</span>
                       </div>
                       <Slider
@@ -288,7 +294,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium leading-none flex items-center gap-2">
-                          Novos clientes via indicação/mês
+                          {t("simulator_referrals")}
                         </span>
                         <Input
                           type="number"
@@ -310,7 +316,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium leading-none flex items-center gap-2">
                           <Percent className="w-4 h-4 text-muted-foreground" />
-                          Taxa de cashback
+                          {t("simulator_cashback_rate")}
                         </span>
                         <span className="font-semibold text-primary">{cashbackRate}%</span>
                       </div>
@@ -330,7 +336,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium leading-none flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                      Crescimento mensal estimado
+                      {t("simulator_growth_est")}
                     </span>
                     <span className="font-semibold text-primary">{crescimentoMensal}%</span>
                   </div>
@@ -454,7 +460,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
                   className="w-full"
                   onClick={onCTA}
                 >
-                  🚀 Quero começar agora
+                  {t("simulator_cta")}
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </div>
@@ -464,8 +470,7 @@ const EarningsSimulator = ({ variant, onCTA }: SimulatorProps) => {
 
         {/* Legal Disclaimer */}
         <p className="text-center text-xs text-muted-foreground mt-6 max-w-3xl mx-auto">
-          Esta simulação é apenas ilustrativa e não representa promessa ou garantia de ganhos. 
-          Os resultados dependem exclusivamente da performance individual e da adesão da base.
+          {t("simulator_disclaimer")}
         </p>
       </div>
     </TooltipProvider>

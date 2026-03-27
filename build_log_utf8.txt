@@ -1,0 +1,82 @@
+﻿
+> vite_react_shadcn_ts@0.0.0 build
+> vite build
+
+[36mvite v5.4.19 [32mbuilding for production...[36m[39m
+transforming...
+[32mÔ£ô[39m 16 modules transformed.
+node.exe : [31mx[39m Build 
+failed in 14.83s
+No linha:1 caractere:1
++ & "C:\Program 
+Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~
+    + CategoryInfo          : NotS 
+   pecified: ([31mx[39m Build f  
+  ailed in 14.83s:String) [], Re   
+ moteException
+    + FullyQualifiedErrorId : Nati 
+   veCommandError
+ 
+[31merror during build:
+[31m[vite-plugin-pwa:build] 
+Transform failed with 1 error:
+C:/Users/pattydoamaral/Downloads/sa
+lao app/cashback-converters/src/pag
+es/dashboards/ClienteDashboard.tsx:
+349:0: ERROR: Unexpected "<<"[31m
+file: [36mC:/Users/pattydoamaral/D
+ownloads/salao app/cashback-convert
+ers/src/pages/dashboards/ClienteDas
+hboard.tsx:349:0[31m
+[33m
+[33mUnexpected "<<"[33m
+347|    
+348|    useEffect(() => {
+349|  <<<<<<< HEAD
+   |  ^
+350|      if (!user) return;
+351|      supabase.from("notificati
+ons").select("*").eq("user_id", 
+user.id).order("created_at", { 
+ascending: false 
+}).limit(50).then(({ data }) => 
+setNotifications(data || []));
+[31m
+    at failureErrorWithLog (C:\User
+s\pattydoamaral\Downloads\salao app
+\cashback-converters\node_modules\e
+sbuild\lib\main.js:1472:15)
+    at C:\Users\pattydoamaral\Downl
+oads\salao app\cashback-converters\
+node_modules\esbuild\lib\main.js:75
+5:50
+    at 
+responseCallbacks.<computed> (C:\Us
+ers\pattydoamaral\Downloads\salao a
+pp\cashback-converters\node_modules
+\esbuild\lib\main.js:622:9)
+    at handleIncomingPacket (C:\Use
+rs\pattydoamaral\Downloads\salao ap
+p\cashback-converters\node_modules\
+esbuild\lib\main.js:677:12)
+    at Socket.readFromStdout (C:\Us
+ers\pattydoamaral\Downloads\salao a
+pp\cashback-converters\node_modules
+\esbuild\lib\main.js:600:7)
+    at Socket.emit 
+(node:events:508:28)
+    at addChunk (node:internal/stre
+ams/readable:563:12)
+    at 
+readableAddChunkPushByteMode (node:
+internal/streams/readable:514:3)
+    at Readable.push (node:internal
+/streams/readable:394:5)
+    at Pipe.onStreamRead (node:inte
+rnal/stream_base_commons:189:23)[3
+9m
+

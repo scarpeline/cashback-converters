@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useFeature } from '@/hooks/useFeatureFlags';
 import { supabase } from '@/integrations/supabase/client';
+const db = supabase as any;
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -63,13 +64,13 @@ export function BackupSystemPanel() {
     setLoading(true);
     try {
       // Carregar estatísticas
-      const { data: statsData } = await supabase.rpc('get_backup_stats');
+      const { data: statsData } = await db.rpc('get_backup_stats');
       if (statsData) {
         setStats(statsData[0]);
       }
 
       // Carregar backups recentes
-      const { data: backupsData } = await supabase
+      const { data: backupsData } = await db
         .from('backups')
         .select('*')
         .order('created_at', { ascending: false })
@@ -80,7 +81,7 @@ export function BackupSystemPanel() {
       }
 
       // Carregar configurações
-      const { data: settingsData } = await supabase
+      const { data: settingsData } = await db
         .from('backup_settings')
         .select('*')
         .limit(1);
@@ -98,7 +99,7 @@ export function BackupSystemPanel() {
   const handleCreateBackup = async (type: string = 'full') => {
     setCreating(true);
     try {
-      const { data } = await supabase.rpc('start_backup', { p_backup_type: type });
+      const { data } = await db.rpc('start_backup', { p_backup_type: type });
       
       if (data) {
         await loadBackupData();
@@ -113,7 +114,7 @@ export function BackupSystemPanel() {
   const handleRestoreBackup = async (backupId: string) => {
     setRestoring(backupId);
     try {
-      const { data } = await supabase.rpc('restore_backup', { p_backup_id: backupId });
+      const { data } = await db.rpc('restore_backup', { p_backup_id: backupId });
       
       if (data) {
         // Backup restaurado com sucesso
@@ -127,7 +128,7 @@ export function BackupSystemPanel() {
 
   const handleCleanup = async () => {
     try {
-      const { data } = await supabase.rpc('cleanup_old_backups');
+      const { data } = await db.rpc('cleanup_old_backups');
       
       if (data) {
         await loadBackupData();

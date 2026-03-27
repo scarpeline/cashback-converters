@@ -4,6 +4,7 @@ import { getDashboardForRole, isLoginRoute } from "@/lib/route-config";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { useLocation } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
+import { Loader2 } from "lucide-react";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -13,11 +14,11 @@ interface AuthGuardProps {
  * AuthGuard - Para páginas de LOGIN apenas
  * Se já logado com roles → redireciona para dashboard
  * Se não logado → renderiza children (formulário de login)
- * Timeout de 6s para evitar loading infinito
  */
 export function AuthGuard({ children }: AuthGuardProps) {
   const { user, authResolved, roles, getPrimaryRole } = useAuth();
   const location = useLocation();
+<<<<<<< HEAD
   const [redirectTimeout, setRedirectTimeout] = useState(false);
   const redirectAttemptedRef = useRef(false);
 
@@ -53,7 +54,6 @@ export function AuthGuard({ children }: AuthGuardProps) {
     const dashboard = getDashboardForRole(getPrimaryRole());
     
     if (redirectTimeout) {
-      // Força redirect se timeout
       return (
         <LoadingScreen 
           message="Redirecionando para seu dashboard..." 

@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { LoadingScreen, ErrorLoading } from "@/components/ui/LoadingScreen";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
+import { Loader2 } from "lucide-react";
 import { getDashboardForRole, getLoginForRoute } from "@/lib/route-config";
 import { useEffect, useState, useRef } from "react";
 
@@ -10,8 +11,13 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
-export function ProtectedRoute({ children, allowedRoles, redirectTo }: ProtectedRouteProps) {
-  const { user, roles, getPrimaryRole, authResolved, profileLoading } = useAuth();
+export function ProtectedRoute({
+  children,
+  allowedRoles,
+  redirectTo,
+}: ProtectedRouteProps) {
+  const { user, roles, getPrimaryRole, authResolved, profileLoading, barbershop } =
+    useAuth();
   const location = useLocation();
   const [rolesTimeout, setRolesTimeout] = useState(false);
   const [globalTimeout, setGlobalTimeout] = useState(false);
@@ -87,35 +93,35 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
-  // STEP 1: Aguardar auth resolver (mas sem bloquear indefinidamente)
-  if (!authResolved) {
+  // STEP 1: Aguardar auth resolver
+  if (!authResolved || (user && profileLoading && roles.length === 0 && !globalTimeout)) {
     return <LoadingScreen message="Carregando ambiente seguro..." showRetry={retryCount > 2} onRetry={handleRetry} />;
   }
 
-  // STEP 2: Sem sessão → login
+  // STEP 2: Redirecionar para login se não autenticado
   if (!user) {
     const loginPath = redirectTo || getLoginForRoute(location.pathname);
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
-  // STEP 3: Sessão OK mas sem roles → aguardar brevemente (com timeout)
+  // STEP 3: Sessão OK mas sem roles → aguardar brevemente
   if (roles.length === 0) {
     if (rolesTimeout) {
       console.warn('[ProtectedRoute] Roles timeout - redirecting to login. User:', user?.email);
       const loginPath = redirectTo || getLoginForRoute(location.pathname);
       return <Navigate to={loginPath} state={{ from: location }} replace />;
     }
-    
-    // Não mostrar loading se profileLoading já for false (evitar tela branca)
-    if (!profileLoading) {
-      return <LoadingScreen 
-        message="Validando permissões..." 
-        showRetry={retryCount > 1}
-        onRetry={handleRetry}
-      />;
-    }
-    
-    return <LoadingScreen message="Carregando perfil..." />;
+    return <LoadingScreen message="Validando permissões..." showRetry={retryCount > 1} onRetry={handleRetry} />;
+  }
+
+  // STEP 3b: Redirecionar para onboarding se for dono com status 'pending'
+  if (
+    barbershop &&
+    barbershop.onboarding_status === "pending" &&
+    roles.includes("dono") &&
+    location.pathname !== "/onboarding"
+  ) {
+    return <Navigate to="/onboarding" state={{ from: location }} replace />;
   }
 
   // STEP 4: Verificar permissão
@@ -129,6 +135,6 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo }: Protected
     }
   }
 
-  // STEP 5: Autorizado
+  // STEP 5: Renderizar o conteúdo protegido
   return <>{children}</>;
 }

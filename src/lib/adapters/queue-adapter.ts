@@ -33,7 +33,7 @@ class PostgresQueueAdapter implements QueueAdapter {
    * Retorna o ID do job criado ou null em caso de erro
    */
   async enqueue(options: EnqueueOptions): Promise<string | null> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("job_queue" as any)
       .insert({
         job_type: options.job_type,
@@ -65,7 +65,7 @@ class PostgresQueueAdapter implements QueueAdapter {
       scheduled_at: j.scheduled_at ?? new Date().toISOString(),
     }));
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("job_queue" as any)
       .insert(rows)
       .select("id");

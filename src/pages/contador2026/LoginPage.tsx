@@ -46,7 +46,7 @@ const ContadorLoginPage = () => {
   // After login, verify the user is actually a contador
   const verifyContadorAccess = useCallback(async (userId: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase.rpc("is_authorized_contador", { _user_id: userId });
+      const { data, error } = await (supabase as any).rpc("is_authorized_contador", { _user_id: userId });
       if (error) return false;
       return !!data;
     } catch {

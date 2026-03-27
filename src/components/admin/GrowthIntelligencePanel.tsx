@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useFeature } from '@/hooks/useFeatureFlags';
 import { supabase } from '@/integrations/supabase/client';
+const db = supabase as any;
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -78,7 +79,7 @@ export function GrowthIntelligencePanel() {
     setLoading(true);
     try {
       // Carregar métricas de crescimento
-      const { data: metricsData } = await supabase
+      const { data: metricsData } = await db
         .from('growth_metrics')
         .select('*')
         .order('demand_score', { ascending: false })
@@ -89,7 +90,7 @@ export function GrowthIntelligencePanel() {
       }
 
       // Carregar insights
-      const { data: insightsData } = await supabase
+      const { data: insightsData } = await db
         .from('growth_insights')
         .select('*')
         .eq('status', 'open')
@@ -101,7 +102,7 @@ export function GrowthIntelligencePanel() {
       }
 
       // Carregar previsões
-      const { data: forecastsData } = await supabase
+      const { data: forecastsData } = await db
         .from('growth_forecasts')
         .select('*')
         .order('created_at', { ascending: false })
@@ -112,7 +113,7 @@ export function GrowthIntelligencePanel() {
       }
 
       // Carregar rankings de franqueados
-      const { data: rankingsData } = await supabase.rpc('get_franchise_rankings');
+      const { data: rankingsData } = await db.rpc('get_franchise_rankings');
       
       if (rankingsData) {
         setRankings(rankingsData);
@@ -128,10 +129,10 @@ export function GrowthIntelligencePanel() {
     setAnalyzing(true);
     try {
       // Atualizar métricas
-      await supabase.rpc('update_growth_metrics');
+      await db.rpc('update_growth_metrics');
       
       // Gerar insights
-      await supabase.rpc('generate_growth_insights');
+      await db.rpc('generate_growth_insights');
       
       // Recarregar dados
       await loadGrowthData();

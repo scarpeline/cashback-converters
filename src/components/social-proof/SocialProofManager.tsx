@@ -44,7 +44,7 @@ export function SocialProofManager({ barbershopId, showPageSelector = false }: S
   });
 
   const fetchProofs = async () => {
-    let query = supabase.from("social_proofs").select("*").order("created_at", { ascending: false });
+    let query = (supabase as any).from("social_proofs").select("*").order("created_at", { ascending: false });
     if (barbershopId) {
       query = query.eq("barbershop_id", barbershopId);
     }
@@ -89,14 +89,14 @@ export function SocialProofManager({ barbershopId, showPageSelector = false }: S
     if (barbershopId) payload.barbershop_id = barbershopId;
 
     if (editingId) {
-      const { error } = await supabase.from("social_proofs").update(payload).eq("id", editingId);
+      const { error } = await (supabase as any).from("social_proofs").update(payload).eq("id", editingId);
       setSaving(false);
       if (error) { console.error("Social proof update error:", error); toast.error("Erro ao atualizar: " + error.message); return; }
       toast.success("Prova social atualizada!");
     } else {
       payload.created_by = user?.id;
       payload.is_active = true;
-      const { error } = await supabase.from("social_proofs").insert(payload);
+      const { error } = await (supabase as any).from("social_proofs").insert(payload);
       setSaving(false);
       if (error) { console.error("Social proof insert error:", error); toast.error("Erro ao criar: " + error.message); return; }
       toast.success("Prova social criada!");
@@ -107,12 +107,12 @@ export function SocialProofManager({ barbershopId, showPageSelector = false }: S
   };
 
   const toggleActive = async (id: string, current: boolean) => {
-    await supabase.from("social_proofs").update({ is_active: !current }).eq("id", id);
+    await (supabase as any).from("social_proofs").update({ is_active: !current }).eq("id", id);
     fetchProofs();
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from("social_proofs").delete().eq("id", id);
+    await (supabase as any).from("social_proofs").delete().eq("id", id);
     toast.success("Removido!");
     fetchProofs();
   };

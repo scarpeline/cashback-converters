@@ -21,6 +21,7 @@ import {
   Target
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+const db = supabase as any;
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -75,36 +76,36 @@ export const RealTimeMetricsPanel = () => {
         webhooksCount
       ] = await Promise.all([
         // Total de usuários
-        supabase.from('profiles').select('id', { count: 'exact' }),
+        db.from('profiles').select('id', { count: 'exact' }),
         
         // Usuários ativos (últimos 7 dias)
-        supabase.from('profiles').select('id', { count: 'exact' })
+        db.from('profiles').select('id', { count: 'exact' })
           .gte('last_sign_in_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
         
         // Total de barbearias
-        supabase.from('barbershops').select('id', { count: 'exact' }),
+        db.from('barbershops').select('id', { count: 'exact' }),
         
         // Barbearias ativas (com agendamentos nos últimos 30 dias)
-        supabase.from('barbershops').select('id', { count: 'exact' })
+        db.from('barbershops').select('id', { count: 'exact' })
           .in('id', 
-            supabase.from('appointments').select('barbershop_id')
+            db.from('appointments').select('barbershop_id')
               .gte('scheduled_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
           ),
         
         // Métricas de hoje
-        supabase.from('daily_metrics').select('revenue, services_count, appointments_count')
+        db.from('daily_metrics').select('revenue, services_count, appointments_count')
           .eq('date', today),
         
         // Métricas do mês
-        supabase.from('daily_metrics').select('revenue, services_count, appointments_count')
+        db.from('daily_metrics').select('revenue, services_count, appointments_count')
           .gte('date', monthStart),
         
         // Pagamentos pendentes
-        supabase.from('payments').select('id', { count: 'exact' })
+        db.from('payments').select('id', { count: 'exact' })
           .eq('status', 'pending'),
         
         // Webhooks com falha nas últimas 24h
-        supabase.from('webhook_logs').select('id', { count: 'exact' })
+        db.from('webhook_logs').select('id', { count: 'exact' })
           .lt('response_status', 200)
           .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
       ]);

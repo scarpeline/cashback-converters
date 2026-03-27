@@ -89,7 +89,7 @@ serve(async (req) => {
       }
 
       case "asaas_auth": {
-        // Test Asaas API key
+        // Test Asaas API key — nunca expor a key no response/log
         const env = config.environment || "sandbox";
         const apiKey = env === "sandbox"
           ? Deno.env.get("ASAAS_API_KEY_SANDBOX")
@@ -99,7 +99,8 @@ serve(async (req) => {
           : "https://api.asaas.com/api/v3";
 
         if (!apiKey) {
-          result = { success: false, message: `API key para ${env} não configurada` };
+          // Não revelar se a key existe ou não — apenas "não configurada"
+          result = { success: false, message: `Credencial para ${env} não configurada no servidor` };
           break;
         }
 
@@ -107,17 +108,22 @@ serve(async (req) => {
           const response = await fetch(`${baseUrl}/finance/balance`, {
             headers: { "access_token": apiKey },
           });
-          const data = await response.json();
+          // Não logar o body completo — pode conter dados sensíveis
           if (response.ok) {
+            const data = await response.json();
             result = {
               success: true,
-              message: `Conectado ao Asaas (${env}). Saldo: R$ ${data.totalBalance || 0}`,
-              balance: data.totalBalance,
+              message: `Conectado ao Asaas (${env}). Saldo disponível confirmado.`,
+              // Não expor saldo real em logs — apenas confirmar conectividade
+              connected: true,
+              environment: env,
             };
           } else {
-            result = { success: false, message: data.errors?.[0]?.description || "Autenticação falhou" };
+            // Não expor detalhes do erro que possam revelar a key
+            result = { success: false, message: `Autenticação falhou no Asaas (${env})` };
           }
-        } catch (err) {
+        } catch (_err) {
+          // Não logar o erro completo — pode conter a URL com a key
           result = { success: false, message: "Falha ao conectar com Asaas" };
         }
         break;

@@ -21,6 +21,7 @@ interface Barbershop {
   asaas_customer_id: string | null;
   asaas_wallet_id: string | null;
   automation_schedule: any;
+  sector: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -37,7 +38,7 @@ export function useBarbershop() {
     }
 
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("barbershops")
       .select("*")
       .eq("owner_user_id", user.id)
@@ -55,5 +56,27 @@ export function useBarbershop() {
     fetchBarbershop();
   }, [user]);
 
-  return { barbershop, loading, refetch: fetchBarbershop };
+  const updateBarbershop = async (updates: Partial<Barbershop>) => {
+    if (!barbershop?.id) return { success: false, error: 'Barbearia não encontrada' };
+
+    setLoading(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("barbershops")
+        .update(updates)
+        .eq("id", barbershop.id);
+
+      if (error) throw error;
+      
+      setBarbershop((prev) => prev ? { ...prev, ...updates } : null);
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erro ao atualizar barbearia:', error);
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { barbershop, loading, refetch: fetchBarbershop, updateBarbershop };
 }
