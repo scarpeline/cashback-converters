@@ -15,44 +15,6 @@ export default defineConfig(({ mode }) => ({
       port: 8080,
     },
   },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // Separar vendors grandes
-          'react-vendor': ['react', 'react-dom'],
-          'supabase-vendor': ['@supabase/supabase-js'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
-          'router-vendor': ['react-router-dom'],
-          'query-vendor': ['@tanstack/react-query'],
-          'lucide-vendor': ['lucide-react'],
-          
-          // Separar dashboards pesados
-          'dashboard-dono': [
-            './src/pages/dashboards/DonoDashboard.tsx',
-            './src/pages/DonoDashboard/DividasPage.tsx'
-          ],
-          'dashboard-superadmin': [
-            './src/pages/dashboards/SuperAdminDashboard.tsx'
-          ],
-          'dashboard-profissional': [
-            './src/pages/dashboards/ProfissionalDashboard.tsx'
-          ],
-          'dashboard-cliente': [
-            './src/pages/dashboards/ClienteDashboard.tsx'
-          ],
-          'dashboard-afiliado': [
-            './src/pages/dashboards/AfiliadoDashboard.tsx'
-          ],
-          'dashboard-contador': [
-            './src/pages/dashboards/ContadorDashboard.tsx'
-          ]
-        }
-      }
-    },
-    chunkSizeWarningLimit: 1000,
-    sourcemap: mode === 'development'
-  },
   plugins: [
     react(),
     mode === "development" && componentTagger(),

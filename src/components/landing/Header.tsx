@@ -73,17 +73,11 @@ const Header = () => {
                 <Link to="/login" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                   <Button variant="gold" className="w-full justify-center">{t("get_started")}</Button>
                 </Link>
-<<<<<<< HEAD
-                {/* Botão Seja um Franqueado removido temporariamente
-                <Link to="/seja-um-franqueado" onClick={() => setIsMenuOpen(false)}>
-=======
                 <Link to="/seja-um-franqueado" onClick={() => setIsMenuOpen(!isMenuOpen)}>
->>>>>>> origin/main
                   <Button variant="outline" className="w-full justify-center border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white">
                     {t("be_franchisee")}
                   </Button>
                 </Link>
-                */}
               </div>
             </nav>
           </div>

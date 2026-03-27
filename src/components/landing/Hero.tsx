@@ -79,38 +79,21 @@ const Hero = () => {
                 <Users className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" style={{ color: "var(--accent-orange)" }} />
                 <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-black" style={{ color: "var(--text-light)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>500+</span>
               </div>
-<<<<<<< HEAD
-              <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "var(--text-light)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>Barbearias ativas</p>
-=======
-              <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "hsl(0 0% 100%)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>
-                {nicheLabelPlural} {t("hero.active")}
-              </p>
->>>>>>> origin/main
+              <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "var(--text-light)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>{nicheLabelPlural} {t("hero.active") || "Barbearias ativas"}</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
                 <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" style={{ color: "var(--accent-orange)" }} />
                 <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-black" style={{ color: "var(--text-light)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>60%</span>
               </div>
-<<<<<<< HEAD
-              <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "var(--text-light)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>Economia de tempo</p>
+              <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "var(--text-light)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>{t("hero.time_saving") || "Economia de tempo"}</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
                 <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" style={{ color: "var(--accent-orange)" }} />
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-black" style={{ color: "var(--text-light)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>7 dias</span>
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-black" style={{ color: "var(--text-light)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>{t("hero.seven_days") || "7 dias"}</span>
               </div>
-              <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "var(--text-light)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>Teste grátis</p>
-=======
-              <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "hsl(0 0% 100%)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>{t("hero.time_saving")}</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" style={{ color: "hsl(38 92% 50%)" }} />
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-black" style={{ color: "hsl(0 0% 100%)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>{t("hero.seven_days")}</span>
-              </div>
-              <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "hsl(0 0% 100%)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>{t("hero.free_trial")}</p>
->>>>>>> origin/main
+              <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "var(--text-light)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>{t("hero.free_trial") || "Teste grátis"}</p>
             </div>
           </div>
         </div>

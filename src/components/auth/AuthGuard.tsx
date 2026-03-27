@@ -18,7 +18,6 @@ interface AuthGuardProps {
 export function AuthGuard({ children }: AuthGuardProps) {
   const { user, authResolved, roles, getPrimaryRole } = useAuth();
   const location = useLocation();
-<<<<<<< HEAD
   const [redirectTimeout, setRedirectTimeout] = useState(false);
   const redirectAttemptedRef = useRef(false);
 
