@@ -1,105 +1,159 @@
 // @ts-nocheck
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, TrendingUp, Users } from "lucide-react";
+import { ArrowRight, Sparkles, TrendingUp, Users, Play } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useNiche } from "@/hooks/useNiche";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 
 const Hero = () => {
   const { nicheLabel, nicheLabelPlural } = useNiche();
   const { t } = useTranslation("common");
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-2 sm:px-4 py-20" style={{ background: "linear-gradient(135deg, hsl(212 78% 31%) 0%, hsl(212 78% 41%) 25%, hsl(212 78% 51%) 50%, hsl(212 78% 61%) 75%, hsl(212 78% 31%) 100%)" }}>
-      {/* Glowing orbs */}
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, hsl(38 92% 50% / 0.15), transparent 70%)" }} />
-      <div className="absolute bottom-1/4 left-1/4 w-80 h-80 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, hsl(0 0% 100% / 0.15), transparent 70%)" }} />
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 pt-24 pb-16">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/5" />
+      
+      {/* Grid pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }}
+      />
 
-      <div className="container relative z-10 mx-auto px-2 sm:px-0">
-        <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
+      {/* Floating orbs */}
+      <motion.div
+        animate={{ y: [0, -30, 0], x: [0, 15, 0] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-1/4 right-[15%] w-72 h-72 rounded-full blur-3xl bg-accent/10"
+      />
+      <motion.div
+        animate={{ y: [0, 20, 0], x: [0, -20, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute bottom-1/4 left-[10%] w-96 h-96 rounded-full blur-3xl bg-primary/10"
+      />
+
+      <div className="container relative z-10 mx-auto">
+        <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 sm:px-6 py-3 rounded-full border mb-8 sm:mb-10 animate-fade-in" style={{ background: "hsl(212 78% 95% / 0.9)", borderColor: "hsl(38 92% 50%)" }}>
-            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: "hsl(38 92% 50%)" }} />
-            <span className="text-lg sm:text-xl lg:text-2xl font-bold" style={{ color: "hsl(212 78% 31%)" }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 mb-8"
+          >
+            <Sparkles className="w-4 h-4 text-accent" />
+            <span className="text-sm font-semibold text-accent">
               {t("niche.saas_for_niche", { niche: nicheLabel })}
             </span>
-          </div>
+          </motion.div>
 
           {/* Headline */}
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-7xl xl:text-8xl font-black leading-tight mb-6 sm:mb-8 animate-fade-in" style={{ animationDelay: "0.1s", color: "hsl(0 0% 100%)", textShadow: "2px 2px 4px rgba(0,0,0,0.3)" }}>
-            <span className="text-4xl sm:text-5xl lg:text-7xl xl:text-8xl">
-              {t("niche.automate_niche", { niche: nicheLabel })}
-            </span>
-            <br className="sm:hidden" />
-            <span className="text-4xl sm:text-5xl lg:text-7xl xl:text-8xl"> {t("hero.and_have")}</span>
-            <br className="sm:hidden" />
-            <span className="text-4xl sm:text-5xl lg:text-7xl xl:text-8xl font-black" style={{ color: "hsl(38 92% 50%)", textShadow: "3px 3px 6px rgba(0,0,0,0.5)" }}>{t("hero.full_schedule")}</span>
-          </h1>
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="font-display text-4xl sm:text-5xl lg:text-7xl font-black leading-[1.1] mb-6 text-foreground"
+          >
+            {t("niche.automate_niche", { niche: nicheLabel })}
+            <br />
+            <span className="text-foreground">{t("hero.and_have")} </span>
+            <span className="text-gradient-orange">{t("hero.full_schedule")}</span>
+          </motion.h1>
 
-          {/* Logo */}
-          <div className="relative my-8 animate-fade-in" style={{ animationDelay: "0.15s" }}>
-            <div className="absolute inset-0 blur-2xl scale-150" style={{ background: "radial-gradient(circle, hsl(42 100% 50% / 0.2), transparent)" }} />
-            <img src={logo} alt="SalãoCashBack" className="relative w-48 sm:w-56 lg:w-64 h-auto animate-float drop-shadow-2xl" />
-          </div>
+          {/* Logo floating */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="relative my-6"
+          >
+            <div className="absolute inset-0 blur-3xl scale-150 bg-accent/10 rounded-full" />
+            <img
+              src={logo}
+              alt="SalãoCashBack"
+              className="relative w-40 sm:w-48 lg:w-56 h-auto drop-shadow-2xl animate-float"
+            />
+          </motion.div>
 
           {/* Subheadline */}
-          <p className="text-xl sm:text-2xl lg:text-3xl mb-4 sm:mb-6 animate-fade-in font-semibold" style={{ animationDelay: "0.2s", color: "hsl(0 0% 100%)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>
-            <span className="text-xl sm:text-2xl lg:text-3xl">{t("hero.complete_management")}</span>
-            <br className="sm:hidden" />
-            <span className="text-xl sm:text-2xl lg:text-3xl"> {t("hero.automation_of")}{" "}</span>
-            <span className="font-black text-xl sm:text-2xl lg:text-3xl" style={{ color: "hsl(38 92% 50%)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>{t("hero.marketing_financial")}</span>
-          </p>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-lg sm:text-xl lg:text-2xl mb-4 text-muted-foreground font-medium max-w-3xl"
+          >
+            {t("hero.complete_management")}{" "}
+            {t("hero.automation_of")}{" "}
+            <span className="text-accent font-bold">{t("hero.marketing_financial")}</span>
+          </motion.p>
 
           {/* Copy */}
-          <p className="text-lg sm:text-xl lg:text-2xl mb-8 sm:mb-10 lg:mb-12 max-w-xl animate-fade-in" style={{ animationDelay: "0.3s", color: "hsl(0 0% 100%)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>
-            <span className="text-lg sm:text-xl lg:text-2xl">{t("hero.reduce_work")}</span>
-            <br className="sm:hidden" />
-            <span className="text-lg sm:text-xl lg:text-2xl"> {t("hero.and_have")}{" "}</span>
-            <strong className="text-lg sm:text-xl lg:text-2xl font-black" style={{ color: "hsl(0 0% 100%)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>{t("hero.full_control")}</strong>
-          </p>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="text-base sm:text-lg mb-10 max-w-xl text-muted-foreground"
+          >
+            {t("hero.reduce_work")} {t("hero.and_have")}{" "}
+            <strong className="text-foreground font-bold">{t("hero.full_control")}</strong>
+          </motion.p>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 animate-fade-in" style={{ animationDelay: "0.4s" }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="flex flex-col sm:flex-row items-center gap-4"
+          >
             <Link to="/login">
-              <Button variant="hero" size="lg" className="w-full sm:w-auto text-lg sm:text-xl lg:text-2xl px-8 py-4 font-bold" style={{ background: "hsl(38 92% 50%)", color: "hsl(0 0% 100%)", border: "2px solid hsl(38 92% 50%)" }}>
-                <span className="text-lg sm:text-xl lg:text-2xl">{t("hero.test_system")}</span>
-                <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
+              <Button
+                size="lg"
+                className="text-lg px-8 py-6 bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/30 transition-all hover:scale-105"
+              >
+                {t("hero.test_system")}
+                <ArrowRight className="w-5 h-5 ml-1" />
               </Button>
             </Link>
             <a href="#features">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg sm:text-xl lg:text-2xl px-8 py-4 font-bold border-2" style={{ borderColor: "hsl(0 0% 100%)", color: "hsl(0 0% 100%)", background: "hsl(0 0% 100% / 0.1)" }}>
-                <span className="text-lg sm:text-xl lg:text-2xl">{t("hero.view_demo")}</span>
+              <Button
+                variant="outline"
+                size="lg"
+                className="text-lg px-8 py-6 border-border hover:bg-muted"
+              >
+                <Play className="w-4 h-4 mr-1" />
+                {t("hero.view_demo")}
               </Button>
             </a>
-          </div>
+          </motion.div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 sm:gap-8 mt-12 sm:mt-16 pt-8 sm:pt-10 animate-fade-in" style={{ animationDelay: "0.5s", borderTop: "2px solid hsl(0 0% 100% / 0.3)" }}>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" style={{ color: "hsl(38 92% 50%)" }} />
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-black" style={{ color: "hsl(0 0% 100%)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>500+</span>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="grid grid-cols-3 gap-8 sm:gap-16 mt-16 pt-10 border-t border-border/50 w-full max-w-2xl"
+          >
+            {[
+              { icon: Users, value: "500+", label: `${nicheLabelPlural} ${t("hero.active")}` },
+              { icon: TrendingUp, value: "60%", label: t("hero.time_saving") },
+              { icon: Sparkles, value: t("hero.seven_days"), label: t("hero.free_trial") },
+            ].map(({ icon: Icon, value, label }) => (
+              <div key={label} className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Icon className="w-4 h-4 text-accent" />
+                  <span className="text-2xl sm:text-3xl font-display font-black text-foreground">
+                    {value}
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium">{label}</p>
               </div>
-              <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "hsl(0 0% 100%)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>
-                {nicheLabelPlural} {t("hero.active")}
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
-                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" style={{ color: "hsl(38 92% 50%)" }} />
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-black" style={{ color: "hsl(0 0% 100%)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>60%</span>
-              </div>
-              <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "hsl(0 0% 100%)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>{t("hero.time_saving")}</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" style={{ color: "hsl(38 92% 50%)" }} />
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-black" style={{ color: "hsl(0 0% 100%)", textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>{t("hero.seven_days")}</span>
-              </div>
-              <p className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: "hsl(0 0% 100%)", textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>{t("hero.free_trial")}</p>
-            </div>
-          </div>
+            ))}
+          </motion.div>
         </div>
       </div>
     </section>
