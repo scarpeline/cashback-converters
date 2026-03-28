@@ -149,7 +149,7 @@ export async function processIncomingMessage(params: {
       .eq('barbershop_id', barbershopId)
       .maybeSingle();
 
-    const personality = config?.personality || 'friendly';
+    const personality = (config?.personality || 'friendly') as 'formal' | 'friendly' | 'premium';
     const autoBooking = config?.auto_booking !== false;
     const autoRegister = config?.auto_register_client !== false;
 
@@ -195,7 +195,7 @@ export async function processIncomingMessage(params: {
 
 async function handleNewConversation(
   barbershopId: string, phone: string, name: string,
-  message: string, intent: AIIntentType, personality: string, autoBooking: boolean
+  message: string, intent: AIIntentType, personality: 'formal' | 'friendly' | 'premium', autoBooking: boolean
 ): Promise<AssistantResponse> {
 
   switch (intent) {
@@ -295,7 +295,7 @@ async function handleNewConversation(
 
 async function handleOngoingConversation(
   state: ConversationState, message: string, intent: AIIntentType,
-  personality: string, barbershopId: string
+  personality: 'formal' | 'friendly' | 'premium', barbershopId: string
 ): Promise<AssistantResponse> {
   const msg = message.toLowerCase().trim();
   const ctx = state.context || {};
@@ -410,15 +410,16 @@ async function handleOngoingConversation(
 
       // Criar agendamento
       const scheduledAt = new Date(`${ctx.selected_date}T${ctx.selected_time}:00`);
-      const appointment = await createAppointment({
-        barbershop_id: barbershopId,
-        professional_id: ctx.professional_id!,
-        service_id: ctx.service_id!,
-        client_name: state.client_name || 'Cliente',
-        client_whatsapp: state.client_phone,
-        scheduled_at: scheduledAt.toISOString(),
-        notes: 'Agendado via WhatsApp IA',
-      });
+      const appointment = await createAppointment(
+        barbershopId,
+        ctx.professional_id!,
+        ctx.service_id!,
+        '',
+        state.client_name || 'Cliente',
+        state.client_phone,
+        scheduledAt,
+        'Agendado via WhatsApp IA'
+      );
 
       await upsertConversationState({
         barbershop_id: barbershopId,

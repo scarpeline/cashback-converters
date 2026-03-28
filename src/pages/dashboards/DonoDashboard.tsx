@@ -146,8 +146,6 @@ const DonoDashboard = () => {
     return <DonoOnboarding onComplete={refetchBarbershop} />;
   }
 
-  const basePath = "/painel-dono";
-
   const navigation = [
     { name: "Dashboard", href: basePath, icon: LayoutDashboard },
     { name: "Agendamentos", href: `${basePath}/agendamentos`, icon: Calendar },

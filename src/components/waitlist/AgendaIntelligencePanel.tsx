@@ -69,10 +69,6 @@ export const AgendaIntelligencePanel = ({ barbershopId }: AgendaIntelligencePane
     is_active: true,
   });
 
-  useEffect(() => {
-    loadData();
-  }, [barbershopId, loadData]);
-
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -91,6 +87,10 @@ export const AgendaIntelligencePanel = ({ barbershopId }: AgendaIntelligencePane
       setLoading(false);
     }
   }, [barbershopId]);
+
+  useEffect(() => {
+    loadData();
+  }, [barbershopId, loadData]);
 
   const handleSaveSettings = async () => {
     if (!settings) return;

@@ -52,10 +52,6 @@ export function WeeklySchedulePanel({ barbershopId }: WeeklySchedulePanelProps) 
     use_ai: false,
   });
 
-  useEffect(() => {
-    loadSchedules();
-  }, [barbershopId, loadSchedules]);
-
   const loadSchedules = useCallback(async () => {
     try {
       const { data } = await (supabase as any)
@@ -70,6 +66,10 @@ export function WeeklySchedulePanel({ barbershopId }: WeeklySchedulePanelProps) 
       setLoading(false);
     }
   }, [barbershopId]);
+
+  useEffect(() => {
+    loadSchedules();
+  }, [barbershopId, loadSchedules]);
 
   const saveSchedule = async () => {
     if (!form.name || !form.message_template) {

@@ -39,12 +39,6 @@ export default function ResourcesPanel() {
     color: "#6366f1",
   });
 
-  useEffect(() => {
-    if (barbershop?.id) {
-      fetchResources();
-    }
-  }, [barbershop?.id, fetchResources]);
-
   const fetchResources = useCallback(async () => {
     if (!barbershop?.id) return;
     setLoading(true);
@@ -57,6 +51,12 @@ export default function ResourcesPanel() {
       setLoading(false);
     }
   }, [barbershop?.id]);
+
+  useEffect(() => {
+    if (barbershop?.id) {
+      fetchResources();
+    }
+  }, [barbershop?.id, fetchResources]);
 
   const handleOpenDialog = (resource?: Resource) => {
     if (resource) {
