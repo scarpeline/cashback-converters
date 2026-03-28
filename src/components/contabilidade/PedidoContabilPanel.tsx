@@ -63,11 +63,6 @@ export function PedidoContabilPanel({ barbershopId }: Props) {
   const [loading, setLoading] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) fetchPedidos();
-    fetchServicos();
-  }, [user]);
-
   const fetchPedidos = async () => {
     if (!user) return;
     const { data } = await (supabase as any)
@@ -77,6 +72,11 @@ export function PedidoContabilPanel({ barbershopId }: Props) {
       .order("created_at", { ascending: false });
     setPedidos((data as Pedido[]) || []);
   };
+
+  useEffect(() => {
+    if (user) fetchPedidos();
+    fetchServicos();
+  }, [user]);
 
   const fetchServicos = async () => {
     const { data } = await (supabase as any)

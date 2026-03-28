@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -55,11 +55,7 @@ export function AgendaIntelligencePanel({ barbershopId }: AgendaIntelligencePane
   const [cancellationRisks, setCancellationRisks] = useState<ModuleCancellationPrediction[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, [barbershopId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [metricsData, today, tomorrow, predictionsData, suggestionsData, promo, gaps, risks] = await Promise.all([
@@ -87,7 +83,11 @@ export function AgendaIntelligencePanel({ barbershopId }: AgendaIntelligencePane
     } finally {
       setLoading(false);
     }
-  };
+  }, [barbershopId, toast]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   if (loading) {
     return (

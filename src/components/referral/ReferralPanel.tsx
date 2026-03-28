@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,11 +44,7 @@ export function ReferralPanel({ userId }: ReferralPanelProps) {
   const [shareLinks, setShareLinks] = useState<{ whatsapp: string; email: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, [userId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [referralCode, myReferrals, byMe, referralStats] = await Promise.all([
@@ -67,7 +63,11 @@ export function ReferralPanel({ userId }: ReferralPanelProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    loadData();
+  }, [userId, loadData]);
 
   const handleApplyCode = async () => {
     if (!applyCode.trim()) {

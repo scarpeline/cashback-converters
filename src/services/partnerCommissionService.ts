@@ -16,9 +16,13 @@ export async function generateReferralCommission(
   paymentId: string
 ) {
   try {
-    // Buscar configuração de comissão para afiliados
-    const commissionPercentage = 0.10; // 10% para primeira compra
+    // Buscar configuração de comissão do parceiro
+    const { data: partner } = await (supabase as any)
+      .from('partners').select('type, commission_rate').eq('id', referrerId).single();
+    const commissionPercentage = partner?.commission_rate || 0.10;
     const commissionAmount = paymentAmount * commissionPercentage;
+
+    if (commissionAmount <= 0) return false;
 
     const success = await createPartnerCommission({
       partner_id: referrerId,

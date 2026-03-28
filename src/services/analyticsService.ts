@@ -1,52 +1,17 @@
-// Analytics Service
-// Métricas avançadas para dashboard
-
+// Analytics Service — Métricas reais para dashboards
 import { supabase } from '@/integrations/supabase/client';
 
 export interface DashboardMetrics {
-  revenue: {
-    today: number;
-    week: number;
-    month: number;
-    comparison: number;
-  };
-  appointments: {
-    today: number;
-    week: number;
-    month: number;
-    completed: number;
-    cancelled: number;
-    noShow: number;
-  };
-  clients: {
-    total: number;
-    newThisMonth: number;
-    active: number;
-    inactive: number;
-    retention: number;
-  };
-  occupation: {
-    average: number;
-    peak: number;
-    weak: number;
-  };
-  financials: {
-    averageTicket: number;
-    totalRevenue: number;
-    totalCost: number;
-    profit: number;
-    margin: number;
-  };
+  revenue: { today: number; week: number; month: number; comparison: number };
+  appointments: { today: number; week: number; month: number; completed: number; cancelled: number; noShow: number };
+  clients: { total: number; newThisMonth: number; active: number; inactive: number; retention: number };
+  occupation: { average: number; peak: number; weak: number };
+  financials: { averageTicket: number; totalRevenue: number; totalCost: number; profit: number; margin: number };
 }
 
 export interface ClientMetrics {
-  totalClients: number;
-  newClients: number;
-  returningClients: number;
-  vipClients: number;
-  inactiveClients: number;
-  averageVisits: number;
-  averageSpent: number;
+  totalClients: number; newClients: number; returningClients: number;
+  vipClients: number; inactiveClients: number; averageVisits: number; averageSpent: number;
 }
 
 export interface RevenueMetrics {
@@ -58,121 +23,145 @@ export interface RevenueMetrics {
   monthly: { month: string; amount: number }[];
 }
 
+// Helpers de data
+const toISO = (d: Date) => d.toISOString();
+const daysAgo = (n: number) => { const d = new Date(); d.setDate(d.getDate() - n); return d; };
+const startOfDay = (d: Date) => { const c = new Date(d); c.setHours(0, 0, 0, 0); return c; };
+const endOfDay = (d: Date) => { const c = new Date(d); c.setHours(23, 59, 59, 999); return c; };
+
+const EMPTY_METRICS: DashboardMetrics = {
+  revenue: { today: 0, week: 0, month: 0, comparison: 0 },
+  appointments: { today: 0, week: 0, month: 0, completed: 0, cancelled: 0, noShow: 0 },
+  clients: { total: 0, newThisMonth: 0, active: 0, inactive: 0, retention: 0 },
+  occupation: { average: 0, peak: 0, weak: 0 },
+  financials: { averageTicket: 0, totalRevenue: 0, totalCost: 0, profit: 0, margin: 0 },
+};
+
 export async function getDashboardMetrics(barbershopId: string): Promise<DashboardMetrics> {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const lastMonthAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const now = new Date();
+    const todayStart = toISO(startOfDay(now));
+    const todayEnd = toISO(endOfDay(now));
+    const weekStart = toISO(daysAgo(7));
+    const monthStart = toISO(daysAgo(30));
+    const lastMonthStart = toISO(daysAgo(60));
 
-    const [todayAppointments, weekAppointments, monthAppointments, lastMonthAppointments, clients, allAppointments] = await Promise.all([
-      (supabase as any).from('appointments').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId).gte('scheduled_at', `${today}T00:00:00`).lte('scheduled_at', `${today}T23:59:59`),
-      (supabase as any).from('appointments').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId).gte('scheduled_at', `${weekAgo}T00:00:00`),
-      (supabase as any).from('appointments').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId).gte('scheduled_at', `${monthAgo}T00:00:00`),
-      (supabase as any).from('appointments').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId).gte('scheduled_at', `${lastMonthAgo}T00:00:00`).lt('scheduled_at', `${monthAgo}T00:00:00`),
-      (supabase as any).from('clients').select('*', { count: 'exact' }).eq('barbershop_id', barbershopId),
-      (supabase as any).from('appointments').select('*').eq('barbershop_id', barbershopId).gte('scheduled_at', `${monthAgo}T00:00:00`),
+    // Buscar agendamentos do mês atual e anterior em paralelo
+    const [monthRes, lastMonthRes, clientsRes, paymentsRes] = await Promise.all([
+      (supabase as any).from('appointments').select('id, status, total_price, scheduled_at')
+        .eq('barbershop_id', barbershopId).gte('scheduled_at', monthStart),
+      (supabase as any).from('appointments').select('id, total_price, status')
+        .eq('barbershop_id', barbershopId).gte('scheduled_at', lastMonthStart).lt('scheduled_at', monthStart),
+      (supabase as any).from('clients').select('id, created_at, last_visit_at')
+        .eq('barbershop_id', barbershopId),
+      (supabase as any).from('payments').select('amount, status, method')
+        .eq('barbershop_id', barbershopId).eq('status', 'paid').gte('created_at', monthStart),
     ]);
 
-    const completed = allAppointments.data?.filter((a: any) => a.status === 'completed').length || 0;
-    const cancelled = allAppointments.data?.filter((a: any) => a.status === 'cancelled').length || 0;
-    const noShow = allAppointments.data?.filter((a: any) => a.status === 'no_show').length || 0;
+    const monthAppts = monthRes.data || [];
+    const lastMonthAppts = lastMonthRes.data || [];
+    const clients = clientsRes.data || [];
 
-    const totalRevenue = allAppointments.data
-      ?.filter((a: any) => a.status === 'completed')
-      ?.reduce((sum: number, a: any) => sum + (a.total_price || 0), 0) || 0;
+    // Contagens de agendamentos
+    const todayAppts = monthAppts.filter((a: any) => a.scheduled_at >= todayStart && a.scheduled_at <= todayEnd);
+    const weekAppts = monthAppts.filter((a: any) => a.scheduled_at >= weekStart);
+    const completed = monthAppts.filter((a: any) => a.status === 'completed');
+    const cancelled = monthAppts.filter((a: any) => a.status === 'cancelled').length;
+    const noShow = monthAppts.filter((a: any) => a.status === 'no_show').length;
 
-    const lastMonthRevenue = 0;
+    // Receita
+    const monthRevenue = completed.reduce((s: number, a: any) => s + (a.total_price || 0), 0);
+    const todayRevenue = todayAppts.filter((a: any) => a.status === 'completed').reduce((s: number, a: any) => s + (a.total_price || 0), 0);
+    const weekRevenue = weekAppts.filter((a: any) => a.status === 'completed').reduce((s: number, a: any) => s + (a.total_price || 0), 0);
+    const lastMonthRevenue = lastMonthAppts.filter((a: any) => a.status === 'completed').reduce((s: number, a: any) => s + (a.total_price || 0), 0);
+    const comparison = lastMonthRevenue > 0 ? ((monthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0;
 
-    const workingHours = 12;
-    const daysInMonth = 30;
-    const totalSlots = daysInMonth * workingHours;
-    const averageOccupancy = allAppointments.data?.length ? (allAppointments.data.length / totalSlots) * 100 : 0;
+    // Clientes
+    const monthAgoDate = daysAgo(30);
+    const sixtyDaysAgo = daysAgo(60);
+    const newThisMonth = clients.filter((c: any) => new Date(c.created_at) > monthAgoDate).length;
+    const activeClients = clients.filter((c: any) => c.last_visit_at && new Date(c.last_visit_at) > sixtyDaysAgo).length;
+    const inactiveClients = clients.length - activeClients;
+
+    // Retenção: clientes que voltaram no mês atual vs mês anterior
+    const lastMonthClientIds = new Set(lastMonthAppts.map((a: any) => a.client_user_id).filter(Boolean));
+    const currentClientIds = new Set(monthAppts.map((a: any) => a.client_user_id).filter(Boolean));
+    let retained = 0;
+    lastMonthClientIds.forEach((id: string) => { if (currentClientIds.has(id)) retained++; });
+    const retention = lastMonthClientIds.size > 0 ? Math.round((retained / lastMonthClientIds.size) * 100) : 0;
+
+    // Ocupação (estimativa: 12h de trabalho/dia, 26 dias úteis)
+    const totalSlots = 26 * 12;
+    const avgOccupancy = totalSlots > 0 ? Math.round((monthAppts.length / totalSlots) * 100) : 0;
+
+    // Horários de pico
+    const hourCounts: Record<number, number> = {};
+    monthAppts.forEach((a: any) => {
+      const h = new Date(a.scheduled_at).getHours();
+      hourCounts[h] = (hourCounts[h] || 0) + 1;
+    });
+    const hours = Object.entries(hourCounts).map(([h, c]) => ({ hour: +h, count: c }));
+    hours.sort((a, b) => b.count - a.count);
+    const peakHour = hours[0]?.hour ?? 0;
+    const weakHour = hours[hours.length - 1]?.hour ?? 0;
+
+    const avgTicket = completed.length > 0 ? monthRevenue / completed.length : 0;
 
     return {
-      revenue: {
-        today: totalRevenue * (todayAppointments.count || 0) / Math.max(allAppointments.data?.length || 1, 1),
-        week: totalRevenue * (weekAppointments.count || 0) / Math.max(allAppointments.data?.length || 1, 1),
-        month: totalRevenue,
-        comparison: lastMonthRevenue > 0 ? ((totalRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0,
-      },
-      appointments: {
-        today: todayAppointments.count || 0,
-        week: weekAppointments.count || 0,
-        month: monthAppointments.count || 0,
-        completed,
-        cancelled,
-        noShow,
-      },
-      clients: {
-        total: clients.count || 0,
-        newThisMonth: 0,
-        active: 0,
-        inactive: 0,
-        retention: 0,
-      },
-      occupation: {
-        average: Math.round(averageOccupancy * 100) / 100,
-        peak: 0,
-        weak: 0,
-      },
-      financials: {
-        averageTicket: completed > 0 ? totalRevenue / completed : 0,
-        totalRevenue,
-        totalCost: 0,
-        profit: totalRevenue,
-        margin: totalRevenue > 0 ? 0 : 0,
-      },
+      revenue: { today: todayRevenue, week: weekRevenue, month: monthRevenue, comparison: Math.round(comparison * 100) / 100 },
+      appointments: { today: todayAppts.length, week: weekAppts.length, month: monthAppts.length, completed: completed.length, cancelled, noShow },
+      clients: { total: clients.length, newThisMonth, active: activeClients, inactive: inactiveClients, retention },
+      occupation: { average: avgOccupancy, peak: peakHour, weak: weakHour },
+      financials: { averageTicket: Math.round(avgTicket * 100) / 100, totalRevenue: monthRevenue, totalCost: 0, profit: monthRevenue, margin: monthRevenue > 0 ? 100 : 0 },
     };
   } catch (error) {
     console.error('Erro ao buscar métricas:', error);
-    return {
-      revenue: { today: 0, week: 0, month: 0, comparison: 0 },
-      appointments: { today: 0, week: 0, month: 0, completed: 0, cancelled: 0, noShow: 0 },
-      clients: { total: 0, newThisMonth: 0, active: 0, inactive: 0, retention: 0 },
-      occupation: { average: 0, peak: 0, weak: 0 },
-      financials: { averageTicket: 0, totalRevenue: 0, totalCost: 0, profit: 0, margin: 0 },
-    };
+    return EMPTY_METRICS;
   }
 }
 
 export async function getRevenueMetrics(barbershopId: string, days: number = 30): Promise<RevenueMetrics> {
   try {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
+    const start = toISO(daysAgo(days));
     const { data: appointments } = await (supabase as any)
       .from('appointments')
-      .select('*, services(name), professionals(name)')
-      .eq('barbershop_id', barbershopId)
-      .eq('status', 'completed')
-      .gte('scheduled_at', startDate.toISOString());
+      .select('total_price, scheduled_at, status, payment_method, services(name), professionals(name)')
+      .eq('barbershop_id', barbershopId).eq('status', 'completed').gte('scheduled_at', start);
 
-    const total = appointments?.reduce((sum: number, a: any) => sum + (a.total_price || 0), 0) || 0;
+    const items = appointments || [];
+    const total = items.reduce((s: number, a: any) => s + (a.total_price || 0), 0);
 
-    const byService: Record<string, number> = {};
-    const byProfessional: Record<string, number> = {};
-    const byDay: Record<string, number> = {};
+    const byServiceMap: Record<string, number> = {};
+    const byProfMap: Record<string, number> = {};
+    const byDayMap: Record<string, number> = {};
+    const byMonthMap: Record<string, number> = {};
+    const byPaymentMap: Record<string, number> = {};
 
-    appointments?.forEach((apt: any) => {
-      const serviceName = apt.services?.name || 'Outro';
-      const profName = apt.professionals?.name || 'Não definido';
-      const day = apt.scheduled_at?.split('T')[0];
+    items.forEach((a: any) => {
+      const price = a.total_price || 0;
+      const svc = a.services?.name || 'Outro';
+      const prof = a.professionals?.name || 'Não definido';
+      const day = a.scheduled_at?.split('T')[0] || '';
+      const month = day.substring(0, 7);
+      const method = a.payment_method || 'não informado';
 
-      byService[serviceName] = (byService[serviceName] || 0) + (apt.total_price || 0);
-      byProfessional[profName] = (byProfessional[profName] || 0) + (apt.total_price || 0);
-      if (day) {
-        byDay[day] = (byDay[day] || 0) + (apt.total_price || 0);
-      }
+      byServiceMap[svc] = (byServiceMap[svc] || 0) + price;
+      byProfMap[prof] = (byProfMap[prof] || 0) + price;
+      if (day) byDayMap[day] = (byDayMap[day] || 0) + price;
+      if (month) byMonthMap[month] = (byMonthMap[month] || 0) + price;
+      byPaymentMap[method] = (byPaymentMap[method] || 0) + price;
     });
+
+    const toSorted = (map: Record<string, number>, key: string) =>
+      Object.entries(map).map(([k, v]) => ({ [key]: k, amount: v })).sort((a, b) => b.amount - a.amount) as any[];
 
     return {
       total,
-      byPayment: [],
-      byService: Object.entries(byService).map(([service, amount]) => ({ service, amount })).sort((a, b) => b.amount - a.amount),
-      byProfessional: Object.entries(byProfessional).map(([professional, amount]) => ({ professional, amount })).sort((a, b) => b.amount - a.amount),
-      daily: Object.entries(byDay).map(([date, amount]) => ({ date, amount })).sort((a, b) => a.date.localeCompare(b.date)),
-      monthly: [],
+      byPayment: toSorted(byPaymentMap, 'method'),
+      byService: toSorted(byServiceMap, 'service'),
+      byProfessional: toSorted(byProfMap, 'professional'),
+      daily: Object.entries(byDayMap).map(([date, amount]) => ({ date, amount })).sort((a, b) => a.date.localeCompare(b.date)),
+      monthly: Object.entries(byMonthMap).map(([month, amount]) => ({ month, amount })).sort((a, b) => a.month.localeCompare(b.month)),
     };
   } catch (error) {
     console.error('Erro ao buscar métricas de receita:', error);
@@ -182,209 +171,132 @@ export async function getRevenueMetrics(barbershopId: string, days: number = 30)
 
 export async function getClientMetrics(barbershopId: string): Promise<ClientMetrics> {
   try {
-    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const monthAgo = daysAgo(30);
+    const sixtyDaysAgo = daysAgo(60);
 
-    const { data: clients } = await (supabase as any)
-      .from('clients')
-      .select('*')
-      .eq('barbershop_id', barbershopId);
+    const [clientsRes, appointmentsRes, paymentsRes] = await Promise.all([
+      (supabase as any).from('clients').select('id, created_at, last_visit_at, total_spent, visit_count').eq('barbershop_id', barbershopId),
+      (supabase as any).from('appointments').select('client_user_id').eq('barbershop_id', barbershopId).gte('scheduled_at', toISO(monthAgo)),
+      (supabase as any).from('payments').select('client_id, amount').eq('barbershop_id', barbershopId).eq('status', 'paid').gte('created_at', toISO(monthAgo)),
+    ]);
 
-    const { data: appointments } = await (supabase as any)
-      .from('appointments')
-      .select('client_user_id, scheduled_at')
-      .eq('barbershop_id', barbershopId)
-      .gte('scheduled_at', monthAgo.toISOString());
+    const clients = clientsRes.data || [];
+    const appointments = appointmentsRes.data || [];
+    const payments = paymentsRes.data || [];
 
-    const clientVisits: Record<string, number> = {};
-    appointments?.forEach((apt: any) => {
-      if (apt.client_user_id) {
-        clientVisits[apt.client_user_id] = (clientVisits[apt.client_user_id] || 0) + 1;
-      }
+    const visitCounts: Record<string, number> = {};
+    appointments.forEach((a: any) => {
+      if (a.client_user_id) visitCounts[a.client_user_id] = (visitCounts[a.client_user_id] || 0) + 1;
     });
 
-    const totalClients = clients?.length || 0;
-    const activeClients = Object.keys(clientVisits).length;
-    const newClients = clients?.filter((c: any) => new Date(c.created_at) > monthAgo).length || 0;
-    const returningClients = Object.values(clientVisits).filter(v => v > 1).length;
+    const totalClients = clients.length;
+    const newClients = clients.filter((c: any) => new Date(c.created_at) > monthAgo).length;
+    const activeClients = Object.keys(visitCounts).length;
+    const returningClients = Object.values(visitCounts).filter(v => v > 1).length;
+    const vipClients = clients.filter((c: any) => (c.visit_count || 0) >= 10 || (c.total_spent || 0) >= 500).length;
+    const inactiveClients = clients.filter((c: any) => !c.last_visit_at || new Date(c.last_visit_at) < sixtyDaysAgo).length;
 
-    return {
-      totalClients,
-      newClients,
-      returningClients,
-      vipClients: 0,
-      inactiveClients: totalClients - activeClients,
-      averageVisits: totalClients > 0 ? (appointments?.length || 0) / totalClients : 0,
-      averageSpent: 0,
-    };
+    const totalSpent = payments.reduce((s: number, p: any) => s + (p.amount || 0), 0);
+    const averageVisits = totalClients > 0 ? Math.round((appointments.length / totalClients) * 10) / 10 : 0;
+    const averageSpent = activeClients > 0 ? Math.round((totalSpent / activeClients) * 100) / 100 : 0;
+
+    return { totalClients, newClients, returningClients, vipClients, inactiveClients, averageVisits, averageSpent };
   } catch (error) {
     console.error('Erro ao buscar métricas de clientes:', error);
-    return {
-      totalClients: 0,
-      newClients: 0,
-      returningClients: 0,
-      vipClients: 0,
-      inactiveClients: 0,
-      averageVisits: 0,
-      averageSpent: 0,
-    };
+    return { totalClients: 0, newClients: 0, returningClients: 0, vipClients: 0, inactiveClients: 0, averageVisits: 0, averageSpent: 0 };
   }
 }
 
 export async function getRetentionRate(barbershopId: string, days: number = 30): Promise<number> {
   try {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days * 2);
+    const currentStart = toISO(daysAgo(days));
+    const lastStart = toISO(daysAgo(days * 2));
 
-    const { data: currentPeriod } = await (supabase as any)
-      .from('appointments')
-      .select('client_user_id')
-      .eq('barbershop_id', barbershopId)
-      .gte('scheduled_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
+    const [currentRes, lastRes] = await Promise.all([
+      (supabase as any).from('appointments').select('client_user_id').eq('barbershop_id', barbershopId).gte('scheduled_at', currentStart),
+      (supabase as any).from('appointments').select('client_user_id').eq('barbershop_id', barbershopId).gte('scheduled_at', lastStart).lt('scheduled_at', currentStart),
+    ]);
 
-    const { data: lastPeriod } = await (supabase as any)
-      .from('appointments')
-      .select('client_user_id')
-      .eq('barbershop_id', barbershopId)
-      .gte('scheduled_at', startDate.toISOString())
-      .lt('scheduled_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
-
-    const currentClients = new Set(currentPeriod?.map((a: any) => a.client_user_id).filter(Boolean) || []);
-    const lastClients = new Set(lastPeriod?.map((a: any) => a.client_user_id).filter(Boolean) || []);
+    const currentClients = new Set((currentRes.data || []).map((a: any) => a.client_user_id).filter(Boolean));
+    const lastClients = new Set((lastRes.data || []).map((a: any) => a.client_user_id).filter(Boolean));
 
     let retained = 0;
-    lastClients.forEach(clientId => {
-      if (currentClients.has(clientId)) retained++;
-    });
-
+    lastClients.forEach((id: string) => { if (currentClients.has(id)) retained++; });
     return lastClients.size > 0 ? Math.round((retained / lastClients.size) * 100) : 0;
   } catch (error) {
-    console.error('Erro ao calcular taxa de retenção:', error);
+    console.error('Erro ao calcular retenção:', error);
     return 0;
   }
 }
 
 export async function getCancellationRate(barbershopId: string, days: number = 30): Promise<number> {
   try {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
-    const { data: appointments } = await (supabase as any)
-      .from('appointments')
-      .select('status')
-      .eq('barbershop_id', barbershopId)
-      .gte('scheduled_at', startDate.toISOString());
-
-    const total = appointments?.length || 0;
-    const cancelled = appointments?.filter((a: any) => a.status === 'cancelled' || a.status === 'no_show').length || 0;
-
+    const { data } = await (supabase as any).from('appointments').select('status')
+      .eq('barbershop_id', barbershopId).gte('scheduled_at', toISO(daysAgo(days)));
+    const total = data?.length || 0;
+    const cancelled = data?.filter((a: any) => a.status === 'cancelled' || a.status === 'no_show').length || 0;
     return total > 0 ? Math.round((cancelled / total) * 100) : 0;
   } catch (error) {
-    console.error('Erro ao calcular taxa de cancelamento:', error);
+    console.error('Erro ao calcular cancelamento:', error);
     return 0;
   }
 }
 
-export async function getProfessionalRanking(barbershopId: string, days: number = 30): Promise<{ professional: string; appointments: number; revenue: number }[]> {
+export async function getProfessionalRanking(barbershopId: string, days: number = 30) {
   try {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
-    const { data: appointments } = await (supabase as any)
-      .from('appointments')
-      .select('professionals(name), total_price, status')
-      .eq('barbershop_id', barbershopId)
-      .eq('status', 'completed')
-      .gte('scheduled_at', startDate.toISOString());
-
-    const ranking: Record<string, { appointments: number; revenue: number }> = {};
-
-    appointments?.forEach((apt: any) => {
-      const name = apt.professionals?.name || 'Não definido';
-      if (!ranking[name]) {
-        ranking[name] = { appointments: 0, revenue: 0 };
-      }
-      ranking[name].appointments++;
-      ranking[name].revenue += apt.total_price || 0;
+    const { data } = await (supabase as any).from('appointments').select('professionals(name), total_price')
+      .eq('barbershop_id', barbershopId).eq('status', 'completed').gte('scheduled_at', toISO(daysAgo(days)));
+    const map: Record<string, { appointments: number; revenue: number }> = {};
+    (data || []).forEach((a: any) => {
+      const name = a.professionals?.name || 'Não definido';
+      if (!map[name]) map[name] = { appointments: 0, revenue: 0 };
+      map[name].appointments++;
+      map[name].revenue += a.total_price || 0;
     });
-
-    return Object.entries(ranking)
-      .map(([professional, data]) => ({ professional, ...data }))
-      .sort((a, b) => b.revenue - a.revenue);
+    return Object.entries(map).map(([professional, d]) => ({ professional, ...d })).sort((a, b) => b.revenue - a.revenue);
   } catch (error) {
-    console.error('Erro ao buscar ranking:', error);
+    console.error('Erro ranking profissionais:', error);
     return [];
   }
 }
 
-export async function getServiceRanking(barbershopId: string, days: number = 30): Promise<{ service: string; count: number; revenue: number }[]> {
+export async function getServiceRanking(barbershopId: string, days: number = 30) {
   try {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
-    const { data: appointments } = await (supabase as any)
-      .from('appointments')
-      .select('services(name), total_price, status')
-      .eq('barbershop_id', barbershopId)
-      .eq('status', 'completed')
-      .gte('scheduled_at', startDate.toISOString());
-
-    const ranking: Record<string, { count: number; revenue: number }> = {};
-
-    appointments?.forEach((apt: any) => {
-      const name = apt.services?.name || 'Outro';
-      if (!ranking[name]) {
-        ranking[name] = { count: 0, revenue: 0 };
-      }
-      ranking[name].count++;
-      ranking[name].revenue += apt.total_price || 0;
+    const { data } = await (supabase as any).from('appointments').select('services(name), total_price')
+      .eq('barbershop_id', barbershopId).eq('status', 'completed').gte('scheduled_at', toISO(daysAgo(days)));
+    const map: Record<string, { count: number; revenue: number }> = {};
+    (data || []).forEach((a: any) => {
+      const name = a.services?.name || 'Outro';
+      if (!map[name]) map[name] = { count: 0, revenue: 0 };
+      map[name].count++;
+      map[name].revenue += a.total_price || 0;
     });
-
-    return Object.entries(ranking)
-      .map(([service, data]) => ({ service, ...data }))
-      .sort((a, b) => b.revenue - a.revenue);
+    return Object.entries(map).map(([service, d]) => ({ service, ...d })).sort((a, b) => b.revenue - a.revenue);
   } catch (error) {
-    console.error('Erro ao buscar ranking de serviços:', error);
+    console.error('Erro ranking serviços:', error);
     return [];
   }
 }
 
-export async function getHourlyOccupancyAnalytics(barbershopId: string, days: number = 30): Promise<{ hour: number; occupancy: number; dayOfWeek: number }[]> {
+export async function getHourlyOccupancyAnalytics(barbershopId: string, days: number = 30) {
   try {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
-    const { data: appointments } = await (supabase as any)
-      .from('appointments')
-      .select('scheduled_at')
-      .eq('barbershop_id', barbershopId)
-      .gte('scheduled_at', startDate.toISOString());
-
-    const hourCounts: Record<number, { total: number; days: Set<string> }> = {};
-
-    for (let h = 8; h < 20; h++) {
-      hourCounts[h] = { total: 0, days: new Set() };
-    }
-
-    appointments?.forEach((apt: any) => {
-      const date = new Date(apt.scheduled_at);
-      const hour = date.getHours();
-      const dayKey = apt.scheduled_at.split('T')[0];
-
-      if (hour >= 8 && hour < 20) {
-        hourCounts[hour].total++;
-        hourCounts[hour].days.add(dayKey);
-      }
+    const { data } = await (supabase as any).from('appointments').select('scheduled_at')
+      .eq('barbershop_id', barbershopId).gte('scheduled_at', toISO(daysAgo(days)));
+    const hourCounts: Record<number, number> = {};
+    for (let h = 8; h < 20; h++) hourCounts[h] = 0;
+    const uniqueDays = new Set<string>();
+    (data || []).forEach((a: any) => {
+      const d = new Date(a.scheduled_at);
+      const h = d.getHours();
+      if (h >= 8 && h < 20) hourCounts[h]++;
+      uniqueDays.add(a.scheduled_at.split('T')[0]);
     });
-
-    const totalDays = new Set(appointments?.map((a: any) => a.scheduled_at.split('T')[0])).size || 1;
-
-    return Object.entries(hourCounts).map(([hour, data]) => ({
-      hour: parseInt(hour),
-      occupancy: Math.round((data.total / (totalDays * 12)) * 100),
-      dayOfWeek: 0,
+    const totalDays = Math.max(uniqueDays.size, 1);
+    return Object.entries(hourCounts).map(([hour, count]) => ({
+      hour: +hour, occupancy: Math.round((count / totalDays) * 100) / 100, dayOfWeek: 0,
     }));
   } catch (error) {
-    console.error('Erro ao buscar occupancy por hora:', error);
+    console.error('Erro occupancy:', error);
     return [];
   }
 }

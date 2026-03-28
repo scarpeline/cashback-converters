@@ -396,9 +396,9 @@ export async function getTopClients(barbershopId: string, limit: number = 10): P
       const visits = clientVisits[clientId];
       const spent = clientSpent[clientId];
 
-      let frequencyScore = visits >= 10 ? 40 : visits >= 5 ? 25 : 10;
-      let spendingScore = spent >= 1000 ? 30 : spent >= 500 ? 20 : 10;
-      let recencyScore = 15; // Assume active
+      const frequencyScore = visits >= 10 ? 40 : visits >= 5 ? 25 : 10;
+      const spendingScore = spent >= 1000 ? 30 : spent >= 500 ? 20 : 10;
+      const recencyScore = 15; // Assume active
 
       clientScores[clientId] = frequencyScore + spendingScore + recencyScore;
     }

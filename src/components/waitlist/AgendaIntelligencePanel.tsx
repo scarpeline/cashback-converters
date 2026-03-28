@@ -9,7 +9,7 @@
  * - Permissões para profissionais
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -71,9 +71,9 @@ export const AgendaIntelligencePanel = ({ barbershopId }: AgendaIntelligencePane
 
   useEffect(() => {
     loadData();
-  }, [barbershopId]);
+  }, [barbershopId, loadData]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -90,7 +90,7 @@ export const AgendaIntelligencePanel = ({ barbershopId }: AgendaIntelligencePane
     } finally {
       setLoading(false);
     }
-  };
+  }, [barbershopId]);
 
   const handleSaveSettings = async () => {
     if (!settings) return;

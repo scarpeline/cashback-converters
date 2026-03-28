@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -71,100 +71,8 @@ export function UniversalChatPanel({
     currentUserId : 
     selectedUsuarioId;
 
-  // Carregar lista de contadores disponíveis
-  const loadContadores = async () => {
-    try {
-      const { data, error } = await (supabase as any)
-        .from("accountants")
-        .select("id, name, email, empresa_contabil, cidade, estado, aceita_novos_clientes")
-        .eq("is_active", true)
-        .eq("status_verificado", "verified")
-        .order("name");
-
-      if (error) throw error;
-      setContadores(data || []);
-      
-      // Auto-selecionar primeiro contador se nenhum estiver selecionado
-      if (!selectedContadorId && data && data.length > 0) {
-        setSelectedContadorId(data[0].id);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar contadores:", error);
-      toast.error("Erro ao carregar lista de contadores");
-    }
-  };
-
-  // Carregar lista de usuários (para contador)
-  const loadUsuarios = async () => {
-    if (mode !== "contador") return;
-    
-    try {
-      const { data, error } = await (supabase as any)
-        .from("recent_chat_messages")
-        .select("usuario_id, usuario_email, usuario_name")
-        .eq("contador_id", effectiveContadorId)
-        .neq("usuario_id", currentUserId)
-        .distinct();
-
-      if (error) throw error;
-      
-      const usuariosUnicos = data?.map(u => ({
-        id: u.usuario_id,
-        email: u.usuario_email,
-        name: u.usuario_name || u.usuario_email
-      })) || [];
-      
-      setUsuarios(usuariosUnicos);
-      
-      // Auto-selecionar primeiro usuário se nenhum estiver selecionado
-      if (!selectedUsuarioId && usuariosUnicos.length > 0) {
-        setSelectedUsuarioId(usuariosUnicos[0].id);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar usuários:", error);
-    }
-  };
-
-  // Carregar informações do contador
-  const loadContadorInfo = async () => {
-    if (!effectiveContadorId) return;
-    
-    try {
-      const { data, error } = await (supabase as any)
-        .from("accountants")
-        .select("id, name, email, empresa_contabil, cidade, estado, aceita_novos_clientes")
-        .eq("id", effectiveContadorId)
-        .single();
-
-      if (error) throw error;
-      setContador(data);
-    } catch (error) {
-      console.error("Erro ao carregar info do contador:", error);
-    }
-  };
-
-  // Carregar informações do usuário
-  const loadUsuarioInfo = async () => {
-    if (!effectiveUsuarioId) return;
-    
-    try {
-      const { data, error } = await supabase.auth.admin.getUserById(effectiveUsuarioId);
-      if (error) throw error;
-      
-      if (data.user) {
-        setUsuario({
-          id: data.user.id,
-          email: data.user.email || "",
-          name: data.user.user_metadata?.name || data.user.email
-        });
-      }
-    } catch (error) {
-      console.error("Erro ao carregar info do usuário:", error);
-    }
-  };
-
   // Carregar mensagens
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     if (!effectiveContadorId || !effectiveUsuarioId) {
       setMessages([]);
       setLoading(false);
@@ -173,7 +81,7 @@ export function UniversalChatPanel({
 
     setLoading(true);
     try {
-      let query = (supabase as any)
+      const query = (supabase as any)
         .from("chat_contador")
         .select("*")
         .eq("contador_id", effectiveContadorId)
@@ -200,7 +108,7 @@ export function UniversalChatPanel({
     } finally {
       setLoading(false);
     }
-  };
+  }, [effectiveContadorId, effectiveUsuarioId, mode]);
 
   // Enviar mensagem
   const sendMessage = async () => {
@@ -264,18 +172,100 @@ export function UniversalChatPanel({
 
   // Carregar dados iniciais
   useEffect(() => {
+    const loadContadores = async () => {
+      try {
+        const { data, error } = await (supabase as any)
+          .from("accountants")
+          .select("id, name, email, empresa_contabil, cidade, estado, aceita_novos_clientes")
+          .eq("is_active", true)
+          .eq("status_verificado", "verified")
+          .order("name");
+
+        if (error) throw error;
+        setContadores(data || []);
+        
+        if (!selectedContadorId && data && data.length > 0) {
+          setSelectedContadorId(data[0].id);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar contadores:", error);
+        toast.error("Erro ao carregar lista de contadores");
+      }
+    };
+    const loadUsuarios = async () => {
+      if (mode !== "contador") return;
+      
+      try {
+        const { data, error } = await (supabase as any)
+          .from("recent_chat_messages")
+          .select("usuario_id, usuario_email, usuario_name")
+          .eq("contador_id", effectiveContadorId)
+          .neq("usuario_id", currentUserId)
+          .distinct();
+
+        if (error) throw error;
+        
+        const usuariosUnicos = data?.map(u => ({
+          id: u.usuario_id,
+          email: u.usuario_email,
+          name: u.usuario_name || u.usuario_email
+        })) || [];
+        
+        setUsuarios(usuariosUnicos);
+        
+        if (!selectedUsuarioId && usuariosUnicos.length > 0) {
+          setSelectedUsuarioId(usuariosUnicos[0].id);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar usuários:", error);
+      }
+    };
     if (mode === "usuario" || mode === "superadmin") {
       loadContadores();
     } else if (mode === "contador" && effectiveContadorId) {
       loadUsuarios();
     }
-  }, [mode, effectiveContadorId]);
+  }, [mode, effectiveContadorId, currentUserId, selectedContadorId, selectedUsuarioId]);
 
   useEffect(() => {
+    const loadContadorInfo = async () => {
+      if (!effectiveContadorId) return;
+      
+      try {
+        const { data, error } = await (supabase as any)
+          .from("accountants")
+          .select("id, name, email, empresa_contabil, cidade, estado, aceita_novos_clientes")
+          .eq("id", effectiveContadorId)
+          .single();
+
+        if (error) throw error;
+        setContador(data);
+      } catch (error) {
+        console.error("Erro ao carregar info do contador:", error);
+      }
+    };
     loadContadorInfo();
   }, [effectiveContadorId]);
 
   useEffect(() => {
+    const loadUsuarioInfo = async () => {
+      if (!effectiveUsuarioId) return;
+      
+      try {
+        const { data, error } = await supabase.auth.admin.getUserById(effectiveUsuarioId);
+        if (error) throw error;
+        
+        if (data.user) {
+          setUsuario({
+            id: data.user.id,
+            email: data.user.email || "",
+            name: data.user.user_metadata?.name || data.user.email
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao carregar info do usuário:", error);
+      }
+    };
     loadUsuarioInfo();
   }, [effectiveUsuarioId]);
 
@@ -283,7 +273,7 @@ export function UniversalChatPanel({
     if (effectiveContadorId && effectiveUsuarioId) {
       loadMessages();
     }
-  }, [effectiveContadorId, effectiveUsuarioId]);
+  }, [effectiveContadorId, effectiveUsuarioId, loadMessages]);
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString("pt-BR", { 

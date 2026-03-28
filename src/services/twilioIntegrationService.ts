@@ -3,7 +3,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { getAccountById, WhatsAppAccount } from './whatsappAccountService';
-import { useMessages, getBalance } from './messagePackageService';
+import { useMessages as consumeMessages, getBalance } from './messagePackageService';
 import { calculateCostSplit } from './costSplitService';
 import { logMessageUsage } from './messageReportService';
 
@@ -107,7 +107,7 @@ export async function sendWhatsAppMessage(params: SendMessageParams): Promise<Se
       return { success: false, error: responseData.message || 'Erro ao enviar mensagem' };
     }
 
-    await useMessages(account.barbershop_id, 1);
+    await consumeMessages(account.barbershop_id, 1);
 
     await logMessageUsage({
       barbershopId: account.barbershop_id,

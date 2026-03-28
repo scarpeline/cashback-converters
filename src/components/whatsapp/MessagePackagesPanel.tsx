@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,11 +44,7 @@ export function MessagePackagesPanel({ barbershopId }: MessagePackagesPanelProps
     validity_days: 30,
   });
 
-  useEffect(() => {
-    loadData();
-  }, [barbershopId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       await createDefaultPackages(barbershopId);
@@ -66,7 +62,11 @@ export function MessagePackagesPanel({ barbershopId }: MessagePackagesPanelProps
     } finally {
       setLoading(false);
     }
-  };
+  }, [barbershopId, toast]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleBuyPackage = async () => {
     if (!selectedPackage) return;

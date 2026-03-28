@@ -41,6 +41,42 @@ export function ChatContadorPanel({ contadorId, modo, usuarioId }: Props) {
 
   useEffect(() => {
     if (!uid && modo === "contador") return;
+    const carregarContador = async () => {
+      const { data } = await (supabase as any)
+        .from("accountants")
+        .select("id, name, empresa_contabil")
+        .eq("id", contadorId)
+        .maybeSingle();
+      if (data) setContador(data as ContadorInfo);
+    };
+    const carregarMensagens = async () => {
+      setLoading(true);
+      let query = (supabase as any)
+        .from("chat_contador")
+        .select("id, mensagem, remetente, data_envio, lido")
+        .eq("contador_id", contadorId)
+        .order("data_envio", { ascending: true });
+
+      if (modo === "usuario" && user?.id) {
+        query = query.eq("usuario_id", user.id);
+      } else if (modo === "contador" && uid) {
+        query = query.eq("usuario_id", uid);
+      }
+
+      const { data, error } = await query;
+      setLoading(false);
+      if (error) { toast.error("Erro ao carregar mensagens."); return; }
+      setMsgs((data as Msg[]) || []);
+
+      if (modo === "contador" && uid) {
+        await (supabase as any)
+          .from("chat_contador")
+          .update({ lido: true })
+          .eq("contador_id", contadorId)
+          .eq("usuario_id", uid)
+          .eq("remetente", "usuario");
+      }
+    };
     carregarContador();
     carregarMensagens();
     const channel = supabase
@@ -59,50 +95,12 @@ export function ChatContadorPanel({ contadorId, modo, usuarioId }: Props) {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [contadorId, uid]);
+  }, [contadorId, uid, modo]);
 
   useEffect(() => { scrollBottom(); }, [msgs]);
 
   const scrollBottom = () => {
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
-  };
-
-  const carregarContador = async () => {
-    const { data } = await (supabase as any)
-      .from("accountants")
-      .select("id, name, empresa_contabil")
-      .eq("id", contadorId)
-      .maybeSingle();
-    if (data) setContador(data as ContadorInfo);
-  };
-
-  const carregarMensagens = async () => {
-    setLoading(true);
-    let query = (supabase as any)
-      .from("chat_contador")
-      .select("id, mensagem, remetente, data_envio, lido")
-      .eq("contador_id", contadorId)
-      .order("data_envio", { ascending: true });
-
-    if (modo === "usuario" && user?.id) {
-      query = query.eq("usuario_id", user.id);
-    } else if (modo === "contador" && uid) {
-      query = query.eq("usuario_id", uid);
-    }
-
-    const { data, error } = await query;
-    setLoading(false);
-    if (error) { toast.error("Erro ao carregar mensagens."); return; }
-    setMsgs((data as Msg[]) || []);
-
-    if (modo === "contador" && uid) {
-      await (supabase as any)
-        .from("chat_contador")
-        .update({ lido: true })
-        .eq("contador_id", contadorId)
-        .eq("usuario_id", uid)
-        .eq("remetente", "usuario");
-    }
   };
 
   const enviarMensagem = async () => {

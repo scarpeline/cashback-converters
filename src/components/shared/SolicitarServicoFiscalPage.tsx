@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 const db = supabase as any;
@@ -164,7 +164,7 @@ export default function SolicitarServicoFiscalPage() {
     return s ? Number(s.price) : 0;
   };
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     if (!user) return;
     const { data } = await (supabase as any)
       .from("fiscal_service_requests")
@@ -173,9 +173,9 @@ export default function SolicitarServicoFiscalPage() {
       .order("created_at", { ascending: false });
     setRequests(data || []);
     setLoading(false);
-  };
+  }, [user]);
 
-  useEffect(() => { fetchRequests(); }, [user]);
+  useEffect(() => { fetchRequests(); }, [user, fetchRequests]);
 
   const primaryRole = getPrimaryRole();
   const canRequestAsCompany = primaryRole === "dono";

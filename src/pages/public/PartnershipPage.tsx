@@ -54,16 +54,18 @@ const PartnershipPage = () => {
     const whatsappPrice = 39; // Preço WhatsApp
     
     switch (simulatorType) {
-      case 'director':
+      case 'director': {
         const directorRevenue = (franchiseeCount * basePrice * 0.15) + 
                                (clientCount * (basePrice + smsPrice + whatsappPrice) * 0.10);
         return directorRevenue;
+      }
       case 'franchisee':
         return clientCount * (basePrice + smsPrice + whatsappPrice) * 0.65;
-      case 'affiliate':
+      case 'affiliate': {
         const affiliateRevenue = clientCount * basePrice * 0.50;
         const recurringRevenue = clientCount * (basePrice + smsPrice + whatsappPrice) * 0.25;
         return affiliateRevenue + recurringRevenue;
+      }
       default:
         return 0;
     }

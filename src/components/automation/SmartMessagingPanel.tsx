@@ -131,60 +131,58 @@ export const SmartMessagingPanel = () => {
 
   useEffect(() => {
     if (!barbershop?.id) return;
+    const loadClientCounts = async () => {
+      if (!barbershop?.id) return;
+      const now = new Date();
+      const d30 = new Date(now); d30.setDate(d30.getDate() - 30);
+      const d60 = new Date(now); d60.setDate(d60.getDate() - 60);
+      const d90 = new Date(now); d90.setDate(d90.getDate() - 90);
+      const d2 = new Date(now); d2.setDate(d2.getDate() - 2);
+
+      const [newNoApt, i30, i60, i90] = await Promise.all([
+        (supabase as any).from("profiles").select("user_id", { count: "exact", head: true })
+          .eq("role", "cliente")
+          .lt("created_at", d2.toISOString())
+          .not("user_id", "in",
+            `(SELECT DISTINCT client_user_id FROM appointments WHERE barbershop_id='${barbershop.id}' AND client_user_id IS NOT NULL)`
+          ),
+        (supabase as any).from("appointments").select("client_user_id", { count: "exact", head: true })
+          .eq("barbershop_id", barbershop.id)
+          .lt("scheduled_at", d30.toISOString())
+          .gte("scheduled_at", d60.toISOString()),
+        (supabase as any).from("appointments").select("client_user_id", { count: "exact", head: true })
+          .eq("barbershop_id", barbershop.id)
+          .lt("scheduled_at", d60.toISOString())
+          .gte("scheduled_at", d90.toISOString()),
+        (supabase as any).from("appointments").select("client_user_id", { count: "exact", head: true })
+          .eq("barbershop_id", barbershop.id)
+          .lt("scheduled_at", d90.toISOString()),
+      ]);
+
+      setClientCounts({
+        new_no_appointment: newNoApt.count || 0,
+        inactive_30: i30.count || 0,
+        inactive_60: i60.count || 0,
+        inactive_90: i90.count || 0,
+      });
+    };
+    const loadSavedRules = async () => {
+      if (!barbershop?.id) return;
+      const { data } = await (supabase as any)
+        .from("barbershops")
+        .select("automation_schedule")
+        .eq("id", barbershop.id)
+        .single();
+      if (data?.automation_schedule) {
+        const saved = (data.automation_schedule as any)?.smart_messages;
+        if (saved) {
+          setRules(prev => prev.map(r => ({ ...r, ...(saved[r.id] || {}) })));
+        }
+      }
+    };
     loadClientCounts();
     loadSavedRules();
   }, [barbershop?.id]);
-
-  const loadSavedRules = async () => {
-    if (!barbershop?.id) return;
-    const { data } = await (supabase as any)
-      .from("barbershops")
-      .select("automation_schedule")
-      .eq("id", barbershop.id)
-      .single();
-    if (data?.automation_schedule) {
-      const saved = (data.automation_schedule as any)?.smart_messages;
-      if (saved) {
-        setRules(prev => prev.map(r => ({ ...r, ...(saved[r.id] || {}) })));
-      }
-    }
-  };
-
-  const loadClientCounts = async () => {
-    if (!barbershop?.id) return;
-    const now = new Date();
-    const d30 = new Date(now); d30.setDate(d30.getDate() - 30);
-    const d60 = new Date(now); d60.setDate(d60.getDate() - 60);
-    const d90 = new Date(now); d90.setDate(d90.getDate() - 90);
-    const d2 = new Date(now); d2.setDate(d2.getDate() - 2);
-
-    const [newNoApt, i30, i60, i90] = await Promise.all([
-      (supabase as any).from("profiles").select("user_id", { count: "exact", head: true })
-        .eq("role", "cliente")
-        .lt("created_at", d2.toISOString())
-        .not("user_id", "in",
-          `(SELECT DISTINCT client_user_id FROM appointments WHERE barbershop_id='${barbershop.id}' AND client_user_id IS NOT NULL)`
-        ),
-      (supabase as any).from("appointments").select("client_user_id", { count: "exact", head: true })
-        .eq("barbershop_id", barbershop.id)
-        .lt("scheduled_at", d30.toISOString())
-        .gte("scheduled_at", d60.toISOString()),
-      (supabase as any).from("appointments").select("client_user_id", { count: "exact", head: true })
-        .eq("barbershop_id", barbershop.id)
-        .lt("scheduled_at", d60.toISOString())
-        .gte("scheduled_at", d90.toISOString()),
-      (supabase as any).from("appointments").select("client_user_id", { count: "exact", head: true })
-        .eq("barbershop_id", barbershop.id)
-        .lt("scheduled_at", d90.toISOString()),
-    ]);
-
-    setClientCounts({
-      new_no_appointment: newNoApt.count || 0,
-      inactive_30: i30.count || 0,
-      inactive_60: i60.count || 0,
-      inactive_90: i90.count || 0,
-    });
-  };
 
   const toggleRule = (id: SegmentType) => {
     setRules(prev => prev.map(r => r.id === id ? { ...r, active: !r.active } : r));

@@ -175,6 +175,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
       .eq("year_month", yearMonth)
       .maybeSingle();
     setRevenue(data || null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [barbershopId, yearMonth]);
 
   const fetchTaxes = useCallback(async () => {
@@ -185,6 +186,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
       .eq("year_month", yearMonth)
       .order("due_date", { ascending: true });
     setTaxes(data || []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [barbershopId, yearMonth]);
 
   const fetchAlerts = useCallback(async () => {
@@ -196,6 +198,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
       .order("created_at", { ascending: false })
       .limit(20);
     setAlerts(data || []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [barbershopId]);
 
   const fetchChecklist = useCallback(async () => {
@@ -206,6 +209,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
       .eq("year_month", yearMonth)
       .order("created_at", { ascending: true });
     setChecklist(data || []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [barbershopId, yearMonth]);
 
   const fetchScore = useCallback(async () => {
@@ -216,6 +220,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
       .eq("year_month", yearMonth)
       .maybeSingle();
     setScore(data || null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [barbershopId, yearMonth]);
 
   const fetchCalendar = useCallback(async () => {
@@ -225,6 +230,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
       .eq("is_active", true)
       .order("due_day", { ascending: true });
     setCalendar(data || []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchBarbershopRegime = useCallback(async () => {
@@ -234,6 +240,7 @@ export function FiscalAutomationPanel({ barbershopId, mode = "owner" }: FiscalAu
       .eq("id", barbershopId)
       .maybeSingle();
     setBarbershopRegime(data?.tax_regime || "mei");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [barbershopId]);
 
   const fetchAll = useCallback(async () => {

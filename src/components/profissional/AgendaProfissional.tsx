@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +54,7 @@ export const AgendaProfissional = ({ professionalId }: AgendaProfissionalProps) 
   const [showFinalizarModal, setShowFinalizarModal] = useState(false);
   const [filter, setFilter] = useState<"today" | "all">("today");
 
-  const loadAppointments = async () => {
+  const loadAppointments = useCallback(async () => {
     if (!user && !professionalId) return;
 
     setLoading(true);
@@ -96,11 +96,11 @@ export const AgendaProfissional = ({ professionalId }: AgendaProfissionalProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, professionalId, filter]);
 
   useEffect(() => {
     loadAppointments();
-  }, [user, professionalId, filter]);
+  }, [user, professionalId, filter, loadAppointments]);
 
   const handleFinalizarAtendimento = (appointment: Appointment) => {
     setSelectedAppointment(appointment);

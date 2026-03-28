@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,9 +54,9 @@ export function WeeklySchedulePanel({ barbershopId }: WeeklySchedulePanelProps) 
 
   useEffect(() => {
     loadSchedules();
-  }, [barbershopId]);
+  }, [barbershopId, loadSchedules]);
 
-  const loadSchedules = async () => {
+  const loadSchedules = useCallback(async () => {
     try {
       const { data } = await (supabase as any)
         .from("message_schedules")
@@ -69,7 +69,7 @@ export function WeeklySchedulePanel({ barbershopId }: WeeklySchedulePanelProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [barbershopId]);
 
   const saveSchedule = async () => {
     if (!form.name || !form.message_template) {

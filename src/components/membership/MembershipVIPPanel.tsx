@@ -31,23 +31,24 @@ export function MembershipVIPPanel({ barbershopId }: MembershipVIPPanelProps) {
   const [loading, setLoading] = useState(true);
   const [showPlanDialog, setShowPlanDialog] = useState(false);
 
-  useEffect(() => { loadData(); }, [barbershopId]);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [plansData, statsData] = await Promise.all([
-        getPlans(barbershopId),
-        getMembershipStats(barbershopId),
-      ]);
-      setPlans(plansData);
-      setStats(statsData);
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const [plansData, statsData] = await Promise.all([
+          getPlans(barbershopId),
+          getMembershipStats(barbershopId),
+        ]);
+        setPlans(plansData);
+        setStats(statsData);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [barbershopId]);
 
   if (loading) {
     return <div className="flex items-center justify-center p-8"><RefreshCw className="w-8 h-8 animate-spin" /></div>;

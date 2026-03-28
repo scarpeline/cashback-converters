@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,9 +29,9 @@ export function ClientReviewsPanel({ barbershopId, canCreate = false }: ClientRe
 
   useEffect(() => {
     loadReviews();
-  }, [barbershopId]);
+  }, [barbershopId, loadReviews]);
 
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
     try {
       const { data } = await (supabase as any)
         .from("client_reviews")
@@ -47,7 +47,7 @@ export function ClientReviewsPanel({ barbershopId, canCreate = false }: ClientRe
     } finally {
       setLoading(false);
     }
-  };
+  }, [barbershopId]);
 
   const submitReview = async () => {
     setSubmitting(true);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,11 +46,7 @@ export function MessageReportsPanel({ barbershopId }: MessageReportsPanelProps) 
   const [exportLoading, setExportLoading] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<MessageUsage | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [barbershopId, filters]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const start = new Date(filters.startDate);
@@ -81,7 +77,11 @@ export function MessageReportsPanel({ barbershopId }: MessageReportsPanelProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [barbershopId, filters, toast, page]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleExport = async () => {
     setExportLoading(true);

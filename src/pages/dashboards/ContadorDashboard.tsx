@@ -50,55 +50,6 @@ const ContadorDashboard = () => {
     null,
   );
 
-  // Verify the user is actually a registered, active contador
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .rpc("is_authorized_contador", { _user_id: user.id })
-      .then(({ data }) => {
-        setAccountantVerified(!!data);
-      });
-  }, [user]);
-
-  // If verified as NOT a contador, show access denied
-  if (accountantVerified === false) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="max-w-md w-full mx-4">
-          <CardHeader className="text-center">
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-              <AlertCircle className="w-8 h-8 text-destructive" />
-            </div>
-            <CardTitle>Acesso Negado</CardTitle>
-            <CardDescription>
-              Sua conta não está registrada como contador ativo no sistema.
-              Contadores são cadastrados exclusivamente pelo administrador.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            <Button variant="gold" onClick={signOut}>
-              Sair
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Loading state while verifying
-  if (accountantVerified === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground text-sm">
-            Verificando registro de contador...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   const basePath = "/contador2026";
 
   const navigation = useMemo(
@@ -149,6 +100,55 @@ const ContadorDashboard = () => {
     },
     [basePath, location.pathname],
   );
+
+  // Verify the user is actually a registered, active contador
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .rpc("is_authorized_contador", { _user_id: user.id })
+      .then(({ data }) => {
+        setAccountantVerified(!!data);
+      });
+  }, [user]);
+
+  // If verified as NOT a contador, show access denied
+  if (accountantVerified === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md w-full mx-4">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-destructive" />
+            </div>
+            <CardTitle>Acesso Negado</CardTitle>
+            <CardDescription>
+              Sua conta não está registrada como contador ativo no sistema.
+              Contadores são cadastrados exclusivamente pelo administrador.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            <Button variant="gold" onClick={signOut}>
+              Sair
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Loading state while verifying
+  if (accountantVerified === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground text-sm">
+            Verificando registro de contador...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex">

@@ -1,6 +1,6 @@
 // @ts-nocheck
 // Hook para IA aprimorada com memória
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getClientHistory, getAIStats } from '@/services/aiMemoryService';
 
@@ -187,7 +187,7 @@ export function useAIChat(clientId?: string) {
   const { data: history } = useAIHistory(clientId);
   
   // Carregar histórico quando disponível
-  useState(() => {
+  useEffect(() => {
     if (history && history.length > 0) {
       const historyMessages = history.map(item => ({
         id: item.id,
@@ -197,7 +197,7 @@ export function useAIChat(clientId?: string) {
       }));
       setMessages(historyMessages.slice(0, 10));
     }
-  });
+  }, [history]);
   
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || !clientId) return;

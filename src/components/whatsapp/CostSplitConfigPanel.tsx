@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,11 +40,7 @@ export function CostSplitConfigPanel({ barbershopId }: CostSplitConfigPanelProps
     selected_professionals: [] as string[],
   });
 
-  useEffect(() => {
-    loadData();
-  }, [barbershopId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [configs, profs] = await Promise.all([
@@ -93,7 +89,11 @@ export function CostSplitConfigPanel({ barbershopId }: CostSplitConfigPanelProps
     } finally {
       setLoading(false);
     }
-  };
+  }, [barbershopId, toast]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleSaveConfig = async (config: ProfessionalWithShare) => {
     setSaving(true);

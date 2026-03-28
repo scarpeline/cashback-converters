@@ -47,8 +47,29 @@ export function ContadorBuscaPanel({
   const [vinculosExistentes, setVinculosExistentes] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    buscarContadores();
-    if (barbershopId) carregarVinculos();
+    const buscarContadoresInit = async () => {
+      setLoading(true);
+      const { data, error } = await (supabase as any).rpc("search_contadores_verificados", {
+        _search: "",
+      });
+      setLoading(false);
+      if (error) { toast.error("Erro ao buscar contadores: " + error.message); return; }
+      setResultados((data as ContadorResult[]) || []);
+    };
+    const carregarVinculosInit = async () => {
+      if (!barbershopId) return;
+      const { data } = await (supabase as any)
+        .from("accountant_barbershop_links")
+        .select("accountant_id, status")
+        .eq("barbershop_id", barbershopId);
+      if (data) {
+        const mapa: Record<string, string> = {};
+        data.forEach((v) => { mapa[v.accountant_id] = v.status; });
+        setVinculosExistentes(mapa);
+      }
+    };
+    buscarContadoresInit();
+    if (barbershopId) carregarVinculosInit();
   }, [barbershopId]);
 
   const buscarContadores = async (termo?: string) => {

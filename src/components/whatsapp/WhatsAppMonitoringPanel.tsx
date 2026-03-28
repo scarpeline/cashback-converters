@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,13 +52,7 @@ export function WhatsAppMonitoringPanel({ barbershopId }: WhatsAppMonitoringPane
   const [loading, setLoading] = useState(true);
   const [selectedAlert, setSelectedAlert] = useState<BlockedAlert | null>(null);
 
-  useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 30000);
-    return () => clearInterval(interval);
-  }, [barbershopId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [nums, als, stats, sendStats, jobs] = await Promise.all([
@@ -79,7 +73,13 @@ export function WhatsAppMonitoringPanel({ barbershopId }: WhatsAppMonitoringPane
     } finally {
       setLoading(false);
     }
-  };
+  }, [barbershopId]);
+
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(loadData, 30000);
+    return () => clearInterval(interval);
+  }, [loadData]);
 
   const handleBlockNumber = async (numberId: string) => {
     const until = new Date();

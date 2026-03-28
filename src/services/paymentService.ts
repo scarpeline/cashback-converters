@@ -1,6 +1,4 @@
-// Serviço de Pagamentos
-// Integração com Supabase e gateways de pagamento
-
+// Serviço de Pagamentos — Refatorado sem duplicações
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Payment {
@@ -22,41 +20,56 @@ export interface PaymentStats {
   paid: number;
   pending: number;
   failed: number;
+  totalAmount: number;
+  paidAmount: number;
   byMethod: Record<string, number>;
 }
 
+interface PaymentFilters {
+  barbershop_id?: string;
+  client_id?: string;
+  status?: Payment['status'];
+  method?: Payment['method'];
+  startDate?: Date;
+  endDate?: Date;
+  limit?: number;
+}
+
 /**
- * Criar novo pagamento
+ * Query genérica de pagamentos com filtros compostos
  */
-export async function createPayment(
-  data: {
-    barbershop_id: string;
-    client_id: string;
-    amount: number;
-    method: Payment['method'];
-    reference_id?: string;
-    reference_type?: 'appointment' | 'subscription' | 'service';
+export async function queryPayments(filters: PaymentFilters): Promise<Payment[]> {
+  try {
+    let query = (supabase as any).from('payments').select('*');
+
+    if (filters.barbershop_id) query = query.eq('barbershop_id', filters.barbershop_id);
+    if (filters.client_id) query = query.eq('client_id', filters.client_id);
+    if (filters.status) query = query.eq('status', filters.status);
+    if (filters.method) query = query.eq('method', filters.method);
+    if (filters.startDate) query = query.gte('created_at', filters.startDate.toISOString());
+    if (filters.endDate) query = query.lte('created_at', filters.endDate.toISOString());
+
+    query = query.order('created_at', { ascending: false });
+    if (filters.limit) query = query.limit(filters.limit);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Erro ao buscar pagamentos:', error);
+    return [];
   }
-): Promise<Payment | null> {
+}
+
+/** Criar novo pagamento */
+export async function createPayment(data: {
+  barbershop_id: string; client_id: string; amount: number;
+  method: Payment['method']; reference_id?: string; reference_type?: string;
+}): Promise<Payment | null> {
   try {
     const { data: payment, error } = await (supabase as any)
-      .from('payments')
-      .insert({
-        barbershop_id: data.barbershop_id,
-        client_id: data.client_id,
-        amount: data.amount,
-        method: data.method,
-        status: 'pending',
-        asaas_payment_id: null,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Erro ao criar pagamento:', error);
-      return null;
-    }
-
+      .from('payments').insert({ ...data, status: 'pending' }).select().single();
+    if (error) throw error;
     return payment;
   } catch (error) {
     console.error('Erro ao criar pagamento:', error);
@@ -64,561 +77,82 @@ export async function createPayment(
   }
 }
 
-/**
- * Confirmar pagamento
- */
-export async function confirmPayment(
-  paymentId: string,
-  paidAt?: Date
+/** Atualizar status do pagamento */
+export async function updatePaymentStatus(
+  paymentId: string, status: Payment['status'], extra?: Record<string, any>
 ): Promise<boolean> {
   try {
-    const { error } = await (supabase as any)
-      .from('payments')
-      .update({
-        status: 'paid',
-        paid_at: paidAt?.toISOString(),
-      })
-      .eq('id', paymentId);
+    const updates: Record<string, any> = { status };
+    if (status === 'paid') updates.paid_at = new Date().toISOString();
+    if (extra) Object.assign(updates, extra);
 
-    if (error) {
-      console.error('Erro ao confirmar pagamento:', error);
-      return false;
-    }
-
+    const { error } = await (supabase as any).from('payments').update(updates).eq('id', paymentId);
+    if (error) throw error;
     return true;
   } catch (error) {
-    console.error('Erro ao confirmar pagamento:', error);
+    console.error(`Erro ao atualizar pagamento para ${status}:`, error);
     return false;
   }
 }
 
-/**
- * Falhar pagamento
- */
-export async function failPayment(
-  paymentId: string,
-  reason: string
-): Promise<boolean> {
-  try {
-    const { error } = await (supabase as any)
-      .from('payments')
-      .update({
-        status: 'failed',
-      })
-      .eq('id', paymentId);
+/** Confirmar pagamento */
+export const confirmPayment = (id: string) => updatePaymentStatus(id, 'paid');
+/** Falhar pagamento */
+export const failPayment = (id: string) => updatePaymentStatus(id, 'failed');
+/** Reembolsar pagamento */
+export const refundPayment = (id: string) => updatePaymentStatus(id, 'refunded');
 
-    if (error) {
-      console.error('Erro ao falhar pagamento:', error);
-      return false;
-    }
+/** Pagamentos de um cliente */
+export const getClientPayments = (clientId: string, limit = 50) =>
+  queryPayments({ client_id: clientId, limit });
 
-    return true;
-  } catch (error) {
-    console.error('Erro ao falhar pagamento:', error);
-    return false;
-  }
+/** Pagamentos de uma barbearia por período */
+export const getBarbershopPayments = (barbershopId: string, startDate: Date, endDate: Date) =>
+  queryPayments({ barbershop_id: barbershopId, startDate, endDate });
+
+/** Pagamentos pendentes */
+export const getPendingPayments = () => queryPayments({ status: 'pending', limit: 50 });
+
+/** Pagamentos de hoje */
+export function getTodayPayments(): Promise<Payment[]> {
+  const start = new Date(); start.setHours(0, 0, 0, 0);
+  const end = new Date(); end.setHours(23, 59, 59, 999);
+  return queryPayments({ startDate: start, endDate: end });
 }
 
-/**
- * Buscar pagamentos de um cliente
- */
-export async function getClientPayments(
-  clientId: string,
-  limit: number = 50
-): Promise<Payment[]> {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .eq('client_id', clientId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos:', error);
-    return [];
-  }
-}
-
-/**
- * Buscar pagamentos de uma barbearia
- */
-export async function getBarbershopPayments(
-  barbershopId: string,
-  startDate: Date,
-  endDate: Date
-): Promise<Payment[]> {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .eq('barbershop_id', barbershopId)
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString())
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos:', error);
-    return [];
-  }
-}
-
-/**
- * Buscar pagamentos pendentes
- */
-export async function getPendingPayments(): Promise<Payment[]> {
-  try {
-    const hoje = new Date();
-
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .eq('status', 'pending')
-      .lt('created_at', hoje.toISOString())
-      .order('created_at', { ascending: true })
-      .limit(50);
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos pendentes:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos pendentes:', error);
-    return [];
-  }
-}
-
-/**
- * Buscar pagamentos de hoje
- */
-export async function getTodayPayments(): Promise<Payment[]> {
-  try {
-    const hoje = new Date();
-    const startOfDay = new Date(hoje);
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const endOfDay = new Date(hoje);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .gte('created_at', startOfDay.toISOString())
-      .lte('created_at', endOfDay.toISOString())
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos de hoje:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos de hoje:', error);
-    return [];
-  }
-}
-
-/**
- * Buscar pagamentos por status
- */
-export async function getPaymentsByStatus(status: Payment['status']): Promise<Payment[]> {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .eq('status', status)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos:', error);
-    return [];
-  }
-}
-
-/**
- * Buscar pagamentos por método
- */
-export async function getPaymentsByMethod(method: Payment['method']): Promise<Payment[]> {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .eq('method', method)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos:', error);
-    return [];
-  }
-}
-
-/**
- * Calcular estatísticas de pagamentos
- */
+/** Estatísticas de pagamentos */
 export async function getPaymentStats(barbershopId: string): Promise<PaymentStats> {
   try {
     const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('status, method, amount')
-      .eq('barbershop_id', barbershopId);
-
-    if (error) {
-      console.error('Erro ao calcular estatísticas:', error);
-      return {
-        total: 0,
-        paid: 0,
-        pending: 0,
-        failed: 0,
-        byMethod: {},
-      };
-    }
+      .from('payments').select('status, method, amount').eq('barbershop_id', barbershopId);
+    if (error) throw error;
 
     const payments = data || [];
-    
-    const total = payments.length;
-    const paid = payments.filter((p: any) => p.status === 'paid').length;
-    const pending = payments.filter((p: any) => p.status === 'pending').length;
-    const failed = payments.filter((p: any) => p.status === 'failed').length;
-
     const byMethod: Record<string, number> = {};
+    let paidAmount = 0;
+
     payments.forEach((p: any) => {
       byMethod[p.method] = (byMethod[p.method] || 0) + 1;
+      if (p.status === 'paid') paidAmount += Number(p.amount || 0);
     });
 
     return {
-      total,
-      paid,
-      pending,
-      failed,
+      total: payments.length,
+      paid: payments.filter((p: any) => p.status === 'paid').length,
+      pending: payments.filter((p: any) => p.status === 'pending').length,
+      failed: payments.filter((p: any) => p.status === 'failed').length,
+      totalAmount: payments.reduce((s: number, p: any) => s + Number(p.amount || 0), 0),
+      paidAmount,
       byMethod,
     };
   } catch (error) {
     console.error('Erro ao calcular estatísticas:', error);
-    return {
-      total: 0,
-      paid: 0,
-      pending: 0,
-      failed: 0,
-      byMethod: {},
-    };
+    return { total: 0, paid: 0, pending: 0, failed: 0, totalAmount: 0, paidAmount: 0, byMethod: {} };
   }
 }
 
-/**
- * Calcular total de pagamentos
- */
-export async function getTotalPayments(
-  barbershopId: string,
-  startDate: Date,
-  endDate: Date
-): Promise<number> {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('amount')
-      .eq('barbershop_id', barbershopId)
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString())
-      .eq('status', 'paid');
-
-    if (error) {
-      console.error('Erro ao calcular total:', error);
-      return 0;
-    }
-
-    return (data || []).reduce((acc, p: any) => acc + Number(p.amount), 0);
-  } catch (error) {
-    console.error('Erro ao calcular total:', error);
-    return 0;
-  }
-}
-
-/**
- * Buscar pagamentos recorrentes
- */
-export async function getRecurringPayments(
-  barbershopId: string,
-  status: 'active' | 'cancelled' = 'active'
-): Promise<Payment[]> {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .eq('barbershop_id', barbershopId)
-      .eq('status', status)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos recorrentes:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos recorrentes:', error);
-    return [];
-  }
-}
-
-/**
- * Buscar pagamentos por cliente
- */
-export async function getPaymentsByClient(
-  clientId: string,
-  startDate: Date,
-  endDate: Date
-): Promise<Payment[]> {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .eq('client_id', clientId)
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString())
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos:', error);
-    return [];
-  }
-}
-
-/**
- * Buscar pagamentos por barbearia e status
- */
-export async function getBarbershopPaymentsByStatus(
-  barbershopId: string,
-  status: Payment['status']
-): Promise<Payment[]> {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .eq('barbershop_id', barbershopId)
-      .eq('status', status)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos:', error);
-    return [];
-  }
-}
-
-/**
- * Buscar pagamentos por barbearia e método
- */
-export async function getBarbershopPaymentsByMethod(
-  barbershopId: string,
-  method: Payment['method']
-): Promise<Payment[]> {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .eq('barbershop_id', barbershopId)
-      .eq('method', method)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos:', error);
-    return [];
-  }
-}
-
-/**
- * Buscar pagamentos por barbearia, status e método
- */
-export async function getBarbershopPaymentsByStatusAndMethod(
-  barbershopId: string,
-  status: Payment['status'],
-  method: Payment['method']
-): Promise<Payment[]> {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .eq('barbershop_id', barbershopId)
-      .eq('status', status)
-      .eq('method', method)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos:', error);
-    return [];
-  }
-}
-
-/**
- * Buscar pagamentos por barbearia, data inicial e final
- */
-export async function getBarbershopPaymentsByDateRange(
-  barbershopId: string,
-  startDate: Date,
-  endDate: Date
-): Promise<Payment[]> {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .eq('barbershop_id', barbershopId)
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString())
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos:', error);
-    return [];
-  }
-}
-
-/**
- * Buscar pagamentos por barbearia, data inicial e final, e status
- */
-export async function getBarbershopPaymentsByDateRangeAndStatus(
-  barbershopId: string,
-  startDate: Date,
-  endDate: Date,
-  status: Payment['status']
-): Promise<Payment[]> {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .eq('barbershop_id', barbershopId)
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString())
-      .eq('status', status)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos:', error);
-    return [];
-  }
-}
-
-/**
- * Buscar pagamentos por barbearia, data inicial e final, e método
- */
-export async function getBarbershopPaymentsByDateRangeAndMethod(
-  barbershopId: string,
-  startDate: Date,
-  endDate: Date,
-  method: Payment['method']
-): Promise<Payment[]> {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .eq('barbershop_id', barbershopId)
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString())
-      .eq('method', method)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos:', error);
-    return [];
-  }
-}
-
-/**
- * Buscar pagamentos por barbearia, data inicial e final, status e método
- */
-export async function getBarbershopPaymentsByDateRangeAndStatusAndMethod(
-  barbershopId: string,
-  startDate: Date,
-  endDate: Date,
-  status: Payment['status'],
-  method: Payment['method']
-): Promise<Payment[]> {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('payments')
-      .select('*')
-      .eq('barbershop_id', barbershopId)
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString())
-      .eq('status', status)
-      .eq('method', method)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar pagamentos:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar pagamentos:', error);
-    return [];
-  }
+/** Total de pagamentos pagos num período */
+export async function getTotalPayments(barbershopId: string, startDate: Date, endDate: Date): Promise<number> {
+  const payments = await queryPayments({ barbershop_id: barbershopId, status: 'paid', startDate, endDate });
+  return payments.reduce((s, p) => s + Number(p.amount || 0), 0);
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,9 +43,9 @@ export default function ResourcesPanel() {
     if (barbershop?.id) {
       fetchResources();
     }
-  }, [barbershop?.id]);
+  }, [barbershop?.id, fetchResources]);
 
-  const fetchResources = async () => {
+  const fetchResources = useCallback(async () => {
     if (!barbershop?.id) return;
     setLoading(true);
     try {
@@ -56,7 +56,7 @@ export default function ResourcesPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [barbershop?.id]);
 
   const handleOpenDialog = (resource?: Resource) => {
     if (resource) {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,12 +51,7 @@ export function WhatsAppAccountsPanel({ barbershopId }: WhatsAppAccountsPanelPro
     twilio_messaging_service_sid: '',
   });
 
-  useEffect(() => {
-    loadAccounts();
-    loadProfessionals();
-  }, [barbershopId]);
-
-  const loadAccounts = async () => {
+  const loadAccounts = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getWhatsAppAccountsWithProfessional(barbershopId);
@@ -67,9 +62,9 @@ export function WhatsAppAccountsPanel({ barbershopId }: WhatsAppAccountsPanelPro
     } finally {
       setLoading(false);
     }
-  };
+  }, [barbershopId, toast]);
 
-  const loadProfessionals = async () => {
+  const loadProfessionals = useCallback(async () => {
     try {
       const { data } = await (supabase as any)
         .from('professionals')
@@ -81,7 +76,12 @@ export function WhatsAppAccountsPanel({ barbershopId }: WhatsAppAccountsPanelPro
     } catch (error) {
       console.error('Erro ao carregar profissionais:', error);
     }
-  };
+  }, [barbershopId]);
+
+  useEffect(() => {
+    loadAccounts();
+    loadProfessionals();
+  }, [loadAccounts, loadProfessionals]);
 
   const handleAddAccount = async () => {
     if (!newAccount.phone_number) {

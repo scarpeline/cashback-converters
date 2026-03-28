@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,9 +56,7 @@ export function AssinaturaContabilPanel({ barbershopId }: Props) {
   const [cancelando, setCancelando] = useState<string | null>(null);
   const [split, setSplit] = useState<{ pct_app: number; pct_contador: number; valor_app: number; valor_contador: number } | null>(null);
 
-  useEffect(() => { if (user) { fetchAssinaturas(); } }, [user]);
-
-  const fetchAssinaturas = async () => {
+  const fetchAssinaturas = useCallback(async () => {
     if (!user) return;
     const { data } = await (supabase as any)
       .from("assinaturas_contabeis")
@@ -87,7 +85,9 @@ export function AssinaturaContabilPanel({ barbershopId }: Props) {
         .limit(10);
       setHistorico((hist as Historico[]) || []);
     }
-  };
+  }, [user]);
+
+  useEffect(() => { if (user) { fetchAssinaturas(); } }, [user, fetchAssinaturas]);
 
   const handleSelecionarContador = async (c: { id: string; name: string; valor_mensalidade: number | null }) => {
     setContadorSel(c);

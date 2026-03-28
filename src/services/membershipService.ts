@@ -240,14 +240,29 @@ export async function addCashback(params: {
   order_id?: string;
 }): Promise<boolean> {
   try {
-    const { error } = await (supabase as any).rpc('credit_cashback', {
-      p_membership_id: params.membership_id,
-      p_amount: params.amount,
-      p_description: params.description,
-      p_order_id: params.order_id,
-    });
+    // Buscar saldo atual
+    const balance = await getCashbackBalance(params.membership_id);
+    const newBalance = balance + params.amount;
+
+    // Registrar transação
+    const { error } = await (supabase as any)
+      .from('membership_transactions')
+      .insert({
+        membership_id: params.membership_id,
+        transaction_type: 'cashback_earned',
+        amount: params.amount,
+        balance_after: newBalance,
+        description: params.description,
+      });
 
     if (error) throw error;
+
+    // Atualizar total no membership
+    await (supabase as any)
+      .from('memberships')
+      .update({ total_cashback_earned: newBalance })
+      .eq('id', params.membership_id);
+
     return true;
   } catch (error) {
     console.error('Erro ao adicionar cashback:', error);
@@ -261,14 +276,26 @@ export async function redeemCashback(params: {
   description: string;
 }): Promise<{ success: boolean; error?: string }> {
   try {
-    const { data, error } = await (supabase as any).rpc('redeem_cashback', {
-      p_membership_id: params.membership_id,
-      p_amount: params.amount,
-      p_description: params.description,
-    });
+    const balance = await getCashbackBalance(params.membership_id);
+
+    if (params.amount > balance) {
+      return { success: false, error: 'Saldo insuficiente de cashback' };
+    }
+
+    const newBalance = balance - params.amount;
+
+    const { error } = await (supabase as any)
+      .from('membership_transactions')
+      .insert({
+        membership_id: params.membership_id,
+        transaction_type: 'cashback_redeemed',
+        amount: params.amount,
+        balance_after: newBalance,
+        description: params.description,
+      });
 
     if (error) throw error;
-    return { success: data };
+    return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

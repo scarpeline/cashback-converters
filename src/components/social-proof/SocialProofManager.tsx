@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,7 @@ export function SocialProofManager({ barbershopId, showPageSelector = false }: S
     booking_link: "",
   });
 
-  const fetchProofs = async () => {
+  const fetchProofs = useCallback(async () => {
     let query = (supabase as any).from("social_proofs").select("*").order("created_at", { ascending: false });
     if (barbershopId) {
       query = query.eq("barbershop_id", barbershopId);
@@ -51,9 +51,9 @@ export function SocialProofManager({ barbershopId, showPageSelector = false }: S
     const { data } = await query;
     setProofs(data || []);
     setLoading(false);
-  };
+  }, [barbershopId]);
 
-  useEffect(() => { fetchProofs(); }, [barbershopId]);
+  useEffect(() => { fetchProofs(); }, [barbershopId, fetchProofs]);
 
   const openEdit = (p: any) => {
     setEditingId(p.id);

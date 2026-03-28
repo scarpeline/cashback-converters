@@ -48,7 +48,7 @@ export function AIChat({ clientId, clientName = 'Cliente' }: AIChatProps) {
     if (!autoSpeak || !hasSpeechSynthesis) return;
     const last = messages[messages.length - 1];
     if (last?.sender === 'ai') speakText(last.text);
-  }, [messages, autoSpeak]);
+  }, [messages, autoSpeak, speakText]);
 
   // ── Gravação de voz ──────────────────────────────────────────────────────────
   const startRecording = useCallback(() => {
@@ -321,7 +321,9 @@ export function AIChat({ clientId, clientName = 'Cliente' }: AIChatProps) {
               className="flex-1 text-xs"
               onClick={() => {
                 const last = messages.filter(m => m.sender === 'ai').pop();
-                if (last) isSpeaking ? stopSpeaking() : speakText(last.text);
+                if (last) {
+                  if (isSpeaking) stopSpeaking(); else speakText(last.text);
+                }
               }}
               disabled={isProcessing}
             >

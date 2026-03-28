@@ -120,13 +120,8 @@ export default defineConfig(({ mode }) => ({
             return "vendor-framer";
           }
 
-          // Chunk: Charts — Recharts
-          if (
-            id.includes("node_modules/recharts/") ||
-            id.includes("node_modules/d3-")
-          ) {
-            return "vendor-charts";
-          }
+          // Recharts + d3 ficam no chunk padrão — separar causa
+          // "Cannot access 'S' before initialization" por dependência circular.
 
           // Chunk: TanStack Query
           if (id.includes("node_modules/@tanstack/")) {

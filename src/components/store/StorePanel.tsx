@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -50,9 +50,7 @@ export function StorePanel({ barbershopId }: StorePanelProps) {
   const [newProduct, setNewProduct] = useState({ name: '', description: '', price: 0, cost: 0, sku: '', category: '', product_type: 'product' as const, stock_quantity: 0 });
   const [newPackage, setNewPackage] = useState({ name: '', description: '', package_type: 'sessions' as const, total_sessions: 10, price: 0, validity_days: 90 });
 
-  useEffect(() => { loadData(); }, [barbershopId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [productsData, ordersData, packagesData, statsData] = await Promise.all([
@@ -70,7 +68,9 @@ export function StorePanel({ barbershopId }: StorePanelProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [barbershopId]);
+
+  useEffect(() => { loadData(); }, [barbershopId, loadData]);
 
   const handleCreateProduct = async () => {
     if (!newProduct.name || newProduct.price <= 0) {

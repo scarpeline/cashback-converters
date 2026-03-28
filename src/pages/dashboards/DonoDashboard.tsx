@@ -129,6 +129,19 @@ const DonoDashboard = () => {
     refetch: refetchBarbershop,
   } = useBarbershop();
 
+  const basePath = "/painel-dono";
+
+  const isActive = useCallback(
+    (href: string) => {
+      if (href === basePath)
+        return (
+          location.pathname === basePath || location.pathname === `${basePath}/`
+        );
+      return location.pathname.startsWith(href);
+    },
+    [basePath, location.pathname],
+  );
+
   if (!barbershopLoading && !mainBarbershop) {
     return <DonoOnboarding onComplete={refetchBarbershop} />;
   }
@@ -206,17 +219,6 @@ const DonoDashboard = () => {
     { name: "Fidelidade", href: `${basePath}/fidelidade`, icon: Gift },
     { name: "Ciclo Mensagens", href: `${basePath}/ciclo-mensagens`, icon: Bell },
   ];
-
-  const isActive = useCallback(
-    (href: string) => {
-      if (href === basePath)
-        return (
-          location.pathname === basePath || location.pathname === `${basePath}/`
-        );
-      return location.pathname.startsWith(href);
-    },
-    [basePath, location.pathname],
-  );
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -455,6 +457,7 @@ function useServices(barbershopId: string | undefined) {
   };
   useEffect(() => {
     fetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [barbershopId]);
   return { services, loading, refetch: fetch };
 }
@@ -480,6 +483,7 @@ function useProfessionals(barbershopId: string | undefined) {
   };
   useEffect(() => {
     fetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [barbershopId]);
   return { professionals, loading, refetch: fetch };
 }
@@ -505,6 +509,7 @@ function useAppointments(barbershopId: string | undefined) {
   };
   useEffect(() => {
     fetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [barbershopId]);
   return { appointments, loading, refetch: fetch };
 }
@@ -2882,6 +2887,7 @@ const AfiliadosBarbeariaPage = () => {
         setAffiliates(data || []);
         setLoading(false);
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [barbershop?.id]);
 
   const toggleAffiliate = async (
@@ -3363,6 +3369,7 @@ const CashbackPage = () => {
       .eq("barbershop_id", barbershop.id)
       .order("min_visits", { ascending: true })
       .then(({ data }) => { setVipLevels(data || []); setLoadingVip(false); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [barbershop?.id]);
 
   const totalDistribuido = transactions.filter((t) => t.type === "earned").reduce((s, t) => s + Number(t.amount || 0), 0);

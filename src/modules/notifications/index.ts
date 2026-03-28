@@ -129,7 +129,7 @@ export async function sendBulkNotification(params: {
       title: params.title,
       body: params.body,
     });
-    result.success ? sent++ : failed++;
+    if (result.success) sent++; else failed++;
   }
 
   return { sent, failed };

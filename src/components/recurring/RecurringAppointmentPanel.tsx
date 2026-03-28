@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,9 +68,9 @@ export const RecurringAppointmentPanel: React.FC<RecurringAppointmentPanelProps>
 
   useEffect(() => {
     loadData();
-  }, [barbershopId]);
+  }, [barbershopId, loadData]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [appointmentsData, settingsData] = await Promise.all([
@@ -94,7 +94,7 @@ export const RecurringAppointmentPanel: React.FC<RecurringAppointmentPanelProps>
     } finally {
       setLoading(false);
     }
-  };
+  }, [barbershopId]);
 
   const handleCreateAppointment = async () => {
     if (!formData.professional_id || !formData.service_id || !formData.time) {

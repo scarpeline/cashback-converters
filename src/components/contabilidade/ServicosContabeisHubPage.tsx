@@ -38,37 +38,36 @@ export function ServicosContabeisHubPage({ barbershopId }: Props) {
   const basePath = location.pathname.split('/servicos-contabeis')[0] + '/servicos-contabeis';
 
   useEffect(() => {
+    const checkExistingAccountant = async () => {
+      if (!barbershopId) return;
+      
+      try {
+        const { data, error } = await (supabase as any)
+          .from("accountant_barbershop_links")
+          .select(`
+            *,
+            accountants(
+              id, name, email, whatsapp, empresa_contabil, 
+              cidade, estado, crc_registro, status_verificado
+            )
+          `)
+          .eq("barbershop_id", barbershopId)
+          .eq("status", "active")
+          .maybeSingle();
+
+        if (error) throw error;
+        
+        if (data?.accountants) {
+          setActiveAccountant(data.accountants);
+        }
+      } catch (error) {
+        console.error("Erro ao verificar contador existente:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
     checkExistingAccountant();
   }, [barbershopId]);
-
-  const checkExistingAccountant = async () => {
-    if (!barbershopId) return;
-    
-    try {
-      const { data, error } = await (supabase as any)
-        .from("accountant_barbershop_links")
-        .select(`
-          *,
-          accountants(
-            id, name, email, whatsapp, empresa_contabil, 
-            cidade, estado, crc_registro, status_verificado
-          )
-        `)
-        .eq("barbershop_id", barbershopId)
-        .eq("status", "active")
-        .maybeSingle();
-
-      if (error) throw error;
-      
-      if (data?.accountants) {
-        setActiveAccountant(data.accountants);
-      }
-    } catch (error) {
-      console.error("Erro ao verificar contador existente:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAccountantLinked = (accountant: any) => {
     setActiveAccountant(accountant);

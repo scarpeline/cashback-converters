@@ -44,7 +44,7 @@ const LABEL_CONFIGS: { [key: string]: DynamicLabelConfig } = {
       contador: "Contadores",
     },
     espacos_locacao: {
-      default: "Gestores", // Para quem gerencia o espaço
+      default: "Gestores",
     },
   },
   services: {
@@ -75,67 +75,68 @@ const LABEL_CONFIGS: { [key: string]: DynamicLabelConfig } = {
       banho_tosa: "Serviços Pet",
       veterinario: "Consultas Veterinárias",
     },
-    servicos_domiciliares: {
-      default: "Serviços",
-    },
-    juridico_financeiro: {
-      default: "Consultorias",
-    },
-    espacos_locacao: {
-      default: "Locações",
-    },
+    servicos_domiciliares: { default: "Serviços" },
+    juridico_financeiro: { default: "Consultorias" },
+    espacos_locacao: { default: "Locações" },
   },
   resources: {
     default: "Recursos",
-    espacos_locacao: {
-      default: "Espaços",
-    },
+    espacos_locacao: { default: "Espaços" },
   },
   appointments: {
     default: "Agendamentos",
-    educacao_mentorias: {
-      default: "Aulas/Sessões",
-    },
-    espacos_locacao: {
-      default: "Reservas",
-    },
+    educacao_mentorias: { default: "Aulas/Sessões" },
+    espacos_locacao: { default: "Reservas" },
   },
   clients: {
     default: "Clientes",
-    pets: {
-      default: "Tutores",
-    },
+    pets: { default: "Tutores" },
   },
-  reports: {
-    default: "Relatórios",
-  },
-  settings: {
-    default: "Configurações",
-  },
-  automations: {
-    default: "Automações",
-  },
-  policies: {
-    default: "Políticas",
-  },
+  reports: { default: "Relatórios" },
+  settings: { default: "Configurações" },
+  automations: { default: "Automações" },
+  policies: { default: "Políticas" },
 };
 
-export function getDynamicLabel(key: string): string {
-  const { barbershop } = useAuth();
+/**
+ * Resolve um label dinâmico baseado no setor/especialidade da barbearia.
+ * Função pura — não usa hooks. Use useDynamicLabel() em componentes React.
+ */
+export function resolveDynamicLabel(
+  key: string,
+  sector?: string | null,
+  specialty?: string | null
+): string {
   const config = LABEL_CONFIGS[key];
+  if (!config) return key.charAt(0).toUpperCase() + key.slice(1);
 
-  if (!config) {
-    return key.charAt(0).toUpperCase() + key.slice(1); // Fallback to capitalized key
-  }
-
-  if (barbershop?.sector && barbershop?.specialty) {
-    const sectorConfig = config[barbershop.sector];
-    if (typeof sectorConfig === 'object' && sectorConfig !== null) {
-      const val = (sectorConfig as Record<string, string>)[barbershop.specialty] || (sectorConfig as Record<string, string>).default || config.default;
+  if (sector && specialty) {
+    const sectorConfig = config[sector];
+    if (typeof sectorConfig === "object" && sectorConfig !== null) {
+      const val =
+        (sectorConfig as Record<string, string>)[specialty] ||
+        (sectorConfig as Record<string, string>).default ||
+        config.default;
       return val;
     }
-    return (typeof sectorConfig === 'string' ? sectorConfig : config.default);
+    return typeof sectorConfig === "string" ? sectorConfig : config.default;
   }
 
   return config.default;
+}
+
+/**
+ * Hook React para obter labels dinâmicos baseados na barbearia do usuário logado.
+ * Use este hook em componentes React.
+ */
+export function useDynamicLabel(key: string): string {
+  const { barbershop } = useAuth();
+  return resolveDynamicLabel(key, barbershop?.sector, barbershop?.specialty);
+}
+
+/**
+ * @deprecated Use useDynamicLabel() em componentes React ou resolveDynamicLabel() em funções puras.
+ */
+export function getDynamicLabel(key: string): string {
+  return resolveDynamicLabel(key);
 }

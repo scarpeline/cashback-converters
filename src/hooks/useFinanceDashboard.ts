@@ -1,6 +1,5 @@
-// Hook para Dashboard Financeiro
+// Hook para Dashboard Financeiro — Corrigido para tabelas reais
 import { useState, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 
 export interface FinanceData {
@@ -24,12 +23,11 @@ export interface Commission {
   id: string;
   partner_id: string;
   amount: number;
-  type: 'adesao' | 'recorrente';
+  type: string;
   status: 'pending' | 'paid';
   created_at: string;
 }
 
-// Chaves de query para cache
 export const financeKeys = {
   all: ['finance'] as const,
   summary: () => [...financeKeys.all, 'summary'] as const,
@@ -39,118 +37,67 @@ export const financeKeys = {
   partners: () => [...financeKeys.all, 'partners'] as const,
 };
 
-/**
- * Hook para dados financeiros resumidos
- */
+function getPeriodStart(period: '7d' | '30d' | '90d' | '12m'): Date {
+  const d = new Date();
+  switch (period) {
+    case '7d': d.setDate(d.getDate() - 7); break;
+    case '30d': d.setDate(d.getDate() - 30); break;
+    case '90d': d.setDate(d.getDate() - 90); break;
+    case '12m': d.setMonth(d.getMonth() - 12); break;
+  }
+  return d;
+}
+
 export function useFinanceSummary(period: '7d' | '30d' | '90d' | '12m' = '30d') {
-  const [data, setData] = useState<FinanceData>({
-    faturamento: 0,
-    previsao: 0,
-    comissoes: 0,
-    pagamentosPendentes: 0,
-    assinaturasAtivas: 0,
-  });
+  const [data, setData] = useState<FinanceData>({ faturamento: 0, previsao: 0, comissoes: 0, pagamentosPendentes: 0, assinaturasAtivas: 0 });
   const [loading, setLoading] = useState(true);
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
-    
     try {
-      const hoje = new Date();
-      const dataInicio = new Date();
-      
-      switch (period) {
-        case '7d':
-          dataInicio.setDate(hoje.getDate() - 7);
-          break;
-        case '30d':
-          dataInicio.setDate(hoje.getDate() - 30);
-          break;
-        case '90d':
-          dataInicio.setDate(hoje.getDate() - 90);
-          break;
-        case '12m':
-          dataInicio.setMonth(hoje.getMonth() - 12);
-          break;
-      }
+      const inicio = getPeriodStart(period).toISOString();
 
-      // Buscar pagamentos
-      const { data: pagamentos, error: pagError } = await (supabase as any)
-        .from('payments')
-        .select('*')
-        .gte('created_at', dataInicio.toISOString())
-        .eq('status', 'paid');
+      const [pagosRes, pendentesRes, comissoesRes, subsRes] = await Promise.all([
+        (supabase as any).from('payments').select('amount').eq('status', 'paid').gte('created_at', inicio),
+        (supabase as any).from('payments').select('amount').eq('status', 'pending'),
+        (supabase as any).from('partner_commissions').select('amount').eq('status', 'paid').gte('created_at', inicio),
+        (supabase as any).from('user_subscriptions').select('id').eq('status', 'active').gte('ends_at', new Date().toISOString()),
+      ]);
 
-      // Buscar assinaturas ativas
-      const { data: assinaturas, error: subError } = await (supabase as any)
-        .from('subscriptions')
-        .select('*')
-        .eq('status', 'ativo');
-
-      // Buscar comissões pagas
-      const { data: comissoes, error: comError } = await (supabase as any)
-        .from('commissions')
-        .select('*')
-        .gte('created_at', dataInicio.toISOString())
-        .eq('status', 'pago');
-
-      // Buscar pagamentos pendentes
-      const { data: pendentes, error: pendError } = await (supabase as any)
-        .from('payments')
-        .select('*')
-        .eq('status', 'pending');
-
-      if (pagError || subError || comError || pendError) {
-        throw new Error('Erro ao carregar dados financeiros');
-      }
-
-      // Calcular totais
-      const faturamento = (pagamentos || []).reduce((acc, p: any) => acc + Number(p.amount), 0);
-      const previsao = (assinaturas || []).reduce((acc, s: any) => acc + Number(s.value), 0);
-      const comissoesTotal = (comissoes || []).reduce((acc, c: any) => acc + Number(c.amount), 0);
-      const pagamentosPendentes = (pendentes || []).reduce((acc, p: any) => acc + Number(p.amount), 0);
+      const sum = (arr: any[]) => (arr || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
 
       setData({
-        faturamento,
-        previsao,
-        comissoes: comissoesTotal,
-        pagamentosPendentes,
-        assinaturasAtivas: assinaturas?.length || 0,
+        faturamento: sum(pagosRes.data),
+        previsao: sum(pagosRes.data) * 1.1, // projeção simples +10%
+        comissoes: sum(comissoesRes.data),
+        pagamentosPendentes: sum(pendentesRes.data),
+        assinaturasAtivas: subsRes.data?.length || 0,
       });
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error('Erro ao carregar resumo financeiro:', error);
     } finally {
       setLoading(false);
     }
   }, [period]);
 
-  return {
-    data,
-    loading,
-    loadSummary,
-  };
+  return { data, loading, loadSummary };
 }
 
-/**
- * Hook para transações
- */
 export function useTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadTransactions = useCallback(async () => {
     setLoading(true);
-    
     try {
       const { data, error } = await (supabase as any)
-        .from('payments')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
+        .from('payments').select('id, amount, status, method, created_at')
+        .order('created_at', { ascending: false }).limit(50);
       if (error) throw error;
-
-      setTransactions((data || []).map((p: any) => ({ ...p, type: 'income' as const, description: p.payment_method || '' })));
+      setTransactions((data || []).map((p: any) => ({
+        id: p.id, amount: Number(p.amount), type: 'income' as const,
+        status: p.status, description: p.method || 'pagamento', created_at: p.created_at,
+      })));
     } catch (error) {
       console.error('Erro ao carregar transações:', error);
     } finally {
@@ -158,32 +105,20 @@ export function useTransactions() {
     }
   }, []);
 
-  return {
-    transactions,
-    loading,
-    loadTransactions,
-  };
+  return { transactions, loading, loadTransactions };
 }
 
-/**
- * Hook para comissões
- */
 export function useCommissions() {
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadCommissions = useCallback(async () => {
     setLoading(true);
-    
     try {
       const { data, error } = await (supabase as any)
-        .from('commissions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
+        .from('partner_commissions').select('id, partner_id, amount, type, status, created_at')
+        .order('created_at', { ascending: false }).limit(50);
       if (error) throw error;
-
       setCommissions((data || []) as Commission[]);
     } catch (error) {
       console.error('Erro ao carregar comissões:', error);
@@ -192,84 +127,45 @@ export function useCommissions() {
     }
   }, []);
 
-  return {
-    commissions,
-    loading,
-    loadCommissions,
-  };
+  return { commissions, loading, loadCommissions };
 }
 
-/**
- * Hook para estatísticas de parceiros
- */
 export function usePartnerStats() {
-  const [stats, setStats] = useState({
-    totalPartners: 0,
-    totalEarnings: 0,
-    activePartners: 0,
-  });
+  const [stats, setStats] = useState({ totalPartners: 0, totalEarnings: 0, activePartners: 0 });
   const [loading, setLoading] = useState(true);
 
   const loadStats = useCallback(async () => {
     setLoading(true);
-    
     try {
-      // Buscar parceiros
-      const { data: partners, error: partnersError } = await (supabase as any)
-        .from('partners')
-        .select('*');
-
-      // Buscar comissões pagas
-      const { data: commissions, error: commissionsError } = await (supabase as any)
-        .from('commissions')
-        .select('*')
-        .eq('status', 'pago');
-
-      if (partnersError || commissionsError) {
-        throw new Error('Erro ao carregar estatísticas');
-      }
-
+      const [partnersRes, comRes] = await Promise.all([
+        (supabase as any).from('partners').select('id, status'),
+        (supabase as any).from('partner_commissions').select('amount').eq('status', 'paid'),
+      ]);
+      const partners = partnersRes.data || [];
       setStats({
-        totalPartners: partners?.length || 0,
-        totalEarnings: (commissions || []).reduce((acc, c: any) => acc + Number(c.amount), 0),
-        activePartners: (partners || []).filter((p: any) => p.status === 'ativo').length,
+        totalPartners: partners.length,
+        totalEarnings: (comRes.data || []).reduce((s: number, c: any) => s + Number(c.amount || 0), 0),
+        activePartners: partners.filter((p: any) => p.status === 'ativo').length,
       });
     } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
+      console.error('Erro ao carregar stats parceiros:', error);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  return {
-    stats,
-    loading,
-    loadStats,
-  };
+  return { stats, loading, loadStats };
 }
 
-/**
- * Hook para dashboard completo
- */
 export function useFinanceDashboard() {
-  const { data: summary, loading: summaryLoading, loadSummary } = useFinanceSummary();
-  const { transactions, loading: transactionsLoading, loadTransactions } = useTransactions();
-  const { commissions, loading: commissionsLoading, loadCommissions } = useCommissions();
-  const { stats, loading: statsLoading, loadStats } = usePartnerStats();
-
-  const loading = summaryLoading || transactionsLoading || commissionsLoading || statsLoading;
+  const { data: summary, loading: l1, loadSummary } = useFinanceSummary();
+  const { transactions, loading: l2, loadTransactions } = useTransactions();
+  const { commissions, loading: l3, loadCommissions } = useCommissions();
+  const { stats, loading: l4, loadStats } = usePartnerStats();
 
   return {
-    summary,
-    transactions,
-    commissions,
-    stats,
-    loading,
-    refresh: () => {
-      loadSummary();
-      loadTransactions();
-      loadCommissions();
-      loadStats();
-    },
+    summary, transactions, commissions, stats,
+    loading: l1 || l2 || l3 || l4,
+    refresh: () => { loadSummary(); loadTransactions(); loadCommissions(); loadStats(); },
   };
 }

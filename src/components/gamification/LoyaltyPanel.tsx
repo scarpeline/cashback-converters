@@ -32,28 +32,27 @@ export function LoyaltyPanel({ barbershopId, userId, isOwner = false }: LoyaltyP
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
-  }, [barbershopId, userId]);
+    const loadData = async () => {
+      try {
+        let query = (supabase as any)
+          .from("loyalty_points")
+          .select("*")
+          .eq("barbershop_id", barbershopId);
 
-  const loadData = async () => {
-    try {
-      let query = (supabase as any)
-        .from("loyalty_points")
-        .select("*")
-        .eq("barbershop_id", barbershopId);
+        if (!isOwner && userId) {
+          query = query.eq("user_id", userId);
+        }
 
-      if (!isOwner && userId) {
-        query = query.eq("user_id", userId);
+        const { data: points } = await query.order("points", { ascending: false }).limit(50);
+        setData(points || []);
+      } catch (err) {
+        console.error("Error loading loyalty:", err);
+      } finally {
+        setLoading(false);
       }
-
-      const { data: points } = await query.order("points", { ascending: false }).limit(50);
-      setData(points || []);
-    } catch (err) {
-      console.error("Error loading loyalty:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    loadData();
+  }, [barbershopId, userId, isOwner]);
 
   const getCurrentLevel = (points: number) => {
     return [...LEVELS].reverse().find(l => points >= l.min) || LEVELS[0];

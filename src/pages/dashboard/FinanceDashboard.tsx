@@ -21,81 +21,80 @@ export default function FinanceDashboard() {
   const [period, setPeriod] = useState<'7d' | '30d' | '90d' | '12m'>('30d');
 
   useEffect(() => {
+    async function carregarDados() {
+      setLoading(true);
+      
+      try {
+        // Calcular data de início baseada no período
+        const hoje = new Date();
+        const dataInicio = new Date();
+        
+        switch (period) {
+          case '7d':
+            dataInicio.setDate(hoje.getDate() - 7);
+            break;
+          case '30d':
+            dataInicio.setDate(hoje.getDate() - 30);
+            break;
+          case '90d':
+            dataInicio.setDate(hoje.getDate() - 90);
+            break;
+          case '12m':
+            dataInicio.setMonth(hoje.getMonth() - 12);
+            break;
+        }
+
+        // Buscar pagamentos
+        const { data: pagamentos, error: pagError } = await (supabase as any)
+          .from('payments')
+          .select('*')
+          .gte('created_at', dataInicio.toISOString())
+          .eq('status', 'paid');
+
+        // Buscar assinaturas ativas
+        const { data: assinaturas, error: subError } = await (supabase as any)
+          .from('subscriptions')
+          .select('*')
+          .eq('status', 'ativo');
+
+        // Buscar comissões pagas
+        const { data: comissoes, error: comError } = await (supabase as any)
+          .from('commissions')
+          .select('*')
+          .gte('created_at', dataInicio.toISOString())
+          .eq('status', 'pago');
+
+        // Buscar pagamentos pendentes
+        const { data: pendentes, error: pendError } = await (supabase as any)
+          .from('payments')
+          .select('*')
+          .eq('status', 'pending');
+
+        if (pagError || subError || comError || pendError) {
+          throw new Error('Erro ao carregar dados financeiros');
+        }
+
+        // Calcular totais
+        const faturamento = (pagamentos || []).reduce((acc, p: any) => acc + Number(p.amount), 0);
+        const previsao = (assinaturas || []).reduce((acc, s: any) => acc + Number(s.value), 0);
+        const comissoesTotal = (comissoes || []).reduce((acc, c: any) => acc + Number(c.amount), 0);
+        const pagamentosPendentes = (pendentes || []).reduce((acc, p: any) => acc + Number(p.amount), 0);
+
+        setFinanceData({
+          faturamento,
+          previsao,
+          comissoes: comissoesTotal,
+          pagamentosPendentes,
+          assinaturasAtivas: assinaturas?.length || 0,
+        });
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
     carregarDados();
   }, [period]);
-
-  async function carregarDados() {
-    setLoading(true);
-    
-    try {
-      // Calcular data de início baseada no período
-      const hoje = new Date();
-      const dataInicio = new Date();
-      
-      switch (period) {
-        case '7d':
-          dataInicio.setDate(hoje.getDate() - 7);
-          break;
-        case '30d':
-          dataInicio.setDate(hoje.getDate() - 30);
-          break;
-        case '90d':
-          dataInicio.setDate(hoje.getDate() - 90);
-          break;
-        case '12m':
-          dataInicio.setMonth(hoje.getMonth() - 12);
-          break;
-      }
-
-      // Buscar pagamentos
-      const { data: pagamentos, error: pagError } = await (supabase as any)
-        .from('payments')
-        .select('*')
-        .gte('created_at', dataInicio.toISOString())
-        .eq('status', 'paid');
-
-      // Buscar assinaturas ativas
-      const { data: assinaturas, error: subError } = await (supabase as any)
-        .from('subscriptions')
-        .select('*')
-        .eq('status', 'ativo');
-
-      // Buscar comissões pagas
-      const { data: comissoes, error: comError } = await (supabase as any)
-        .from('commissions')
-        .select('*')
-        .gte('created_at', dataInicio.toISOString())
-        .eq('status', 'pago');
-
-      // Buscar pagamentos pendentes
-      const { data: pendentes, error: pendError } = await (supabase as any)
-        .from('payments')
-        .select('*')
-        .eq('status', 'pending');
-
-      if (pagError || subError || comError || pendError) {
-        throw new Error('Erro ao carregar dados financeiros');
-      }
-
-      // Calcular totais
-      const faturamento = (pagamentos || []).reduce((acc, p: any) => acc + Number(p.amount), 0);
-      const previsao = (assinaturas || []).reduce((acc, s: any) => acc + Number(s.value), 0);
-      const comissoesTotal = (comissoes || []).reduce((acc, c: any) => acc + Number(c.amount), 0);
-      const pagamentosPendentes = (pendentes || []).reduce((acc, p: any) => acc + Number(p.amount), 0);
-
-      setFinanceData({
-        faturamento,
-        previsao,
-        comissoes: comissoesTotal,
-        pagamentosPendentes,
-        assinaturasAtivas: assinaturas?.length || 0,
-      });
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const formatMoney = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {

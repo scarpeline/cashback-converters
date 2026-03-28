@@ -1,5 +1,5 @@
 // Hook para WhatsApp Integration
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -227,11 +227,11 @@ export function useWhatsAppChat(clientId?: string) {
   const { data: history } = useWhatsAppHistory(clientId);
 
   // Carregar histórico
-  useState(() => {
+  useEffect(() => {
     if (history) {
       setMessages(history);
     }
-  });
+  }, [history]);
 
   const addMessage = useCallback((message: WhatsAppMessage) => {
     setMessages(prev => [message, ...prev]);

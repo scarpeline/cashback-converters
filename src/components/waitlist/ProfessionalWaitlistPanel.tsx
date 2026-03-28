@@ -9,7 +9,7 @@
  * - Realocar clientes
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,9 +60,9 @@ export const ProfessionalWaitlistPanel = ({ barbershopId, professionalId }: Prof
 
   useEffect(() => {
     loadData();
-  }, [barbershopId, professionalId, selectedDate]);
+  }, [barbershopId, professionalId, selectedDate, loadData]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -83,7 +83,7 @@ export const ProfessionalWaitlistPanel = ({ barbershopId, professionalId }: Prof
     } finally {
       setLoading(false);
     }
-  };
+  }, [barbershopId, selectedDate, professionalId]);
 
   const handleOfferSlot = async (client: WaitlistEntry) => {
     if (!offerForm.time) {

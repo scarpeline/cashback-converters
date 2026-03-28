@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,13 +43,7 @@ export default function AutomationsPanel() {
     priority: 0,
   });
 
-  useEffect(() => {
-    if (barbershop?.id) {
-      fetchAutomations();
-    }
-  }, [barbershop?.id]);
-
-  const fetchAutomations = async () => {
+  const fetchAutomations = useCallback(async () => {
     if (!barbershop?.id) return;
     setLoading(true);
     try {
@@ -60,7 +54,13 @@ export default function AutomationsPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [barbershop?.id]);
+
+  useEffect(() => {
+    if (barbershop?.id) {
+      fetchAutomations();
+    }
+  }, [barbershop?.id, fetchAutomations]);
 
   const handleOpenDialog = (automation?: Automation) => {
     if (automation) {

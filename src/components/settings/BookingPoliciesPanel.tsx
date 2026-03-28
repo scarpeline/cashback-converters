@@ -48,25 +48,24 @@ export default function BookingPoliciesPanel() {
 
   useEffect(() => {
     if (barbershop?.id) {
+      const fetchPolicies = async () => {
+        if (!barbershop?.id) return;
+        setLoading(true);
+        try {
+          const result = await getBookingPolicies(barbershop.id);
+          if (result.success && result.policies) {
+            setPolicies({ ...DEFAULT_POLICIES, ...result.policies });
+          }
+        } catch (error) {
+          console.error("Erro ao buscar políticas:", error);
+          toast.error("Erro ao carregar políticas de agendamento.");
+        } finally {
+          setLoading(false);
+        }
+      };
       fetchPolicies();
     }
   }, [barbershop?.id]);
-
-  const fetchPolicies = async () => {
-    if (!barbershop?.id) return;
-    setLoading(true);
-    try {
-      const result = await getBookingPolicies(barbershop.id);
-      if (result.success && result.policies) {
-        setPolicies({ ...DEFAULT_POLICIES, ...result.policies });
-      }
-    } catch (error) {
-      console.error("Erro ao buscar políticas:", error);
-      toast.error("Erro ao carregar políticas de agendamento.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleChange = (field: keyof BookingPolicies, value: any) => {
     setPolicies((prev) => ({ ...prev, [field]: value }));

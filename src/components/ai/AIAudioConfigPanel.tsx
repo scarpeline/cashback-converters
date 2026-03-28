@@ -45,36 +45,35 @@ export function AIAudioConfigPanel({ barbershopId }: AIAudioConfigPanelProps) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const { data, error } = await (supabase as any)
+          .from("ai_config")
+          .select("*")
+          .eq("barbershop_id", barbershopId)
+          .maybeSingle();
+
+        if (data) {
+          setConfig({
+            response_type: data.response_type,
+            personality: data.personality,
+            voice_id: data.voice_id,
+            language: data.language,
+            auto_booking: data.auto_booking,
+            auto_register_client: data.auto_register_client,
+            auto_reactivation: data.auto_reactivation,
+            auto_billing: data.auto_billing,
+            greeting_message: data.greeting_message,
+          });
+        }
+      } catch (err) {
+        console.error("Error loading AI config:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
     loadConfig();
   }, [barbershopId]);
-
-  const loadConfig = async () => {
-    try {
-      const { data, error } = await (supabase as any)
-        .from("ai_config")
-        .select("*")
-        .eq("barbershop_id", barbershopId)
-        .maybeSingle();
-
-      if (data) {
-        setConfig({
-          response_type: data.response_type,
-          personality: data.personality,
-          voice_id: data.voice_id,
-          language: data.language,
-          auto_booking: data.auto_booking,
-          auto_register_client: data.auto_register_client,
-          auto_reactivation: data.auto_reactivation,
-          auto_billing: data.auto_billing,
-          greeting_message: data.greeting_message,
-        });
-      }
-    } catch (err) {
-      console.error("Error loading AI config:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const saveConfig = async () => {
     setSaving(true);

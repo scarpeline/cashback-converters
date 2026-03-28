@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,13 +44,7 @@ export function AntiFraudPanel() {
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
 
-  useEffect(() => {
-    if (antifraudEnabled) {
-      loadFraudData();
-    }
-  }, [antifraudEnabled]);
-
-  const loadFraudData = async () => {
+  const loadFraudData = useCallback(async () => {
     setLoading(true);
     try {
       // Carregar alertas de fraude
@@ -83,7 +77,13 @@ export function AntiFraudPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (antifraudEnabled) {
+      loadFraudData();
+    }
+  }, [antifraudEnabled, loadFraudData]);
 
   const handleAnalyzeFraud = async () => {
     setAnalyzing(true);

@@ -71,6 +71,41 @@ export const NotificationBell = () => {
 
   useEffect(() => {
     if (user) {
+      const loadNotifications = async () => {
+        if (!user) return;
+
+        setLoading(true);
+        try {
+          const notificationsData = await PostAppointmentNotificationsService.getUnreadNotifications(user.id);
+          
+          // Buscar detalhes dos agendamentos
+          const notificationsWithDetails = await Promise.all(
+            notificationsData.map(async (notification) => {
+              const { data: appointment } = await (supabase as any)
+                .from("appointments")
+                .select(`
+                  client_name,
+                  services(name),
+                  scheduled_at
+                `)
+                .eq("id", notification.appointment_id)
+                .single();
+
+              return {
+                ...notification,
+                appointment: appointment || undefined
+              };
+            })
+          );
+
+          setNotifications(notificationsWithDetails);
+          setUnreadCount(notificationsWithDetails.length);
+        } catch (error) {
+          console.error("Erro ao carregar notificações:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
       loadNotifications();
       
       // Recarregar notificações a cada 30 segundos

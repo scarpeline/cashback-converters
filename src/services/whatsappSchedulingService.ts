@@ -25,7 +25,7 @@ export const handleIncomingWhatsappMessage = async (
 ): Promise<string> => {
   let conversation = await getConversation(barbershopId, clientWhatsapp);
   let responseMessage = "";
-  let clientName = conversation?.conversation_state?.client_name || "Cliente";
+  const clientName = conversation?.conversation_state?.client_name || "Cliente";
 
   // Se não há conversa ativa, ou se a conversa expirou, iniciar uma nova
   if (!conversation || !conversation.is_active || (new Date().getTime() - new Date(conversation.last_message_at).getTime() > 30 * 60 * 1000)) {
@@ -71,11 +71,12 @@ export const handleIncomingWhatsappMessage = async (
     case "cancel_booking_confirm":
       responseMessage = await handleCancelBookingConfirmStep(conversation, messageBody);
       break;
-    default:
+    default: {
       const invalidInputTemplate = await getMessageTemplate(barbershopId, "invalid_input");
       responseMessage = formatMessage(invalidInputTemplate?.template_content || "Desculpe, não entendi. Tente novamente.", { client_name: clientName });
       await updateConversation(conversation.id, { current_step: "initial" });
       break;
+    }
   }
 
   return responseMessage;
@@ -86,7 +87,7 @@ const handleInitialStep = async (conversation: WhatsappConversation, messageBody
   const clientName = conversation.conversation_state?.client_name || "Cliente";
 
   switch (messageBody.trim()) {
-    case "1":
+    case "1": {
       const services = await getServices(barbershopId);
       const serviceList = services.map((s, i) => `${i + 1}. ${s.name}`).join("\n");
       await updateConversation(conversation.id, {
@@ -95,6 +96,7 @@ const handleInitialStep = async (conversation: WhatsappConversation, messageBody
       });
       const askServiceTemplate = await getMessageTemplate(barbershopId, "ask_service");
       return formatMessage(askServiceTemplate?.template_content || "Qual serviço você gostaria de agendar?\n{service_list}", { client_name: clientName, service_list: serviceList });
+    }
     case "2":
       await updateConversation(conversation.id, { current_step: "view_bookings" });
       return handleViewBookingsStep(conversation, messageBody);
@@ -104,9 +106,10 @@ const handleInitialStep = async (conversation: WhatsappConversation, messageBody
     case "4":
       await endConversation(conversation.id);
       return "Ok, {client_name}. Um de nossos atendentes entrará em contato em breve.".replace("{client_name}", clientName);
-    default:
+    default: {
       const invalidInputTemplate = await getMessageTemplate(barbershopId, "invalid_input");
       return formatMessage(invalidInputTemplate?.template_content || "Desculpe, não entendi. Tente novamente.", { client_name: clientName });
+    }
   }
 };
 
@@ -282,7 +285,7 @@ const handleViewBookingsStep = async (conversation: WhatsappConversation, messag
   const clientWhatsapp = conversation.client_whatsapp;
   const clientName = conversation.conversation_state?.client_name || "Cliente";
 
-  let client = await getClientByWhatsApp(clientWhatsapp);
+  const client = await getClientByWhatsApp(clientWhatsapp);
   if (!client) {
     await endConversation(conversation.id);
     return "Olá {client_name}, não encontramos nenhum agendamento para este número. Você já se cadastrou?".replace("{client_name}", clientName);
@@ -308,7 +311,7 @@ const handleCancelBookingSelectStep = async (conversation: WhatsappConversation,
   const clientWhatsapp = conversation.client_whatsapp;
   const clientName = conversation.conversation_state?.client_name || "Cliente";
 
-  let client = await getClientByWhatsApp(clientWhatsapp);
+  const client = await getClientByWhatsApp(clientWhatsapp);
   if (!client) {
     await endConversation(conversation.id);
     return "Olá {client_name}, não encontramos nenhum agendamento para este número. Você já se cadastrou?".replace("{client_name}", clientName);

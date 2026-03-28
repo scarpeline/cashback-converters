@@ -797,7 +797,9 @@ const NotificacoesAdminPage = () => {
             },
           });
           sent++;
-        } catch {}
+        } catch {
+          // intentionally empty - continue sending to remaining phones
+        }
       }
       toast.success(
         `${sent} ${channel.toUpperCase()} + ${userIds.length} notificações!`,
@@ -1809,6 +1811,7 @@ const ServicosContabeisAdminPage = () => {
 
   useEffect(() => {
     fetchServices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const approveOrReject = async (id: string, approved: boolean) => {
