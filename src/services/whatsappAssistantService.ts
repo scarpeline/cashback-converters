@@ -295,7 +295,7 @@ async function handleNewConversation(
 
 async function handleOngoingConversation(
   state: ConversationState, message: string, intent: AIIntentType,
-  personality: string, barbershopId: string
+  personality: 'formal' | 'friendly' | 'premium', barbershopId: string
 ): Promise<AssistantResponse> {
   const msg = message.toLowerCase().trim();
   const ctx = state.context || {};
