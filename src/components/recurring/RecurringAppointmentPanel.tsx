@@ -66,10 +66,6 @@ export const RecurringAppointmentPanel: React.FC<RecurringAppointmentPanelProps>
     notify_conflicts: true
   });
 
-  useEffect(() => {
-    loadData();
-  }, [barbershopId, loadData]);
-
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
@@ -95,6 +91,10 @@ export const RecurringAppointmentPanel: React.FC<RecurringAppointmentPanelProps>
       setLoading(false);
     }
   }, [barbershopId]);
+
+  useEffect(() => {
+    loadData();
+  }, [barbershopId, loadData]);
 
   const handleCreateAppointment = async () => {
     if (!formData.professional_id || !formData.service_id || !formData.time) {
