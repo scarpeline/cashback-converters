@@ -70,7 +70,6 @@ export function WeeklySchedulePanel({ barbershopId }: WeeklySchedulePanelProps) 
   useEffect(() => {
     loadSchedules();
   }, [barbershopId, loadSchedules]);
-  }, [barbershopId]);
 
   const saveSchedule = async () => {
     if (!form.name || !form.message_template) {

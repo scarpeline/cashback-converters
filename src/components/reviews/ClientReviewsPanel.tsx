@@ -48,11 +48,6 @@ export function ClientReviewsPanel({ barbershopId, canCreate = false }: ClientRe
   useEffect(() => {
     loadReviews();
   }, [barbershopId, loadReviews]);
-      console.error("Error loading reviews:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [barbershopId]);
 
   const submitReview = async () => {
     setSubmitting(true);
