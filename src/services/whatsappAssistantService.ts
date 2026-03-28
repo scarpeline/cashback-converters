@@ -149,7 +149,7 @@ export async function processIncomingMessage(params: {
       .eq('barbershop_id', barbershopId)
       .maybeSingle();
 
-    const personality = config?.personality || 'friendly';
+    const personality = (config?.personality || 'friendly') as 'formal' | 'friendly' | 'premium';
     const autoBooking = config?.auto_booking !== false;
     const autoRegister = config?.auto_register_client !== false;
 
