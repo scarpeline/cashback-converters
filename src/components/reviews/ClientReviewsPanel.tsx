@@ -27,10 +27,6 @@ export function ClientReviewsPanel({ barbershopId, canCreate = false }: ClientRe
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    loadReviews();
-  }, [barbershopId, loadReviews]);
-
   const loadReviews = useCallback(async () => {
     try {
       const { data } = await (supabase as any)
@@ -43,6 +39,15 @@ export function ClientReviewsPanel({ barbershopId, canCreate = false }: ClientRe
 
       setReviews(data || []);
     } catch (err) {
+      console.error("Error loading reviews:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [barbershopId]);
+
+  useEffect(() => {
+    loadReviews();
+  }, [barbershopId, loadReviews]);
       console.error("Error loading reviews:", err);
     } finally {
       setLoading(false);
