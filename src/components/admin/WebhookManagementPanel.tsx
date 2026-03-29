@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-const db = supabase as any;
 import { 
   Webhook, 
   RefreshCw, 
@@ -20,6 +19,8 @@ import {
   Link as LinkIcon,
   TestTube
 } from "lucide-react";
+
+const db = supabase as any;
 
 interface WebhookConfig {
   id: string;

@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-const db = supabase as any;
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2, Send } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+
+const db = supabase as any;
 
 type Mode = "owner" | "accountant";
 

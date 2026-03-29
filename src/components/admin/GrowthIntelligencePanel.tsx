@@ -10,9 +10,10 @@ import {
 } from 'lucide-react';
 import { useFeature } from '@/hooks/useFeatureFlags';
 import { supabase } from '@/integrations/supabase/client';
-const db = supabase as any;
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+const db = supabase as any;
 
 interface GrowthMetric {
   city: string;

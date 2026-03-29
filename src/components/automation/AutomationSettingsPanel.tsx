@@ -19,9 +19,10 @@ import {
   EyeOff
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-const db = supabase as any;
 import { toast } from "sonner";
 import { useBarbershop } from "@/hooks/useBarbershop";
+
+const db = supabase as any;
 
 interface AutomationSettings {
   blockIfHasAppointment: boolean;

@@ -21,9 +21,10 @@ import {
   Target
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-const db = supabase as any;
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+const db = supabase as any;
 
 interface RealTimeMetrics {
   totalUsers: number;

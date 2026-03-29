@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-const db = supabase as any;
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -41,6 +40,8 @@ import { AccountingTaxesPanel } from "@/components/shared/AccountingTaxesPanel";
 import { AccountingMessagesPanel } from "@/components/shared/AccountingMessagesPanel";
 import UniversalChatPanel from "@/components/shared/UniversalChatPanel";
 import { FiscalAutomationPanel } from "@/components/fiscal/FiscalAutomationPanel";
+
+const db = supabase as any;
 
 const ContadorDashboard = () => {
   const { profile, user, signOut, roles } = useAuth();

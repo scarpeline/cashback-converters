@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-const db = supabase as any;
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FileText, ClipboardList, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
+const db = supabase as any;
 
 // Fallback labels when DB services not loaded
 const SERVICE_LABELS_FALLBACK: Record<string, string> = {
