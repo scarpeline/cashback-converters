@@ -139,7 +139,7 @@ const ProfileSettings = () => {
                    </div>
                 </div>
                 <div className="md:col-span-2 flex justify-end mt-4">
-                   <Button variant="gold" className="rounded-2xl h-12 px-10 font-black shadow-gold" onClick={handleSave} disabled={saving}>
+                   <Button variant="gold" className="rounded-2xl h-12 px-10 font-black shadow-gold diamond-glow transition-premium" onClick={handleSave} disabled={saving}>
                       {saving ? "Salvando..." : "Salvar Alterações"}
                    </Button>
                 </div>

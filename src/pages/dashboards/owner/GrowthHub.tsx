@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoyaltyPanel } from "@/components/gamification/LoyaltyPanel";
-import { WeeklySchedulePanel } from "@/components/messaging/WeeklySchedulePanel";
 
 export const GrowthHub = () => {
   const [activeTab, setActiveTab] = useState<"marketing" | "loyalty" | "cashback">("marketing");
@@ -121,8 +120,22 @@ const MarketingCenter = () => {
                 </Card>
             </div>
 
-            <div className="glass-card p-8 rounded-[2.5rem] border-white/5">
-                <WeeklySchedulePanel barbershopId={barbershop?.id || ""} />
+            {/* Atalho para o Hub de Comunicação - Diamond Style */}
+            <div className="glass-card p-8 rounded-[3rem] border border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-transparent flex flex-col md:flex-row items-center justify-between gap-8 group hover:border-orange-500/40 transition-premium shadow-glow">
+                <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 rounded-[2rem] bg-orange-500/10 flex items-center justify-center group-hover:scale-110 transition-premium ring-4 ring-orange-500/5">
+                        <MessageCircle className="w-8 h-8 text-orange-400" />
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-black text-white mb-1">Hub de Comunicação & WhatsApp</h3>
+                        <p className="text-sm text-slate-500 font-medium max-w-md">Gerencie suas contas, automações de mensagens e campanhas de reativação para explodir seu faturamento.</p>
+                    </div>
+                </div>
+                <Link to="/painel-dono/comunicacao">
+                    <Button variant="gold" className="rounded-2xl font-black h-14 px-10 shadow-gold diamond-glow transition-premium text-lg">
+                        Acessar Comunicação <ChevronRight className="ml-2 w-5 h-5" />
+                    </Button>
+                </Link>
             </div>
         </div>
     );

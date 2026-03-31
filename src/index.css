@@ -131,7 +131,10 @@
   .bg-mesh {
     background-image: 
       radial-gradient(at 0% 0%, hsla(222, 100%, 61%, 0.15) 0, transparent 50%), 
-      radial-gradient(at 100% 0%, hsla(38, 100%, 55%, 0.15) 0, transparent 50%);
+      radial-gradient(at 100% 0%, hsla(38, 100%, 55%, 0.15) 0, transparent 50%),
+      radial-gradient(at 50% 100%, hsla(280, 100%, 61%, 0.1) 0, transparent 50%);
+    background-size: 200% 200%;
+    animation: mesh-flow 15s ease infinite alternate;
   }
 
   .transition-premium {
@@ -183,8 +186,42 @@
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes mesh-flow {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
+}
+
+.diamond-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.diamond-glow::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,149,0,0.2) 0%, transparent 70%);
+  transform: scale(0);
+  transition: transform 0.6s ease-out, opacity 0.6s;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.diamond-glow:hover::after {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.text-gradient-gold {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-orange-400 via-yellow-200 to-orange-500;
+  filter: drop-shadow(0 2px 4px rgba(255, 149, 0, 0.2));
 }
 
 ::-webkit-scrollbar { width: 6px; }

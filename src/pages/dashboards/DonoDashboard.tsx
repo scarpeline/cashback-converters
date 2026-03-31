@@ -14,7 +14,12 @@ import {
   Search,
   Zap,
   HelpCircle,
-  ChevronRight
+  ChevronRight,
+  MessageCircle,
+  Smartphone,
+  CalendarClock,
+  Megaphone,
+  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { useBarbershop } from "./owner/hooks";
@@ -30,12 +35,14 @@ const OperationsHub = lazy(() => import("./owner/OperationsHub").then(m => ({ de
 const ManagementHub = lazy(() => import("./owner/ManagementHub").then(m => ({ default: m.ManagementHub })));
 const FinancialHub = lazy(() => import("./owner/FinancialHub").then(m => ({ default: m.FinancialHub })));
 const GrowthHub = lazy(() => import("./owner/GrowthHub").then(m => ({ default: m.GrowthHub })));
+const CommunicationHub = lazy(() => import("./owner/CommunicationHub").then(m => ({ default: m.CommunicationHub })));
 const SettingsHub = lazy(() => import("./owner/SettingsHub").then(m => ({ default: m.SettingsHub })));
 
 const DonoDashboard = () => {
     const { user, profile, signOut } = useAuth();
     const { barbershop, loading } = useBarbershop();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [commExpanded, setCommExpanded] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -50,6 +57,13 @@ const DonoDashboard = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Auto-expand comm menu if on comm route
+    useEffect(() => {
+        if (location.pathname.startsWith("/painel-dono/comunicacao")) {
+            setCommExpanded(true);
+        }
+    }, [location.pathname]);
+
     if (loading) return <DashboardLoadingSkeleton />;
 
     const navItems = [
@@ -58,7 +72,16 @@ const DonoDashboard = () => {
         { icon: <Users />, label: "Gestão", path: "/painel-dono/gestao" },
         { icon: <Wallet />, label: "Financeiro", path: "/painel-dono/financeiro" },
         { icon: <TrendingUp />, label: "Crescimento", path: "/painel-dono/crescimento" },
+    ];
+
+    const navItemsBottom = [
         { icon: <Settings />, label: "Ajustes", path: "/painel-dono/configuracoes" },
+    ];
+
+    const commSubItems = [
+        { icon: <Smartphone size={14} />, label: "WhatsApp", path: "/painel-dono/comunicacao", tab: "whatsapp" },
+        { icon: <CalendarClock size={14} />, label: "Mensagens", path: "/painel-dono/comunicacao", tab: "mensagens" },
+        { icon: <Megaphone size={14} />, label: "Campanhas", path: "/painel-dono/comunicacao", tab: "campanhas" },
     ];
 
     return (
@@ -98,7 +121,7 @@ const DonoDashboard = () => {
 
                     {/* Navigation */}
                     <nav className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
-                        <p className="px-4 text-[10px] font-black text-slate-600 uppercase tracking-widest mb-4 italic">Painel do Dono</p>
+                    <p className="px-4 text-[10px] font-black text-slate-600 uppercase tracking-widest mb-4 italic">Painel do Dono</p>
                         {navItems.map((item) => {
                             const isActive = item.exact 
                                 ? location.pathname === item.path 
@@ -107,6 +130,61 @@ const DonoDashboard = () => {
                             return (
                                 <Link 
                                     key={item.path} 
+                                    to={item.path}
+                                    className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-premium group relative overflow-hidden ${isActive ? 'bg-gradient-gold text-black font-black shadow-gold diamond-glow' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                                >
+                                    <span className={`transition-premium ${isActive ? 'text-black' : 'group-hover:scale-110 text-orange-400/50 group-hover:text-orange-400'}`}>
+                                        {React.cloneElement(item.icon as React.ReactElement, { size: 20 })}
+                                    </span>
+                                    <span className="text-sm tracking-tight">{item.label}</span>
+                                    {isActive && <ChevronRight className="ml-auto w-4 h-4 opacity-50 animate-in slide-in-from-left duration-300" />}
+                                </Link>
+                            );
+                        })}
+
+                        {/* ── Comunicação com sub-menu ── */}
+                        <div>
+                            <button
+                                onClick={() => setCommExpanded(!commExpanded)}
+                                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-premium group relative overflow-hidden ${
+                                    location.pathname.startsWith("/painel-dono/comunicacao")
+                                        ? 'bg-gradient-gold text-black font-black shadow-gold diamond-glow'
+                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                }`}
+                            >
+                                <span className={`transition-premium ${location.pathname.startsWith("/painel-dono/comunicacao") ? 'text-black' : 'group-hover:scale-110 text-orange-400/50 group-hover:text-orange-400'}`}>
+                                    <MessageCircle size={20} />
+                                </span>
+                                <span className="text-sm tracking-tight flex-1 text-left">Comunicação</span>
+                                <ChevronDown
+                                    size={14}
+                                    className={`opacity-50 transition-transform duration-500 ${commExpanded ? 'rotate-180' : ''}`}
+                                />
+                            </button>
+
+                            {/* Sub-items */}
+                            <div className={`overflow-hidden transition-all duration-300 ${commExpanded ? 'max-h-40 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+                                <div className="ml-4 pl-4 border-l border-white/5 space-y-0.5">
+                                    {commSubItems.map((sub) => (
+                                        <Link
+                                            key={sub.tab}
+                                            to={sub.path}
+                                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-orange-400 hover:bg-white/5 transition-premium group"
+                                        >
+                                            <span className="group-hover:scale-110 transition-premium">{sub.icon}</span>
+                                            {sub.label}
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── Ajustes (sempre por último) ── */}
+                        {navItemsBottom.map((item) => {
+                            const isActive = location.pathname.startsWith(item.path);
+                            return (
+                                <Link
+                                    key={item.path}
                                     to={item.path}
                                     className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-premium group ${isActive ? 'bg-gradient-gold text-black font-black shadow-gold' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
                                 >
@@ -181,6 +259,7 @@ const DonoDashboard = () => {
                             <Route path="gestao/*" element={<ManagementHub />} />
                             <Route path="financeiro/*" element={<FinancialHub />} />
                             <Route path="crescimento/*" element={<GrowthHub />} />
+                            <Route path="comunicacao/*" element={<CommunicationHub />} />
                             <Route path="configuracoes/*" element={<SettingsHub />} />
                             <Route path="*" element={<Navigate to="/painel-dono" replace />} />
                         </Routes>

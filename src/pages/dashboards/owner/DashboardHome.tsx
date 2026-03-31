@@ -75,11 +75,11 @@ export const DashboardHome = () => {
                  </h1>
                  <p className="text-slate-400 font-medium">Seu negócio está decolando. Veja o resumo de hoje.</p>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 animate-in slide-in-from-right duration-700">
                  <Button variant="ghost" className="rounded-2xl h-12 px-6 border border-white/5 bg-white/5 font-bold text-white hover:bg-white/10 transition-premium" onClick={handleShare}>
                     <Share2 className="w-4 h-4 mr-2 text-orange-400" /> Compartilhar App
                  </Button>
-                 <Button variant="gold" className="rounded-2xl h-12 px-8 font-black shadow-gold hover-scale" onClick={() => navigate('/painel-dono/operacoes')}>
+                 <Button variant="gold" className="rounded-2xl h-12 px-8 font-black shadow-gold hover-scale diamond-glow" onClick={() => navigate('/painel-dono/operacoes')}>
                     Ver Agenda
                  </Button>
               </div>
@@ -87,10 +87,10 @@ export const DashboardHome = () => {
 
            {/* Metrics Grid */}
            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <MetricCard title="Faturamento Hoje" value={`R$ ${metrics.todayRevenue.toFixed(2)}`} icon={<TrendingUp className="text-emerald-400" />} trend="+15%" />
-              <MetricCard title="Agendamentos" value={metrics.todayAppointments} icon={<Calendar className="text-blue-400" />} trend="Hojee" />
-              <MetricCard title="Clientes Base" value={metrics.activeClients} icon={<Users className="text-orange-400" />} trend="Total" />
-              <MetricCard title="NPS Médio" value="4.9" icon={<Star className="text-yellow-400 fill-yellow-400/20" />} trend="Excelente" />
+              <MetricCard title="Faturamento Hoje" value={`R$ ${metrics.todayRevenue.toFixed(2)}`} icon={<TrendingUp className="text-emerald-400" />} trend="+15%" delay="delay-0" />
+              <MetricCard title="Agendamentos" value={metrics.todayAppointments} icon={<Calendar className="text-blue-400" />} trend="Hoje" delay="delay-100" />
+              <MetricCard title="Clientes Base" value={metrics.activeClients} icon={<Users className="text-orange-400" />} trend="Total" delay="delay-200" />
+              <MetricCard title="NPS Médio" value="4.9" icon={<Star className="text-yellow-400 fill-yellow-400/20" />} trend="Excelente" delay="delay-300" />
            </div>
 
            {/* Quick Actions */}
@@ -141,8 +141,8 @@ export const DashboardHome = () => {
     );
 };
 
-const MetricCard = ({ title, value, icon, trend }: any) => (
-    <Card className="glass-card p-6 rounded-[2.5rem] border-white/5 hover:border-white/10 transition-premium group relative overflow-hidden">
+const MetricCard = ({ title, value, icon, trend, delay = "" }: any) => (
+    <Card className={`glass-card p-6 rounded-[2.5rem] border-white/5 hover:border-white/10 transition-premium group relative overflow-hidden animate-in fade-in zoom-in duration-700 ${delay}`}>
         <div className="absolute -top-10 -right-10 w-24 h-24 bg-white/5 blur-[40px] rounded-full group-hover:bg-white/10 transition-colors" />
         <div className="flex items-center justify-between mb-4">
             <div className="w-10 h-10 rounded-2xl bg-slate-900/50 flex items-center justify-center border border-white/5">
@@ -158,7 +158,7 @@ const MetricCard = ({ title, value, icon, trend }: any) => (
 const QuickActionCard = ({ title, desc, icon, color, onClick }: any) => (
     <div 
         onClick={onClick}
-        className="glass-card p-6 rounded-[2.5rem] border border-white/5 hover:border-white/10 transition-premium cursor-pointer group flex items-center gap-5"
+        className="glass-card p-6 rounded-[2.5rem] border border-white/5 hover:border-white/10 transition-premium cursor-pointer group flex items-center gap-5 diamond-glow"
     >
         <div className={`w-14 h-14 rounded-[1.8rem] flex items-center justify-center flex-shrink-0 transition-premium group-hover:scale-110 shadow-premium ${color}`}>
             {icon}

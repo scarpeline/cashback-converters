@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { ProfessionalWaitlistPanel } from "@/components/waitlist/ProfessionalWaitlistPanel";
 import { RecurringAppointmentPanel } from "@/components/recurring/RecurringAppointmentPanel";
 import { Badge } from "@/components/ui/badge";
+import { SkeletonHub } from "@/components/ui/SkeletonHub";
 
 export const OperationsHub = () => {
   const [activeTab, setActiveTab] = useState<"agenda" | "recurring" | "waitlist">("agenda");
@@ -88,7 +89,7 @@ const AgendamentosPage = () => {
   const { logAction } = useAuditLog(barbershop?.id || "");
   const { services } = useServices(barbershop?.id);
   const { professionals } = useProfessionals(barbershop?.id);
-  const { appointments, refetch } = useAppointments(barbershop?.id);
+  const { appointments, refetch, loading: loadingAppointments } = useAppointments(barbershop?.id);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -195,7 +196,9 @@ const AgendamentosPage = () => {
           </div>
 
           <div className="space-y-3">
-            {filteredAppointments.length === 0 ? (
+            {loadingAppointments ? (
+              <SkeletonHub variant="list" />
+            ) : filteredAppointments.length === 0 ? (
               <div className="glass-card p-12 text-center rounded-[2.5rem]">
                 <Calendar className="w-12 h-12 text-slate-700 mx-auto mb-4" />
                 <p className="text-slate-500 font-medium italic">Nenhum agendamento encontrado.</p>
@@ -320,7 +323,7 @@ const AgendamentosPage = () => {
 
               <Button 
                 variant="gold" 
-                className="w-full h-14 rounded-2xl font-black text-lg shadow-gold mt-4 hover-scale"
+                className="w-full h-14 rounded-2xl font-black text-lg shadow-gold mt-4 hover-scale diamond-glow"
                 onClick={handleCreate}
                 disabled={saving}
               >

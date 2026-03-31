@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 import { SubscriptionPlans } from "@/components/subscription/SubscriptionPlans";
 import { Badge } from "@/components/ui/badge";
+import { HubSkeleton, SkeletonHub } from "@/components/ui/SkeletonHub";
 
 export const FinancialHub = () => {
   const [activeTab, setActiveTab] = useState<"overview" | "payouts" | "subscription">("overview");
@@ -98,6 +99,7 @@ const FinancialOverview = () => {
   useEffect(() => {
     if (!barbershop?.id) return;
     const fetchMetrics = async () => {
+       setLoading(true); // Garante que loading comece verdadeiro
        const { data: payments } = await (supabase as any)
          .from("payments")
          .select("amount, status")
@@ -112,6 +114,8 @@ const FinancialOverview = () => {
     };
     fetchMetrics();
   }, [barbershop?.id]);
+
+  if (loading) return <HubSkeleton />;
 
   const handleWithdraw = async () => {
     if (!barbershop?.id) return;

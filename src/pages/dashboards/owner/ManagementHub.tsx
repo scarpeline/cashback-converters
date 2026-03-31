@@ -23,9 +23,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { uploadImage } from "@/lib/upload-image";
+import { SkeletonHub } from "@/components/ui/SkeletonHub";
 
 export const ManagementHub = () => {
   const [activeTab, setActiveTab] = useState<"professionals" | "services" | "inventory">("professionals");
@@ -80,7 +80,7 @@ export const ManagementHub = () => {
 const ProfissionaisPage = () => {
   const { barbershop } = useBarbershop();
   const { logAction } = useAuditLog(barbershop?.id || "");
-  const { professionals, refetch } = useProfessionals(barbershop?.id);
+  const { professionals, refetch, loading: loadingProfs } = useProfessionals(barbershop?.id);
   const [showAdd, setShowAdd] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -150,7 +150,7 @@ const ProfissionaisPage = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <Button variant="gold" className="rounded-2xl font-black shadow-gold h-12 px-8" onClick={() => setShowAdd(!showAdd)}>
+        <Button variant="gold" className="rounded-2xl font-black shadow-gold h-12 px-8 diamond-glow" onClick={() => setShowAdd(!showAdd)}>
           <Plus className="w-5 h-5 mr-2" /> {showAdd ? "Fechar" : "Novo Integrante"}
         </Button>
       </div>
@@ -202,7 +202,9 @@ const ProfissionaisPage = () => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {professionals.map((prof) => (
+        {loadingProfs ? (
+          [1, 2, 3].map(i => <SkeletonHub key={i} className="h-64 rounded-[2.5rem]" />)
+        ) : professionals.map((prof) => (
           <div key={prof.id} className="glass-card p-6 rounded-[2.5rem] group hover-scale border border-white/5 hover:border-white/10 transition-premium relative overflow-hidden">
             <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-premium">
                <Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/5"><Edit className="w-4 h-4 text-slate-400" /></Button>
@@ -251,7 +253,7 @@ const ProfissionaisPage = () => {
 const ServicosPage = () => {
   const { barbershop } = useBarbershop();
   const { logAction } = useAuditLog(barbershop?.id || "");
-  const { services, refetch } = useServices(barbershop?.id);
+  const { services, refetch, loading: loadingServices } = useServices(barbershop?.id);
   const [showAdd, setShowAdd] = useState(false);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -295,7 +297,7 @@ const ServicosPage = () => {
   return (
     <div className="space-y-8">
       <div className="flex justify-end">
-        <Button variant="gold" className="rounded-2xl h-12 px-8 font-black shadow-gold" onClick={() => setShowAdd(!showAdd)}>
+        <Button variant="gold" className="rounded-2xl h-12 px-8 font-black shadow-gold diamond-glow" onClick={() => setShowAdd(!showAdd)}>
           <Plus className="w-5 h-5 mr-2" /> {showAdd ? "Fechar" : "Novo Serviço"}
         </Button>
       </div>
