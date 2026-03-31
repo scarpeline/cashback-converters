@@ -24,8 +24,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { uploadImage } from "@/lib/upload-image";
 import { SkeletonHub } from "@/components/ui/SkeletonHub";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const ManagementHub = () => {
   const [activeTab, setActiveTab] = useState<"professionals" | "services" | "inventory">("professionals");
@@ -93,7 +100,6 @@ const ProfissionaisPage = () => {
   const handleCreate = async () => {
     if (!barbershop) return;
 
-    // 🛡️ Segurança: Validação Zod
     const validation = ProfessionalSchema.safeParse({
        name,
        email,
@@ -123,7 +129,6 @@ const ProfissionaisPage = () => {
     if (error) toast.error(error.message);
     else {
       toast.success("Profissional cadastrado!");
-      // 🛡️ Segurança: Auditoria
       await logAction('SETTINGS_CHANGE', 'professionals', undefined, { name, email, comm });
       
       setShowAdd(false);
@@ -137,7 +142,6 @@ const ProfissionaisPage = () => {
     if (!file || !barbershop) return;
     setUploading(true);
     const url = await uploadImage(file, "avatars", barbershop.id.slice(0, 8));
-    setUploading(true);
     if (url) {
       setPhotoUrl(url);
       setUploading(false);
@@ -201,44 +205,63 @@ const ProfissionaisPage = () => {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <TooltipProvider>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {loadingProfs ? (
           [1, 2, 3].map(i => <SkeletonHub key={i} className="h-64 rounded-[2.5rem]" />)
-        ) : professionals.map((prof) => (
-          <div key={prof.id} className="glass-card p-6 rounded-[2.5rem] group hover-scale border border-white/5 hover:border-white/10 transition-premium relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-premium">
-               <Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/5"><Edit className="w-4 h-4 text-slate-400" /></Button>
+        ) : professionals.map((prof, idx) => (
+          <div 
+            key={prof.id} 
+            className={`glass-card p-6 rounded-[2.5rem] group hover-scale border border-white/5 hover:border-white/10 transition-premium relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 delay-${idx % 5 * 100}`}
+          >
+            <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-premium z-10">
+               <Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/5 h-9 w-9"><Edit className="w-4 h-4 text-slate-400" /></Button>
             </div>
             
-            <div className="flex flex-col items-center text-center">
-               <div className="w-20 h-20 rounded-[2rem] bg-gradient-orange p-1 shadow-gold-sm mb-4">
+            <div className="flex flex-col items-center text-center relative z-0">
+               <div className="w-20 h-20 rounded-[2rem] bg-gradient-orange p-1 shadow-gold-sm mb-4 group-hover:rotate-3 transition-transform duration-500">
                   <div className="w-full h-full rounded-[1.8rem] overflow-hidden bg-slate-900 flex items-center justify-center">
                      {prof.avatar_url ? <img src={prof.avatar_url} className="w-full h-full object-cover" /> : <Users className="w-8 h-8 text-slate-700" />}
                   </div>
                </div>
                
-               <h3 className="font-black text-xl text-white underline-gold px-1">{prof.name}</h3>
-               <p className="text-slate-500 text-sm font-medium mt-1 mb-6">{prof.email || "Sem e-mail cadastrado"}</p>
+               <h3 className="font-black text-xl text-white underline-gold px-1 truncate w-full">{prof.name}</h3>
+               <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1 mb-6 truncate w-full">{prof.email || "Sem e-mail"}</p>
                
                <div className="grid grid-cols-2 w-full gap-3">
-                  <div className="bg-slate-900/50 p-4 rounded-3xl border border-white/5">
-                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Comissão</p>
-                     <p className="text-lg font-black text-white">{prof.commission_percentage}%</p>
-                  </div>
-                  <div className="bg-slate-900/50 p-4 rounded-3xl border border-white/5">
-                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Avaliação</p>
-                     <div className="flex items-center justify-center gap-1">
-                        <Star className="w-4 h-4 text-orange-400 fill-orange-400" />
-                        <p className="text-lg font-black text-white">4.9</p>
-                     </div>
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-slate-900/50 p-4 rounded-3xl border border-white/5 cursor-help hover:bg-slate-900 transition-colors">
+                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center justify-center gap-1">Paga <HelpCircle size={8} /></p>
+                         <p className="text-lg font-black text-white">{prof.commission_percentage}%</p>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-slate-900 border-white/10 text-white rounded-xl py-3 px-4 shadow-premium backdrop-blur-xl">
+                       <p className="text-xs font-bold">Porcentagem de comissão por serviço executado.</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-slate-900/50 p-4 rounded-3xl border border-white/5 cursor-help hover:bg-slate-900 transition-colors">
+                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center justify-center gap-1">Meta <HelpCircle size={8} /></p>
+                         <div className="flex items-center justify-center gap-1">
+                            <Star className="w-4 h-4 text-orange-400 fill-orange-400" />
+                            <p className="text-lg font-black text-white">4.9</p>
+                         </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-slate-900 border-white/10 text-white rounded-xl py-3 px-4 shadow-premium backdrop-blur-xl">
+                       <p className="text-xs font-bold">Avaliação média dos clientes para este profissional.</p>
+                    </TooltipContent>
+                  </Tooltip>
                </div>
                
                <div className="mt-6 w-full flex items-center justify-between px-2">
                   <Badge variant="outline" className="rounded-full bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-3 py-1 text-[10px] font-black tracking-widest uppercase">
                     Ativo
                   </Badge>
-                  <Button variant="ghost" size="sm" className="text-slate-500 hover:text-white font-bold gap-2">
+                  <Button variant="ghost" size="sm" className="text-slate-500 hover:text-white font-black text-[10px] uppercase tracking-widest gap-2">
                     <ShieldCheck className="w-4 h-4" /> Direitos
                   </Button>
                </div>
@@ -246,6 +269,7 @@ const ProfissionaisPage = () => {
           </div>
         ))}
       </div>
+     </TooltipProvider>
     </div>
   );
 };
@@ -262,7 +286,6 @@ const ServicosPage = () => {
   const handleCreate = async () => {
     if (!barbershop) return;
 
-    // 🛡️ Segurança: Validação Zod
     const validation = ServiceSchema.safeParse({
        name,
        price: Number(price),
@@ -285,7 +308,6 @@ const ServicosPage = () => {
     if (error) toast.error(error.message);
     else {
       toast.success("Serviço adicionado!");
-      // 🛡️ Segurança: Auditoria
       await logAction('SETTINGS_CHANGE', 'services', undefined, { name, price });
 
       setShowAdd(false);
@@ -336,38 +358,44 @@ const ServicosPage = () => {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {services.map(s => (
-          <div key={s.id} className="glass-card p-6 rounded-[2.5rem] relative group border border-white/5 hover:border-white/10 transition-premium overflow-hidden">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {services.map((s, idx) => (
+          <div 
+            key={s.id} 
+            className={`glass-card p-6 md:p-8 rounded-[2.5rem] relative group border border-white/5 hover:border-white/10 transition-premium overflow-hidden animate-in fade-in slide-in-from-right-4 duration-700 delay-${idx % 5 * 100}`}
+          >
              {/* Background Decoration */}
-             <div className="absolute -top-10 -right-10 w-32 h-32 bg-orange-500/5 blur-[50px] rounded-full group-hover:bg-orange-500/10 transition-colors" />
+             <div className="absolute -top-10 -right-10 w-32 h-32 bg-orange-500/5 blur-[50px] rounded-full group-hover:bg-orange-500/15 transition-all duration-700 scale-150" />
              
-             <div className="flex items-start justify-between mb-6">
-                <div className="w-14 h-14 rounded-3xl bg-slate-900/50 flex items-center justify-center border border-white/5 group-hover:border-orange-500/30 transition-premium">
+             <div className="flex items-start justify-between mb-6 relative z-10">
+                <div className="w-14 h-14 rounded-3xl bg-slate-900/50 flex items-center justify-center border border-white/5 group-hover:border-orange-500/30 transition-premium group-hover:scale-110">
                    <Tag className="w-6 h-6 text-orange-400" />
                 </div>
                 <div className="p-2 opacity-0 group-hover:opacity-100 transition-premium">
-                   <Button variant="ghost" size="icon" className="rounded-xl"><Edit className="w-4 h-4 text-slate-500" /></Button>
+                   <Button variant="ghost" size="icon" className="rounded-xl h-9 w-9 hover:bg-white/5"><Edit className="w-4 h-4 text-slate-400" /></Button>
                 </div>
              </div>
              
-             <h3 className="text-xl font-black text-white mb-2 leading-tight">{s.name}</h3>
+             <h3 className="text-xl font-black text-white mb-2 leading-tight relative z-10 truncate">{s.name}</h3>
              
-             <div className="flex items-center gap-4 text-slate-500 mb-8">
-                <div className="flex items-center gap-1.5 font-bold">
-                   <Clock className="w-4 h-4" />
-                   <span className="text-xs uppercase tracking-widest">{s.duration_minutes} min</span>
+             <div className="flex items-center gap-4 text-slate-500 mb-8 relative z-10">
+                <div className="flex items-center gap-1.5 font-black uppercase tracking-widest text-[10px]">
+                   <Clock className="w-3.5 h-3.5" />
+                   <span>{s.duration_minutes} min</span>
                 </div>
                 <span className="text-slate-800">•</span>
-                <div className="flex items-center gap-1.5 font-bold text-orange-400/80">
-                   <Scissors className="w-4 h-4" />
-                   <span className="text-xs uppercase tracking-widest">Execução</span>
+                <div className="flex items-center gap-1.5 font-black uppercase tracking-widest text-[10px] text-orange-400/80">
+                   <Scissors className="w-3.5 h-3.5" />
+                   <span>Execução</span>
                 </div>
              </div>
              
-             <div className="flex items-center justify-between mt-auto pt-6 border-t border-white/5">
-                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Preço Base</p>
-                <p className="text-2xl font-black text-gradient-gold">R$ {Number(s.price).toFixed(2)}</p>
+             <div className="flex items-center justify-between mt-auto pt-6 border-t border-white/5 relative z-10">
+                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Preço Sugerido</p>
+                <div className="text-right">
+                  <p className="text-2xl font-black text-gradient-gold">R$ {Number(s.price).toFixed(2)}</p>
+                  <p className="text-[9px] font-black text-emerald-400/50 uppercase tracking-tighter">Padrão Ouro</p>
+                </div>
              </div>
           </div>
         ))}

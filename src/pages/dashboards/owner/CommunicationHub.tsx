@@ -12,6 +12,7 @@ import {
   BarChart3,
   UserCheck,
   Zap,
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -92,56 +93,50 @@ export const CommunicationHub = () => {
         </div>
       </div>
 
-      {/* ── WhatsApp Section ── */}
-      {mainTab === "whatsapp" && (
-        <div className="space-y-6">
-          <SubTabBar
-            tabs={whatsappTabs}
-            active={waTab}
-            onChange={(v) => setWaTab(v as WhatsAppSubTab)}
-          />
-          <div className="glass-card p-6 rounded-[2.5rem] border-white/5">
-            {waTab === "contas" && <WhatsAppAccountsPanel barbershopId={barbershop?.id || ""} />}
-            {waTab === "monitoramento" && <WhatsAppMonitoringPanel barbershopId={barbershop?.id || ""} />}
-            {waTab === "pacotes" && <MessagePackagesPanel barbershopId={barbershop?.id || ""} />}
+      {/* ── Content Section ── */}
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {mainTab === "whatsapp" && (
+          <div className="space-y-8">
+            <SubTabBar tabs={whatsappTabs} active={waTab} onChange={(v) => setWaTab(v as WhatsAppSubTab)} />
+            <div className="glass-card p-4 md:p-8 rounded-[2.5rem] border-white/5 bg-slate-950/20 backdrop-blur-3xl min-h-[400px]">
+               <div className="animate-in fade-in zoom-in-95 duration-500">
+                  {waTab === "contas" && <WhatsAppAccountsPanel barbershopId={barbershop?.id || ""} />}
+                  {waTab === "monitoramento" && <WhatsAppMonitoringPanel barbershopId={barbershop?.id || ""} />}
+                  {waTab === "pacotes" && <MessagePackagesPanel barbershopId={barbershop?.id || ""} />}
+               </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ── Mensagens Section ── */}
-      {mainTab === "mensagens" && (
-        <div className="space-y-6">
-          <SubTabBar
-            tabs={mensagensTabs}
-            active={msgTab}
-            onChange={(v) => setMsgTab(v as MensagensSubTab)}
-          />
-          <div className="glass-card p-6 rounded-[2.5rem] border-white/5">
-            {msgTab === "agenda" && <WeeklySchedulePanel barbershopId={barbershop?.id || ""} />}
-            {msgTab === "relatorios" && <MessageReportsPanel barbershopId={barbershop?.id || ""} />}
+        {mainTab === "mensagens" && (
+          <div className="space-y-8">
+            <SubTabBar tabs={mensagensTabs} active={msgTab} onChange={(v) => setMsgTab(v as MensagensSubTab)} />
+            <div className="glass-card p-4 md:p-8 rounded-[2.5rem] border-white/5 bg-slate-950/20 backdrop-blur-3xl min-h-[400px]">
+               <div className="animate-in fade-in zoom-in-95 duration-500">
+                  {msgTab === "agenda" && <WeeklySchedulePanel barbershopId={barbershop?.id || ""} />}
+                  {msgTab === "relatorios" && <MessageReportsPanel barbershopId={barbershop?.id || ""} />}
+               </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ── Campanhas Section ── */}
-      {mainTab === "campanhas" && (
-        <div className="space-y-6">
-          <SubTabBar
-            tabs={campanhasTabs}
-            active={campTab}
-            onChange={(v) => setCampTab(v as CampanhasSubTab)}
-          />
-          <div className="glass-card p-6 rounded-[2.5rem] border-white/5">
-            {campTab === "reativacao" && <ClientReactivationDashboard />}
-            {campTab === "automacoes" && <AutomacoesPlaceholder />}
+        {mainTab === "campanhas" && (
+          <div className="space-y-8">
+            <SubTabBar tabs={campanhasTabs} active={campTab} onChange={(v) => setCampTab(v as CampanhasSubTab)} />
+            <div className="glass-card p-4 md:p-8 rounded-[2.5rem] border-white/5 bg-slate-950/20 backdrop-blur-3xl min-h-[400px]">
+               <div className="animate-in fade-in zoom-in-95 duration-500">
+                  {campTab === "reativacao" && <ClientReactivationDashboard />}
+                  {campTab === "automacoes" && <AutomacoesPlaceholder />}
+               </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
 
-// ─── Reusable sub-tab bar ─────────────────────────────────────────────────────
+// ─── Reusable components ──────────────────────────────────────────────────────
 function SubTabBar<T extends string>({
   tabs,
   active,
@@ -152,18 +147,18 @@ function SubTabBar<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center gap-2 flex-wrap mb-2">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
-          className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-[0.1em] transition-premium border ${
+          className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 border ${
             active === tab.id
-              ? "bg-orange-500/20 text-orange-400 border-orange-500/40 shadow-glow"
+              ? "bg-gradient-gold text-white border-transparent shadow-gold diamond-glow scale-[1.02]"
               : "text-slate-500 border-white/5 hover:text-slate-300 hover:border-white/10 hover:bg-white/5"
           }`}
         >
-          <span className="group-hover:scale-110 transition-premium">{tab.icon}</span>
+          <span className={`${active === tab.id ? 'animate-pulse' : ''}`}>{tab.icon}</span>
           {tab.label}
         </button>
       ))}
@@ -171,20 +166,28 @@ function SubTabBar<T extends string>({
   );
 }
 
-// ─── Automações placeholder ───────────────────────────────────────────────────
 function AutomacoesPlaceholder() {
   return (
-    <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-      <div className="w-16 h-16 rounded-3xl bg-orange-500/10 flex items-center justify-center">
-        <Zap className="w-8 h-8 text-orange-400" />
+    <div className="flex flex-col items-center justify-center py-20 gap-8 text-center relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 to-transparent opacity-50" />
+      <div className="relative z-10">
+        <div className="w-24 h-24 rounded-[2.5rem] bg-slate-900 border border-white/10 flex items-center justify-center mb-6 mx-auto shadow-2xl relative group">
+           <div className="absolute inset-0 bg-gradient-gold opacity-10 blur-xl group-hover:opacity-20 transition-opacity" />
+           <Zap className="w-10 h-10 text-orange-400 animate-pulse relative z-10" />
+        </div>
+        <h3 className="text-3xl font-black text-white mb-2">Automações <span className="text-gradient-gold">Enterprise</span></h3>
+        <p className="text-slate-500 text-sm max-w-sm mx-auto font-medium leading-relaxed mb-8 px-4">
+          Estamos forjando o motor de fluxo mais poderoso do mercado. Gatilhos por comportamento, IA generativa de textos e recuperação forense de agendamentos.
+        </p>
+        <div className="flex flex-col gap-3 max-w-[280px] mx-auto">
+           <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/20 rounded-2xl px-6 py-2 text-[10px] font-black uppercase tracking-widest justify-center">
+             Em Desenvolvimento Profundo
+           </Badge>
+           <Button variant="ghost" className="text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-white transition-premium">
+             Sugerir Funcionalidade
+           </Button>
+        </div>
       </div>
-      <h3 className="text-xl font-black text-white">Automações em breve</h3>
-      <p className="text-slate-500 text-sm max-w-sm">
-        Configure fluxos automáticos de mensagens por gatilho: aniversário, pós-atendimento, inatividade e mais.
-      </p>
-      <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/20 rounded-full px-4 py-1 text-xs font-black uppercase tracking-widest">
-        Em desenvolvimento
-      </Badge>
     </div>
   );
 }

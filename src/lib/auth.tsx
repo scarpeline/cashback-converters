@@ -14,26 +14,14 @@ import {
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  logAuthStart,
-  logAuthValidate,
-  logAuthRole,
-  logAuthError,
   logAuthSuccess,
-  logSessionRefresh,
-  logRoleAssignment,
-  logRoleBootstrap,
-  logCriticalError,
-  logLoadComplete,
 } from "@/lib/debug/auth-logger";
-import {
-  validateSession,
-  clearLocalStorageToken,
-} from "@/lib/debug/session-validator";
 import {
   getDashboardForRole,
   getLoginForRoute,
   ROLE_PRIORITY,
 } from "@/lib/route-config";
+import { checkRateLimit, resetRateLimit, audit } from "@/lib/security";
 
 export type AppRole =
   | "cliente"
@@ -157,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       if (!isMounted) return;
       
       setSession(currentSession);
@@ -199,6 +187,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadUserComplete]);
 
   const signUp = async (email: string, password: string, metadata: SignUpMetadata) => {
+    // Rate limit por e-mail
+    const rl = checkRateLimit("signup", email.toLowerCase());
+    if (!rl.allowed) {
+      const mins = Math.ceil((rl.retryAfterMs ?? 0) / 60000);
+      return { error: new Error(`Muitas tentativas de cadastro. Tente em ${mins} minuto(s).`), needsConfirmation: false };
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email, password,
       options: { data: { name: metadata.name, role: metadata.role } }
@@ -207,7 +202,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    // Rate limit por e-mail
+    const rl = checkRateLimit("login", email.toLowerCase());
+    if (!rl.allowed) {
+      const mins = Math.ceil((rl.retryAfterMs ?? 0) / 60000);
+      await audit.rateLimitHit("login", email);
+      return { error: new Error(`Muitas tentativas. Tente novamente em ${mins} minuto(s).`) };
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      await audit.loginFailed(email);
+    } else {
+      resetRateLimit("login", email.toLowerCase());
+    }
     return { error };
   };
 
@@ -224,6 +233,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const sendPasswordResetEmail = async (email: string) => {
+    const rl = checkRateLimit("passwordReset", email.toLowerCase());
+    if (!rl.allowed) {
+      const mins = Math.ceil((rl.retryAfterMs ?? 0) / 60000);
+      return { error: new Error(`Aguarde ${mins} minuto(s) antes de solicitar novamente.`) };
+    }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
@@ -231,6 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    if (user) await audit.logout(user.id);
     await supabase.auth.signOut();
     window.location.href = "/login";
   };

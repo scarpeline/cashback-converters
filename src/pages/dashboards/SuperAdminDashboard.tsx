@@ -1,6 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { Routes, Route, Link, useLocation } from "react-router-dom";
+import { useState, useEffect, useMemo, useCallback } from "react";import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { SocialProofManager } from "@/components/social-proof/SocialProofManager";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +52,7 @@ import {
   EyeOff,
   Globe,
   ShieldOff,
+  ChevronDown,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -88,61 +88,77 @@ const SuperAdminDashboard = () => {
   const { profile, signOut } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
   const basePath = "/admin";
 
-  const navigation = useMemo(
-    () => [
-      { name: "Dashboard", href: basePath, icon: LayoutDashboard },
-      { name: "Usuários", href: `${basePath}/usuarios`, icon: Users },
-      { name: "Parceiros", href: `${basePath}/parceiros`, icon: Users },
-      { name: "Comissões Parceiros", href: `${basePath}/comissoes`, icon: DollarSign },
-      { name: "Barbearias", href: `${basePath}/barbearias`, icon: Building2 },
-      { name: "Produtos", href: `${basePath}/produtos`, icon: Package },
-      { name: "Afiliados", href: `${basePath}/afiliados`, icon: Users },
-      { name: "Contadores", href: `${basePath}/contadores`, icon: Calculator },
-      {
-        name: "Comissões Contábeis",
-        href: `${basePath}/comissoes-contabeis`,
-        icon: TrendingUp,
-      },
-      {
-        name: "Serviços Contábeis",
-        href: `${basePath}/servicos-contabeis`,
-        icon: FileText,
-      },
-      { name: "Webhooks", href: `${basePath}/webhooks`, icon: LinkIcon },
-      { name: "Testes API", href: `${basePath}/testes-api`, icon: TestTube },
-      { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
-      {
-        name: "Prova Social",
-        href: `${basePath}/prova-social`,
-        icon: Activity,
-      },
-      { name: "Integrações", href: `${basePath}/integracoes`, icon: Plug },
-      { name: "Pixels Globais", href: `${basePath}/pixels`, icon: Image },
-      {
-        name: "Mensagens Sistema",
-        href: `${basePath}/mensagens-sistema`,
-        icon: MessageCircle,
-      },
-      { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
-      { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
-      { name: "Remarketing", href: `${basePath}/remarketing`, icon: TrendingUp },
-      { name: "IA Dashboard", href: `${basePath}/ia`, icon: Activity },
-      {
-        name: "Visibilidade Landing",
-        href: `${basePath}/visibilidade`,
-        icon: Eye,
-      },
-      {
-        name: "Configurações",
-        href: `${basePath}/configuracoes`,
-        icon: Settings,
-      },
-    ],
-    [basePath],
-  );
+  // Grouped navigation
+  const navGroups = useMemo(() => [
+    {
+      id: "usuarios",
+      label: "Usuários & Parceiros",
+      icon: Users,
+      items: [
+        { name: "Usuários", href: `${basePath}/usuarios`, icon: Users },
+        { name: "Parceiros", href: `${basePath}/parceiros`, icon: Users },
+        { name: "Comissões Parceiros", href: `${basePath}/comissoes`, icon: DollarSign },
+        { name: "Afiliados", href: `${basePath}/afiliados`, icon: Users },
+      ],
+    },
+    {
+      id: "negocios",
+      label: "Negócios",
+      icon: Building2,
+      items: [
+        { name: "Barbearias", href: `${basePath}/barbearias`, icon: Building2 },
+        { name: "Produtos", href: `${basePath}/produtos`, icon: Package },
+      ],
+    },
+    {
+      id: "contabilidade",
+      label: "Contabilidade",
+      icon: Calculator,
+      items: [
+        { name: "Contadores", href: `${basePath}/contadores`, icon: Calculator },
+        { name: "Comissões Contábeis", href: `${basePath}/comissoes-contabeis`, icon: TrendingUp },
+        { name: "Serviços Contábeis", href: `${basePath}/servicos-contabeis`, icon: FileText },
+      ],
+    },
+    {
+      id: "financeiro",
+      label: "Financeiro",
+      icon: DollarSign,
+      items: [
+        { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
+        { name: "Remarketing", href: `${basePath}/remarketing`, icon: TrendingUp },
+      ],
+    },
+    {
+      id: "comunicacao",
+      label: "Comunicação",
+      icon: MessageCircle,
+      items: [
+        { name: "Mensagens Sistema", href: `${basePath}/mensagens-sistema`, icon: MessageCircle },
+        { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
+        { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
+      ],
+    },
+    {
+      id: "sistema",
+      label: "Sistema & Dev",
+      icon: Settings,
+      items: [
+        { name: "Webhooks", href: `${basePath}/webhooks`, icon: LinkIcon },
+        { name: "Testes API", href: `${basePath}/testes-api`, icon: TestTube },
+        { name: "Integrações", href: `${basePath}/integracoes`, icon: Plug },
+        { name: "Pixels Globais", href: `${basePath}/pixels`, icon: Image },
+        { name: "IA Dashboard", href: `${basePath}/ia`, icon: Activity },
+        { name: "Prova Social", href: `${basePath}/prova-social`, icon: Activity },
+        { name: "Visibilidade Landing", href: `${basePath}/visibilidade`, icon: Eye },
+        { name: "Configurações", href: `${basePath}/configuracoes`, icon: Settings },
+      ],
+    },
+  ], [basePath]);
 
   const isActive = useCallback(
     (href: string) => {
@@ -154,6 +170,16 @@ const SuperAdminDashboard = () => {
     },
     [basePath, location.pathname],
   );
+
+  // Auto-expand group that has active item
+  useEffect(() => {
+    for (const group of navGroups) {
+      if (group.items.some(item => isActive(item.href))) {
+        setExpandedGroup(group.id);
+        break;
+      }
+    }
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -191,18 +217,49 @@ const SuperAdminDashboard = () => {
               {profile?.email}
             </p>
           </div>
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(item.href) ? "bg-destructive text-destructive-foreground" : "text-sidebar-foreground/60 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground"}`}
-              >
-                <item.icon className="w-5 h-5" />
-                {item.name}
-              </Link>
-            ))}
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+            {/* Dashboard direto */}
+            <Link
+              to={basePath}
+              onClick={() => setSidebarOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(basePath) ? "bg-destructive text-destructive-foreground" : "text-sidebar-foreground/60 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground"}`}
+            >
+              <LayoutDashboard className="w-5 h-5" />
+              Dashboard
+            </Link>
+
+            {/* Grupos colapsáveis */}
+            {navGroups.map((group) => {
+              const isGroupActive = group.items.some(item => isActive(item.href));
+              const isOpen = expandedGroup === group.id;
+              return (
+                <div key={group.id}>
+                  <button
+                    onClick={() => setExpandedGroup(isOpen ? null : group.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isGroupActive ? "text-sidebar-foreground bg-sidebar-accent/10" : "text-sidebar-foreground/60 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground"}`}
+                  >
+                    <group.icon className="w-5 h-5 flex-shrink-0" />
+                    <span className="flex-1 text-left">{group.label}</span>
+                    <ChevronDown className={`w-4 h-4 opacity-50 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  <div className={`overflow-hidden transition-all duration-200 ${isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}>
+                    <div className="ml-3 pl-3 border-l border-border/50 mt-1 space-y-0.5">
+                      {group.items.map((item) => (
+                        <Link
+                          key={item.name}
+                          to={item.href}
+                          onClick={() => setSidebarOpen(false)}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${isActive(item.href) ? "bg-destructive text-destructive-foreground" : "text-sidebar-foreground/50 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground"}`}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          {item.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </nav>
           <div className="p-4 border-t border-sidebar-border">
             <Button

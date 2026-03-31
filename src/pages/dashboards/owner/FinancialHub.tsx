@@ -31,6 +31,12 @@ import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus
 import { SubscriptionPlans } from "@/components/subscription/SubscriptionPlans";
 import { Badge } from "@/components/ui/badge";
 import { HubSkeleton, SkeletonHub } from "@/components/ui/SkeletonHub";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const FinancialHub = () => {
   const [activeTab, setActiveTab] = useState<"overview" | "payouts" | "subscription">("overview");
@@ -87,6 +93,32 @@ export const FinancialHub = () => {
   );
 };
 
+const MetricCard = ({ title, value, icon, trend, color, glow, tooltip, delay }: any) => (
+  <Card className={`glass-card p-4 rounded-[2.5rem] ${color} group overflow-hidden animate-in fade-in zoom-in duration-700 ${delay}`}>
+    <div className={`absolute -top-10 -right-10 w-32 h-32 ${glow} blur-[50px] rounded-full`} />
+    <CardHeader className="pb-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{title}</p>
+          <Tooltip>
+            <TooltipTrigger><HelpCircle className="w-3 h-3 text-slate-600" /></TooltipTrigger>
+            <TooltipContent>{tooltip}</TooltipContent>
+          </Tooltip>
+        </div>
+        <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center">
+          {icon}
+        </div>
+      </div>
+      <p className="text-4xl font-black text-white mt-4">{value}</p>
+    </CardHeader>
+    <CardContent>
+      <div className="mt-4 flex items-center gap-2">
+        <Badge className="bg-white/5 text-slate-400 border-none text-[10px] font-black">{trend}</Badge>
+      </div>
+    </CardContent>
+  </Card>
+);
+
 const FinancialOverview = () => {
   const { barbershop } = useBarbershop();
   const { logAction } = useAuditLog(barbershop?.id || "");
@@ -99,7 +131,7 @@ const FinancialOverview = () => {
   useEffect(() => {
     if (!barbershop?.id) return;
     const fetchMetrics = async () => {
-       setLoading(true); // Garante que loading comece verdadeiro
+       setLoading(true);
        const { data: payments } = await (supabase as any)
          .from("payments")
          .select("amount, status")
@@ -115,7 +147,7 @@ const FinancialOverview = () => {
     fetchMetrics();
   }, [barbershop?.id]);
 
-  if (loading) return <HubSkeleton />;
+  if (loading) return <div className="p-8"><HubSkeleton /></div>;
 
   const handleWithdraw = async () => {
     if (!barbershop?.id) return;
@@ -142,128 +174,119 @@ const FinancialOverview = () => {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="glass-card p-4 rounded-[2.5rem] border-emerald-500/10 group overflow-hidden">
-           <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/5 blur-[50px] rounded-full" />
-           <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                 <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Total Recebido</p>
-                 <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                    <ArrowUpRight className="w-4 h-4 text-emerald-400" />
+    <TooltipProvider>
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <MetricCard 
+            title="Total Recebido" 
+            value={`R$ ${metrics.received.toFixed(2)}`} 
+            icon={<ArrowUpRight className="w-4 h-4 text-emerald-400" />} 
+            trend="+12%" 
+            color="border-emerald-500/10" 
+            glow="bg-emerald-500/5"
+            tooltip="Valor total já liquidado e disponível na sua conta."
+            delay="delay-0"
+          />
+
+          <MetricCard 
+            title="Aguardando" 
+            value={`R$ ${metrics.pending.toFixed(2)}`} 
+            icon={<Wallet className="w-4 h-4 text-orange-400" />} 
+            trend="Pendente" 
+            color="border-orange-500/10" 
+            glow="bg-orange-500/5"
+            tooltip="Valores de transações em processamento ou futuras."
+            delay="delay-100"
+          />
+
+          <Card className="glass-card p-6 md:p-8 rounded-[2.5rem] md:rounded-[3.5rem] border-none bg-gradient-orange shadow-gold group relative overflow-hidden diamond-glow animate-in fade-in zoom-in duration-700 delay-200">
+            <div className="relative z-10">
+              <p className="text-[10px] font-black text-white/60 uppercase tracking-widest mb-4">Solicitar Saque Rápido</p>
+              <div className="space-y-4">
+                 <Input 
+                    placeholder="Valor R$" 
+                    type="number" 
+                    value={withdrawAmount} 
+                    onChange={e => setWithdrawAmount(e.target.value)} 
+                    className="bg-white/10 border-white/10 text-white placeholder:text-white/40 h-12 rounded-2xl focus-visible:ring-white/20 transition-premium"
+                 />
+                 <Input 
+                    placeholder="Chave PIX" 
+                    value={withdrawPix} 
+                    onChange={e => setWithdrawPix(e.target.value)} 
+                    className="bg-white/10 border-white/10 text-white placeholder:text-white/40 h-12 rounded-2xl focus-visible:ring-white/20 transition-premium"
+                 />
+                 <Button 
+                    variant="ghost" 
+                    className="w-full bg-white/20 hover:bg-white/30 text-white rounded-2xl h-12 font-black border border-white/10 transition-premium shadow-premium"
+                    onClick={handleWithdraw}
+                    disabled={isWithdrawing}
+                 >
+                    {isWithdrawing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><DollarSign className="w-4 h-4 mr-2" /> Efetuar Saque</>}
+                 </Button>
+                 <p className="text-[10px] text-center text-white/40 font-bold uppercase tracking-widest italic pt-2 flex items-center justify-center gap-1">
+                   <ShieldCheck size={10} /> Blindado por Auditoria
+                 </p>
+              </div>
+            </div>
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Zap className="w-24 h-24 text-white rotate-12" />
+            </div>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+           <Card className="glass-card p-6 md:p-8 rounded-[2.5rem] lg:col-span-7 animate-in fade-in slide-in-from-left duration-700 delay-300">
+              <div className="flex items-center justify-between mb-8">
+                 <div>
+                    <h3 className="text-2xl font-black text-white">Fluxo de Caixa</h3>
+                    <p className="text-slate-500 text-xs font-medium">Desempenho dos últimos 30 dias</p>
                  </div>
+                 <Button variant="ghost" size="sm" className="bg-slate-900/50 border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white">
+                    <Calendar className="w-3 h-3 mr-2" /> Out/2026
+                 </Button>
               </div>
-              <p className="text-4xl font-black text-white mt-4">R$ {metrics.received.toFixed(2)}</p>
-           </CardHeader>
-           <CardContent>
-              <div className="mt-4 flex items-center gap-2">
-                 <Badge className="bg-emerald-500/10 text-emerald-400 border-none text-[10px] font-black">+12%</Badge>
-                 <span className="text-xs text-slate-500 font-medium italic">em relação ao mês passado</span>
+              
+              <div className="h-56 flex items-end justify-between gap-2 md:gap-4 px-2">
+                 {[40, 70, 45, 90, 65, 80, 55, 100, 85, 95].map((h, i) => (
+                    <div key={i} className="flex-1 group relative">
+                       <div 
+                          className={`w-full rounded-t-xl transition-all duration-700 group-hover:scale-y-105 shadow-gold-sm ${i === 7 ? 'bg-gradient-gold diamond-glow' : 'bg-slate-800'}`} 
+                          style={{ height: `${h}%` }}
+                       />
+                    </div>
+                 ))}
               </div>
-           </CardContent>
-        </Card>
+           </Card>
 
-        <Card className="glass-card p-4 rounded-[2.5rem] border-orange-500/10 group overflow-hidden">
-           <div className="absolute -top-10 -right-10 w-32 h-32 bg-orange-500/5 blur-[50px] rounded-full" />
-           <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                 <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Aguardando Pagamento</p>
-                 <div className="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center">
-                    <Wallet className="w-4 h-4 text-orange-400" />
-                 </div>
+           <Card className="glass-card p-6 md:p-8 rounded-[2.5rem] lg:col-span-5 animate-in fade-in slide-in-from-right duration-700 delay-400">
+              <div className="flex items-center justify-between mb-8">
+                 <h3 className="text-2xl font-black text-white">Atividade</h3>
+                 <Button variant="ghost" size="icon" className="rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 h-10 w-10"><Search className="w-4 h-4 text-slate-400" /></Button>
               </div>
-              <p className="text-4xl font-black text-white mt-4">R$ {metrics.pending.toFixed(2)}</p>
-           </CardHeader>
-           <CardContent>
-              <div className="mt-4 flex items-center gap-2">
-                 <Badge className="bg-orange-500/10 text-orange-400 border-none text-[10px] font-black">Pendente</Badge>
-                 <span className="text-xs text-slate-500 font-medium italic">fluxo de caixa futuro</span>
+              
+              <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                 {[1, 2, 3, 4, 5].map(t => (
+                    <div key={t} className="flex items-center justify-between p-4 bg-slate-900/30 rounded-3xl border border-white/5 hover:border-white/10 transition-premium group translate-x-0 hover:translate-x-1 cursor-pointer">
+                       <div className="flex items-center gap-4">
+                          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-premium group-hover:scale-110 ${t % 2 === 0 ? 'bg-emerald-500/10' : 'bg-slate-800'}`}>
+                             {t % 2 === 0 ? <TrendingUp className="w-5 h-5 text-emerald-400" /> : <CreditCard className="w-5 h-5 text-slate-500" />}
+                          </div>
+                          <div>
+                             <p className="font-black text-white text-sm">Corte + Barba</p>
+                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest italic">Hoje • 14:35</p>
+                          </div>
+                       </div>
+                       <div className="text-right">
+                          <p className="font-black text-white">R$ 75,00</p>
+                       </div>
+                    </div>
+                 ))}
               </div>
-           </CardContent>
-        </Card>
-
-        <Card className="glass-card p-8 rounded-[3.5rem] border-none bg-gradient-orange shadow-gold group">
-            <p className="text-xs font-black text-white/60 uppercase tracking-widest mb-4">Solicitar Saque Rápido</p>
-            <div className="space-y-4">
-               <Input 
-                  placeholder="Valor R$" 
-                  type="number" 
-                  value={withdrawAmount} 
-                  onChange={e => setWithdrawAmount(e.target.value)} 
-                  className="bg-white/10 border-white/10 text-white placeholder:text-white/40 h-12 rounded-2xl"
-               />
-               <Input 
-                  placeholder="Chave PIX" 
-                  value={withdrawPix} 
-                  onChange={e => setWithdrawPix(e.target.value)} 
-                  className="bg-white/10 border-white/10 text-white placeholder:text-white/40 h-12 rounded-2xl"
-               />
-               <Button 
-                  variant="ghost" 
-                  className="w-full bg-white/20 hover:bg-white/30 text-white rounded-2xl h-12 font-black border border-white/10 transition-premium shadow-premium"
-                  onClick={handleWithdraw}
-                  disabled={isWithdrawing}
-               >
-                  {isWithdrawing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><DollarSign className="w-4 h-4 mr-2" /> Efetuar Saque</>}
-               </Button>
-               <p className="text-[10px] text-center text-white/40 font-bold uppercase tracking-widest italic pt-2">Blindado por Criptografia SSL</p>
-            </div>
-        </Card>
+           </Card>
+        </div>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-         <Card className="glass-card p-8 rounded-[2.5rem]">
-            <div className="flex items-center justify-between mb-8">
-               <h3 className="text-2xl font-black text-white">Fluxo de Caixa</h3>
-               <Button variant="ghost" size="sm" className="bg-slate-900 border border-white/5 rounded-xl text-xs font-bold gap-2">
-                  <Calendar className="w-3 h-3" /> Últimos 30 dias
-               </Button>
-            </div>
-            
-            <div className="h-48 flex items-end justify-between gap-4 px-4">
-               {[40, 70, 45, 90, 65, 80, 55, 100, 85, 95].map((h, i) => (
-                  <div key={i} className="flex-1 group relative">
-                     <div 
-                        className={`w-full rounded-t-xl transition-all duration-500 group-hover:opacity-80 shadow-gold-sm ${i === 7 ? 'bg-orange-400' : 'bg-slate-800'}`} 
-                        style={{ height: `${h}%` }}
-                     />
-                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white text-slate-900 text-[10px] font-black px-2 py-1 rounded shadow-xl">
-                        R${(h * 150).toFixed(0)}
-                     </div>
-                  </div>
-               ))}
-            </div>
-            <div className="mt-4 flex justify-between px-4 text-slate-700 font-bold text-[10px] uppercase tracking-tighter">
-               <span>Pálio 2024</span>
-               <span>Meta Mensal</span>
-            </div>
-         </Card>
-
-         <Card className="glass-card p-8 rounded-[2.5rem]">
-            <div className="flex items-center justify-between mb-8">
-               <h3 className="text-2xl font-black text-white">Transações Recentes</h3>
-               <Button variant="ghost" size="icon" className="rounded-xl"><Search className="w-4 h-4 text-slate-500" /></Button>
-            </div>
-            
-            <div className="space-y-4">
-               {[1, 2, 3, 4].map(t => (
-                  <div key={t} className="flex items-center justify-between p-4 bg-slate-900/30 rounded-3xl border border-white/5 hover:border-white/10 transition-colors">
-                     <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${t % 2 === 0 ? 'bg-emerald-500/10' : 'bg-slate-800'}`}>
-                           {t % 2 === 0 ? <TrendingUp className="w-4 h-4 text-emerald-400" /> : <CreditCard className="w-4 h-4 text-slate-500" />}
-                        </div>
-                        <div>
-                           <p className="font-bold text-white text-sm">Serviço: Corte + Barba</p>
-                           <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">PIX • 14:35</p>
-                        </div>
-                     </div>
-                     <p className="font-black text-white">R$ 75,00</p>
-                  </div>
-               ))}
-            </div>
-         </Card>
-      </div>
-    </div>
+    </TooltipProvider>
   );
 };
 

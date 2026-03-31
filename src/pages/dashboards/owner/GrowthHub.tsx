@@ -15,8 +15,10 @@ import {
   Share2,
   Bell,
   CheckCircle,
-  Plus
+  Plus,
+  ChevronRight
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -77,45 +79,45 @@ const MarketingCenter = () => {
     
     return (
         <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="glass-card p-6 rounded-[2.5rem] relative overflow-hidden group">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Card className="glass-card p-6 rounded-[2.5rem] relative overflow-hidden group animate-in fade-in slide-in-from-bottom-4 duration-700 delay-0">
                     <div className="absolute top-0 right-0 p-6">
-                       <Zap className="w-8 h-8 text-orange-400 opacity-20 group-hover:opacity-100 transition-premium" />
+                       <Zap className="w-8 h-8 text-orange-400 opacity-20 group-hover:opacity-100 transition-premium group-hover:scale-110" />
                     </div>
                     <CardHeader className="pb-2">
                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Atração com IA</p>
                        <CardTitle className="text-xl font-black text-white mt-2">Reativação Inteligente</CardTitle>
                     </CardHeader>
                     <CardContent>
-                       <p className="text-xs text-slate-500 font-medium leading-relaxed">Detectamos clientes que não voltam há 30 dias e enviamos uma oferta automática.</p>
-                       <Button variant="gold" size="sm" className="w-full mt-6 rounded-xl font-black shadow-gold-sm">Ligar Motor</Button>
+                       <p className="text-xs text-slate-500 font-medium leading-relaxed mb-4">Detectamos clientes que não voltam há 30 dias e enviamos uma oferta automática.</p>
+                       <Button variant="gold" size="sm" className="w-full mt-2 rounded-xl font-black shadow-gold-sm transition-premium hover:scale-[1.02] active:scale-[0.98]">Ligar Motor de Vendas</Button>
                     </CardContent>
                 </Card>
 
-                <Card className="glass-card p-6 rounded-[2.5rem] relative overflow-hidden group">
+                <Card className="glass-card p-6 rounded-[2.5rem] relative overflow-hidden group animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
                     <div className="absolute top-0 right-0 p-6">
-                       <Sparkles className="w-8 h-8 text-blue-400 opacity-20 group-hover:opacity-100 transition-premium" />
+                       <Sparkles className="w-8 h-8 text-blue-400 opacity-20 group-hover:opacity-100 transition-premium group-hover:scale-110" />
                     </div>
                     <CardHeader className="pb-2">
                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Engajamento Social</p>
                        <CardTitle className="text-xl font-black text-white mt-2">Prova Social Auto</CardTitle>
                     </CardHeader>
                     <CardContent>
-                       <p className="text-xs text-slate-500 font-medium leading-relaxed">Exiba as melhores avaliações do Google e Instagram diretamente no seu agendamento.</p>
-                       <Button variant="ghost" size="sm" className="w-full mt-6 rounded-xl font-black border border-white/5 bg-white/5 hover:bg-white/10 transition-premium">Configurar</Button>
+                       <p className="text-xs text-slate-500 font-medium leading-relaxed mb-4">Exiba as melhores avaliações do Google e Instagram diretamente no seu agendamento.</p>
+                       <Button variant="ghost" size="sm" className="w-full mt-2 rounded-xl font-black border border-white/5 bg-white/5 hover:bg-white/10 transition-premium">Configurar Feed 3D</Button>
                     </CardContent>
                 </Card>
 
-                <Card className="glass-card p-6 rounded-[2.5rem] bg-gradient-to-br from-blue-600/20 to-indigo-600/20 border-white/5 shadow-premium">
+                <Card className="glass-card p-6 rounded-[2.5rem] bg-gradient-to-br from-blue-600/10 to-indigo-600/10 border-white/5 shadow-premium animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 group">
                     <CardHeader className="pb-2">
                        <div className="flex items-center gap-2 mb-2">
-                          <Badge className="bg-blue-500/20 text-blue-400 border-none rounded-full px-2 py-0.5 text-[8px] font-black tracking-widest uppercase italic">Power Up</Badge>
+                          <Badge className="bg-blue-500/20 text-blue-400 border-none rounded-full px-2 py-0.5 text-[8px] font-black tracking-widest uppercase italic">Enterprise</Badge>
                        </div>
                        <CardTitle className="text-xl font-black text-white">Pixels & Tracking</CardTitle>
                     </CardHeader>
                     <CardContent>
-                       <p className="text-xs text-slate-500 font-medium leading-relaxed">Integre Meta, Google e TikTok Pixel para traquear conversões e otimizar anúncios.</p>
-                       <Button variant="ghost" size="sm" className="w-full mt-6 rounded-xl font-black border border-white/10 hover:bg-white/5">Gerenciar</Button>
+                       <p className="text-xs text-slate-500 font-medium leading-relaxed mb-4">Integre Meta, Google e TikTok Pixel para traquear conversões e otimizar anúncios de alta escala.</p>
+                       <Button variant="ghost" size="sm" className="w-full mt-2 rounded-xl font-black border border-white/10 hover:bg-white/5 hover:text-white transition-premium">Gerenciar Conectores</Button>
                     </CardContent>
                 </Card>
             </div>
@@ -176,68 +178,84 @@ const LoyaltyCenter = () => {
 const CashbackCenter = () => {
     return (
         <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-               <Card className="glass-card p-10 rounded-[2.5rem] border-orange-500/10">
-                  <div className="w-16 h-16 rounded-3xl bg-orange-500/10 flex items-center justify-center mb-6 shadow-gold-sm">
-                     <Gift className="w-8 h-8 text-orange-400" />
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+               <Card className="glass-card p-10 rounded-[2.5rem] border-orange-500/10 lg:col-span-3 animate-in fade-in slide-in-from-left-4 duration-700">
+                  <div className="flex items-start justify-between mb-8">
+                    <div className="w-16 h-16 rounded-[2rem] bg-gradient-orange flex items-center justify-center shadow-gold-sm group-hover:scale-110 transition-transform">
+                       <Gift className="w-8 h-8 text-white" />
+                    </div>
+                    <Badge className="bg-emerald-500/10 text-emerald-400 border-none rounded-full px-3 py-1 text-[10px] font-black tracking-widest uppercase italic">Ativo & Auditado</Badge>
                   </div>
-                  <h3 className="text-3xl font-black text-white mb-4">Motor de Cashback</h3>
-                  <p className="text-slate-400 font-medium text-sm leading-relaxed mb-8">
-                     Configure uma porcentagem que o cliente recebe de volta em créditos para gastar no próximo serviço.
-                     Aumente a retenção em até 40% com o uso estratégico de créditos.
+                  
+                  <h3 className="text-3xl font-black text-white mb-4">Motor de <span className="text-gradient-gold">Cashback</span></h3>
+                  <p className="text-slate-400 font-medium text-sm leading-relaxed mb-8 max-w-lg">
+                     Aumente a retenção em até 40% com nossa IA de créditos. Configure a porcentagem que o cliente recebe de volta e veja seu faturamento recorrente escalar.
                   </p>
                   
-                  <div className="flex items-center gap-6 p-6 bg-slate-900/50 rounded-[2rem] border border-white/5 mb-8">
-                     <div>
-                        <p className="text-[10px] font-black text-slate-500 mb-1">PORCENTAGEM ATUAL</p>
-                        <p className="text-3xl font-black text-white">5%</p>
+                  <div className="flex flex-col sm:flex-row items-center gap-6 p-6 md:p-8 bg-slate-900/50 rounded-[2.5rem] border border-white/5 mb-8">
+                     <div className="text-center sm:text-left">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Taxa de Recompensa</p>
+                        <p className="text-4xl font-black text-white">5% <span className="text-xs text-emerald-400 ml-1">Ideal</span></p>
                      </div>
-                     <div className="flex-1">
-                        <Button variant="ghost" className="rounded-xl font-bold text-orange-400 border border-orange-500/20">Alterar Regra</Button>
+                     <div className="h-px w-full sm:h-12 sm:w-px bg-white/5" />
+                     <div className="flex-1 w-full">
+                        <Button variant="gold" className="w-full rounded-2xl h-14 font-black shadow-gold flex items-center justify-center gap-2">
+                           <Zap size={18} /> Ajustar Estratégia
+                        </Button>
                      </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                     <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-                     <span className="text-xs font-black text-slate-500 uppercase tracking-widest italic">Sistema de créditos ativo</span>
+                  <div className="flex items-center gap-3 px-4">
+                     <div className="flex -space-x-2">
+                        {[1, 2, 3].map(i => <div key={i} className={`w-6 h-6 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[8px] font-black text-white`}>U{i}</div>)}
+                     </div>
+                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">128 clientes já usaram este mês</span>
                   </div>
                </Card>
 
-               <div className="space-y-6">
-                  <div className="glass-card p-8 rounded-[2.5rem] border-white/5 relative group overflow-hidden">
-                     <div className="absolute top-0 right-0 p-8">
-                        <TrendingUp className="w-14 h-14 text-white/5 group-hover:text-white/10 transition-colors" />
+               <div className="lg:col-span-2 space-y-6 animate-in fade-in slide-in-from-right-4 duration-700 delay-200">
+                  <div className="glass-card p-8 rounded-[2.5rem] border-white/5 relative group overflow-hidden bg-slate-950/20 backdrop-blur-3xl">
+                     <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/5 blur-[60px] rounded-full group-hover:bg-emerald-500/10 transition-colors" />
+                     
+                     <div className="flex items-center justify-between mb-8 relative z-10">
+                        <h4 className="text-xl font-black text-white">Performance</h4>
+                        <BarChart3 className="w-5 h-5 text-slate-600 group-hover:text-white transition-colors" />
                      </div>
-                     <h4 className="text-xl font-black text-white mb-4">Métricas de Retenção</h4>
-                     <div className="space-y-5">
-                        <div className="flex justify-between items-end">
-                           <span className="text-xs font-bold text-slate-400">Taxa de Retorno</span>
-                           <span className="text-lg font-black text-white">68%</span>
-                        </div>
-                        <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                           <div className="h-full bg-gradient-gold w-[68%]" />
+                     
+                     <div className="space-y-6 relative z-10">
+                        <div className="space-y-2">
+                           <div className="flex justify-between items-end">
+                              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Taxa de Retorno</span>
+                              <span className="text-xl font-black text-white">68%</span>
+                           </div>
+                           <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-white/5">
+                              <div className="h-full bg-gradient-gold w-[68%] shadow-gold-sm transition-all duration-1000" />
+                           </div>
                         </div>
                         
-                        <div className="flex justify-between items-end">
-                           <span className="text-xs font-bold text-slate-400">Tickets com Cashback</span>
-                           <span className="text-lg font-black text-white">42%</span>
-                        </div>
-                        <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                           <div className="h-full bg-blue-500 w-[42%]" />
+                        <div className="space-y-2">
+                           <div className="flex justify-between items-end">
+                              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Conversão Cashback</span>
+                              <span className="text-xl font-black text-white">42%</span>
+                           </div>
+                           <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-white/5">
+                              <div className="h-full bg-blue-500 w-[42%] shadow-blue-500/20 transition-all duration-1000 delay-300" />
+                           </div>
                         </div>
                      </div>
+                     
+                     <p className="mt-8 text-[10px] font-black text-slate-600 uppercase tracking-widest text-center pt-6 border-t border-white/5">Últimos 30 dias de operação</p>
                   </div>
                   
-                  <div className="glass-card p-8 rounded-[2.5rem] border-white/5 bg-slate-950/40 flex items-center gap-6">
-                     <div className="w-16 h-16 rounded-[2rem] bg-slate-900 border border-white/5 flex items-center justify-center">
-                        <Share2 className="w-6 h-6 text-slate-500" />
+                  <Card className="glass-card p-8 rounded-[2.5rem] border-white/5 bg-slate-950/40 flex items-center gap-6 group hover:border-white/10 transition-premium cursor-pointer">
+                     <div className="w-16 h-16 rounded-[2rem] bg-slate-900 border border-white/5 flex items-center justify-center transition-premium group-hover:scale-110 group-hover:border-blue-500/30">
+                        <Share2 className="w-7 h-7 text-slate-500 group-hover:text-blue-400 transition-colors" />
                      </div>
-                     <div>
-                        <h4 className="text-lg font-black text-white">Indique & Ganhe</h4>
-                        <p className="text-slate-500 text-xs font-medium">Recompense clientes que trazem novos amigos.</p>
-                        <Button variant="ghost" className="mt-2 text-[10px] uppercase font-black tracking-widest text-orange-400 p-0 h-auto hover:bg-transparent">Configurar links</Button>
+                     <div className="flex-1">
+                        <h4 className="text-lg font-black text-white group-hover:text-blue-400 transition-colors">Indique & Ganhe</h4>
+                        <p className="text-slate-500 text-xs font-medium leading-tight">Recompense indicações com incentivos automáticos.</p>
                      </div>
-                  </div>
+                  </Card>
                </div>
             </div>
         </div>

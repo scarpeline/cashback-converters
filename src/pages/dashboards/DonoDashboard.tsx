@@ -100,29 +100,27 @@ const DonoDashboard = () => {
 
             {/* Premium Sidebar */}
             <aside 
-                className={`fixed top-0 left-0 h-full w-72 bg-slate-900 border-r border-white/5 z-40 transition-transform duration-500 ease-premium ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+                className={`fixed top-0 left-0 h-full w-72 bg-slate-900/40 backdrop-blur-3xl border-r border-white/5 z-40 transition-all duration-700 ease-premium ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
             >
-                <div className="flex flex-col h-full bg-grid-slate-800/[0.03]">
+                <div className="flex flex-col h-full bg-grid-white/[0.02]">
                     {/* Brand */}
-                    <div className="p-8 flex items-center justify-between">
-                        <div className="flex items-center gap-3 group cursor-pointer" onClick={() => navigate('/')}>
-                            <div className="w-10 h-10 bg-gradient-gold rounded-2xl flex items-center justify-center shadow-gold transition-premium group-hover:rotate-12 group-hover:scale-110">
-                                <Zap className="w-6 h-6 text-black fill-black" />
+                    <div className="p-10 flex items-center justify-between">
+                        <div className="flex items-center gap-4 group cursor-pointer" onClick={() => navigate('/')}>
+                            <div className="w-12 h-12 bg-gradient-gold rounded-[1.4rem] flex items-center justify-center shadow-gold transition-all duration-700 group-hover:rotate-[15deg] group-hover:scale-110 relative overflow-hidden">
+                                <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                                <Zap className="w-7 h-7 text-black fill-black" />
                             </div>
                             <div>
-                                <span className="text-xl font-black text-white tracking-tighter">CASHBACK</span>
-                                <p className="text-[10px] font-black text-orange-400 tracking-[0.2em] italic uppercase -mt-1 opacity-70">Salão Pro</p>
+                                <span className="text-2xl font-black text-white tracking-tighter block leading-none">CASHBACK</span>
+                                <p className="text-[10px] font-black text-orange-400 tracking-[0.3em] uppercase opacity-70">Diamond Edition</p>
                             </div>
                         </div>
-                        <Button variant="ghost" size="icon" className="lg:hidden text-slate-500 hover:text-white" onClick={() => setIsSidebarOpen(false)}>
-                            <X className="w-6 h-6" />
-                        </Button>
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
-                    <p className="px-4 text-[10px] font-black text-slate-600 uppercase tracking-widest mb-4 italic">Painel do Dono</p>
-                        {navItems.map((item) => {
+                    <nav className="flex-1 px-6 space-y-2 overflow-y-auto custom-scrollbar pt-4">
+                        <p className="px-4 text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] mb-6 italic opacity-50">Strategic Menu</p>
+                        {navItems.map((item, idx) => {
                             const isActive = item.exact 
                                 ? location.pathname === item.path 
                                 : location.pathname.startsWith(item.path);
@@ -131,121 +129,116 @@ const DonoDashboard = () => {
                                 <Link 
                                     key={item.path} 
                                     to={item.path}
-                                    className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-premium group relative overflow-hidden ${isActive ? 'bg-gradient-gold text-black font-black shadow-gold diamond-glow' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                                    style={{ animationDelay: `${idx * 50}ms` }}
+                                    className={`flex items-center gap-4 px-5 py-4 rounded-[1.4rem] transition-all duration-500 group relative overflow-hidden animate-in slide-in-from-left-4 ${isActive ? 'bg-gradient-gold text-black font-black shadow-gold diamond-glow scale-[1.02]' : 'text-slate-400 hover:text-white hover:bg-white/5 hover:translate-x-1'}`}
                                 >
-                                    <span className={`transition-premium ${isActive ? 'text-black' : 'group-hover:scale-110 text-orange-400/50 group-hover:text-orange-400'}`}>
-                                        {React.cloneElement(item.icon as React.ReactElement, { size: 20 })}
+                                    <span className={`transition-all duration-500 ${isActive ? 'text-black' : 'group-hover:scale-125 text-orange-400/50 group-hover:text-orange-400'}`}>
+                                        {React.cloneElement(item.icon as React.ReactElement, { size: 18 })}
                                     </span>
                                     <span className="text-sm tracking-tight">{item.label}</span>
-                                    {isActive && <ChevronRight className="ml-auto w-4 h-4 opacity-50 animate-in slide-in-from-left duration-300" />}
+                                    {isActive && <div className="ml-auto w-1.5 h-1.5 bg-black rounded-full animate-pulse" />}
                                 </Link>
                             );
                         })}
 
-                        {/* ── Comunicação com sub-menu ── */}
-                        <div>
+                        {/* ── Comunicação Sub-menu Diamond ── */}
+                        <div className="pt-2">
                             <button
                                 onClick={() => setCommExpanded(!commExpanded)}
-                                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-premium group relative overflow-hidden ${
+                                className={`w-full flex items-center gap-4 px-5 py-4 rounded-[1.4rem] transition-all duration-500 group relative overflow-hidden ${
                                     location.pathname.startsWith("/painel-dono/comunicacao")
-                                        ? 'bg-gradient-gold text-black font-black shadow-gold diamond-glow'
+                                        ? 'bg-gradient-gold text-black font-black shadow-gold diamond-glow scale-[1.02]'
                                         : 'text-slate-400 hover:text-white hover:bg-white/5'
                                 }`}
                             >
-                                <span className={`transition-premium ${location.pathname.startsWith("/painel-dono/comunicacao") ? 'text-black' : 'group-hover:scale-110 text-orange-400/50 group-hover:text-orange-400'}`}>
-                                    <MessageCircle size={20} />
+                                <span className={`transition-all duration-500 ${location.pathname.startsWith("/painel-dono/comunicacao") ? 'text-black' : 'group-hover:scale-125 text-orange-400/50 group-hover:text-orange-400'}`}>
+                                    <MessageCircle size={18} />
                                 </span>
                                 <span className="text-sm tracking-tight flex-1 text-left">Comunicação</span>
                                 <ChevronDown
                                     size={14}
-                                    className={`opacity-50 transition-transform duration-500 ${commExpanded ? 'rotate-180' : ''}`}
+                                    className={`opacity-50 transition-all duration-500 ${commExpanded ? 'rotate-180' : ''}`}
                                 />
                             </button>
 
-                            {/* Sub-items */}
-                            <div className={`overflow-hidden transition-all duration-300 ${commExpanded ? 'max-h-40 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
-                                <div className="ml-4 pl-4 border-l border-white/5 space-y-0.5">
+                            <div className={`overflow-hidden transition-all duration-700 ease-premium ${commExpanded ? 'max-h-60 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+                                <div className="ml-6 pl-4 border-l-2 border-white/5 space-y-1">
                                     {commSubItems.map((sub) => (
                                         <Link
                                             key={sub.tab}
                                             to={sub.path}
-                                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-orange-400 hover:bg-white/5 transition-premium group"
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-slate-500 hover:text-orange-400 hover:bg-white/5 transition-all duration-300 group"
                                         >
-                                            <span className="group-hover:scale-110 transition-premium">{sub.icon}</span>
+                                            <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-orange-400/10 transition-colors">
+                                               {React.cloneElement(sub.icon as React.ReactElement, { size: 12 })}
+                                            </div>
                                             {sub.label}
                                         </Link>
                                     ))}
                                 </div>
                             </div>
                         </div>
-
-                        {/* ── Ajustes (sempre por último) ── */}
-                        {navItemsBottom.map((item) => {
-                            const isActive = location.pathname.startsWith(item.path);
-                            return (
-                                <Link
-                                    key={item.path}
-                                    to={item.path}
-                                    className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-premium group ${isActive ? 'bg-gradient-gold text-black font-black shadow-gold' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-                                >
-                                    <span className={`transition-premium ${isActive ? 'text-black' : 'group-hover:scale-110 text-orange-400/50 group-hover:text-orange-400'}`}>
-                                        {React.cloneElement(item.icon as React.ReactElement, { size: 20 })}
-                                    </span>
-                                    <span className="text-sm tracking-tight">{item.label}</span>
-                                    {isActive && <ChevronRight className="ml-auto w-4 h-4 opacity-50" />}
-                                </Link>
-                            );
-                        })}
                     </nav>
 
-                    {/* Footer / User */}
-                    <div className="p-6 mt-auto border-t border-white/5 bg-slate-950/20 backdrop-blur-sm">
-                        <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl border border-white/5 mb-4 group hover:border-orange-500/20 transition-premium cursor-pointer">
-                            <Avatar className="w-10 h-10 border-2 border-white/10 group-hover:border-orange-500/50 transition-premium shadow-premium">
+                    {/* Footer / User Diamond */}
+                    <div className="p-8 mt-auto">
+                        <div className="flex items-center gap-4 p-4 bg-white/5 rounded-[1.8rem] border border-white/5 mb-6 group hover:border-orange-500/30 transition-all duration-500 cursor-pointer relative overflow-hidden">
+                             <div className="absolute inset-0 bg-gradient-gold opacity-0 group-hover:opacity-5 transition-opacity" />
+                            <Avatar className="w-12 h-12 border-2 border-white/10 group-hover:border-orange-500/50 transition-all duration-500 shadow-2xl relative z-10">
                                 <AvatarImage src={profile?.avatar_url || ""} />
-                                <AvatarFallback className="bg-slate-800 text-slate-400 text-xs font-black">DO</AvatarFallback>
+                                <AvatarFallback className="bg-slate-800 text-slate-400 text-xs font-black uppercase">Admin</AvatarFallback>
                             </Avatar>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-black text-white truncate">{profile?.name || "Dono"}</p>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">Plano Enterprise</p>
+                            <div className="flex-1 min-w-0 relative z-10">
+                                <p className="text-sm font-black text-white truncate leading-none mb-1">{profile?.name || "Diretoria"}</p>
+                                <p className="text-[9px] text-orange-400 font-bold uppercase tracking-widest truncate flex items-center gap-1">
+                                    <div className="w-1 h-1 bg-orange-400 rounded-full animate-pulse" /> Global Admin
+                                </p>
                             </div>
                         </div>
                         <Button 
                             variant="ghost" 
-                            className="w-full justify-start text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl h-12 font-bold transition-premium"
+                            className="w-full justify-start text-rose-500/60 hover:text-white hover:bg-rose-500 rounded-2xl h-14 font-black transition-all duration-500 group overflow-hidden relative"
                             onClick={() => signOut()}
                         >
-                            <LogOut className="w-5 h-5 mr-3" /> Sair com Segurança
+                            <div className="absolute inset-0 bg-rose-600 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                            <span className="relative z-10 flex items-center">
+                               <LogOut className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" /> Logout Diamond
+                            </span>
                         </Button>
                     </div>
                 </div>
             </aside>
 
             {/* Main Content Area */}
-            <main className={`transition-all duration-500 ease-premium ${isSidebarOpen ? 'lg:pl-72' : ''}`}>
-                {/* Header */}
-                <header className="sticky top-0 z-30 h-20 bg-slate-950/80 backdrop-blur-2xl border-b border-white/5 px-8 flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1">
-                        <div className="hidden md:flex items-center gap-3 bg-white/5 border border-white/5 rounded-2xl px-4 py-2 w-96 group focus-within:border-orange-500/30 transition-premium">
+            <main className={`transition-all duration-700 ease-premium ${isSidebarOpen ? 'lg:pl-72' : ''}`}>
+                {/* Diamond Header */}
+                <header className="sticky top-0 z-30 h-24 bg-slate-950/40 backdrop-blur-[40px] border-b border-white/5 px-10 flex items-center justify-between">
+                    <div className="flex items-center gap-6 flex-1">
+                        <div className="hidden md:flex items-center gap-4 bg-white/5 border border-white/10 rounded-[1.2rem] px-6 py-3 w-[450px] group focus-within:border-orange-500/40 focus-within:bg-slate-900/40 transition-all duration-500 shadow-2xl">
                             <Search className="w-4 h-4 text-slate-500 group-focus-within:text-orange-400 transition-colors" />
                             <input 
                                 type="text" 
-                                placeholder="Buscar agendamentos, clientes ou ferramentas..." 
-                                className="bg-transparent border-none text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-0 w-full font-medium"
+                                placeholder="Comando rápido: buscar clientes ou agendamentos..." 
+                                className="bg-transparent border-none text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-0 w-full font-bold tracking-tight"
                             />
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-8">
                         <LanguageSelector />
-                        <button className="relative p-2 text-slate-400 hover:text-white transition-premium group">
-                            <Bell className="w-6 h-6 group-hover:scale-110" />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-4 ring-slate-950 group-hover:scale-125 transition-premium" />
+                        
+                        <button className="relative p-3 text-slate-400 hover:text-white transition-all duration-500 group bg-white/5 rounded-2xl border border-white/5 hover:border-orange-500/30">
+                            <Bell className="w-5 h-5 group-hover:scale-110 group-hover:rotate-12 transition-all" />
+                            <span className="absolute top-0 right-0 w-3 h-3 bg-rose-500 rounded-full border-4 border-slate-950 shadow-glow-rose animate-pulse" />
                         </button>
-                        <div className="w-px h-6 bg-white/10 hidden sm:block" />
-                        <div className="hidden sm:flex items-center gap-3">
-                            <HelpCircle className="w-5 h-5 text-slate-600 hover:text-white cursor-pointer transition-colors" />
-                            <p className="text-xs font-black text-slate-600 uppercase tracking-widest italic pt-1">Suporte VIP</p>
+
+                        <div className="hidden xl:flex items-center gap-4 pl-4 border-l border-white/10">
+                            <div className="text-right">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] leading-none mb-1">Status do Servidor</p>
+                                <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center justify-end gap-1.5">
+                                   <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" /> 100% Online
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </header>
