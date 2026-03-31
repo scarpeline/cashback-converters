@@ -26,14 +26,14 @@ export function LanguageSelector() {
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-300 border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 text-white backdrop-blur-md shadow-premium group"
+          className="inline-flex items-center justify-center rounded-2xl px-5 py-2.5 text-sm font-bold transition-premium border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 text-white backdrop-blur-xl shadow-premium group"
           id="language-menu-button"
           aria-expanded={isOpen}
           aria-haspopup="true"
         >
-          <Globe className="h-4 w-4 mr-2 text-orange-400 group-hover:rotate-12 transition-transform" />
-          <span className="hidden sm:inline">{currentLanguage.name}</span>
-          <span className="sm:hidden uppercase">{currentLanguage.code}</span>
+          <Globe className="h-4.5 w-4.5 mr-2.5 text-orange-400 group-hover:rotate-[30deg] transition-premium" />
+          <span className="hidden sm:inline tracking-tight">{currentLanguage.name}</span>
+          <span className="sm:hidden font-black text-xs tracking-widest">{currentLanguage.code.toUpperCase()}</span>
         </button>
       </div>
 
@@ -44,29 +44,29 @@ export function LanguageSelector() {
             onClick={() => setIsOpen(false)}
           ></div>
           <div
-            className="absolute right-1/2 translate-x-1/2 sm:right-0 sm:translate-x-0 z-20 mt-3 w-56 origin-top rounded-2xl bg-slate-950/90 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl ring-1 ring-white/20 focus:outline-none overflow-hidden animate-in fade-in zoom-in duration-200"
+            className="absolute right-1/2 translate-x-1/2 sm:right-0 sm:translate-x-0 z-20 mt-4 w-60 origin-top rounded-[2rem] bg-slate-950/80 border border-white/10 shadow-premium backdrop-blur-[20px] ring-1 ring-white/10 focus:outline-none overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300"
             role="menu"
             aria-orientation="vertical"
             aria-labelledby="language-menu-button"
           >
-            <div className="p-2 space-y-1" role="none">
+            <div className="p-3 space-y-1.5" role="none">
               {languages.map((lang) => (
                 <button
                   key={lang.code}
                   onClick={() => changeLanguage(lang.code)}
-                  className={`flex items-center justify-between w-full px-4 py-3 text-sm rounded-xl transition-all duration-200 ${
+                  className={`flex items-center justify-between w-full px-4 py-3.5 text-sm rounded-2xl transition-premium ${
                     i18n.language === lang.code
-                      ? 'bg-orange-500/20 text-orange-400 font-bold border border-orange-500/30'
-                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      ? 'bg-gradient-orange text-white font-black shadow-gold'
+                      : 'text-slate-400 hover:bg-white/10 hover:text-white'
                   }`}
                   role="menuitem"
                 >
-                  <span className="flex items-center">
-                    <span className="mr-3 text-xl">{lang.flag === 'BR' ? '🇧🇷' : lang.flag === 'US' ? '🇺🇸' : lang.flag === 'ES' ? '🇪🇸' : '🇫🇷'}</span>
-                    {lang.name}
+                  <span className="flex items-center gap-3">
+                    <span className="text-xl filter drop-shadow-md">{lang.flag === 'BR' ? '🇧🇷' : lang.flag === 'US' ? '🇺🇸' : lang.flag === 'ES' ? '🇪🇸' : '🇫🇷'}</span>
+                    <span className="font-medium tracking-tight">{lang.name}</span>
                   </span>
                   {i18n.language === lang.code && (
-                    <div className="bg-orange-500 rounded-full p-0.5">
+                    <div className="bg-white/20 backdrop-blur-md rounded-full p-1 border border-white/30">
                       <Check className="h-3 w-3 text-white" />
                     </div>
                   )}
