@@ -138,7 +138,7 @@ const AgendamentosPage = () => {
       return;
     }
 
-    await logAction('INSERT', 'appointments', undefined, { client: form.client_name, service: form.service_id });
+    await logAction('SETTINGS_CHANGE', 'appointments', undefined, { client: form.client_name, service: form.service_id });
     toast.success("Agendamento Diamante criado!");
     setSaving(false);
     setForm({ client_name: "", client_whatsapp: "", service_id: "", professional_id: "", scheduled_at: "", notes: "" });
@@ -151,7 +151,7 @@ const AgendamentosPage = () => {
       toast.error("Erro ao atualizar status");
       return;
     }
-    await logAction('UPDATE', 'appointments', id, { status });
+    await logAction('SETTINGS_CHANGE', 'appointments', id, { status });
     toast.success(`Agendamento ${status === 'completed' ? 'finalizado' : 'cancelado'}`);
     refetch();
   };

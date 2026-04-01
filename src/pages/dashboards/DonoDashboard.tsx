@@ -21,7 +21,7 @@ import {
   Megaphone,
   ChevronDown,
 } from "lucide-react";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/lib/auth";
 import { useBarbershop } from "./owner/hooks";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

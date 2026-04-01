@@ -43,7 +43,7 @@ const Header = () => {
               <Button variant="ghost" size="sm" className="font-bold text-slate-300 hover:text-white hover:bg-white/5">{t("enter")}</Button>
             </Link>
             <Link to="/login" className="hover-scale">
-              <Button variant="gold" size="md" className="shadow-gold px-8 font-black">{t("get_started")}</Button>
+              <Button variant="gold" size="default" className="shadow-gold px-8 font-black">{t("get_started")}</Button>
             </Link>
           </div>
 

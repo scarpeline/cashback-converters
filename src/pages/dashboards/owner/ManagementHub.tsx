@@ -18,7 +18,9 @@ import {
   Star,
   ShieldCheck,
   Zap,
-  Tag
+  Tag,
+  HelpCircle,
+  Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";

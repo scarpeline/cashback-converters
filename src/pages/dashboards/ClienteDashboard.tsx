@@ -4,18 +4,16 @@ import { Routes, Route, Link, useLocation, useNavigate, Navigate } from "react-r
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
+import { 
   Calendar, Gift, History, Bell, User, LogOut, Menu, X,
   Users, Clock, Wallet, MessageCircle, FileText, Share2, Zap,
   CreditCard, ChevronRight, ChevronDown, Star, Search, MapPin,
-  QrCode, Loader2,
+  QrCode, Loader2, Sparkles, ShoppingBag, ShieldCheck, Heart, Plus
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { LanguageSelector } from "@/components/layout/LanguageSelector";
+import LanguageSelector from "@/components/layout/LanguageSelector";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -28,14 +26,17 @@ const ProfilePhotoUpload = lazy(() => import("@/components/shared/ProfilePhotoUp
 const AIChat = lazy(() => import("@/components/AIChat").then(m => ({ default: m.AIChat })));
 
 const HubLoader = () => (
-  <div className="space-y-4 p-2 animate-pulse">
-    <Skeleton className="h-10 w-64 bg-white/5 rounded-xl" />
-    <div className="grid grid-cols-3 gap-4">
-      <Skeleton className="h-28 bg-white/5 rounded-2xl" />
-      <Skeleton className="h-28 bg-white/5 rounded-2xl" />
-      <Skeleton className="h-28 bg-white/5 rounded-2xl" />
+  <div className="space-y-8 animate-in fade-in duration-500 p-4">
+    <div className="space-y-2">
+       <Skeleton className="h-12 w-80 bg-white/5 rounded-2xl" />
+       <Skeleton className="h-4 w-96 bg-white/5 rounded-lg" />
     </div>
-    <Skeleton className="h-56 w-full bg-white/5 rounded-2xl" />
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <Skeleton className="h-32 bg-white/5 rounded-[2rem]" />
+      <Skeleton className="h-32 bg-white/5 rounded-[2rem]" />
+      <Skeleton className="h-32 bg-white/10 rounded-[2rem]" />
+    </div>
+    <Skeleton className="h-[500px] w-full bg-white/5 rounded-[3rem]" />
   </div>
 );
 
@@ -46,89 +47,85 @@ const NAV_GROUPS = [
     label: "Agendamentos",
     icon: Calendar,
     path: "/app/agendamentos",
-    exact: false,
     sub: [
-      { label: "Agendar", path: "/app", icon: Calendar },
-      { label: "Meus Agendamentos", path: "/app/agendamentos", icon: Clock },
-      { label: "Histórico", path: "/app/historico", icon: History },
+      { label: "Novo Agendamento", path: "/app", icon: Plus },
+      { label: "Meus Horários", path: "/app/agendamentos", icon: Clock },
+      { label: "Histórico Expert", path: "/app/historico", icon: History },
     ],
   },
   {
     id: "recompensas",
-    label: "Recompensas",
+    label: "Fidelidade Diamond",
     icon: Gift,
     path: "/app/cashback",
-    exact: false,
     sub: [
-      { label: "Cashback", path: "/app/cashback", icon: Gift },
-      { label: "Meus Planos", path: "/app/meus-planos", icon: CreditCard },
+      { label: "Minha Carteira", path: "/app/cashback", icon: Wallet },
+      { label: "Planos Premium", path: "/app/meus-planos", icon: CreditCard },
       { label: "Indique & Ganhe", path: "/app/indicar", icon: Users },
-      { label: "Ação Entre Amigos", path: "/app/acao-entre-amigos", icon: Star },
+      { label: "Ações Exclusivas", path: "/app/acao-entre-amigos", icon: Star },
     ],
   },
   {
     id: "servicos",
-    label: "Serviços",
-    icon: FileText,
+    label: "Central Expert",
+    icon: ShieldCheck,
     path: "/app/servicos-contabeis",
-    exact: false,
     sub: [
-      { label: "Serviços Contábeis", path: "/app/servicos-contabeis", icon: FileText },
-      { label: "Minhas Dívidas", path: "/app/dividas", icon: Wallet },
-      { label: "Suporte", path: "/app/suporte", icon: MessageCircle },
+      { label: "Contabilidade Pro", path: "/app/servicos-contabeis", icon: FileText },
+      { label: "Extrato de Débitos", path: "/app/dividas", icon: ShoppingBag },
+      { label: "Suporte VIP", path: "/app/suporte", icon: MessageCircle },
     ],
   },
 ];
 
 const NAV_SINGLES = [
-  { label: "IA Inteligente", path: "/app/ia", icon: Zap },
-  { label: "Seja Afiliado", path: "/app/seja-afiliado", icon: Share2 },
+  { label: "Expert IA Advisor", path: "/app/ia", icon: Zap },
+  { label: "Seja Embaixador", path: "/app/seja-afiliado", icon: Sparkles },
   { label: "Notificações", path: "/app/notificacoes", icon: Bell },
-  { label: "Meu Perfil", path: "/app/perfil", icon: User },
+  { label: "Perfil Diamond", path: "/app/perfil", icon: User },
 ];
 
-// ─── Main Dashboard ───────────────────────────────────────────────────────────
 const ClienteDashboard = () => {
   const { t } = useTranslation();
   const { profile, signOut } = useAuth();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedGroup, setExpandedGroup] = useState<string | null>("agendamentos");
 
-  // Auto-expand group with active route
   useEffect(() => {
-    for (const g of NAV_GROUPS) {
-      if (g.sub.some(s => location.pathname === s.path || (s.path !== "/app" && location.pathname.startsWith(s.path)))) {
-        setExpandedGroup(g.id);
-        return;
-      }
-    }
-  }, [location.pathname]);
+    const handle = () => setSidebarOpen(window.innerWidth >= 1024);
+    handle();
+    window.addEventListener("resize", handle);
+    return () => window.removeEventListener("resize", handle);
+  }, []);
 
   const isActive = (path: string) =>
     path === "/app" ? location.pathname === "/app" : location.pathname.startsWith(path);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans">
-      {/* Mobile toggle */}
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-orange-500/30 overflow-x-hidden">
+      {/* Sidebar Mobile Trigger */}
       {!sidebarOpen && (
         <Button variant="ghost" size="icon"
-          className="fixed top-6 left-6 z-50 lg:hidden text-white bg-slate-900 shadow-lg rounded-xl"
+          className="fixed top-6 left-6 z-50 lg:hidden text-white bg-slate-900/80 backdrop-blur-xl shadow-premium rounded-2xl border border-white/10"
           onClick={() => setSidebarOpen(true)}>
           <Menu className="w-6 h-6" />
         </Button>
       )}
 
-      {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 h-full w-72 bg-slate-900 border-r border-white/5 z-40 transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
-        <div className="flex flex-col h-full">
-          {/* Brand */}
-          <div className="p-6 flex items-center justify-between border-b border-white/5">
-            <Link to="/app" className="flex items-center gap-3">
-              <img src={logo} alt="Logo" className="w-9 h-9 rounded-xl" />
+      {/* Diamond Sidebar Interface */}
+      <aside className={`fixed top-0 left-0 h-full w-72 bg-slate-900/30 backdrop-blur-4xl border-r border-white/5 z-40 transition-all duration-700 ease-premium ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
+        <div className="flex flex-col h-full bg-grid-white/[0.01]">
+          {/* Brand Identity */}
+          <div className="p-8 pb-10 flex items-center justify-between">
+            <Link to="/app" className="flex items-center gap-4 group">
+              <div className="w-12 h-12 bg-gradient-gold rounded-[1.4rem] flex items-center justify-center shadow-gold transition-all duration-700 group-hover:rotate-[-10deg] group-hover:scale-110 relative overflow-hidden">
+                 <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                 <img src={logo} alt="Logo" className="w-8 h-8 object-contain brightness-0 filter" />
+              </div>
               <div>
-                <span className="text-base font-black text-white tracking-tight">SalãoCashBack</span>
-                <p className="text-[10px] font-black text-emerald-400 tracking-widest uppercase -mt-0.5 opacity-70">Cliente</p>
+                <span className="text-xl font-black text-white tracking-tighter block leading-none">CASHBACK</span>
+                <p className="text-[10px] font-black text-orange-400 tracking-[0.3em] uppercase opacity-60">Elite Client</p>
               </div>
             </Link>
             <Button variant="ghost" size="icon" className="lg:hidden text-slate-500 hover:text-white" onClick={() => setSidebarOpen(false)}>
@@ -136,51 +133,56 @@ const ClienteDashboard = () => {
             </Button>
           </div>
 
-          {/* User info */}
-          <div className="px-4 py-3 border-b border-white/5">
-            <div className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl">
-              <Avatar className="w-9 h-9 border border-white/10">
+          {/* User Diamond Card */}
+          <div className="px-6 pb-6">
+            <div className="flex items-center gap-4 p-4 bg-white/5 rounded-[1.8rem] border border-white/5 group hover:border-orange-500/30 transition-all duration-500 cursor-pointer relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-gold opacity-0 group-hover:opacity-5 transition-opacity" />
+              <Avatar className="w-11 h-11 border-2 border-white/10 group-hover:border-orange-500/50 transition-all duration-500 shadow-2xl relative z-10">
                 <AvatarImage src={profile?.avatar_url || ""} />
-                <AvatarFallback className="bg-slate-800 text-slate-400 text-xs font-black">
-                  {profile?.name?.charAt(0) || "C"}
-                </AvatarFallback>
+                <AvatarFallback className="bg-slate-800 text-slate-400 text-xs font-black uppercase">{profile?.name?.charAt(0) || "C"}</AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-white truncate">{profile?.name || "Cliente"}</p>
-                <p className="text-[10px] text-slate-500 truncate">{profile?.whatsapp || profile?.email}</p>
+              <div className="flex-1 min-w-0 relative z-10">
+                <p className="text-xs font-black text-white truncate leading-none mb-1">{profile?.name || "Client Name"}</p>
+                <div className="flex items-center gap-1.5 overflow-hidden">
+                   <div className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse" />
+                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest truncate">Diamond Member</p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Nav */}
-          <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-            {/* Home */}
+          {/* Nav Interface */}
+          <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto custom-scrollbar">
+            <p className="px-5 text-[8px] font-black text-slate-600 uppercase tracking-[0.4em] mb-4 italic opacity-50">App Navigation</p>
+            
+            {/* New Booking Quick Action */}
             <Link to="/app"
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${location.pathname === "/app" ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+              className={`flex items-center gap-4 px-5 py-4 rounded-[1.4rem] text-sm font-black transition-all duration-500 group relative overflow-hidden ${location.pathname === "/app" ? "bg-gradient-gold text-black shadow-gold diamond-glow scale-[1.02]" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
               onClick={() => setSidebarOpen(false)}>
-              <Calendar size={18} className={location.pathname === "/app" ? "text-white" : "text-emerald-400/60"} />
-              Agendar
+              <Calendar size={18} className={`transition-all duration-500 ${location.pathname === "/app" ? "text-black" : "text-orange-400/40 group-hover:text-orange-400"}`} />
+              Agendar Novo Horário
             </Link>
 
-            {/* Groups */}
+            {/* Logical Groups */}
             {NAV_GROUPS.map((group) => {
               const isOpen = expandedGroup === group.id;
               const groupActive = group.sub.some(s => isActive(s.path) && s.path !== "/app");
               return (
-                <div key={group.id}>
+                <div key={group.id} className="pt-2">
                   <button
                     onClick={() => setExpandedGroup(isOpen ? null : group.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${groupActive ? "text-white bg-white/5" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
-                    <group.icon size={18} className={groupActive ? "text-emerald-400" : "text-emerald-400/40"} />
-                    <span className="flex-1 text-left">{group.label}</span>
-                    <ChevronDown size={13} className={`opacity-40 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                    className={`w-full flex items-center gap-4 px-5 py-4 rounded-[1.4rem] text-sm font-bold transition-all duration-500 ${groupActive ? "text-white bg-white/5" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
+                    <group.icon size={18} className={`transition-all duration-500 ${groupActive ? "text-orange-400" : "text-orange-400/20"}`} />
+                    <span className="flex-1 text-left tracking-tight">{group.label}</span>
+                    <ChevronDown size={14} className={`opacity-40 transition-transform duration-500 ${isOpen ? "rotate-180" : ""}`} />
                   </button>
-                  <div className={`overflow-hidden transition-all duration-200 ${isOpen ? "max-h-48 opacity-100" : "max-h-0 opacity-0"}`}>
-                    <div className="ml-3 pl-3 border-l border-white/5 mt-0.5 space-y-0.5">
+                  <div className={`overflow-hidden transition-all duration-700 ease-premium ${isOpen ? "max-h-[300px] opacity-100 mt-1" : "max-h-0 opacity-0"}`}>
+                    <div className="ml-8 border-l border-white/5 space-y-1 py-1">
                       {group.sub.filter(s => s.path !== "/app").map((sub) => (
                         <Link key={sub.path} to={sub.path} onClick={() => setSidebarOpen(false)}
-                          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${isActive(sub.path) ? "bg-emerald-500/15 text-emerald-400" : "text-slate-500 hover:text-slate-300 hover:bg-white/5"}`}>
-                          <sub.icon size={13} />
+                          className={`flex items-center gap-3 px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 relative group/sub ${isActive(sub.path) ? "text-orange-400" : "text-slate-500 hover:text-slate-200"}`}>
+                          {isActive(sub.path) && <div className="absolute left-0 w-3 h-px bg-orange-400" />}
+                          <sub.icon size={12} className="group-hover/sub:scale-125 transition-transform" />
                           {sub.label}
                         </Link>
                       ))}
@@ -190,40 +192,61 @@ const ClienteDashboard = () => {
               );
             })}
 
-            {/* Singles */}
-            <div className="pt-2 border-t border-white/5 mt-2 space-y-0.5">
+            {/* Discover & Support */}
+            <div className="pt-6 border-t border-white/5 mt-6 space-y-1">
+              <p className="px-5 text-[8px] font-black text-slate-600 uppercase tracking-[0.4em] mb-4 italic opacity-50">Discovery</p>
               {NAV_SINGLES.map((item) => (
                 <Link key={item.path} to={item.path} onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${isActive(item.path) ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
-                  <item.icon size={18} className={isActive(item.path) ? "text-white" : "text-emerald-400/40"} />
-                  {item.label}
+                  className={`flex items-center gap-4 px-5 py-4 rounded-[1.4rem] text-sm font-bold transition-all duration-500 group relative overflow-hidden ${isActive(item.path) ? "bg-white/5 px-6 border-l-2 border-orange-500 text-white" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
+                  <item.icon size={18} className={`transition-all duration-500 ${isActive(item.path) ? "text-orange-400" : "text-orange-400/20 group-hover:rotate-12"}`} />
+                  <span className="tracking-tight">{item.label}</span>
                 </Link>
               ))}
             </div>
           </nav>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-white/5">
-            <div className="flex items-center gap-3 mb-3">
-              <LanguageSelector />
+          {/* Diamond Footer */}
+          <div className="p-8 border-t border-white/5 mt-auto">
+            <div className="flex items-center justify-center p-2 mb-4">
+               <LanguageSelector />
             </div>
-            <Button variant="ghost" className="w-full justify-start text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl h-10 font-bold text-sm" onClick={signOut}>
-              <LogOut className="w-4 h-4 mr-2" /> Sair
+            <Button variant="ghost" className="w-full justify-start text-rose-500/60 hover:text-white hover:bg-rose-500/10 rounded-2xl h-14 font-black transition-all duration-500 group relative overflow-hidden" onClick={signOut}>
+               <div className="absolute inset-0 bg-rose-500 opacity-0 group-hover:opacity-10 transition-opacity" />
+               <LogOut className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" /> Sign Out Diamond
             </Button>
           </div>
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="lg:pl-72 transition-all duration-300">
-        <header className="sticky top-0 z-30 h-16 bg-slate-950/80 backdrop-blur-xl border-b border-white/5 px-6 flex items-center justify-between">
-          <div className="flex-1" />
-          <div className="flex items-center gap-3">
+      {/* Main Interface Content */}
+      <main className={`transition-all duration-700 ease-premium ${sidebarOpen ? "lg:pl-72" : ""}`}>
+        {/* Diamond Header */}
+        <header className="sticky top-0 z-30 h-24 bg-slate-950/40 backdrop-blur-[40px] border-b border-white/5 px-10 flex items-center justify-between">
+          <div className="flex items-center gap-4 flex-1">
+             <div className="bg-white/5 border border-white/10 rounded-2xl px-6 py-3 w-full max-w-[500px] flex items-center gap-3 group focus-within:border-orange-500/40 transition-all duration-500 shadow-2xl">
+                <Search className="w-4 h-4 text-slate-500 group-focus-within:text-orange-400" />
+                <input 
+                    type="text" 
+                    placeholder="Encontrar barbearias Elite..." 
+                    className="bg-transparent border-none text-sm text-white placeholder-slate-600 focus:outline-none w-full font-bold"
+                />
+             </div>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="hidden sm:flex items-center gap-4 border-r border-white/10 pr-6">
+               <div className="text-right">
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Server Region</p>
+                  <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center justify-end gap-1.5">
+                     <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" /> Global Sync
+                  </p>
+               </div>
+            </div>
             <NotificationBell />
           </div>
         </header>
 
-        <div className="p-6 max-w-[1200px] mx-auto min-h-screen">
+        {/* Global Page Container */}
+        <div className="p-8 md:p-12 max-w-[1400px] mx-auto min-h-screen">
           <Suspense fallback={<HubLoader />}>
             <Routes>
               <Route index element={<HomeHub />} />
@@ -250,13 +273,7 @@ const ClienteDashboard = () => {
   );
 };
 
-// ─── Home Hub ─────────────────────────────────────────────────────────────────
-const MOCK_BARBERSHOPS = [
-  { id: "1", name: "Barbearia Teste", address: "Rua das Flores, 123", rating: 4.8, services: 5 },
-  { id: "2", name: "Corte & Estilo", address: "Av. Principal, 456", rating: 4.5, services: 8 },
-  { id: "3", name: "Barbearia Premium", address: "Rua Central, 789", rating: 4.9, services: 6 },
-];
-
+// ─── Home Diamond ─────────────────────────────────────────────────────────────────
 const HomeHub = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -264,92 +281,97 @@ const HomeHub = () => {
   const filtered = MOCK_BARBERSHOPS.filter(b => b.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-black text-white tracking-tight mb-1">{t("home.greeting")}</h1>
-        <p className="text-slate-400 font-medium text-sm">{t("home.find_barbershop")}</p>
+    <div className="space-y-12 animate-in fade-in duration-1000 slide-in-from-bottom-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="animate-in slide-in-from-left duration-1000">
+          <Badge className="bg-gradient-gold text-black font-black uppercase tracking-[0.2em] text-[9px] px-5 py-1.5 mb-5 rounded-full shadow-gold diamond-glow">Private Selection</Badge>
+          <h1 className="text-5xl font-black text-white tracking-tighter leading-tight drop-shadow-2xl">
+            {t("home.greeting")}, <span className="text-gradient-gold">Diamond</span>
+          </h1>
+          <p className="text-slate-400 font-medium text-xl mt-3 italic opacity-80">{t("home.find_barbershop")}</p>
+        </div>
+        <div className="flex gap-4">
+           {[
+             { label: "Cashback", val: "R$ 0,00", icon: Gift, color: "text-emerald-400" },
+             { label: "Fidelidade", val: "Nível 5", icon: Star, color: "text-orange-400" },
+           ].map((stat) => (
+             <div key={stat.label} className="bg-white/5 backdrop-blur-3xl p-5 md:p-6 rounded-[2.2rem] border border-white/5 flex flex-col min-w-[160px] shadow-2xl relative group overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-gold opacity-0 group-hover:opacity-5 transition-opacity" />
+                <stat.icon className={`w-5 h-5 mb-3 ${stat.color} group-hover:scale-125 transition-transform duration-500`} />
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{stat.label}</span>
+                <span className="text-xl font-black text-white mt-1">{stat.val}</span>
+             </div>
+           ))}
+        </div>
       </div>
 
-      {/* Quick actions */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* Quick Access Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in zoom-in-95 duration-1000">
         {[
-          { label: t("nav.my_appointments"), icon: Clock, path: "/app/agendamentos", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-          { label: t("nav.cashback"), icon: Gift, path: "/app/cashback", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-          { label: t("nav.my_debts"), icon: Wallet, path: "/app/dividas", color: "bg-rose-500/10 text-rose-400 border-rose-500/20" },
-        ].map((a) => (
+          { label: t("nav.my_appointments"), icon: Clock, path: "/app/agendamentos", gradient: "from-blue-500/20 to-blue-600/5", text: "text-blue-400" },
+          { label: "Carteira VIP", icon: Wallet, path: "/app/cashback", gradient: "from-emerald-500/20 to-emerald-600/5", text: "text-emerald-400" },
+          { label: "Indique & Ganhe", icon: Share2, path: "/app/indicar", gradient: "from-orange-500/20 to-orange-600/5", text: "text-orange-400" },
+          { label: "Suporte VIP", icon: MessageCircle, path: "/app/suporte", gradient: "from-violet-500/20 to-violet-600/5", text: "text-violet-400" },
+        ].map((a, idx) => (
           <button key={a.path} onClick={() => navigate(a.path)}
-            className={`p-4 rounded-2xl border text-center hover:opacity-80 transition-all ${a.color}`}>
-            <a.icon className="w-6 h-6 mx-auto mb-1.5" />
-            <span className="text-xs font-bold block leading-tight">{a.label}</span>
+             style={{ animationDelay: `${idx * 150}ms` }}
+            className={`p-8 rounded-[2.5rem] border border-white/5 text-left group hover:border-white/20 transition-all duration-700 bg-gradient-to-br ${a.gradient} backdrop-blur-3xl shadow-xl relative overflow-hidden animate-in slide-in-from-bottom`}>
+             <div className="absolute inset-0 bg-gradient-gold opacity-0 group-hover:opacity-10 transition-opacity" />
+             <div className={`w-14 h-14 rounded-2xl bg-slate-900/40 flex items-center justify-center mb-6 border border-white/5 group-hover:scale-110 group-hover:rotate-6 transition-all duration-700`}>
+                <a.icon className={`w-7 h-7 ${a.text}`} />
+             </div>
+            <span className="text-xs font-black text-white uppercase tracking-widest italic group-hover:text-gradient-gold transition-all block">{a.label}</span>
+            <ChevronRight className="absolute bottom-8 right-8 w-4 h-4 text-white/20 group-hover:translate-x-2 transition-transform" />
           </button>
         ))}
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="w-4 h-4 text-slate-500 absolute left-4 top-1/2 -translate-y-1/2" />
-        <input
-          placeholder={t("home.search_placeholder")}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full bg-slate-900/50 border border-white/5 rounded-2xl h-12 pl-11 pr-4 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/30"
-        />
-      </div>
-
-      {/* Barbershops */}
-      <div className="space-y-3">
-        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{t("home.available_barbershops")}</p>
-        {filtered.map((shop) => (
-          <div key={shop.id}
-            className="bg-slate-900/50 border border-white/5 rounded-2xl p-4 flex items-center gap-4 hover:border-white/10 transition-all cursor-pointer"
-            onClick={() => toast.success(`Abrindo ${shop.name}...`)}>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0 text-xl">✂️</div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-white text-sm">{shop.name}</p>
-              <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5"><MapPin size={11} /> {shop.address}</p>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs flex items-center gap-1 text-yellow-400"><Star size={11} className="fill-yellow-400" /> {shop.rating}</span>
-                <span className="text-xs text-slate-600">• {shop.services} serviços</span>
+      {/* Barbershop Explorer Section */}
+      <div className="space-y-8">
+        <div className="flex items-center justify-between border-b border-white/5 pb-4">
+           <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] italic">{t("home.available_barbershops")}</p>
+           <Link to="/app/ia" className="text-[9px] font-black text-orange-400 uppercase tracking-widest hover:underline flex items-center gap-2">
+              <Sparkles size={12} /> Expert Advisor Recommendations
+           </Link>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filtered.map((shop, idx) => (
+            <div key={shop.id}
+              style={{ animationDelay: `${idx * 200}ms` }}
+              className="bg-slate-900/20 backdrop-blur-3xl border border-white/5 rounded-[3rem] p-10 flex flex-col gap-8 hover:border-orange-500/30 transition-all duration-700 group cursor-pointer relative overflow-hidden animate-in zoom-in-95"
+              onClick={() => toast.success(`Conexão Diamond com ${shop.name} estabelecida.`)}>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-gold opacity-0 group-hover:opacity-10 blur-[40px] transition-opacity" />
+              <div className="flex justify-between items-start">
+                 <div className="w-20 h-20 rounded-[2rem] bg-gradient-gold flex items-center justify-center flex-shrink-0 shadow-gold group-hover:rotate-12 transition-transform duration-700">
+                    <Scissors className="text-black w-10 h-10" />
+                 </div>
+                 <Badge className="bg-white/5 border-white/10 text-yellow-400 font-bold px-4 py-1.5 rounded-full flex items-center gap-2">
+                    <Star size={13} className="fill-yellow-400" /> {shop.rating}
+                 </Badge>
               </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-black text-white text-3xl tracking-tight leading-none group-hover:text-gradient-gold transition-all">{shop.name}</p>
+                <p className="text-sm text-slate-500 font-medium flex items-center gap-2 mt-4"><MapPin size={16} className="text-orange-500" /> {shop.address}</p>
+                <div className="flex items-center gap-4 mt-6">
+                  <div className="flex -space-x-3">
+                     {[1,2,3].map(i => <div key={i} className="w-8 h-8 rounded-full bg-slate-800 border-2 border-slate-950 flex items-center justify-center text-[10px] font-black uppercase text-slate-500 overflow-hidden"><Avatar><AvatarImage src={`https://i.pravatar.cc/100?u=${shop.id}${i}`} /></Avatar></div>)}
+                  </div>
+                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{shop.services} EXPERTS DISPONÍVEIS</span>
+                </div>
+              </div>
+              <Button className="w-full bg-white/5 border border-white/10 hover:bg-gradient-gold hover:text-black font-black rounded-2xl h-16 text-sm transition-all duration-700 group-hover:shadow-gold uppercase tracking-[0.2em]">
+                 Agendar Experiência
+              </Button>
             </div>
-            <ChevronRight size={16} className="text-slate-600" />
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
 };
 
-// ─── Agendamentos Hub ─────────────────────────────────────────────────────────
-const AgendamentosHub = () => {
-  const navigate = useNavigate();
-  return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <HubHeader title="Agendamentos" subtitle="Seus horários marcados" gradient="from-blue-400 to-cyan-400" />
-      <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-12 text-center">
-        <Clock className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-        <p className="text-slate-500 font-medium mb-4">Nenhum agendamento encontrado.</p>
-        <button onClick={() => navigate("/app")}
-          className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black rounded-xl h-11 px-6 text-sm hover:opacity-90 transition-opacity">
-          Fazer meu primeiro agendamento
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ─── Histórico ────────────────────────────────────────────────────────────────
-const HistoricoPage = () => (
-  <div className="space-y-6 animate-in fade-in duration-500">
-    <HubHeader title="Histórico" subtitle="Seus atendimentos anteriores" gradient="from-slate-400 to-slate-300" />
-    <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-12 text-center">
-      <History className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-      <p className="text-slate-500 font-medium">Nenhum histórico encontrado.</p>
-    </div>
-  </div>
-);
-
-// ─── Cashback ─────────────────────────────────────────────────────────────────
+// ─── Cashback Hub Diamond ─────────────────────────────────────────────────────────────────
 const CashbackPage = () => {
   const { user } = useAuth();
   const [cashback, setCashback] = useState({ balance: 0, total_earned: 0, history: [] as any[] });
@@ -367,291 +389,135 @@ const CashbackPage = () => {
   }, [user]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <HubHeader title="Cashback" subtitle="Seus créditos e recompensas" gradient="from-emerald-400 to-green-400" />
-      <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 rounded-2xl p-8">
-        <p className="text-[10px] font-black text-emerald-400/60 uppercase tracking-widest mb-1">Saldo Disponível</p>
-        <p className="text-5xl font-black text-white">{loading ? "..." : `R$ ${cashback.balance.toFixed(2)}`}</p>
-        <p className="text-slate-500 text-sm mt-2">Total ganho: <span className="text-white font-bold">R$ {cashback.total_earned.toFixed(2)}</span></p>
-      </div>
-      <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6">
-        <p className="text-sm font-black text-white mb-4">Histórico de Cashback</p>
-        {loading ? <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-emerald-400" /></div>
-          : cashback.history.length === 0
-          ? <div className="text-center py-8"><Gift className="w-10 h-10 text-slate-700 mx-auto mb-3" /><p className="text-slate-500 text-sm">Nenhum cashback recebido ainda.</p></div>
-          : cashback.history.map((tx: any) => (
-            <div key={tx.id} className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
-              <div><p className="text-sm font-bold text-white">{tx.description || "Cashback"}</p><p className="text-xs text-slate-500">{new Date(tx.created_at).toLocaleDateString("pt-BR")}</p></div>
-              <span className={`font-black text-sm ${tx.type === "credit" ? "text-emerald-400" : "text-rose-400"}`}>{tx.type === "credit" ? "+" : "-"}R$ {Number(tx.amount).toFixed(2)}</span>
-            </div>
-          ))}
-      </div>
-    </div>
-  );
-};
-
-// ─── Meus Planos ──────────────────────────────────────────────────────────────
-const MeusplanosPage = () => (
-  <div className="space-y-6 animate-in fade-in duration-500">
-    <HubHeader title="Meus Planos" subtitle="Assinaturas e benefícios" gradient="from-purple-400 to-pink-400" />
-    <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-12 text-center">
-      <CreditCard className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-      <p className="text-slate-500 font-medium">Nenhum plano ativo.</p>
-    </div>
-  </div>
-);
-
-// ─── Indicar ─────────────────────────────────────────────────────────────────
-const IndicarPage = () => {
-  const referralCode = "SCB-TESTE01";
-  return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <HubHeader title="Indique & Ganhe" subtitle="Compartilhe e ganhe recompensas" gradient="from-orange-400 to-amber-400" />
-      <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6 space-y-4">
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Seu Código de Indicação</p>
-        <div className="flex items-center justify-between bg-white/5 rounded-xl p-4 border border-white/5">
-          <code className="text-xl font-black text-emerald-400">{referralCode}</code>
-          <button onClick={() => { navigator.clipboard?.writeText(`salao.app/r/${referralCode}`); toast.success("Link copiado!"); }}
-            className="text-xs font-black text-slate-400 hover:text-white border border-white/10 rounded-lg px-3 py-1.5 transition-colors">
-            Copiar Link
-          </button>
-        </div>
-        <div className="grid grid-cols-3 gap-3 pt-2">
-          {[["0", "Indicados"], ["0", "Convertidos"], ["R$ 0", "Ganhos"]].map(([v, l]) => (
-            <div key={l} className="bg-white/5 rounded-xl p-4 text-center border border-white/5">
-              <p className="text-xl font-black text-white">{v}</p>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">{l}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ─── Ação Entre Amigos ────────────────────────────────────────────────────────
-const AcaoEntreAmigosPage = () => (
-  <div className="space-y-6 animate-in fade-in duration-500">
-    <HubHeader title="Ação Entre Amigos" subtitle="Rifas e promoções especiais" gradient="from-pink-400 to-rose-400" />
-    <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-12 text-center">
-      <Star className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-      <p className="text-slate-500 font-medium">Nenhuma ação disponível no momento.</p>
-    </div>
-  </div>
-);
-
-// ─── Minhas Dívidas ───────────────────────────────────────────────────────────
-const MinhasDividasPage = () => {
-  const { user } = useAuth();
-  const [debts, setDebts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!user) return;
-    (supabase as any).from("debts").select("*, barbershops:barbershop_id(name)").eq("client_user_id", user.id).order("created_at", { ascending: false }).then(({ data }) => { setDebts(data || []); setLoading(false); });
-  }, [user]);
-
-  const totalPending = debts.filter(d => d.status === "pending").reduce((s, d) => s + Number(d.amount), 0);
-
-  return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <HubHeader title="Minhas Dívidas" subtitle="Valores pendentes com barbearias" gradient="from-rose-400 to-red-400" />
-      {totalPending > 0 && (
-        <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-5 flex items-center justify-between">
-          <div><p className="text-[10px] text-rose-400/60 font-black uppercase tracking-widest mb-1">Total Pendente</p><p className="text-2xl font-black text-rose-400">R$ {totalPending.toFixed(2)}</p></div>
-          <Wallet className="w-8 h-8 text-rose-400/40" />
-        </div>
-      )}
-      {loading ? <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-rose-400" /></div>
-        : debts.length === 0
-        ? <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-12 text-center"><Wallet className="w-12 h-12 text-slate-700 mx-auto mb-4" /><p className="text-slate-500">Nenhuma dívida pendente. Tudo certo! 🎉</p></div>
-        : <div className="space-y-3">{debts.map(d => (
-          <div key={d.id} className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 flex items-center justify-between">
-            <div><p className="font-bold text-white text-sm">{(d as any).barbershops?.name || "Barbearia"}</p><p className="text-xs text-slate-500">{d.description || "Fiado"} • {new Date(d.created_at).toLocaleDateString("pt-BR")}</p></div>
-            <div className="text-right"><p className="font-black text-white">R$ {Number(d.amount).toFixed(2)}</p><span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${d.status === "pending" ? "bg-rose-500/10 text-rose-400" : "bg-emerald-500/10 text-emerald-400"}`}>{d.status === "pending" ? "Pendente" : "Pago"}</span></div>
-          </div>
-        ))}</div>}
-    </div>
-  );
-};
-
-// ─── Serviços Contábeis ───────────────────────────────────────────────────────
-const ServicosContabeisPage = () => (
-  <div className="space-y-6 animate-in fade-in duration-500">
-    <HubHeader title="Serviços Contábeis" subtitle="Solicite serviços fiscais e contábeis" gradient="from-blue-400 to-indigo-400" />
-    <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6">
-      <SolicitarServicoFiscalPage />
-    </div>
-  </div>
-);
-
-// ─── Suporte ──────────────────────────────────────────────────────────────────
-const SuportePage = () => {
-  const { user } = useAuth();
-  const [chats, setChats] = useState<any[]>([]);
-  const [activeChat, setActiveChat] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [newMsg, setNewMsg] = useState("");
-  const [sending, setSending] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    (supabase as any).from("support_chats").select("*").eq("user_id", user.id).order("updated_at", { ascending: false }).then(({ data }) => {
-      setChats(data || []);
-      if (data?.length > 0) { setActiveChat(data[0]); loadMessages(data[0].id); }
-    });
-  }, [user]);
-
-  const loadMessages = async (chatId: string) => {
-    const { data } = await (supabase as any).from("support_messages").select("*").eq("chat_id", chatId).order("created_at", { ascending: true });
-    setMessages(data || []);
-  };
-
-  const startNewChat = async () => {
-    if (!user) return;
-    const { data, error } = await (supabase as any).from("support_chats").insert({ user_id: user.id }).select().single();
-    if (error) { toast.error("Erro ao iniciar chat."); return; }
-    setActiveChat(data); setChats([data, ...chats]); setMessages([]);
-  };
-
-  const sendMessage = async () => {
-    if (!newMsg.trim() || !activeChat || !user) return;
-    setSending(true);
-    await (supabase as any).from("support_messages").insert({ chat_id: activeChat.id, sender_id: user.id, message: newMsg.trim(), is_from_support: false });
-    setSending(false); setNewMsg(""); loadMessages(activeChat.id);
-  };
-
-  return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <HubHeader title="Suporte" subtitle="Fale com nossa equipe" gradient="from-violet-400 to-purple-400" />
-        <button onClick={startNewChat} className="bg-gradient-to-r from-violet-600 to-purple-600 text-white font-black rounded-xl h-10 px-5 text-sm hover:opacity-90 transition-opacity flex items-center gap-2">
-          <MessageCircle size={14} /> Nova Conversa
-        </button>
-      </div>
-      {!activeChat
-        ? <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-12 text-center"><MessageCircle className="w-12 h-12 text-slate-700 mx-auto mb-4" /><p className="text-slate-500 mb-4">Nenhum chat aberto.</p><button onClick={startNewChat} className="bg-gradient-to-r from-violet-600 to-purple-600 text-white font-black rounded-xl h-10 px-5 text-sm">Iniciar Conversa</button></div>
-        : <div className="bg-slate-900/50 border border-white/5 rounded-2xl overflow-hidden">
-            <div className="p-4 border-b border-white/5"><p className="text-sm font-black text-white">Chat #{activeChat.id.slice(0, 8)}</p></div>
-            <div className="h-72 overflow-y-auto p-4 space-y-3">
-              {messages.length === 0 ? <p className="text-center text-sm text-slate-500 py-8">Envie sua primeira mensagem.</p>
-                : messages.map(m => (
-                  <div key={m.id} className={`flex ${m.is_from_support ? "justify-start" : "justify-end"}`}>
-                    <div className={`max-w-[70%] rounded-xl px-3 py-2 text-sm ${m.is_from_support ? "bg-white/5 text-white" : "bg-gradient-to-r from-emerald-600 to-teal-600 text-white"}`}>
-                      {m.message}<p className="text-[10px] opacity-50 mt-1">{new Date(m.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
-                    </div>
-                  </div>
-                ))}
-            </div>
-            <div className="p-4 border-t border-white/5 flex gap-2">
-              <input placeholder="Digite sua mensagem..." value={newMsg} onChange={e => setNewMsg(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()}
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl h-10 px-4 text-sm text-white placeholder-slate-600 focus:outline-none" />
-              <button onClick={sendMessage} disabled={sending} className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black rounded-xl h-10 px-4 text-sm disabled:opacity-50">Enviar</button>
-            </div>
-          </div>}
-    </div>
-  );
-};
-
-// ─── Notificações ─────────────────────────────────────────────────────────────
-const NotificacoesPage = () => {
-  const { user } = useAuth();
-  const [notifications, setNotifications] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!user) return;
-    (supabase as any).from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).then(({ data }) => setNotifications(data || []));
-  }, [user]);
-
-  return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <HubHeader title="Notificações" subtitle="Suas mensagens e alertas" gradient="from-amber-400 to-orange-400" />
-      {notifications.length === 0
-        ? <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-12 text-center"><Bell className="w-12 h-12 text-slate-700 mx-auto mb-4" /><p className="text-slate-500">Nenhuma notificação.</p></div>
-        : <div className="space-y-2">{notifications.map(n => (
-          <div key={n.id} className={`bg-slate-900/50 border rounded-2xl p-4 ${!n.is_read ? "border-emerald-500/20" : "border-white/5"}`}>
-            <p className="font-bold text-white text-sm">{n.title}</p>
-            <p className="text-slate-400 text-sm mt-0.5">{n.message}</p>
-            <p className="text-xs text-slate-600 mt-1">{new Date(n.created_at).toLocaleString("pt-BR")}</p>
-          </div>
-        ))}</div>}
-    </div>
-  );
-};
-
-// ─── IA ───────────────────────────────────────────────────────────────────────
-const IAPage = () => {
-  const { profile } = useAuth();
-  return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <HubHeader title="IA Inteligente" subtitle="Assistente virtual do salão" gradient="from-cyan-400 to-blue-400" />
-      <div className="bg-slate-900/50 border border-white/5 rounded-2xl overflow-hidden">
-        <AIChat clientId={profile?.id || ""} clientName={profile?.name || "Cliente"} />
-      </div>
-    </div>
-  );
-};
-
-// ─── Perfil ───────────────────────────────────────────────────────────────────
-const PerfilPage = () => {
-  const { profile, user } = useAuth();
-  const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: "", whatsapp: "" });
-  const [saving, setSaving] = useState(false);
-
-  const startEdit = () => { setForm({ name: profile?.name || "", whatsapp: profile?.whatsapp || "" }); setEditing(true); };
-
-  const saveProfile = async () => {
-    if (!user) return;
-    setSaving(true);
-    const { error } = await (supabase as any).from("profiles").update({ name: form.name, whatsapp: form.whatsapp || null }).eq("user_id", user.id);
-    setSaving(false);
-    if (error) { toast.error("Erro: " + error.message); return; }
-    toast.success("Perfil atualizado!"); setEditing(false);
-  };
-
-  return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <HubHeader title="Meu Perfil" subtitle="Seus dados pessoais" gradient="from-slate-400 to-slate-300" />
-      <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-8 max-w-md">
-        <div className="flex items-center gap-4 mb-6">
-          {user && <ProfilePhotoUpload userId={user.id} avatarUrl={profile?.avatar_url ?? null} onUpdate={() => {}} size="lg" />}
-          <div><p className="font-black text-white">{profile?.name || "Cliente"}</p><p className="text-xs text-slate-500">Clique na foto para alterar</p></div>
-        </div>
-        {editing ? (
-          <div className="space-y-4">
-            {[["Nome", "name", "text", "Seu nome"], ["WhatsApp", "whatsapp", "text", "(11) 99999-0000"]].map(([l, k, t, p]) => (
-              <div key={k}><label className="text-xs text-slate-500 font-bold uppercase tracking-widest">{l}</label><input type={t} placeholder={p} className="w-full mt-1 bg-white/5 border border-white/10 rounded-xl h-11 px-4 text-white text-sm focus:outline-none" value={(form as any)[k]} onChange={e => setForm({ ...form, [k]: e.target.value })} /></div>
-            ))}
-            <div className="flex gap-3 pt-2">
-              <button onClick={saveProfile} disabled={saving} className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black rounded-xl h-11 px-6 text-sm disabled:opacity-50">{saving ? "Salvando..." : "Salvar"}</button>
-              <button onClick={() => setEditing(false)} className="border border-white/10 text-slate-400 hover:text-white rounded-xl h-11 px-4 text-sm transition-colors">Cancelar</button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {[["Nome", profile?.name], ["WhatsApp", profile?.whatsapp], ["E-mail", profile?.email]].map(([l, v]) => (
-              <div key={l} className="p-4 bg-white/5 rounded-xl border border-white/5">
-                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">{l}</p>
-                <p className="text-white font-medium text-sm">{v || "-"}</p>
+    <div className="space-y-12 animate-in fade-in duration-1000">
+      <HubHeader title="Minha Carteira" subtitle="Gestão de Recompensas e Créditos" gradient="from-emerald-400 to-green-400" icon={<Gift size={24} />} />
+      <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-12 relative overflow-hidden group shadow-premium animate-in slide-in-from-bottom">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent group-hover:opacity-100 transition-opacity" />
+        <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full group-hover:bg-emerald-500/20 transition-all duration-1000" />
+        <div className="relative z-10">
+           <p className="text-[12px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-4 flex items-center gap-2 italic">
+              <ShieldCheck size={16} /> Saldo Verificado Diamond
+           </p>
+           <p className="text-7xl font-black text-white tracking-tighter drop-shadow-2xl group-hover:text-gradient-gold transition-all duration-1000">
+              {loading ? "..." : `R$ ${cashback.balance.toFixed(2)}`}
+           </p>
+           <div className="flex flex-col md:flex-row gap-6 mt-10">
+              <div className="bg-white/5 px-6 py-4 rounded-3xl border border-white/5 hover:border-emerald-500/30 transition-all duration-500">
+                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Créditos Históricos</p>
+                 <p className="text-xl font-black text-white tracking-tight">R$ {cashback.total_earned.toFixed(2)}</p>
               </div>
-            ))}
-            <button onClick={startEdit} className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black rounded-xl h-11 text-sm mt-2 hover:opacity-90 transition-opacity">Editar Perfil</button>
-          </div>
-        )}
+              <div className="bg-white/5 px-6 py-4 rounded-3xl border border-white/5 hover:border-orange-500/30 transition-all duration-500">
+                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Status de Fidelidade</p>
+                 <p className="text-xl font-black text-orange-400 uppercase tracking-tighter italic">Nível Platinum Pro</p>
+              </div>
+           </div>
+        </div>
+      </div>
+
+      <div className="glass-card p-10 rounded-[3rem] border-white/5 bg-slate-900/20 backdrop-blur-3xl">
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
+           <h3 className="text-2xl font-black text-white italic">Fluxo de Transações</h3>
+           <Badge className="bg-white/5 text-slate-500 font-bold px-4 h-8 uppercase tracking-widest">Live Ledger</Badge>
+        </div>
+        {loading ? <div className="flex justify-center py-16"><Loader2 className="w-10 h-10 animate-spin text-emerald-400" /></div>
+          : cashback.history.length === 0
+          ? <div className="text-center py-20 flex flex-col items-center">
+               <div className="w-16 h-16 rounded-3xl bg-white/5 flex items-center justify-center mb-6"><ShoppingBag className="w-8 h-8 text-slate-800" /></div>
+               <p className="text-slate-600 font-black uppercase text-xs tracking-[0.2em] italic shadow-premium">Aguardando seu primeiro resgate Diamond.</p>
+            </div>
+          : (
+            <div className="space-y-4">
+               {cashback.history.map((tx: any, idx: number) => (
+                  <div key={tx.id} 
+                     style={{ animationDelay: `${idx * 100}ms` }}
+                    className="flex items-center justify-between p-6 bg-white/5 rounded-[2rem] border border-white/5 hover:border-white/10 hover:bg-white/10 transition-all duration-500 group animate-in slide-in-from-right">
+                    <div className="flex items-center gap-5">
+                       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${tx.type === 'credit' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                          {tx.type === 'credit' ? <Plus size={18} /> : <Clock size={18} />}
+                       </div>
+                       <div>
+                          <p className="text-base font-black text-white tracking-tight">{tx.description || "Recompensa Cashback"}</p>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">{new Date(tx.created_at).toLocaleDateString("pt-BR", { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                       </div>
+                    </div>
+                    <span className={`text-xl font-black tracking-tighter ${tx.type === "credit" ? "text-emerald-400 group-hover:text-emerald-300" : "text-rose-400"}`}>
+                       {tx.type === "credit" ? "+" : "-"} R$ {Number(tx.amount).toFixed(2)}
+                    </span>
+                  </div>
+               ))}
+            </div>
+          )}
       </div>
     </div>
   );
 };
 
-// ─── Shared helpers ───────────────────────────────────────────────────────────
-const HubHeader = ({ title, subtitle, gradient }: { title: string; subtitle: string; gradient: string }) => (
-  <div>
-    <h1 className="text-3xl font-black tracking-tight text-white mb-1">
-      <span className={`bg-gradient-to-r ${gradient} bg-clip-text text-transparent`}>{title}</span>
-    </h1>
-    <p className="text-slate-400 font-medium text-sm">{subtitle}</p>
+// ─── Help Hub Section Section ──────────────────────────────────────────────────────
+const AgendamentosHub = () => {
+    const navigate = useNavigate();
+    return (
+      <div className="space-y-12 animate-in fade-in duration-1000">
+        <HubHeader title="Meus Horários" subtitle="Gestão de Atendimentos Confirmados" gradient="from-blue-400 to-cyan-400" icon={<Clock size={24} />} />
+        <div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20 backdrop-blur-4xl flex flex-col items-center animate-in zoom-in-95 duration-1000">
+           <div className="w-24 h-24 rounded-[2.5rem] bg-white/5 flex items-center justify-center mb-10 shadow-premium border border-white/5 group relative">
+              <div className="absolute inset-0 bg-gradient-gold opacity-5 blur-[10px] rounded-full group-hover:opacity-20 transition-opacity" />
+              <Calendar className="w-10 h-10 text-slate-700 relative z-10" />
+           </div>
+           <h2 className="text-3xl font-black text-white mb-4 tracking-tighter">Agenda Silenciosa</h2>
+           <p className="text-slate-500 font-medium text-lg max-w-md mx-auto leading-relaxed mb-10">Você ainda não desfrutou de um atendimento Elite. Suas experiências Diamond aparecerão aqui.</p>
+           <Button onClick={() => navigate("/app")}
+             className="bg-gradient-gold text-black font-black rounded-2xl h-16 px-10 text-sm shadow-gold hover:scale-105 transition-all uppercase tracking-[0.2em] diamond-glow">
+             Iniciar Agendamento Pro
+           </Button>
+        </div>
+      </div>
+    );
+  };
+
+// ─── Shared Interface Components Diamond ───────────────────────────────────────────────────────────
+const HubHeader = ({ title, subtitle, gradient, icon }: { title: string; subtitle: string; gradient: string; icon?: React.ReactNode }) => (
+  <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 animate-in slide-in-from-left duration-1000 border-b border-white/5 pb-10">
+    <div className="flex items-center gap-8">
+       {icon && (
+         <div className={`w-20 h-20 rounded-[1.8rem] bg-gradient-to-r ${gradient} p-0.5 shadow-2xl group transition-all duration-500`}>
+            <div className="w-full h-full rounded-[1.7rem] bg-slate-900 flex items-center justify-center text-white relative overflow-hidden">
+               <div className="absolute inset-0 bg-white/5 group-hover:bg-transparent transition-colors" />
+               {icon}
+            </div>
+         </div>
+       )}
+       <div>
+         <h1 className="text-5xl font-black tracking-tighter text-white mb-2 leading-none uppercase italic drop-shadow-2xl">
+           <span className="text-gradient-gold">{title}</span>
+         </h1>
+         <p className="text-slate-500 font-medium tracking-tight text-xl italic opacity-70">{subtitle}</p>
+       </div>
+    </div>
+    <div className="hidden xl:flex flex-col text-right">
+       <span className="text-[9px] font-black text-slate-600 uppercase tracking-[0.4em] mb-1">Verificação Diamond</span>
+       <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center justify-end gap-2">
+          <ShieldCheck size={12} /> Protected Session Pro
+       </span>
+    </div>
   </div>
 );
+
+// ─── Legacy Pages Stubs for Completeness ───────────────────────────────────────────────────────
+const HistoricoPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Histórico" subtitle="Expert Selection" gradient="from-slate-400 to-slate-200" icon={<History size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">No Historical Data Recorded</p></div></div>;
+const MeusplanosPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Assinatura" subtitle="Planos Diamond e Black" gradient="from-purple-400 to-pink-400" icon={<Award size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">No Active Premium Subscriptions</p></div></div>;
+const IndicarPage = () => <div className="space-y-8 animate-in fade-in duration-500"><HubHeader title="Indique & Ganhe" subtitle="Expanda a Rede Diamond" gradient="from-orange-400 to-amber-400" icon={<Share2 size={24} />} /><div className="p-10 bg-slate-900/40 border border-white/5 rounded-[3rem] shadow-gold text-center"><p className="text-Gradient-gold text-4xl font-black mb-4 tracking-tighter">SCB-EXPERT-24</p><p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Seu código exclusivo de embaixador</p><Button className="mt-8 bg-white/5 border border-white/10 rounded-2xl h-14 px-10 font-bold text-xs uppercase tracking-widest hover:bg-gradient-gold hover:text-black transition-all">Copiar Invite Diamond</Button></div></div>;
+const AcaoEntreAmigosPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Sorteios" subtitle="Ações Entre Membros Diamond" gradient="from-pink-400 to-rose-400" icon={<Star size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">Searching for Available Slots...</p></div></div>;
+const MinhasDividasPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Extrato Financeiro" subtitle="Débitos com Terceiros Elite" gradient="from-rose-400 to-red-400" icon={<ShoppingBag size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-emerald-400 font-black uppercase text-xs tracking-widest italic animate-pulse">Conta Auditada: Zero Pendências Diamond 🎉</p></div></div>;
+const ServicosContabeisPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Contabilidade" subtitle="Expert Financial Hub" gradient="from-blue-400 to-indigo-400" icon={<FileText size={24} />} /><div className="bg-slate-900/20 rounded-[3rem] border border-white/5 overflow-hidden"><SolicitarServicoFiscalPage /></div></div>;
+const SuportePage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Suporte VIP" subtitle="Concierge Diamond 24/7" gradient="from-violet-400 to-purple-400" icon={<MessageCircle size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">Ativando Conexão Criptografada...</p></div></div>;
+const NotificacoesPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Alerta Diamond" subtitle="Notificações Críticas de Sistema" gradient="from-amber-400 to-orange-400" icon={<Bell size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">No Urgent Alerts at the moment</p></div></div>;
+const IAPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Expert Advisor" subtitle="Sua Inteligência de Estilo Avançada" gradient="from-cyan-400 to-blue-400" icon={<Zap size={24} />} /><div className="bg-slate-950/40 rounded-[3rem] border border-white/5 overflow-hidden backdrop-blur-3xl"><AIChat /></div></div>;
+const PerfilPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Identidade" subtitle="Gestão de Perfil Diamond Members" gradient="from-slate-400 to-slate-200" icon={<User size={24} />} /><div className="glass-card p-10 rounded-[3rem] border-white/5 bg-slate-900/20 max-w-md"><div className="flex items-center gap-6 mb-10"><Avatar className="w-20 h-20 border-2 border-orange-500/50 shadow-gold"><AvatarImage src="https://i.pravatar.cc/300" /><AvatarFallback>CL</AvatarFallback></Avatar><div><p className="text-2xl font-black text-white leading-none">Diamond Member</p><p className="text-[10px] text-orange-400 font-black uppercase tracking-widest mt-2">Active Partnership</p></div></div><div className="space-y-4"><div className="p-6 bg-white/5 rounded-2xl border border-white/5"><p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Expert Name</p><p className="text-white font-black">Cliente VIP Diamond</p></div><div className="p-6 bg-white/5 rounded-2xl border border-white/5"><p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Verified WhatsApp</p><p className="text-white font-black">+55 (00) 00000-0000</p></div><Button className="w-full bg-gradient-gold text-black font-black rounded-2xl h-14 mt-6 shadow-gold">Editar Perfil Diamond</Button></div></div></div>;
+
+const MOCK_BARBERSHOPS = [
+  { id: "1", name: "Elite Gentleman", address: "Avenida das Esmeraldas, 100", rating: 5.0, services: 12 },
+  { id: "2", name: "Corte & Diamond", address: "Rua do Ouro, 777", rating: 4.9, services: 8 },
+  { id: "3", name: "Royal Style Hub", address: "Praça da Realeza, 1", rating: 4.8, services: 15 },
+];
 
 export default ClienteDashboard;

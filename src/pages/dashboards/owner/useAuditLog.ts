@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/lib/auth";
 import { useCallback } from "react";
 
 export const useAuditLog = (barbershopId: string) => {

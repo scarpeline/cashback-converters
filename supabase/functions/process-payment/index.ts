@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 interface ChargeBody {
-  action: "charge" | "get" | "refund" | "create-professional-account" | "create-barbershop-account" | "charge-messaging-package";
+  action: "charge" | "get" | "refund" | "create-professional-account" | "create-barbershop-account" | "charge-messaging-package" | "get-balance" | "transfer";
   customer_id?: string;
   amount?: number;
   description?: string;
@@ -195,6 +195,23 @@ async function handleRefund(paymentId: string, amount?: number) {
   return { success: true };
 }
 
+async function handleGetBalance(walletId?: string) {
+  const path = walletId ? `/finance/balance?walletId=${walletId}` : "/finance/balance";
+  const data = await asaasFetch(path);
+  return { balance: data.balance };
+}
+
+async function handleTransfer(body: ChargeBody) {
+  if (!body.amount) throw new Error("Valor obrigatório para transferência.");
+  const transferPayload: Record<string, unknown> = {
+    value: body.amount,
+    walletId: body.customer_id, // Usamos customer_id como walletId no payload da função por conveniência
+    bankAccount: undefined, // Poderia ser expandido para transferência externa
+  };
+  const data = await asaasFetch("/transfers", { method: "POST", body: JSON.stringify(transferPayload) });
+  return { transfer_id: data.id, status: data.status };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -325,6 +342,14 @@ serve(async (req) => {
           await serviceRoleClient.from("barbershops").update({ asaas_wallet_id: walletId, asaas_customer_id: accountData.id }).eq("id", body.barbershop_id);
         }
         result = { wallet_id: walletId, account_id: accountData.id };
+        break;
+      }
+      case "get-balance": {
+        result = await handleGetBalance(body.customer_id);
+        break;
+      }
+      case "transfer": {
+        result = await handleTransfer(body);
         break;
       }
       default:
