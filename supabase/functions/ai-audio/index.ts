@@ -1,9 +1,45 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const personalityPrompts: Record<string, string> = {
+  formal: "Você é um assistente profissional e formal. Use linguagem educada e direta.",
+  friendly: "Você é um assistente simpático e amigável. Use emojis moderadamente e seja caloroso.",
+  premium: "Você é um concierge premium. Trate o cliente com exclusividade e sofisticação.",
+};
+
+async function aiChat(apiKey: string, systemPrompt: string, userContent: string, maxTokens = 500) {
+  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userContent },
+      ],
+      max_tokens: maxTokens,
+    }),
+  });
+
+  if (!resp.ok) {
+    const status = resp.status;
+    if (status === 429) throw new Error("RATE_LIMIT");
+    if (status === 402) throw new Error("CREDITS_EXHAUSTED");
+    const err = await resp.text();
+    throw new Error(`AI error (${status}): ${err}`);
+  }
+
+  const data = await resp.json();
+  return data.choices?.[0]?.message?.content || "Desculpe, não consegui processar.";
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,154 +47,98 @@ serve(async (req) => {
   }
 
   try {
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    if (!OPENAI_API_KEY && !LOVABLE_API_KEY) {
-      throw new Error("No AI API key configured");
-    }
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const contentType = req.headers.get("content-type") || "";
-
-    // === SPEECH-TO-TEXT (audio file in) ===
-    if (contentType.includes("multipart/form-data")) {
-      if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY required for speech-to-text");
-
-      const formData = await req.formData();
-      const audioFile = formData.get("audio") as File;
-      const language = formData.get("language") as string || "pt";
-
-      if (!audioFile) throw new Error("No audio file provided");
-
-      const whisperForm = new FormData();
-      whisperForm.append("file", audioFile, "audio.ogg");
-      whisperForm.append("model", "whisper-1");
-      whisperForm.append("language", language);
-
-      const sttResponse = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
-        body: whisperForm,
-      });
-
-      if (!sttResponse.ok) {
-        const err = await sttResponse.text();
-        console.error("Whisper error:", err);
-        throw new Error("Speech-to-text failed");
-      }
-
-      const { text } = await sttResponse.json();
-      return new Response(JSON.stringify({ text, source: "whisper" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // === TEXT-TO-SPEECH or AI CHAT ===
     const body = await req.json();
-    const { action, text, voice, messages, personality, barbershop_context } = body;
+    const { action, text, personality, barbershop_id, client_phone, messages, barbershop_context } = body;
 
-    // --- Text-to-Speech ---
-    if (action === "tts") {
-      if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY required for text-to-speech");
-
-      const ttsResponse = await fetch("https://api.openai.com/v1/audio/speech", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "tts-1",
-          input: text,
-          voice: voice || "nova",
-          response_format: "opus",
-        }),
-      });
-
-      if (!ttsResponse.ok) {
-        const err = await ttsResponse.text();
-        console.error("TTS error:", err);
-        throw new Error("Text-to-speech failed");
-      }
-
-      const audioBuffer = await ttsResponse.arrayBuffer();
-      return new Response(audioBuffer, {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "audio/opus",
-          "Content-Disposition": 'attachment; filename="response.opus"',
-        },
-      });
+    // Load AI config
+    let aiConfig: any = null;
+    if (barbershop_id) {
+      const { data } = await supabase.from("ai_config").select("*").eq("barbershop_id", barbershop_id).maybeSingle();
+      aiConfig = data;
     }
 
-    // --- AI Chat (process text with personality) ---
-    if (action === "chat") {
-      const personalityPrompts: Record<string, string> = {
-        formal: "Você é um assistente profissional e formal. Use linguagem educada e direta.",
-        friendly: "Você é um assistente simpático e amigável. Use emojis moderadamente e seja caloroso.",
-        premium: "Você é um concierge premium. Trate o cliente com exclusividade e sofisticação.",
-      };
+    const effectivePersonality = personality || aiConfig?.personality || "friendly";
+    const baseSystem = personalityPrompts[effectivePersonality] || personalityPrompts.friendly;
 
-      const systemPrompt = `${personalityPrompts[personality || "friendly"]}
+    // ── ACTION: chat ──
+    if (action === "chat") {
+      if (!text && !messages?.length) {
+        return new Response(JSON.stringify({ error: "text or messages required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const systemPrompt = `${baseSystem}
 Você é o assistente virtual de um estabelecimento.
 ${barbershop_context ? `Contexto do negócio: ${JSON.stringify(barbershop_context)}` : ""}
 Suas funções: agendar serviços, consultar horários, consultar preços, cadastrar clientes, enviar cobranças e reativar clientes inativos.
 Responda sempre em português brasileiro de forma concisa.`;
 
-      const apiKey = OPENAI_API_KEY || LOVABLE_API_KEY;
-      const apiUrl = OPENAI_API_KEY
-        ? "https://api.openai.com/v1/chat/completions"
-        : "https://ai.gateway.lovable.dev/v1/chat/completions";
+      const reply = await aiChat(LOVABLE_API_KEY, systemPrompt, text || messages[messages.length - 1].content);
 
-      const chatResponse = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: OPENAI_API_KEY ? "gpt-4o-mini" : "google/gemini-3-flash-preview",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...(messages || [{ role: "user", content: text }]),
-          ],
-          max_tokens: 500,
-        }),
-      });
-
-      if (!chatResponse.ok) {
-        const status = chatResponse.status;
-        if (status === 429) {
-          return new Response(JSON.stringify({ error: "Rate limit exceeded. Try again later." }), {
-            status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        if (status === 402) {
-          return new Response(JSON.stringify({ error: "Credits exhausted." }), {
-            status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        const err = await chatResponse.text();
-        console.error("Chat error:", err);
-        throw new Error("AI chat failed");
-      }
-
-      const chatData = await chatResponse.json();
-      const reply = chatData.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
-
-      return new Response(JSON.stringify({ reply, model: chatData.model }), {
+      return new Response(JSON.stringify({ reply, personality: effectivePersonality }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    throw new Error(`Unknown action: ${action}`);
+    // ── ACTION: process-whatsapp (full flow: AI chat + auto-queue reply) ──
+    if (action === "process-whatsapp") {
+      const messageText = text || "";
+
+      const systemPrompt = `${baseSystem}
+Você é o assistente virtual de um estabelecimento via WhatsApp.
+Cliente: ${client_phone || "desconhecido"}
+Funcionalidades: agendamento, cancelamento, informações, cashback.
+
+Regras:
+- Se o cliente quer agendar, pergunte: data, horário e serviço desejado.
+- Se o cliente quer cancelar, peça o ID ou data do agendamento.
+- Se o cliente pergunta sobre cashback, informe o saldo.
+- Seja conciso (máx. 3 frases).`;
+
+      const reply = await aiChat(LOVABLE_API_KEY, systemPrompt, messageText, 300);
+
+      // Queue WhatsApp response
+      if (client_phone && barbershop_id) {
+        await supabase.from("job_queue").insert({
+          job_type: "send_whatsapp",
+          payload: { phone: client_phone, message: reply, barbershop_id },
+          priority: 8,
+          status: "pending",
+          scheduled_at: new Date().toISOString(),
+        });
+      }
+
+      return new Response(JSON.stringify({ reply, personality: effectivePersonality }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── ACTION: get-config ──
+    if (action === "get-config") {
+      return new Response(JSON.stringify({ config: aiConfig }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   } catch (error) {
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    const status = msg === "RATE_LIMIT" ? 429 : msg === "CREDITS_EXHAUSTED" ? 402 : 500;
     console.error("ai-audio error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: msg }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
