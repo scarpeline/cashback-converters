@@ -11,9 +11,9 @@ import { SocialProofPopup } from "@/components/social-proof/SocialProofPopup";
 
 const Index = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       <Header />
-      <main>
+      <main className="pt-16">
         <Hero />
         <PaymentMethodsSection />
         <IntegrationBlocks />

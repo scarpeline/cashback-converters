@@ -1,94 +1,99 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
-import { LanguageSelector } from "@/components/layout/LanguageSelector";
-import { useTranslation } from "react-i18next";
 
 const Header = () => {
-  const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
-    { label: "Nichos", href: "#features" },
-    { label: "Funcionalidades", href: "#todas-funcionalidades" },
+    { label: "Funcionalidades", href: "#features" },
     { label: "Planos", href: "#pricing" },
     { label: "Parceiros", href: "/seja-um-franqueado" },
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 transition-premium" style={{ background: "rgba(10, 15, 30, 0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
-      <div className="container mx-auto px-4 lg:px-8">
-        <div className="flex items-center justify-between h-20 lg:h-24">
-          <Link to="/" className="flex items-center gap-3 hover-scale group">
-            <div className="relative">
-              <div className="absolute inset-0 bg-indigo-500 blur-lg opacity-20 group-hover:opacity-40 transition-premium" />
-              <div className="relative w-11 h-11 lg:w-12 lg:h-12 bg-gradient-gold rounded-2xl flex items-center justify-center shadow-gold">
-                <Zap className="w-6 h-6 lg:w-7 lg:h-7 text-white fill-white" />
-              </div>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-100">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-white" />
             </div>
-            <div>
-              <span className="font-display font-black text-lg lg:text-2xl text-gradient-gold tracking-tight block leading-none">AgendaPRO</span>
-              <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Agenda Universal AI</span>
-            </div>
+            <span className="font-bold text-lg text-slate-900">AgendaPRO</span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-10">
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               link.href.startsWith('/') ? (
-                <Link key={link.label} to={link.href} className="text-sm font-bold tracking-wide transition-premium text-slate-400 hover:text-indigo-400 hover:text-glow-orange">
+                <Link key={link.label} to={link.href} className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
                   {link.label}
                 </Link>
               ) : (
-                <a key={link.label} href={link.href} className="text-sm font-bold tracking-wide transition-premium text-slate-400 hover:text-indigo-400 hover:text-glow-orange">
+                <a key={link.label} href={link.href} className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
                   {link.label}
                 </a>
               )
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center gap-6">
-            <LanguageSelector />
-            <div className="h-6 w-px bg-white/10 mx-2" />
-            <Link to="/login" className="hover-scale">
-              <Button variant="ghost" size="sm" className="font-bold text-slate-300 hover:text-white hover:bg-white/5">Entrar</Button>
+          {/* Desktop CTA */}
+          <div className="hidden md:flex items-center gap-3">
+            <Link to="/login">
+              <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900">
+                Entrar
+              </Button>
             </Link>
-            <Link to="/onboarding" className="hover-scale">
-              <Button variant="gold" size="default" className="shadow-gold px-8 font-black text-white">Criar Conta Grátis</Button>
+            <Link to="/onboarding">
+              <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white px-4">
+                Criar Conta
+              </Button>
             </Link>
           </div>
 
-          <button className="md:hidden p-3 rounded-2xl bg-white/5 border border-white/10 active:scale-95 transition-premium" style={{ color: "hsl(0 0% 98%)" }} onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {/* Mobile menu button */}
+          <button 
+            className="md:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-600" 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
 
+        {/* Mobile menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-6 animate-in fade-in slide-in-from-top-4 duration-300 border-t border-white/10">
-            <nav className="flex flex-col gap-6">
+          <div className="md:hidden py-4 border-t border-slate-100">
+            <nav className="flex flex-col gap-2">
               {navLinks.map((link) => (
                 link.href.startsWith('/') ? (
-                  <Link key={link.label} to={link.href} className="text-lg font-bold px-4 py-2 rounded-2xl hover:bg-white/5 transition-premium text-slate-300" onClick={() => setIsMenuOpen(false)}>
+                  <Link 
+                    key={link.label} 
+                    to={link.href} 
+                    className="text-sm font-medium px-4 py-2 rounded-lg hover:bg-slate-50 text-slate-600" 
+                    onClick={() => setIsMenuOpen(false)}
+                  >
                     {link.label}
                   </Link>
                 ) : (
-                  <a key={link.label} href={link.href} className="text-lg font-bold px-4 py-2 rounded-2xl hover:bg-white/5 transition-premium text-slate-300" onClick={() => setIsMenuOpen(false)}>
+                  <a 
+                    key={link.label} 
+                    href={link.href} 
+                    className="text-sm font-medium px-4 py-2 rounded-lg hover:bg-slate-50 text-slate-600" 
+                    onClick={() => setIsMenuOpen(false)}
+                  >
                     {link.label}
                   </a>
                 )
               ))}
-              <div className="flex flex-col gap-4 pt-6 border-t border-white/10">
-                <div className="flex justify-start px-4">
-                  <LanguageSelector />
-                </div>
-                <div className="grid grid-cols-2 gap-4 px-4">
-                  <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                    <Button variant="ghost" className="w-full font-bold text-slate-300">Entrar</Button>
-                  </Link>
-                  <Link to="/onboarding" onClick={() => setIsMenuOpen(false)}>
-                    <Button variant="gold" className="w-full font-black shadow-gold text-white">Começar</Button>
-                  </Link>
-                </div>
+              <div className="flex gap-2 px-4 pt-4 border-t border-slate-100 mt-2">
+                <Link to="/login" onClick={() => setIsMenuOpen(false)} className="flex-1">
+                  <Button variant="outline" className="w-full text-sm">Entrar</Button>
+                </Link>
+                <Link to="/onboarding" onClick={() => setIsMenuOpen(false)} className="flex-1">
+                  <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white text-sm">Criar Conta</Button>
+                </Link>
               </div>
             </nav>
           </div>

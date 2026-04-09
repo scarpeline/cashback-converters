@@ -75,7 +75,7 @@ const PROBLEMS = [
   {
     icon: UsersRound,
     title: "Time difícil de gerenciar?",
-    description: "Horários, férias, comissão, produtividade — você 管理ando planilha. Seus profissionais querem autonomia.",
+    description: "Horários, férias, comissão, produtividade — você gerenciando planilha. Seus profissionais querem autonomia.",
   },
 ];
 

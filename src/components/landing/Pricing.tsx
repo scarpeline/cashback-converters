@@ -37,88 +37,86 @@ const Pricing = () => {
   const currentPlans = plans(t);
 
   return (
-    <section id="pricing" className="py-28 px-4 relative overflow-hidden" style={{ background: "linear-gradient(180deg, hsl(230 35% 8%) 0%, hsl(230 30% 10%) 100%)" }}>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full blur-3xl" style={{ background: "hsl(262 83% 58% / 0.03)" }} />
-
-      <div className="container relative z-10 mx-auto">
+    <section id="pricing" className="py-20 px-4 bg-slate-50">
+      <div className="container mx-auto">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-block px-5 py-1.5 rounded-full text-sm font-semibold mb-5" style={{ background: "hsl(262 83% 58% / 0.1)", color: "hsl(262 83% 75%)" }}>
-            {t("pricing.title")}
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-sm font-medium text-blue-600 mb-6">
+            <Sparkles className="w-4 h-4" />
+            Preços Transparentes
           </span>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-6xl font-black mb-5" style={{ color: "hsl(0 0% 98%)" }}>
-            {t("pricing.subtitle")}{" "}<span className="text-gradient-gold">{t("pricing.subtitle_highlight")}</span>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
+            Escolha o plano ideal para <span className="text-orange-500">seu negócio</span>
           </h2>
-          <p className="text-lg" style={{ color: "hsl(220 15% 60%)" }}>{t("pricing.trial_info")}</p>
+          <p className="text-slate-600">
+            7 dias grátis em todos os planos. Sem cartão de crédito. Cancele quando quiser.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {currentPlans.map((plan) => (
-            <div key={plan.name} className={`relative rounded-2xl p-6 lg:p-8 transition-all duration-300 ${plan.popular ? "scale-105 z-10" : ""}`}
-              style={{
-                background: "linear-gradient(145deg, hsl(230 30% 13%), hsl(230 30% 9%))",
-                border: plan.popular ? "2px solid hsl(262 83% 58%)" : "1px solid hsl(230 20% 18%)",
-                boxShadow: plan.popular ? "0 4px 30px hsl(262 83% 58% / 0.15)" : "none",
-              }}>
+            <div
+              key={plan.name}
+              className={`relative rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 bg-white border ${
+                plan.popular ? "border-orange-200 shadow-xl shadow-orange-500/10" : "border-slate-200"
+              }`}
+            >
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <div className="flex items-center gap-1 px-4 py-1 rounded-full bg-gradient-gold text-sm font-bold text-white">
-                    <Sparkles className="w-4 h-4" />{t("pricing.most_popular")}
-                  </div>
-                </div>
-              )}
-              {plan.bestValue && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <div className="px-4 py-1 rounded-full text-sm font-bold text-white" style={{ background: "hsl(160 84% 39%)" }}>
-                    {t("pricing.best_value")}
-                  </div>
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-sm font-semibold bg-orange-500 text-white">
+                  Mais Popular
                 </div>
               )}
 
-              <div className="text-center mb-6">
-                <h3 className="font-display text-xl font-bold mb-1" style={{ color: "hsl(0 0% 95%)" }}>{plan.name}</h3>
-                <p className="text-sm" style={{ color: "hsl(220 15% 55%)" }}>{plan.description}</p>
+              <div className="mb-4">
+                <h3 className="text-xl font-bold text-slate-900 mb-1">
+                  {plan.name}
+                </h3>
+                <p className="text-sm text-slate-500">
+                  {plan.description}
+                </p>
               </div>
 
-              <div className="text-center mb-6">
-                {plan.prices ? (
-                  <div className="space-y-2">
-                    {plan.prices.map((p) => (
-                      <div key={p.label} className="flex items-center justify-center gap-2">
-                        <span className="text-sm" style={{ color: "hsl(220 15% 55%)" }}>{p.label}:</span>
-                        <span className="font-display text-2xl font-bold text-gradient-gold">R$ {p.price}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-lg" style={{ color: "hsl(220 15% 55%)" }}>R$</span>
-                      <span className="font-display text-4xl lg:text-5xl font-black text-gradient-gold">{plan.price}</span>
-                      <span style={{ color: "hsl(220 15% 55%)" }}>{plan.priceLabel}</span>
-                    </div>
-                    {plan.monthlyEquivalent && <p className="text-sm mt-1" style={{ color: "hsl(220 15% 55%)" }}>equivalente a R$ {plan.monthlyEquivalent}</p>}
-                  </>
-                )}
+              <div className="mb-4">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-slate-900">
+                    R${plan.price}
+                  </span>
+                  <span className="text-sm text-slate-500">
+                    /{plan.priceLabel}
+                  </span>
+                </div>
+                <p className="text-xs text-green-600 font-medium mt-1">
+                  {plan.trial}
+                </p>
               </div>
 
-              <div className="space-y-3 mb-6">
-                <Link to="/login" className="block">
-                  <Button variant={plan.popular ? "gold" : "outline"} className={`w-full ${plan.popular ? "text-white" : "border-white/20 text-white hover:bg-white/10"}`} size="lg">
-                    {t("pricing.start_free")}
-                  </Button>
-                </Link>
-              </div>
+              <Link to="/onboarding" className="block mb-6">
+                <Button
+                  className={`w-full font-semibold py-5 ${
+                    plan.popular
+                      ? "bg-orange-500 hover:bg-orange-600 text-white"
+                      : "border-slate-300 text-slate-700 hover:bg-slate-50"
+                  }`}
+                  variant={plan.popular ? "default" : "outline"}
+                >
+                  {plan.showTrialButton ? t("pricing.start_free") : t("pricing.buy_now")}
+                </Button>
+              </Link>
 
-              <ul className="space-y-3">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "hsl(160 84% 39% / 0.15)" }}>
-                      <Check className="w-3 h-3" style={{ color: "hsl(160 84% 55%)" }} />
-                    </div>
-                    <span className="text-sm" style={{ color: "hsl(220 15% 60%)" }}>{feature}</span>
-                  </li>
-                ))}
-              </ul>
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                  O que está incluído
+                </p>
+                <ul className="space-y-2">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-slate-600">
+                        {feature}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           ))}
         </div>
