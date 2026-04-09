@@ -13,7 +13,7 @@ const personalityPrompts: Record<string, string> = {
 };
 
 async function aiChat(apiKey: string, systemPrompt: string, userContent: string, maxTokens = 500) {
-  const resp = await fetch("https://ai.lovable.dev/api/chat", {
+  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
