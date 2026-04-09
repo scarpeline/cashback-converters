@@ -20,6 +20,9 @@ import {
   CalendarClock,
   Megaphone,
   ChevronDown,
+  Bot,
+  Mic,
+  Star,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useBarbershop } from "./owner/hooks";
@@ -37,12 +40,22 @@ const FinancialHub = lazy(() => import("./owner/FinancialHub").then(m => ({ defa
 const GrowthHub = lazy(() => import("./owner/GrowthHub").then(m => ({ default: m.GrowthHub })));
 const CommunicationHub = lazy(() => import("./owner/CommunicationHub").then(m => ({ default: m.CommunicationHub })));
 const SettingsHub = lazy(() => import("./owner/SettingsHub").then(m => ({ default: m.SettingsHub })));
+const AIHub = lazy(() => import("./owner/AIHub").then(m => ({ default: m.AIHub })));
+
+// ── Sidebar group type ──────────────────────────────────────────────────
+interface SidebarItem {
+  icon: React.ReactNode;
+  label: string;
+  path: string;
+  exact?: boolean;
+  children?: { icon: React.ReactNode; label: string; path: string }[];
+}
 
 const DonoDashboard = () => {
     const { user, profile, signOut } = useAuth();
     const { barbershop, loading } = useBarbershop();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [commExpanded, setCommExpanded] = useState(false);
+    const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -57,32 +70,69 @@ const DonoDashboard = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Auto-expand comm menu if on comm route
+    // Auto-expand group if active
     useEffect(() => {
-        if (location.pathname.startsWith("/painel-dono/comunicacao")) {
-            setCommExpanded(true);
+        const activeGroup = navItems.find(item => 
+            item.children && (
+                location.pathname.startsWith(item.path) ||
+                item.children.some(c => location.pathname.startsWith(c.path))
+            )
+        );
+        if (activeGroup && !expandedGroups.includes(activeGroup.label)) {
+            setExpandedGroups(prev => [...prev, activeGroup.label]);
         }
     }, [location.pathname]);
 
+    const toggleGroup = (label: string) => {
+        setExpandedGroups(prev => 
+            prev.includes(label) ? prev.filter(g => g !== label) : [...prev, label]
+        );
+    };
+
     if (loading) return <DashboardLoadingSkeleton />;
 
-    const navItems = [
+    const navItems: SidebarItem[] = [
         { icon: <LayoutDashboard />, label: "Geral", path: "/painel-dono", exact: true },
-        { icon: <Calendar />, label: "Operações", path: "/painel-dono/operacoes" },
+        { 
+            icon: <Calendar />, label: "Operações", path: "/painel-dono/operacoes",
+            children: [
+                { icon: <Calendar size={14} />, label: "Agenda", path: "/painel-dono/operacoes" },
+                { icon: <CalendarClock size={14} />, label: "Recorrências", path: "/painel-dono/operacoes?tab=recurring" },
+                { icon: <Users size={14} />, label: "Fila de Espera", path: "/painel-dono/operacoes?tab=waitlist" },
+            ]
+        },
         { icon: <Users />, label: "Gestão", path: "/painel-dono/gestao" },
         { icon: <Wallet />, label: "Financeiro", path: "/painel-dono/financeiro" },
-        { icon: <TrendingUp />, label: "Crescimento", path: "/painel-dono/crescimento" },
-    ];
-
-    const navItemsBottom = [
+        { 
+            icon: <TrendingUp />, label: "Crescimento", path: "/painel-dono/crescimento",
+            children: [
+                { icon: <Megaphone size={14} />, label: "Marketing", path: "/painel-dono/crescimento" },
+                { icon: <Star size={14} />, label: "Fidelidade", path: "/painel-dono/crescimento?tab=loyalty" },
+                { icon: <Zap size={14} />, label: "Cashback", path: "/painel-dono/crescimento?tab=cashback" },
+            ]
+        },
+        { 
+            icon: <MessageCircle />, label: "Comunicação", path: "/painel-dono/comunicacao",
+            children: [
+                { icon: <Smartphone size={14} />, label: "WhatsApp", path: "/painel-dono/comunicacao" },
+                { icon: <CalendarClock size={14} />, label: "Mensagens", path: "/painel-dono/comunicacao?tab=mensagens" },
+                { icon: <Megaphone size={14} />, label: "Reativação", path: "/painel-dono/comunicacao?tab=campanhas" },
+            ]
+        },
+        { 
+            icon: <Bot />, label: "IA & Automação", path: "/painel-dono/ia",
+            children: [
+                { icon: <Mic size={14} />, label: "Assistente IA", path: "/painel-dono/ia" },
+                { icon: <Zap size={14} />, label: "Automações", path: "/painel-dono/ia?tab=automations" },
+            ]
+        },
         { icon: <Settings />, label: "Ajustes", path: "/painel-dono/configuracoes" },
     ];
 
-    const commSubItems = [
-        { icon: <Smartphone size={14} />, label: "WhatsApp", path: "/painel-dono/comunicacao", tab: "whatsapp" },
-        { icon: <CalendarClock size={14} />, label: "Mensagens", path: "/painel-dono/comunicacao", tab: "mensagens" },
-        { icon: <Megaphone size={14} />, label: "Campanhas", path: "/painel-dono/comunicacao", tab: "campanhas" },
-    ];
+    const isItemActive = (item: SidebarItem) => {
+        if (item.exact) return location.pathname === item.path;
+        return location.pathname.startsWith(item.path.split('?')[0]);
+    };
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-orange-500/30">
@@ -118,66 +168,69 @@ const DonoDashboard = () => {
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex-1 px-6 space-y-2 overflow-y-auto custom-scrollbar pt-4">
+                    <nav className="flex-1 px-6 space-y-1 overflow-y-auto custom-scrollbar pt-4">
                         <p className="px-4 text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] mb-6 italic opacity-50">Strategic Menu</p>
                         {navItems.map((item, idx) => {
-                            const isActive = item.exact 
-                                ? location.pathname === item.path 
-                                : location.pathname.startsWith(item.path);
-                            
+                            const active = isItemActive(item);
+                            const hasChildren = item.children && item.children.length > 0;
+                            const isExpanded = expandedGroups.includes(item.label);
+
+                            if (!hasChildren) {
+                                return (
+                                    <Link 
+                                        key={item.path} 
+                                        to={item.path}
+                                        style={{ animationDelay: `${idx * 50}ms` }}
+                                        className={`flex items-center gap-4 px-5 py-3.5 rounded-[1.4rem] transition-all duration-500 group relative overflow-hidden animate-in slide-in-from-left-4 ${active ? 'bg-gradient-gold text-black font-black shadow-gold diamond-glow scale-[1.02]' : 'text-slate-400 hover:text-white hover:bg-white/5 hover:translate-x-1'}`}
+                                    >
+                                        <span className={`transition-all duration-500 ${active ? 'text-black' : 'group-hover:scale-125 text-orange-400/50 group-hover:text-orange-400'}`}>
+                                            {React.cloneElement(item.icon as React.ReactElement, { size: 18 })}
+                                        </span>
+                                        <span className="text-sm tracking-tight">{item.label}</span>
+                                        {active && <div className="ml-auto w-1.5 h-1.5 bg-black rounded-full animate-pulse" />}
+                                    </Link>
+                                );
+                            }
+
                             return (
-                                <Link 
-                                    key={item.path} 
-                                    to={item.path}
-                                    style={{ animationDelay: `${idx * 50}ms` }}
-                                    className={`flex items-center gap-4 px-5 py-4 rounded-[1.4rem] transition-all duration-500 group relative overflow-hidden animate-in slide-in-from-left-4 ${isActive ? 'bg-gradient-gold text-black font-black shadow-gold diamond-glow scale-[1.02]' : 'text-slate-400 hover:text-white hover:bg-white/5 hover:translate-x-1'}`}
-                                >
-                                    <span className={`transition-all duration-500 ${isActive ? 'text-black' : 'group-hover:scale-125 text-orange-400/50 group-hover:text-orange-400'}`}>
-                                        {React.cloneElement(item.icon as React.ReactElement, { size: 18 })}
-                                    </span>
-                                    <span className="text-sm tracking-tight">{item.label}</span>
-                                    {isActive && <div className="ml-auto w-1.5 h-1.5 bg-black rounded-full animate-pulse" />}
-                                </Link>
+                                <div key={item.path} className="pt-1">
+                                    <button
+                                        onClick={() => { toggleGroup(item.label); navigate(item.path); }}
+                                        className={`w-full flex items-center gap-4 px-5 py-3.5 rounded-[1.4rem] transition-all duration-500 group relative overflow-hidden ${
+                                            active
+                                                ? 'bg-gradient-gold text-black font-black shadow-gold diamond-glow scale-[1.02]'
+                                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                    >
+                                        <span className={`transition-all duration-500 ${active ? 'text-black' : 'group-hover:scale-125 text-orange-400/50 group-hover:text-orange-400'}`}>
+                                            {React.cloneElement(item.icon as React.ReactElement, { size: 18 })}
+                                        </span>
+                                        <span className="text-sm tracking-tight flex-1 text-left">{item.label}</span>
+                                        <ChevronDown
+                                            size={14}
+                                            className={`opacity-50 transition-all duration-500 ${isExpanded ? 'rotate-180' : ''}`}
+                                        />
+                                    </button>
+
+                                    <div className={`overflow-hidden transition-all duration-700 ease-premium ${isExpanded ? 'max-h-60 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+                                        <div className="ml-6 pl-4 border-l-2 border-white/5 space-y-0.5">
+                                            {item.children!.map((sub) => (
+                                                <Link
+                                                    key={sub.label}
+                                                    to={sub.path}
+                                                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-orange-400 hover:bg-white/5 transition-all duration-300 group"
+                                                >
+                                                    <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-orange-400/10 transition-colors">
+                                                       {sub.icon}
+                                                    </div>
+                                                    {sub.label}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
                             );
                         })}
-
-                        {/* ── Comunicação Sub-menu Diamond ── */}
-                        <div className="pt-2">
-                            <button
-                                onClick={() => setCommExpanded(!commExpanded)}
-                                className={`w-full flex items-center gap-4 px-5 py-4 rounded-[1.4rem] transition-all duration-500 group relative overflow-hidden ${
-                                    location.pathname.startsWith("/painel-dono/comunicacao")
-                                        ? 'bg-gradient-gold text-black font-black shadow-gold diamond-glow scale-[1.02]'
-                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                }`}
-                            >
-                                <span className={`transition-all duration-500 ${location.pathname.startsWith("/painel-dono/comunicacao") ? 'text-black' : 'group-hover:scale-125 text-orange-400/50 group-hover:text-orange-400'}`}>
-                                    <MessageCircle size={18} />
-                                </span>
-                                <span className="text-sm tracking-tight flex-1 text-left">Comunicação</span>
-                                <ChevronDown
-                                    size={14}
-                                    className={`opacity-50 transition-all duration-500 ${commExpanded ? 'rotate-180' : ''}`}
-                                />
-                            </button>
-
-                            <div className={`overflow-hidden transition-all duration-700 ease-premium ${commExpanded ? 'max-h-60 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
-                                <div className="ml-6 pl-4 border-l-2 border-white/5 space-y-1">
-                                    {commSubItems.map((sub) => (
-                                        <Link
-                                            key={sub.tab}
-                                            to={sub.path}
-                                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-slate-500 hover:text-orange-400 hover:bg-white/5 transition-all duration-300 group"
-                                        >
-                                            <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-orange-400/10 transition-colors">
-                                               {React.cloneElement(sub.icon as React.ReactElement, { size: 12 })}
-                                            </div>
-                                            {sub.label}
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
                     </nav>
 
                     {/* Footer / User Diamond */}
@@ -191,7 +244,7 @@ const DonoDashboard = () => {
                             <div className="flex-1 min-w-0 relative z-10">
                                 <p className="text-sm font-black text-white truncate leading-none mb-1">{profile?.name || "Diretoria"}</p>
                                 <p className="text-[9px] text-orange-400 font-bold uppercase tracking-widest truncate flex items-center gap-1">
-                                    <div className="w-1 h-1 bg-orange-400 rounded-full animate-pulse" /> Global Admin
+                                    <span className="w-1 h-1 bg-orange-400 rounded-full animate-pulse" /> Global Admin
                                 </p>
                             </div>
                         </div>
@@ -236,7 +289,7 @@ const DonoDashboard = () => {
                             <div className="text-right">
                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] leading-none mb-1">Status do Servidor</p>
                                 <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center justify-end gap-1.5">
-                                   <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" /> 100% Online
+                                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" /> 100% Online
                                 </p>
                             </div>
                         </div>
@@ -253,6 +306,7 @@ const DonoDashboard = () => {
                             <Route path="financeiro/*" element={<FinancialHub />} />
                             <Route path="crescimento/*" element={<GrowthHub />} />
                             <Route path="comunicacao/*" element={<CommunicationHub />} />
+                            <Route path="ia/*" element={<AIHub />} />
                             <Route path="configuracoes/*" element={<SettingsHub />} />
                             <Route path="*" element={<Navigate to="/painel-dono" replace />} />
                         </Routes>
@@ -262,7 +316,7 @@ const DonoDashboard = () => {
                 {/* Footer Insight */}
                 <footer className="p-12 border-t border-white/5 opacity-40">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                        <p className="text-xs font-medium text-slate-500 italic">Salão CashBack v4.5.2 • Inteligência Artificial de Gestão</p>
+                        <p className="text-xs font-medium text-slate-500 italic">Agenda Universal AI v5.0 • Plataforma Multi-Nicho</p>
                         <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">
                             <span className="hover:text-orange-400 cursor-pointer transition-colors">Termos de Uso</span>
                             <span className="hover:text-orange-400 cursor-pointer transition-colors">Segurança</span>
