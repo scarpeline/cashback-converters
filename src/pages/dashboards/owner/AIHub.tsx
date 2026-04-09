@@ -4,7 +4,7 @@ import { Bot, Mic, Zap, MessageCircle, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AIAudioConfigPanel } from "@/components/ai/AIAudioConfigPanel";
-import { AutomationsPanel } from "@/components/automation/AutomationsPanel";
+import AutomationsPanel from "@/components/automation/AutomationsPanel";
 
 type AITab = "assistant" | "automations";
 
