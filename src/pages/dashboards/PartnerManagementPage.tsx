@@ -109,7 +109,7 @@ export default function PartnerManagementPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-orange-500">
                 {stats.byType.franqueado}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -150,7 +150,7 @@ export default function PartnerManagementPage() {
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                    <div className="w-2 h-2 rounded-full bg-orange-400" />
                     <span className="font-medium">Franqueado</span>
                   </div>
                   <p className="text-sm text-muted-foreground">

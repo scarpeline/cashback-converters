@@ -147,7 +147,7 @@ const ContabeisHubAfiliadoPage = () => {
 
 const AFFILIATE_LEVELS = [
   { min: 0,   max: 50,   label: "Explorador",              color: "bg-slate-100 text-slate-700" },
-  { min: 51,  max: 100,  label: "Visionário",              color: "bg-blue-100 text-blue-700" },
+  { min: 51,  max: 100,  label: "Visionário",              color: "bg-orange-100 text-orange-700" },
   { min: 101, max: 200,  label: "Estrategista Visionário", color: "bg-purple-100 text-purple-700" },
   { min: 201, max: 400,  label: "Líder Supremo",           color: "bg-orange-100 text-orange-700" },
   { min: 401, max: 700,  label: "Imperador Líder",         color: "bg-red-100 text-red-700" },

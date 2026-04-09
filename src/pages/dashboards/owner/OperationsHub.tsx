@@ -108,10 +108,10 @@ const AgendamentosPage = () => {
 
     const validation = AppointmentSchema.safeParse({
        client_name: form.client_name,
-       client_phone: form.client_whatsapp,
+       client_phone: form.client_whatsapp || "",
        service_id: form.service_id,
        professional_id: form.professional_id,
-       scheduled_at: new Date(form.scheduled_at),
+       scheduled_at: form.scheduled_at,
        status: "scheduled"
     });
 
@@ -157,7 +157,7 @@ const AgendamentosPage = () => {
   };
 
   const statusMap: Record<string, { label: string; color: string; glow: string }> = {
-    scheduled: { label: "Agendado", color: "bg-blue-500/10 text-blue-400 border-blue-500/20", glow: "shadow-blue-500/10" },
+    scheduled: { label: "Agendado", color: "bg-orange-400/10 text-orange-400 border-orange-400/20", glow: "shadow-orange-400/10" },
     confirmed: { label: "Confirmado", color: "bg-orange-500/10 text-orange-400 border-orange-500/20", glow: "shadow-orange-500/20" },
     completed: { label: "Concluído", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", glow: "shadow-emerald-500/10" },
     canceled: { label: "Cancelado", color: "bg-rose-500/10 text-rose-400 border-rose-500/20", glow: "shadow-rose-500/10" },
@@ -252,7 +252,7 @@ const AgendamentosPage = () => {
                       <span className="text-xs font-black text-slate-300 uppercase tracking-tight">{ap.services?.name}</span>
                     </div>
                     <div className="flex items-center gap-2.5 group/info">
-                      <div className="w-8 h-8 rounded-xl bg-blue-500/5 border border-white/5 flex items-center justify-center text-blue-400 group-hover/info:bg-blue-500 transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-orange-400/5 border border-white/5 flex items-center justify-center text-orange-400 group-hover/info:bg-orange-400 transition-colors">
                          <Users size={14} className="group-hover/info:text-white" />
                       </div>
                       <span className="text-xs font-black text-slate-300 uppercase tracking-tight">{ap.professionals?.name}</span>

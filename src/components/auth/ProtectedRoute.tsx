@@ -61,12 +61,11 @@ export function ProtectedRoute({
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
-  // STEP 3: Redirecionar para onboarding se for dono e status for 'pending'
+  // STEP 3: Redirecionar para onboarding se for dono sem barbershop ou com status 'pending'
   if (
-    barbershop &&
-    barbershop.onboarding_status === "pending" &&
     roles.includes("dono") &&
-    location.pathname !== "/onboarding"
+    location.pathname !== "/onboarding" &&
+    (!barbershop || barbershop.onboarding_status === "pending")
   ) {
     return <Navigate to="/onboarding" state={{ from: location }} replace />;
   }

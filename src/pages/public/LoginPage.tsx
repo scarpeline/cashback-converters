@@ -160,7 +160,7 @@ const LoginPage = () => {
 
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
             <img src={logo} alt="Logo" className="w-5 h-5 object-contain" />
           </div>
           <span className="text-base font-semibold text-slate-900">SalãoCashBack</span>
@@ -204,7 +204,7 @@ const LoginPage = () => {
                   onClick={() => setLoginType(type.value)}
                   className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border text-xs font-medium transition-all ${
                     loginType === type.value
-                      ? "border-blue-600 bg-blue-50 text-blue-700"
+                      ? "border-orange-500 bg-orange-50 text-orange-600"
                       : "border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700"
                   }`}
                 >
@@ -228,7 +228,7 @@ const LoginPage = () => {
                   onClick={() => setUserType(type)}
                   className={`flex flex-col items-center gap-2 py-4 rounded-xl border text-sm font-medium transition-all ${
                     userType === type
-                      ? "border-blue-600 bg-blue-50 text-blue-700"
+                      ? "border-orange-500 bg-orange-50 text-orange-600"
                       : "border-slate-200 text-slate-500 hover:border-slate-300"
                   }`}
                 >
@@ -248,7 +248,7 @@ const LoginPage = () => {
               <Input
                 id="name" type="text" placeholder={t("auth.name_placeholder")}
                 value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className="mt-1 h-11 text-slate-900 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="mt-1 h-11 text-slate-900 border-slate-200 focus:border-orange-400 focus:ring-orange-400/20"
                 autoComplete="name"
               />
               {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
@@ -261,7 +261,7 @@ const LoginPage = () => {
               <Input
                 id="whatsapp" type="tel" placeholder="(00) 00000-0000"
                 value={formData.whatsapp} onChange={e => setFormData({ ...formData, whatsapp: formatWhatsAppBR(e.target.value) })}
-                className="mt-1 h-11 text-slate-900 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="mt-1 h-11 text-slate-900 border-slate-200 focus:border-orange-400 focus:ring-orange-400/20"
                 autoComplete="tel"
               />
               {(errors.whatsapp || errors.identifier) && <p className="text-xs text-red-500 mt-1">{errors.whatsapp || errors.identifier}</p>}
@@ -274,7 +274,7 @@ const LoginPage = () => {
               <Input
                 id="email" type="email" placeholder={t("auth.email_placeholder")}
                 value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })}
-                className="mt-1 h-11 text-slate-900 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="mt-1 h-11 text-slate-900 border-slate-200 focus:border-orange-400 focus:ring-orange-400/20"
                 autoComplete="email"
               />
               {(errors.email || errors.identifier) && <p className="text-xs text-red-500 mt-1">{errors.email || errors.identifier}</p>}
@@ -287,7 +287,7 @@ const LoginPage = () => {
               <Input
                 id="cpfCnpj" type="text" placeholder="000.000.000-00"
                 value={formData.cpfCnpj} onChange={e => setFormData({ ...formData, cpfCnpj: formatCpfCnpjBR(e.target.value) })}
-                className="mt-1 h-11 text-slate-900 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="mt-1 h-11 text-slate-900 border-slate-200 focus:border-orange-400 focus:ring-orange-400/20"
               />
             </div>
           )}
@@ -298,7 +298,7 @@ const LoginPage = () => {
               <Input
                 id="pix" type="text" placeholder={t("auth.pix_placeholder")}
                 value={formData.pix} onChange={e => setFormData({ ...formData, pix: e.target.value })}
-                className="mt-1 h-11 text-slate-900 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="mt-1 h-11 text-slate-900 border-slate-200 focus:border-orange-400 focus:ring-orange-400/20"
               />
             </div>
           )}
@@ -309,7 +309,7 @@ const LoginPage = () => {
               {mode === "login" && (
                 <button
                   type="button"
-                  className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
+                  className="text-xs text-orange-500 hover:text-orange-600 transition-colors"
                   onClick={async () => {
                     let targetEmail = "";
                     if (loginType === "cliente") {
@@ -340,7 +340,7 @@ const LoginPage = () => {
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={e => setFormData({ ...formData, password: e.target.value })}
-                className="h-11 pr-10 text-slate-900 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="h-11 pr-10 text-slate-900 border-slate-200 focus:border-orange-400 focus:ring-orange-400/20"
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
               />
               <button
@@ -357,7 +357,7 @@ const LoginPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-11 mt-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+            className="w-full h-11 mt-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
           >
             {loading ? <><Loader2 className="w-4 h-4 animate-spin" />{t("processing")}</> : (mode === "login" ? t("auth.sign_in") : t("auth.sign_up"))}
           </button>
@@ -366,7 +366,7 @@ const LoginPage = () => {
         {mode === "signup" && isBusinessUser && (
           <p className="text-xs text-slate-400 text-center mt-4 leading-relaxed">
             {t("auth.asaas_redirect_info")}{" "}
-            <a href="https://www.asaas.com/r/4095742a-0dd1-4fb7-b9ce-61431bb4f632" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Asaas</a>
+            <a href="https://www.asaas.com/r/4095742a-0dd1-4fb7-b9ce-61431bb4f632" target="_blank" rel="noopener noreferrer" className="text-orange-500 underline">Asaas</a>
           </p>
         )}
 
@@ -374,7 +374,7 @@ const LoginPage = () => {
 
         <p className="text-center text-xs text-slate-400">
           {t("auth.want_to_be_affiliate")}{" "}
-          <Link to="/afiliado-saas/login" className="text-blue-600 font-medium hover:underline">{t("auth.click_here")}</Link>
+          <Link to="/afiliado-saas/login" className="text-orange-500 font-medium hover:underline">{t("auth.click_here")}</Link>
         </p>
       </div>
     </div>

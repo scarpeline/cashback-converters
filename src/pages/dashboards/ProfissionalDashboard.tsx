@@ -192,7 +192,7 @@ const ProfissionalDashboard = () => {
 const ProfHome = () => {
   const { profile } = useAuth();
   const hubs = [
-    { label: "Agenda", desc: "Fluxo de cadeiras e horários", icon: Calendar, color: "text-blue-400 bg-blue-500/10", path: "/painel-profissional/agenda" },
+    { label: "Agenda", desc: "Fluxo de cadeiras e horários", icon: Calendar, color: "text-orange-400 bg-orange-400/10", path: "/painel-profissional/agenda" },
     { label: "Financeiro", desc: "Relatórios de ganhos e faturas", icon: DollarSign, color: "text-emerald-400 bg-emerald-500/10", path: "/painel-profissional/financeiro" },
     { label: "Contabilidade", desc: "Expert Fiscal e Tributário", icon: FileText, color: "text-orange-400 bg-orange-500/10", path: "/painel-profissional/contabilidade" },
     { label: "Crescimento", desc: "Marketing e Afiliação Pro", icon: TrendingUp, color: "text-purple-400 bg-purple-500/10", path: "/painel-profissional/crescimento" },
@@ -263,9 +263,9 @@ const ProfHome = () => {
 // ─── Agenda Hub Diamond ───────────────────────────────────────────────────────────────
 const AgendaHub = () => (
   <div className="space-y-8 animate-in fade-in duration-700">
-    <HubHeader title="Agenda" subtitle="Fluxo operacional e atendimentos confirmados" gradient="from-blue-400 to-cyan-400" icon={<Calendar size={24} />} />
+    <HubHeader title="Agenda" subtitle="Fluxo operacional e atendimentos confirmados" gradient="from-orange-400 to-orange-600" icon={<Calendar size={24} />} />
     <div className="glass-card p-4 md:p-8 rounded-[3rem] border-white/5 bg-slate-950/20 backdrop-blur-3xl relative overflow-hidden">
-       <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[100px] rounded-full" />
+       <div className="absolute top-0 right-0 w-64 h-64 bg-orange-400/5 blur-[100px] rounded-full" />
       <AgendaProfissional />
     </div>
   </div>
@@ -458,10 +458,10 @@ const GanhosPage = () => (
         <p className="text-xs font-bold text-emerald-400 mt-4 flex items-center gap-2"><TrendingUp size={14} /> +0% vs mês anterior</p>
       </div>
       <div className="p-10 bg-white/5 rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-4">Total de Atendimentos</p>
         <p className="text-5xl font-black text-white group-hover:text-gradient-gold transition-all">0</p>
-        <p className="text-xs font-bold text-blue-400 mt-4 flex items-center gap-2"><CheckCircle2 size={14} /> Expert Performance</p>
+        <p className="text-xs font-bold text-orange-400 mt-4 flex items-center gap-2"><CheckCircle2 size={14} /> Expert Performance</p>
       </div>
     </div>
     <div className="glass-card p-20 text-center rounded-[3rem] border-white/5 flex flex-col items-center">

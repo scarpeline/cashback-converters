@@ -96,7 +96,7 @@ const MarketingCenter = () => {
 
                 <Card className="glass-card p-6 rounded-[2.5rem] relative overflow-hidden group animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
                     <div className="absolute top-0 right-0 p-6">
-                       <Sparkles className="w-8 h-8 text-blue-400 opacity-20 group-hover:opacity-100 transition-premium group-hover:scale-110" />
+                       <Sparkles className="w-8 h-8 text-orange-400 opacity-20 group-hover:opacity-100 transition-premium group-hover:scale-110" />
                     </div>
                     <CardHeader className="pb-2">
                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Engajamento Social</p>
@@ -108,10 +108,10 @@ const MarketingCenter = () => {
                     </CardContent>
                 </Card>
 
-                <Card className="glass-card p-6 rounded-[2.5rem] bg-gradient-to-br from-blue-600/10 to-indigo-600/10 border-white/5 shadow-premium animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 group">
+                <Card className="glass-card p-6 rounded-[2.5rem] bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-white/5 shadow-premium animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 group">
                     <CardHeader className="pb-2">
                        <div className="flex items-center gap-2 mb-2">
-                          <Badge className="bg-blue-500/20 text-blue-400 border-none rounded-full px-2 py-0.5 text-[8px] font-black tracking-widest uppercase italic">Enterprise</Badge>
+                          <Badge className="bg-orange-400/20 text-orange-400 border-none rounded-full px-2 py-0.5 text-[8px] font-black tracking-widest uppercase italic">Enterprise</Badge>
                        </div>
                        <CardTitle className="text-xl font-black text-white">Pixels & Tracking</CardTitle>
                     </CardHeader>
@@ -239,7 +239,7 @@ const CashbackCenter = () => {
                               <span className="text-xl font-black text-white">42%</span>
                            </div>
                            <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-white/5">
-                              <div className="h-full bg-blue-500 w-[42%] shadow-blue-500/20 transition-all duration-1000 delay-300" />
+                              <div className="h-full bg-orange-400 w-[42%] shadow-orange-400/20 transition-all duration-1000 delay-300" />
                            </div>
                         </div>
                      </div>
@@ -248,11 +248,11 @@ const CashbackCenter = () => {
                   </div>
                   
                   <Card className="glass-card p-8 rounded-[2.5rem] border-white/5 bg-slate-950/40 flex items-center gap-6 group hover:border-white/10 transition-premium cursor-pointer">
-                     <div className="w-16 h-16 rounded-[2rem] bg-slate-900 border border-white/5 flex items-center justify-center transition-premium group-hover:scale-110 group-hover:border-blue-500/30">
-                        <Share2 className="w-7 h-7 text-slate-500 group-hover:text-blue-400 transition-colors" />
+                     <div className="w-16 h-16 rounded-[2rem] bg-slate-900 border border-white/5 flex items-center justify-center transition-premium group-hover:scale-110 group-hover:border-orange-400/30">
+                        <Share2 className="w-7 h-7 text-slate-500 group-hover:text-orange-400 transition-colors" />
                      </div>
                      <div className="flex-1">
-                        <h4 className="text-lg font-black text-white group-hover:text-blue-400 transition-colors">Indique & Ganhe</h4>
+                        <h4 className="text-lg font-black text-white group-hover:text-orange-400 transition-colors">Indique & Ganhe</h4>
                         <p className="text-slate-500 text-xs font-medium leading-tight">Recompense indicações com incentivos automáticos.</p>
                      </div>
                   </Card>

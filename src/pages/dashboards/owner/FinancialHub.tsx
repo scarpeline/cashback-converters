@@ -24,7 +24,8 @@ import {
   ShieldCheck,
   Zap,
   ArrowRight,
-  HelpCircle
+  HelpCircle,
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -32,8 +33,7 @@ import { Input } from "@/components/ui/input";
 import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 import { SubscriptionPlans } from "@/components/subscription/SubscriptionPlans";
 import { Badge } from "@/components/ui/badge";
-import { HubSkeleton, SkeletonHub } from "@/components/ui/SkeletonHub";
-import { 
+import { HubSkeleton, SkeletonHub } from "@/components/ui/SkeletonHub";import { 
   Tooltip,
   TooltipContent,
   TooltipProvider,

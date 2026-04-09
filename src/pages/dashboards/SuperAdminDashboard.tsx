@@ -354,7 +354,7 @@ const testAccounts = [
   {
     role: "Cliente",
     icon: Users,
-    color: "bg-blue-500",
+    color: "bg-orange-400",
     login: "WhatsApp: 11999990001",
     password: "Teste@123",
     dashboard: "/app",
@@ -1436,7 +1436,7 @@ const BarbeariasPage = () => {
 // Níveis de afiliados baseados em indicações
 const AFFILIATE_LEVELS = [
   { min: 0,    max: 50,   label: "Explorador",            color: "bg-slate-100 text-slate-700" },
-  { min: 51,   max: 100,  label: "Visionário",            color: "bg-blue-100 text-blue-700" },
+  { min: 51,   max: 100,  label: "Visionário",            color: "bg-orange-100 text-orange-600" },
   { min: 101,  max: 200,  label: "Estrategista Visionário", color: "bg-purple-100 text-purple-700" },
   { min: 201,  max: 400,  label: "Líder Supremo",         color: "bg-orange-100 text-orange-700" },
   { min: 401,  max: 700,  label: "Imperador Líder",       color: "bg-red-100 text-red-700" },
@@ -3434,7 +3434,7 @@ const ConfiguracoesPage = () => {
                     {p.is_active ? "Ativo" : "Inativo"}
                   </span>
                   <span
-                    className={`text-xs px-2 py-1 rounded-full ${p.show_on_landing ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"}`}
+                    className={`text-xs px-2 py-1 rounded-full ${p.show_on_landing ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-800"}`}
                   >
                     {p.show_on_landing ? (
                       <>
@@ -3466,7 +3466,7 @@ const ConfiguracoesPage = () => {
                     className={
                       p.show_on_landing
                         ? "text-orange-600 hover:bg-orange-50"
-                        : "text-blue-600 hover:bg-blue-50"
+                        : "text-orange-500 hover:bg-orange-50"
                     }
                   >
                     {p.show_on_landing ? (

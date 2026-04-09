@@ -1,22 +1,18 @@
-import { useTranslation } from "react-i18next";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useAuth } from "@/lib/auth";
+import { resolveDynamicLabel } from "@/lib/dynamicLabels";
 
 export function useNiche() {
-  const { t } = useTranslation();
-  const { selectedSector, selectedSpecialty } = useOnboarding();
+  const { barbershop } = useAuth();
 
-  // Determina o setor atual baseado no onboarding ou no padrão
-  const currentSector = selectedSector || 'barbershop';
-
-  // Labels dinâmicas
-  const nicheLabel = t(`niche.${currentSector}.label`, { defaultValue: t('niche.barbershop.label') });
-  const nicheLabelPlural = t(`niche.${currentSector}.plural`, { defaultValue: t('niche.barbershop.plural') });
+  const sector = barbershop?.sector || null;
+  const specialty = barbershop?.specialty || null;
 
   return {
-    currentNiche: currentSector,
-    nicheLabel,
-    nicheLabelPlural,
-    sector: currentSector,
-    specialty: selectedSpecialty,
+    currentNiche: sector,
+    sector,
+    specialty,
+    nicheLabel: sector || "Negócio",
+    nicheLabelPlural: sector || "Negócios",
+    resolveLabel: (key: string) => resolveDynamicLabel(key, sector, specialty),
   };
 }

@@ -858,7 +858,7 @@ const PedidosServicoPage = () => {
       },
       accepted: {
         label: "Aceito",
-        color: "bg-blue-500/10 text-blue-600",
+        color: "bg-orange-500/10 text-orange-600",
         icon: CheckCircle,
       },
       in_progress: {

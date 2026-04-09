@@ -6,14 +6,14 @@
 
 @layer base {
   :root {
-    /* Core Brand Colors - Indigo/Cyan Premium */
-    --accent-primary: 262 83% 58%; /* #6366F1 Indigo */
-    --accent-primary-light: 262 83% 68%;
-    --accent-primary-dark: 262 83% 48%;
-    --accent-secondary: 192 91% 42%; /* #0EA5E9 Cyan */
-    --accent-secondary-light: 192 91% 55%;
-    --accent-secondary-dark: 192 91% 32%;
-    --emerald: 160 84% 39%; /* #10B981 */
+    /* Core Brand Colors - Orange */
+    --accent-primary: 25 95% 53%;       /* #f97316 orange-500 */
+    --accent-primary-light: 25 95% 65%;
+    --accent-primary-dark: 25 95% 40%;
+    --accent-secondary: 25 95% 53%;
+    --accent-secondary-light: 25 95% 65%;
+    --accent-secondary-dark: 25 95% 40%;
+    --emerald: 160 84% 39%;
 
     /* Backgrounds */
     --background: 0 0% 100%;
@@ -26,8 +26,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary - Indigo */
-    --primary: 262 83% 58%;
+    /* Primary - Orange */
+    --primary: 25 95% 53%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary */
@@ -38,14 +38,14 @@
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
 
-    /* Accent - Cyan */
-    --accent: 192 91% 42%;
+    /* Accent - Orange */
+    --accent: 25 95% 53%;
     --accent-foreground: 0 0% 100%;
 
     /* Borders & Inputs */
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 262 83% 58%;
+    --ring: 25 95% 53%;
 
     /* Premium Effects */
     --glass-bg: 0 0% 100% / 0.05;
@@ -56,21 +56,21 @@
     /* Shadows */
     --shadow-premium: 0 20px 50px -12px rgba(0, 0, 0, 0.25);
     --shadow-inner: inset 0 2px 4px 0 rgba(255, 255, 255, 0.05);
-    --glow-primary: 0 0 30px -5px hsl(262 83% 58% / 0.4);
-    --glow-cyan: 0 0 30px -5px hsl(192 91% 42% / 0.4);
+    --glow-primary: 0 0 30px -5px hsl(25 95% 53% / 0.4);
+    --glow-cyan: 0 0 30px -5px hsl(25 95% 53% / 0.4);
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, #6366F1 0%, #0EA5E9 100%);
+    --gradient-primary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
     --gradient-dark: linear-gradient(180deg, #0A0F1E 0%, #020408 100%);
     --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
 
-    /* Legacy aliases */
-    --orange: 262 83% 58%;
-    --orange-light: 262 83% 68%;
-    --orange-dark: 262 83% 48%;
-    --blue: 192 91% 42%;
-    --blue-light: 192 91% 95%;
-    --blue-dark: 192 91% 25%;
+    /* Legacy aliases → orange */
+    --orange: 25 95% 53%;
+    --orange-light: 25 95% 65%;
+    --orange-dark: 25 95% 40%;
+    --blue: 25 95% 53%;
+    --blue-light: 25 95% 95%;
+    --blue-dark: 25 95% 30%;
 
     --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
@@ -236,8 +236,12 @@
 }
 
 .text-gradient-gold {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-cyan-300 to-indigo-500;
-  filter: drop-shadow(0 2px 4px rgba(99, 102, 241, 0.2));
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-orange-500 via-orange-400 to-orange-600;
+  filter: drop-shadow(0 1px 2px rgba(249, 115, 22, 0.2));
+}
+
+.bg-gradient-gold {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
 }
 
 /* ─── Hub content: force light theme inside dashboard ─── */

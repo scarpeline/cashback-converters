@@ -138,7 +138,7 @@ const PartnershipPage = () => {
               <button
                 className={`px-6 py-3 rounded-md font-bold text-lg transition-all ${
                   activeTab === 'director'
-                    ? 'bg-blue-600 text-white shadow-lg'
+                    ? 'bg-orange-500 text-white shadow-lg'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
                 onClick={() => setActiveTab('director')}
@@ -149,7 +149,7 @@ const PartnershipPage = () => {
               <button
                 className={`px-6 py-3 rounded-md font-bold text-lg transition-all ${
                   activeTab === 'franchisee'
-                    ? 'bg-blue-600 text-white shadow-lg'
+                    ? 'bg-orange-500 text-white shadow-lg'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
                 onClick={() => setActiveTab('franchisee')}
@@ -160,7 +160,7 @@ const PartnershipPage = () => {
               <button
                 className={`px-6 py-3 rounded-md font-bold text-lg transition-all ${
                   activeTab === 'affiliate'
-                    ? 'bg-blue-600 text-white shadow-lg'
+                    ? 'bg-orange-500 text-white shadow-lg'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
                 onClick={() => setActiveTab('affiliate')}

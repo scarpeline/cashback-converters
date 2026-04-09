@@ -217,7 +217,7 @@ const OnboardingSelectionPage = () => {
       <div className="w-full max-w-2xl">
         {/* Logo + title */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-medium mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 border border-orange-100 text-orange-500 text-xs font-medium mb-4">
             <Sparkles className="w-3 h-3" />
             Agenda Universal
           </div>
@@ -235,16 +235,16 @@ const OnboardingSelectionPage = () => {
               <React.Fragment key={s}>
                 <div className="flex flex-col items-center gap-1">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-all ${
-                    done ? "bg-blue-600 border-blue-600 text-white"
-                    : active ? "border-blue-600 text-blue-600 bg-white"
+                    done ? "bg-orange-500 border-orange-500 text-white"
+                    : active ? "border-orange-500 text-orange-500 bg-white"
                     : "border-slate-200 text-slate-400 bg-white"
                   }`}>
                     {done ? <Check className="w-3.5 h-3.5" /> : s}
                   </div>
-                  <span className={`text-[10px] font-medium ${active ? "text-blue-600" : "text-slate-400"}`}>{label}</span>
+                  <span className={`text-[10px] font-medium ${active ? "text-orange-500" : "text-slate-400"}`}>{label}</span>
                 </div>
                 {s < STEPS.length && (
-                  <div className={`w-12 h-0.5 mb-4 mx-1 ${done ? "bg-blue-600" : "bg-slate-200"}`} />
+                  <div className={`w-12 h-0.5 mb-4 mx-1 ${done ? "bg-orange-500" : "bg-slate-200"}`} />
                 )}
               </React.Fragment>
             );
@@ -258,10 +258,10 @@ const OnboardingSelectionPage = () => {
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => handleSelectType("owner")}
-                className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all group text-left"
+                className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-200 hover:border-orange-400 hover:bg-orange-50 transition-all group text-left"
               >
-                <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                  <Building2 className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
+                <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center group-hover:bg-orange-500 transition-colors">
+                  <Building2 className="w-6 h-6 text-orange-500 group-hover:text-white transition-colors" />
                 </div>
                 <div>
                   <p className="font-semibold text-slate-900 text-sm">Dono de Negócio</p>
@@ -270,9 +270,9 @@ const OnboardingSelectionPage = () => {
               </button>
               <button
                 onClick={() => handleSelectType("professional")}
-                className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all group text-left"
+                className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-200 hover:border-orange-400 hover:bg-orange-50 transition-all group text-left"
               >
-                <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center group-hover:bg-orange-500 transition-colors">
                   <Scissors className="w-6 h-6 text-slate-600 group-hover:text-white transition-colors" />
                 </div>
                 <div>
@@ -296,8 +296,8 @@ const OnboardingSelectionPage = () => {
                   onClick={() => handleSelectSector(sector.key)}
                   className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-[1.02] text-center ${
                     selectedSector === sector.key
-                      ? "border-blue-600 bg-blue-50"
-                      : "border-slate-200 hover:border-blue-300 hover:bg-slate-50"
+                      ? "border-orange-500 bg-orange-50"
+                      : "border-slate-200 hover:border-orange-300 hover:bg-slate-50"
                   }`}
                 >
                   <span className="text-3xl">{sector.icon}</span>
@@ -323,7 +323,7 @@ const OnboardingSelectionPage = () => {
 
             {loadingSpecialties ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
               </div>
             ) : specialties && specialties.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -333,12 +333,12 @@ const OnboardingSelectionPage = () => {
                     onClick={() => handleSelectSpecialty(spec.specialty)}
                     className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-[1.02] text-center ${
                       selectedSpecialty === spec.specialty
-                        ? "border-blue-600 bg-blue-50"
-                        : "border-slate-200 hover:border-blue-300 hover:bg-slate-50"
+                        ? "border-orange-500 bg-orange-50"
+                        : "border-slate-200 hover:border-orange-300 hover:bg-slate-50"
                     }`}
                   >
                     {selectedSpecialty === spec.specialty && (
-                      <div className="absolute -top-2 -right-2 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                      <div className="absolute -top-2 -right-2 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
                         <Check className="w-3 h-3 text-white" />
                       </div>
                     )}
@@ -360,7 +360,7 @@ const OnboardingSelectionPage = () => {
               <button onClick={() => setStep(2)} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors">
                 <ChevronLeft className="w-4 h-4" /> Voltar
               </button>
-              <button onClick={() => setStep(4)} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors">
+              <button onClick={() => setStep(4)} className="flex items-center gap-1 text-sm text-orange-500 hover:text-orange-600 transition-colors">
                 {selectedSpecialty ? "Continuar" : "Pular"} <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -426,9 +426,9 @@ const OnboardingSelectionPage = () => {
               </div>
 
               {selectedSpecialty && specialties?.length > 0 && (
-                <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl">
-                  <p className="text-xs font-medium text-blue-700 mb-1">O que será configurado automaticamente:</p>
-                  <ul className="text-xs text-blue-600 space-y-0.5">
+                <div className="p-3 bg-orange-50 border border-orange-100 rounded-xl">
+                  <p className="text-xs font-medium text-orange-600 mb-1">O que será configurado automaticamente:</p>
+                  <ul className="text-xs text-orange-500 space-y-0.5">
                     {(() => {
                       const preset = specialties.find((s: any) => s.specialty === selectedSpecialty);
                       return [
@@ -448,7 +448,7 @@ const OnboardingSelectionPage = () => {
                 <button
                   onClick={handleFinish}
                   disabled={saving}
-                  className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                  className="flex-1 h-11 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
                 >
                   {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Configurando...</> : <>Finalizar Cadastro <ArrowRight className="w-4 h-4" /></>}
                 </button>
