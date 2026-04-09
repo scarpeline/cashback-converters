@@ -9,12 +9,11 @@ import {
   Settings, 
   LogOut, 
   Menu, 
-  X, 
   Bell,
   Search,
   Zap,
-  HelpCircle,
   ChevronRight,
+  ChevronLeft,
   MessageCircle,
   Smartphone,
   CalendarClock,
@@ -55,6 +54,7 @@ const DonoDashboard = () => {
     const { user, profile, signOut } = useAuth();
     const { barbershop, loading } = useBarbershop();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
     const location = useLocation();
     const navigate = useNavigate();
@@ -139,66 +139,55 @@ const DonoDashboard = () => {
         <div className="min-h-screen bg-white text-slate-800 font-sans">
             {/* Mobile menu toggle */}
             {!isSidebarOpen && (
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="fixed top-5 left-5 z-50 lg:hidden text-slate-700 bg-white border border-slate-200 shadow-sm rounded-xl"
+                <button
+                    className="fixed top-5 left-5 z-50 lg:hidden p-2 text-slate-700 bg-white border border-slate-200 shadow-sm rounded-xl"
                     onClick={() => setIsSidebarOpen(true)}
                 >
                     <Menu className="w-5 h-5" />
-                </Button>
+                </button>
             )}
 
             {/* Sidebar */}
-            <aside 
-                className={`fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-100 z-40 transition-transform duration-300 flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+            <aside
+                className={`fixed top-0 left-0 h-full bg-white border-r border-slate-100 z-40 transition-all duration-300 flex flex-col
+                    ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                    ${sidebarCollapsed ? 'w-16' : 'w-64'}
+                `}
             >
-                {/* Brand — nome da empresa */}
-                <div className="px-6 py-6 border-b border-slate-100">
-                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-                        <div className="w-9 h-9 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <Zap className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="min-w-0">
+                {/* Brand */}
+                <div className={`px-3 py-5 border-b border-slate-100 flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
+                    <div
+                        className="w-9 h-9 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer"
+                        onClick={() => navigate('/')}
+                    >
+                        <Zap className="w-5 h-5 text-white" />
+                    </div>
+                    {!sidebarCollapsed && (
+                        <div className="min-w-0 flex-1 cursor-pointer" onClick={() => navigate('/')}>
                             <p className="text-sm font-bold text-slate-900 truncate leading-tight">
                                 {barbershop?.name || profile?.name || "Minha Empresa"}
                             </p>
                             <p className="text-[10px] text-slate-400 truncate">Painel de Gestão</p>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-                    {navItems.map((item, idx) => {
+                <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto overflow-x-hidden">
+                    {navItems.map((item) => {
                         const active = isItemActive(item);
                         const hasChildren = item.children && item.children.length > 0;
                         const isExpanded = expandedGroups.includes(item.label);
 
                         if (!hasChildren) {
                             return (
-                                <Link 
-                                    key={item.path} 
+                                <Link
+                                    key={item.path}
                                     to={item.path}
+                                    title={sidebarCollapsed ? item.label : undefined}
                                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
-                                        active 
-                                            ? 'bg-orange-500 text-white font-semibold' 
-                                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                                    }`}
-                                >
-                                    <span className={`flex-shrink-0 ${active ? 'text-white' : 'text-slate-400 group-hover:text-orange-500'}`}>
-                                        {React.cloneElement(item.icon as React.ReactElement, { size: 17 })}
-                                    </span>
-                                    <span className="text-sm">{item.label}</span>
-                                </Link>
-                            );
-                        }
-
-                        return (
-                            <div key={item.path}>
-                                <button
-                                    onClick={() => { toggleGroup(item.label); navigate(item.path); }}
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
+                                        sidebarCollapsed ? 'justify-center' : ''
+                                    } ${
                                         active
                                             ? 'bg-orange-500 text-white font-semibold'
                                             : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
@@ -207,61 +196,115 @@ const DonoDashboard = () => {
                                     <span className={`flex-shrink-0 ${active ? 'text-white' : 'text-slate-400 group-hover:text-orange-500'}`}>
                                         {React.cloneElement(item.icon as React.ReactElement, { size: 17 })}
                                     </span>
-                                    <span className="text-sm flex-1 text-left">{item.label}</span>
-                                    <ChevronDown
-                                        size={13}
-                                        className={`text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
-                                    />
+                                    {!sidebarCollapsed && <span className="text-sm">{item.label}</span>}
+                                </Link>
+                            );
+                        }
+
+                        return (
+                            <div key={item.path}>
+                                <button
+                                    onClick={() => {
+                                        if (sidebarCollapsed) {
+                                            setSidebarCollapsed(false);
+                                            navigate(item.path);
+                                        } else {
+                                            toggleGroup(item.label);
+                                            navigate(item.path);
+                                        }
+                                    }}
+                                    title={sidebarCollapsed ? item.label : undefined}
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
+                                        sidebarCollapsed ? 'justify-center' : ''
+                                    } ${
+                                        active
+                                            ? 'bg-orange-500 text-white font-semibold'
+                                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    <span className={`flex-shrink-0 ${active ? 'text-white' : 'text-slate-400 group-hover:text-orange-500'}`}>
+                                        {React.cloneElement(item.icon as React.ReactElement, { size: 17 })}
+                                    </span>
+                                    {!sidebarCollapsed && (
+                                        <>
+                                            <span className="text-sm flex-1 text-left">{item.label}</span>
+                                            <ChevronDown
+                                                size={13}
+                                                className={`text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+                                            />
+                                        </>
+                                    )}
                                 </button>
 
-                                <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'}`}>
-                                    <div className="ml-4 pl-3 border-l border-slate-100 mt-0.5 space-y-0.5">
-                                        {item.children!.map((sub) => (
-                                            <Link
-                                                key={sub.label}
-                                                to={sub.path}
-                                                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-orange-500 hover:bg-orange-50 transition-all duration-200"
-                                            >
-                                                <span className="text-slate-400">{sub.icon}</span>
-                                                {sub.label}
-                                            </Link>
-                                        ))}
+                                {!sidebarCollapsed && (
+                                    <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'}`}>
+                                        <div className="ml-4 pl-3 border-l border-slate-100 mt-0.5 space-y-0.5">
+                                            {item.children!.map((sub) => (
+                                                <Link
+                                                    key={sub.label}
+                                                    to={sub.path}
+                                                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-orange-500 hover:bg-orange-50 transition-all duration-200"
+                                                >
+                                                    <span className="text-slate-400">{sub.icon}</span>
+                                                    {sub.label}
+                                                </Link>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         );
                     })}
                 </nav>
 
                 {/* Footer — user + logout */}
-                <div className="px-3 py-4 border-t border-slate-100 space-y-1">
-                    <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl">
-                        <Avatar className="w-8 h-8 flex-shrink-0">
-                            <AvatarImage src={profile?.avatar_url || ""} />
-                            <AvatarFallback className="bg-blue-100 text-blue-600 text-xs font-bold uppercase">
-                                {profile?.name?.charAt(0) || "U"}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-slate-800 truncate leading-tight">{profile?.name || "Usuário"}</p>
+                <div className="px-2 py-4 border-t border-slate-100 space-y-1">
+                    {!sidebarCollapsed && (
+                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl">
+                            <Avatar className="w-8 h-8 flex-shrink-0">
+                                <AvatarImage src={profile?.avatar_url || ""} />
+                                <AvatarFallback className="bg-orange-100 text-orange-500 text-xs font-bold uppercase">
+                                    {profile?.name?.charAt(0) || "U"}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold text-slate-800 truncate leading-tight">{profile?.name || "Usuário"}</p>
+                            </div>
                         </div>
-                    </div>
+                    )}
                     <button
                         onClick={() => signOut()}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all duration-200 group"
+                        title="Sair"
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all duration-200 ${sidebarCollapsed ? 'justify-center' : ''}`}
                     >
                         <LogOut className="w-4 h-4 flex-shrink-0" />
-                        <span className="text-sm">Sair</span>
+                        {!sidebarCollapsed && <span className="text-sm">Sair</span>}
                     </button>
                 </div>
+
+                {/* Collapse toggle button — desktop only */}
+                <button
+                    onClick={() => setSidebarCollapsed(c => !c)}
+                    className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 bg-white border border-slate-200 rounded-full items-center justify-center shadow-sm hover:bg-orange-50 hover:border-orange-300 transition-all duration-200 z-50"
+                    title={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
+                >
+                    {sidebarCollapsed
+                        ? <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                        : <ChevronLeft className="w-3.5 h-3.5 text-slate-500" />
+                    }
+                </button>
             </aside>
 
             {/* Main Content Area */}
-            <main className={`transition-all duration-300 ${isSidebarOpen ? 'lg:pl-64' : ''}`}>
+            <main className={`transition-all duration-300 ${
+                isSidebarOpen
+                    ? sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'
+                    : ''
+            }`}>
                 {/* Header */}
                 <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-100 px-6 flex items-center justify-between">
                     <div className="flex items-center gap-4 flex-1">
-                        <div className="hidden md:flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 w-96 focus-within:border-blue-400 focus-within:bg-white transition-all duration-200">
+                        <div className="hidden md:flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 w-96 focus-within:border-orange-400 focus-within:bg-white transition-all duration-200">
                             <Search className="w-4 h-4 text-slate-400" />
                             <input 
                                 type="text" 
