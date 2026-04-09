@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useBarbershop } from "./hooks";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useDynamicLabel } from "@/lib/dynamicLabels";
 import {
   TrendingUp,
   Calendar,
@@ -76,6 +77,9 @@ export const DashboardHome = () => {
     [barbershop?.slug]
   );
 
+  const clientsLabel = useDynamicLabel("clients");
+  const appointmentsLabel = useDynamicLabel("appointments");
+
   const handleShare = useCallback(() => {
     if (!bookingLink) {
       toast.error("Configure o slug da barbearia primeiro.");
@@ -133,11 +137,11 @@ export const DashboardHome = () => {
             <p className="text-xl font-bold text-slate-900">R$ {metrics.todayRevenue.toFixed(2)}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-500 mb-1">Agendamentos</p>
+            <p className="text-xs text-slate-500 mb-1">{appointmentsLabel}</p>
             <p className="text-xl font-bold text-slate-900">{metrics.todayAppointments}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-500 mb-1">Clientes base</p>
+            <p className="text-xs text-slate-500 mb-1">{clientsLabel}</p>
             <p className="text-xl font-bold text-slate-900">{metrics.activeClients}</p>
           </div>
         </div>

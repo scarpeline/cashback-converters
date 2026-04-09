@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useBarbershop, useServices, useProfessionals } from "./hooks";
 import { useAuditLog } from "./useAuditLog";
+import { useDynamicLabel } from "@/lib/dynamicLabels";
 import { ProfessionalSchema, ServiceSchema } from "@/lib/validations";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -38,6 +39,8 @@ import {
 
 export const ManagementHub = () => {
   const [activeTab, setActiveTab] = useState<"professionals" | "services" | "inventory">("professionals");
+  const profLabel = useDynamicLabel("professionals");
+  const servLabel = useDynamicLabel("services");
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -56,7 +59,7 @@ export const ManagementHub = () => {
             className="rounded-xl font-bold"
             onClick={() => setActiveTab("professionals")}
           >
-            Equipe
+            {profLabel}
           </Button>
           <Button 
             variant={activeTab === "services" ? "gold" : "ghost"} 
@@ -64,7 +67,7 @@ export const ManagementHub = () => {
             className="rounded-xl font-bold"
             onClick={() => setActiveTab("services")}
           >
-            Serviços
+            {servLabel}
           </Button>
           <Button 
             variant={activeTab === "inventory" ? "gold" : "ghost"} 

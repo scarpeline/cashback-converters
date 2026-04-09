@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useBarbershop } from "./hooks";
 import { useAuditLog } from "./useAuditLog";
 import { BarbershopProfileSchema } from "@/lib/validations";
@@ -93,9 +93,17 @@ export const SettingsHub = () => {
 const ProfileSettings = () => {
   const { barbershop, refetch } = useBarbershop();
   const { logAction } = useAuditLog(barbershop?.id || "");
-  const [name, setName] = useState(barbershop?.name || "");
-  const [slug, setSlug] = useState(barbershop?.slug || "");
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Sync fields when barbershop loads
+  useEffect(() => {
+    if (barbershop) {
+      setName(barbershop.name || "");
+      setSlug(barbershop.slug || "");
+    }
+  }, [barbershop?.id]);
 
   const handleSave = async () => {
      if (!barbershop?.id) return;

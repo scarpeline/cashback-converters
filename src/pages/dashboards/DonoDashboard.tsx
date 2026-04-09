@@ -287,7 +287,7 @@ const DonoDashboard = () => {
                 </header>
 
                 {/* Conteúdo principal */}
-                <div className="p-6 max-w-[1600px] mx-auto min-h-screen bg-slate-50">
+                <div className="hub-content p-6 max-w-[1600px] mx-auto min-h-screen bg-slate-50">
                     <Suspense fallback={<HubLoading />}>
                         <Routes>
                             <Route index element={<DashboardHome />} />

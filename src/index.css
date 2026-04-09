@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -108,12 +108,13 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
+    font-size: 15px;
     background-attachment: fixed;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold tracking-tight;
-    font-family: 'Montserrat', sans-serif;
+    @apply font-semibold tracking-tight;
+    font-family: 'Inter', sans-serif;
   }
 }
 
@@ -238,6 +239,69 @@
   @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-cyan-300 to-indigo-500;
   filter: drop-shadow(0 2px 4px rgba(99, 102, 241, 0.2));
 }
+
+/* ─── Hub content: force light theme inside dashboard ─── */
+.hub-content .glass-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.06);
+  backdrop-filter: none;
+}
+
+.hub-content h1,
+.hub-content h2,
+.hub-content h3,
+.hub-content h4,
+.hub-content p,
+.hub-content span,
+.hub-content label {
+  color: inherit;
+}
+
+/* Override dark text classes inside hub */
+.hub-content .text-white { color: #0f172a !important; }
+.hub-content .text-slate-50 { color: #0f172a !important; }
+.hub-content .text-slate-100 { color: #1e293b !important; }
+.hub-content .text-slate-200 { color: #334155 !important; }
+.hub-content .text-slate-300 { color: #475569 !important; }
+.hub-content .text-slate-400 { color: #64748b !important; }
+.hub-content .text-slate-500 { color: #64748b !important; }
+.hub-content .text-slate-600 { color: #475569 !important; }
+.hub-content .text-slate-700 { color: #334155 !important; }
+.hub-content .text-slate-800 { color: #1e293b !important; }
+.hub-content .text-slate-900 { color: #0f172a !important; }
+
+/* Dark backgrounds → white */
+.hub-content .bg-slate-950,
+.hub-content .bg-slate-900,
+.hub-content .bg-slate-800 { background-color: #f8fafc !important; }
+
+/* Gradient text → solid dark */
+.hub-content .text-gradient-gold {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: unset !important;
+  color: #1d4ed8 !important;
+  filter: none !important;
+}
+
+/* Inputs inside hubs */
+.hub-content input,
+.hub-content select,
+.hub-content textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+.hub-content input::placeholder,
+.hub-content textarea::placeholder { color: #94a3b8 !important; }
+
+/* Badge overrides */
+.hub-content .bg-white\/5 { background-color: #f1f5f9 !important; }
+.hub-content .bg-white\/10 { background-color: #e2e8f0 !important; }
+.hub-content .border-white\/5 { border-color: #e2e8f0 !important; }
+.hub-content .border-white\/10 { border-color: #cbd5e1 !important; }
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: hsl(var(--background-subtle)); }
