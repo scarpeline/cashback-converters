@@ -16,97 +16,96 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // 1. Find waitlist entries where slot is now available (status = 'waiting')
-    //    and the previous person timed out or the slot just opened
     const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000).toISOString();
 
-    // Get entries that were notified more than 20 min ago but not confirmed
+    // 1. Expire entries notified more than 20 min ago without confirmation
     const { data: timedOut } = await supabase
       .from("waiting_list")
       .select("*")
       .eq("status", "notified")
       .lt("notified_at", twentyMinutesAgo);
 
-    // Move timed-out entries to 'expired'
     if (timedOut && timedOut.length > 0) {
-      const timedOutIds = timedOut.map((w: any) => w.id);
-      await supabase
-        .from("waiting_list")
-        .update({ status: "expired" })
-        .in("id", timedOutIds);
-
-      console.log(`Expired ${timedOutIds.length} waitlist entries`);
+      const ids = timedOut.map((w: any) => w.id);
+      await supabase.from("waiting_list")
+        .update({ status: "expired", expired_at: new Date().toISOString() })
+        .in("id", ids);
+      console.log(`Expired ${ids.length} waitlist entries`);
     }
 
-    // 2. Find available slots: waiting_list entries with status 'waiting' 
-    //    ordered by position, grouped by barbershop + professional + desired time
+    // 2. Find entries still waiting, ordered by priority + creation
     const { data: waiting } = await supabase
       .from("waiting_list")
-      .select("*")
+      .select("*, clients(name, whatsapp)")
       .eq("status", "waiting")
-      .order("position", { ascending: true })
+      .order("priority", { ascending: false })
       .order("created_at", { ascending: true })
-      .limit(50);
+      .limit(20);
 
     if (!waiting || waiting.length === 0) {
-      return new Response(JSON.stringify({ message: "No waiting entries to process" }), {
+      return new Response(JSON.stringify({ message: "No waiting entries", expired: timedOut?.length || 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // 3. For each waiting entry, check if the slot is actually available
+    // 3. Check for available slots and notify first in queue
     const notified: string[] = [];
 
     for (const entry of waiting) {
-      // Check if there's a canceled/available slot
-      const { count } = await supabase
+      // Check if the preferred time slot now has a cancellation
+      const dateStr = entry.preferred_date;
+      const timeStart = entry.preferred_time_start || "00:00";
+
+      // Build datetime for the preferred slot
+      const slotStart = new Date(`${dateStr}T${timeStart}:00`);
+      const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000); // 1 hour window
+
+      // Count active appointments in that slot for the same professional
+      const query = supabase
         .from("appointments")
         .select("id", { count: "exact", head: true })
         .eq("barbershop_id", entry.barbershop_id)
-        .eq("status", "scheduled")
-        .gte("scheduled_at", entry.desired_date)
-        .lt("scheduled_at", new Date(new Date(entry.desired_date).getTime() + 60 * 60 * 1000).toISOString());
+        .in("status", ["scheduled", "confirmed"])
+        .gte("scheduled_at", slotStart.toISOString())
+        .lt("scheduled_at", slotEnd.toISOString());
 
-      // If the slot has fewer appointments than capacity (simplified: check if <1 for the time slot)
-      // In a real system, you'd check against professional availability
-      // For now, notify the first person in the queue
-
-      // Mark as notified
-      await supabase
-        .from("waiting_list")
-        .update({ 
-          status: "notified", 
-          notified_at: new Date().toISOString() 
-        })
-        .eq("id", entry.id);
-
-      // Queue a WhatsApp message
-      if (entry.client_phone) {
-        await supabase.from("job_queue").insert({
-          job_type: "send_whatsapp",
-          payload: {
-            phone: entry.client_phone,
-            message: `Olá ${entry.client_name || ""}! 🎉 Um horário ficou disponível para você! Responda SIM em até 20 minutos para confirmar seu agendamento. Caso contrário, passaremos para o próximo da fila.`,
-            barbershop_id: entry.barbershop_id,
-          },
-          priority: 10,
-          status: "pending",
-          scheduled_at: new Date().toISOString(),
-        });
+      if (entry.professional_id) {
+        query.eq("professional_id", entry.professional_id);
       }
 
-      notified.push(entry.id);
-      
-      // Only notify one person per slot
-      break;
+      const { count } = await query;
+
+      // If there's room (simplified: < 1 appointment means slot is free)
+      if ((count || 0) < 1) {
+        // Mark as notified
+        await supabase.from("waiting_list")
+          .update({ status: "notified", notified_at: new Date().toISOString() })
+          .eq("id", entry.id);
+
+        // Get client phone
+        const clientPhone = entry.clients?.whatsapp;
+        const clientName = entry.clients?.name || "Cliente";
+
+        if (clientPhone) {
+          await supabase.from("job_queue").insert({
+            job_type: "send_whatsapp",
+            payload: {
+              phone: clientPhone,
+              message: `Olá ${clientName}! 🎉 Um horário ficou disponível para você no dia ${dateStr} às ${timeStart}! Responda SIM em até 20 minutos para confirmar. Caso contrário, passaremos para o próximo da fila.`,
+              barbershop_id: entry.barbershop_id,
+            },
+            priority: 10,
+            status: "pending",
+            scheduled_at: new Date().toISOString(),
+          });
+        }
+
+        notified.push(entry.id);
+      }
     }
 
     return new Response(
-      JSON.stringify({ 
-        message: `Processed waitlist: ${timedOut?.length || 0} expired, ${notified.length} notified`,
-        expired: timedOut?.length || 0,
-        notified: notified.length,
-      }),
+      JSON.stringify({ expired: timedOut?.length || 0, notified: notified.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
