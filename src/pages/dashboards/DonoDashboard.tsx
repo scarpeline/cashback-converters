@@ -70,27 +70,7 @@ const DonoDashboard = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Auto-expand group if active
-    useEffect(() => {
-        const activeGroup = navItems.find(item => 
-            item.children && (
-                location.pathname.startsWith(item.path) ||
-                item.children.some(c => location.pathname.startsWith(c.path))
-            )
-        );
-        if (activeGroup && !expandedGroups.includes(activeGroup.label)) {
-            setExpandedGroups(prev => [...prev, activeGroup.label]);
-        }
-    }, [location.pathname]);
-
-    const toggleGroup = (label: string) => {
-        setExpandedGroups(prev => 
-            prev.includes(label) ? prev.filter(g => g !== label) : [...prev, label]
-        );
-    };
-
-    if (loading) return <DashboardLoadingSkeleton />;
-
+    // Declare navItems before any useEffect that uses it
     const navItems: SidebarItem[] = [
         { icon: <LayoutDashboard />, label: "Geral", path: "/painel-dono", exact: true },
         { 
@@ -128,6 +108,27 @@ const DonoDashboard = () => {
         },
         { icon: <Settings />, label: "Ajustes", path: "/painel-dono/configuracoes" },
     ];
+
+    // Auto-expand group if active
+    useEffect(() => {
+        const activeGroup = navItems.find(item =>
+            item.children && (
+                location.pathname.startsWith(item.path) ||
+                item.children.some(c => location.pathname.startsWith(c.path))
+            )
+        );
+        if (activeGroup && !expandedGroups.includes(activeGroup.label)) {
+            setExpandedGroups(prev => [...prev, activeGroup.label]);
+        }
+    }, [location.pathname, navItems, expandedGroups]);
+
+    const toggleGroup = (label: string) => {
+        setExpandedGroups(prev => 
+            prev.includes(label) ? prev.filter(g => g !== label) : [...prev, label]
+        );
+    };
+
+    if (loading) return <DashboardLoadingSkeleton />;
 
     const isItemActive = (item: SidebarItem) => {
         if (item.exact) return location.pathname === item.path;
