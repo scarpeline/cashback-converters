@@ -55,13 +55,14 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         .gte('ends_at', new Date().toISOString())
         .single();
 
-      if (error && error.code !== 'PGRST116') {
+      // PGRST116 = no rows found (normal), ignore 404 (table may not exist yet)
+      if (error && error.code !== 'PGRST116' && error.code !== '42P01' && !error.message?.includes('404')) {
         console.error('Erro ao buscar assinatura:', error);
       }
 
-      setSubscription(data);
+      setSubscription(data ?? null);
     } catch (error) {
-      console.error('Erro inesperado:', error);
+      // Silently ignore if table doesn't exist
     } finally {
       setLoading(false);
     }

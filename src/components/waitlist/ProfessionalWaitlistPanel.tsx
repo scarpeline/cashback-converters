@@ -58,10 +58,6 @@ export const ProfessionalWaitlistPanel = ({ barbershopId, professionalId }: Prof
     notes: "",
   });
 
-  useEffect(() => {
-    loadData();
-  }, [barbershopId, professionalId, selectedDate, loadData]);
-
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -84,6 +80,10 @@ export const ProfessionalWaitlistPanel = ({ barbershopId, professionalId }: Prof
       setLoading(false);
     }
   }, [barbershopId, selectedDate, professionalId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleOfferSlot = async (client: WaitlistEntry) => {
     if (!offerForm.time) {
