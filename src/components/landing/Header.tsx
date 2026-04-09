@@ -17,14 +17,14 @@ const Header = () => {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 transition-premium" style={{ background: "rgba(10, 15, 30, 0.7)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
+    <header className="fixed top-0 left-0 right-0 z-50 transition-premium" style={{ background: "rgba(10, 15, 30, 0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-20 lg:h-24">
           <Link to="/" className="flex items-center gap-3 hover-scale group">
             <div className="relative">
-              <div className="absolute inset-0 bg-orange-500 blur-lg opacity-20 group-hover:opacity-40 transition-premium" />
+              <div className="absolute inset-0 bg-indigo-500 blur-lg opacity-20 group-hover:opacity-40 transition-premium" />
               <div className="relative w-11 h-11 lg:w-12 lg:h-12 bg-gradient-gold rounded-2xl flex items-center justify-center shadow-gold">
-                <Zap className="w-6 h-6 lg:w-7 lg:h-7 text-black fill-black" />
+                <Zap className="w-6 h-6 lg:w-7 lg:h-7 text-white fill-white" />
               </div>
             </div>
             <div>
@@ -36,11 +36,11 @@ const Header = () => {
           <nav className="hidden md:flex items-center gap-10">
             {navLinks.map((link) => (
               link.href.startsWith('/') ? (
-                <Link key={link.label} to={link.href} className="text-sm font-bold tracking-wide transition-premium text-slate-400 hover:text-orange-400 hover:text-glow-orange">
+                <Link key={link.label} to={link.href} className="text-sm font-bold tracking-wide transition-premium text-slate-400 hover:text-indigo-400 hover:text-glow-orange">
                   {link.label}
                 </Link>
               ) : (
-                <a key={link.label} href={link.href} className="text-sm font-bold tracking-wide transition-premium text-slate-400 hover:text-orange-400 hover:text-glow-orange">
+                <a key={link.label} href={link.href} className="text-sm font-bold tracking-wide transition-premium text-slate-400 hover:text-indigo-400 hover:text-glow-orange">
                   {link.label}
                 </a>
               )
@@ -54,7 +54,7 @@ const Header = () => {
               <Button variant="ghost" size="sm" className="font-bold text-slate-300 hover:text-white hover:bg-white/5">Entrar</Button>
             </Link>
             <Link to="/onboarding" className="hover-scale">
-              <Button variant="gold" size="default" className="shadow-gold px-8 font-black">Criar Conta Grátis</Button>
+              <Button variant="gold" size="default" className="shadow-gold px-8 font-black text-white">Criar Conta Grátis</Button>
             </Link>
           </div>
 
@@ -86,7 +86,7 @@ const Header = () => {
                     <Button variant="ghost" className="w-full font-bold text-slate-300">Entrar</Button>
                   </Link>
                   <Link to="/onboarding" onClick={() => setIsMenuOpen(false)}>
-                    <Button variant="gold" className="w-full font-black shadow-gold">Começar</Button>
+                    <Button variant="gold" className="w-full font-black shadow-gold text-white">Começar</Button>
                   </Link>
                 </div>
               </div>
