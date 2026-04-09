@@ -5,6 +5,16 @@ import {
   Percent, Receipt, ClipboardList, Settings, Eye, Send, ShoppingBag, Bot, Mic
 } from "lucide-react";
 
+const categoryColors = [
+  { iconColor: "hsl(262 83% 68%)", iconBg: "hsl(262 83% 58% / 0.12)", featureIconColor: "hsl(262 83% 65%)", featureIconBg: "hsl(262 83% 58% / 0.08)" },
+  { iconColor: "hsl(192 91% 55%)", iconBg: "hsl(192 91% 42% / 0.12)", featureIconColor: "hsl(192 91% 55%)", featureIconBg: "hsl(192 91% 42% / 0.08)" },
+  { iconColor: "hsl(160 84% 50%)", iconBg: "hsl(160 84% 39% / 0.12)", featureIconColor: "hsl(160 84% 50%)", featureIconBg: "hsl(160 84% 39% / 0.08)" },
+  { iconColor: "hsl(280 70% 65%)", iconBg: "hsl(280 70% 55% / 0.12)", featureIconColor: "hsl(280 70% 60%)", featureIconBg: "hsl(280 70% 55% / 0.08)" },
+  { iconColor: "hsl(210 90% 60%)", iconBg: "hsl(210 90% 50% / 0.12)", featureIconColor: "hsl(210 90% 60%)", featureIconBg: "hsl(210 90% 50% / 0.08)" },
+  { iconColor: "hsl(172 66% 55%)", iconBg: "hsl(172 66% 45% / 0.12)", featureIconColor: "hsl(172 66% 55%)", featureIconBg: "hsl(172 66% 45% / 0.08)" },
+  { iconColor: "hsl(340 70% 60%)", iconBg: "hsl(340 70% 50% / 0.12)", featureIconColor: "hsl(340 70% 60%)", featureIconBg: "hsl(340 70% 50% / 0.08)" },
+];
+
 const featureCategories = [
   {
     title: "Agendamento Inteligente",
@@ -14,7 +24,7 @@ const featureCategories = [
       { icon: Calendar, title: "Agendamento Online 24h", description: "Seus clientes agendam a qualquer hora, direto pelo celular." },
       { icon: Clock, title: "Gestão de Horários por Nicho", description: "Configure horários, intervalos e bloqueios para qualquer segmento." },
       { icon: Bell, title: "Lembretes Automáticos", description: "WhatsApp automático 24h antes. Reduza faltas em até 70%." },
-      { icon: UserCheck, title: "Fila de Espera Inteligente", description: "Vaga abriu? O sistema notifica o próximo da fila automaticamente. 20 min para responder." },
+      { icon: UserCheck, title: "Fila de Espera Inteligente", description: "Vaga abriu? O sistema notifica o próximo da fila automaticamente." },
       { icon: ClipboardList, title: "Ficha do Cliente Completa", description: "Histórico de atendimentos, preferências e anotações por segmento." },
     ]
   },
@@ -91,90 +101,93 @@ const featureCategories = [
 
 const AllFeatures = () => {
   return (
-    <section id="todas-funcionalidades" className="py-24 px-4 relative overflow-hidden" style={{ background: "linear-gradient(180deg, hsl(222 30% 10%) 0%, hsl(222 47% 6%) 100%)" }}>
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-px" style={{ background: "linear-gradient(to right, transparent, hsl(42 100% 50% / 0.3), transparent)" }} />
+    <section id="todas-funcionalidades" className="py-28 px-4 relative overflow-hidden" style={{ background: "linear-gradient(180deg, hsl(230 35% 9%) 0%, hsl(230 35% 6%) 100%)" }}>
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-px" style={{ background: "linear-gradient(to right, transparent, hsl(262 83% 58% / 0.3), transparent)" }} />
 
       <div className="container relative z-10 mx-auto">
-        <div className="text-center max-w-4xl mx-auto mb-16">
-          <span className="inline-block px-4 py-1 rounded-full text-sm font-medium mb-4" style={{ background: "hsl(42 100% 50% / 0.1)", color: "hsl(42 100% 55%)" }}>
+        <div className="text-center max-w-4xl mx-auto mb-20">
+          <span className="inline-block px-5 py-1.5 rounded-full text-sm font-semibold mb-5" style={{ background: "hsl(262 83% 58% / 0.1)", color: "hsl(262 83% 75%)" }}>
             Plataforma Completa
           </span>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4" style={{ color: "hsl(0 0% 98%)" }}>
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-6xl font-black mb-5" style={{ color: "hsl(0 0% 98%)" }}>
             Tudo que seu negócio precisa,{" "}
             <span className="text-gradient-gold">em uma só plataforma</span>
           </h2>
-          <p className="text-lg mb-6" style={{ color: "hsl(220 9% 60%)" }}>
+          <p className="text-lg mb-6" style={{ color: "hsl(220 15% 60%)" }}>
             Enquanto você atende, o sistema trabalha por você.{" "}
-            <strong style={{ color: "hsl(42 100% 55%)" }}>Agendamento com IA, pagamentos, marketing e fidelização</strong>{" "}
+            <strong style={{ color: "hsl(192 91% 55%)" }}>Agendamento com IA, pagamentos, marketing e fidelização</strong>{" "}
             — tudo automatizado para qualquer nicho.
           </p>
-          <div className="flex flex-wrap justify-center gap-4 text-sm" style={{ color: "hsl(220 9% 55%)" }}>
+          <div className="flex flex-wrap justify-center gap-4 text-sm" style={{ color: "hsl(220 15% 58%)" }}>
             <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full" style={{ background: "hsl(142 76% 45%)" }} />
+              <span className="w-2 h-2 rounded-full" style={{ background: "hsl(160 84% 50%)" }} />
               +40 funcionalidades
             </span>
             <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full" style={{ background: "hsl(142 76% 45%)" }} />
+              <span className="w-2 h-2 rounded-full" style={{ background: "hsl(160 84% 50%)" }} />
               IA integrada
             </span>
             <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full" style={{ background: "hsl(142 76% 45%)" }} />
+              <span className="w-2 h-2 rounded-full" style={{ background: "hsl(160 84% 50%)" }} />
               Multi-nicho
             </span>
           </div>
         </div>
 
-        <div className="space-y-12">
-          {featureCategories.map((category) => (
-            <div key={category.title} className="rounded-3xl p-6 lg:p-8" style={{ background: "linear-gradient(145deg, hsl(222 30% 14%), hsl(222 30% 11%))", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: "hsl(38 92% 50% / 0.15)" }}>
-                  <category.icon className="w-7 h-7" style={{ color: "hsl(38 92% 55%)" }} />
+        <div className="space-y-10">
+          {featureCategories.map((category, catIdx) => {
+            const colors = categoryColors[catIdx % categoryColors.length];
+            return (
+              <div key={category.title} className="rounded-3xl p-6 lg:p-8" style={{ background: "linear-gradient(145deg, hsl(230 30% 13%), hsl(230 30% 9%))", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: colors.iconBg }}>
+                    <category.icon className="w-7 h-7" style={{ color: colors.iconColor }} />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-xl lg:text-2xl font-bold mb-1" style={{ color: "hsl(0 0% 98%)" }}>
+                      {category.title}
+                    </h3>
+                    <p className="text-sm" style={{ color: "hsl(220 15% 55%)" }}>
+                      {category.description}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-display text-xl lg:text-2xl font-bold mb-1" style={{ color: "hsl(0 0% 98%)" }}>
-                    {category.title}
-                  </h3>
-                  <p className="text-sm" style={{ color: "hsl(220 9% 55%)" }}>
-                    {category.description}
-                  </p>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {category.features.map((feature) => (
-                  <div key={feature.title} className="group p-4 rounded-xl transition-all duration-300 hover:translate-y-[-2px]" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform" style={{ background: "hsl(38 92% 50% / 0.1)" }}>
-                        <feature.icon className="w-5 h-5" style={{ color: "hsl(38 92% 55%)" }} />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-sm mb-1" style={{ color: "hsl(0 0% 95%)" }}>
-                          {feature.title}
-                        </h4>
-                        <p className="text-xs leading-relaxed" style={{ color: "hsl(220 9% 55%)" }}>
-                          {feature.description}
-                        </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {category.features.map((feature) => (
+                    <div key={feature.title} className="group p-4 rounded-xl transition-all duration-300 hover:translate-y-[-2px]" style={{ background: "hsl(0 0% 100% / 0.02)", border: "1px solid hsl(0 0% 100% / 0.05)" }}>
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform" style={{ background: colors.featureIconBg }}>
+                          <feature.icon className="w-5 h-5" style={{ color: colors.featureIconColor }} />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-sm mb-1" style={{ color: "hsl(0 0% 95%)" }}>
+                            {feature.title}
+                          </h4>
+                          <p className="text-xs leading-relaxed" style={{ color: "hsl(220 15% 55%)" }}>
+                            {feature.description}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="mt-16 text-center">
-          <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-6 rounded-2xl" style={{ background: "linear-gradient(145deg, hsl(42 100% 50% / 0.1), hsl(42 100% 50% / 0.05))", border: "1px solid hsl(42 100% 50% / 0.2)" }}>
+          <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-6 rounded-2xl" style={{ background: "linear-gradient(145deg, hsl(262 83% 58% / 0.08), hsl(192 91% 42% / 0.05))", border: "1px solid hsl(262 83% 58% / 0.15)" }}>
             <div className="text-left">
               <p className="font-display text-lg font-bold" style={{ color: "hsl(0 0% 95%)" }}>
                 Todas essas funcionalidades a partir de
               </p>
-              <p className="text-sm" style={{ color: "hsl(220 9% 55%)" }}>
+              <p className="text-sm" style={{ color: "hsl(220 15% 55%)" }}>
                 R$ 16,65/mês no plano anual • 7 dias grátis • Qualquer nicho
               </p>
             </div>
-            <a href="#pricing" className="px-6 py-3 rounded-xl font-semibold transition-all bg-gradient-gold hover:shadow-gold" style={{ color: "hsl(222 47% 11%)" }}>
+            <a href="#pricing" className="px-6 py-3 rounded-xl font-bold transition-all bg-gradient-gold hover:shadow-gold text-white">
               Ver Planos
             </a>
           </div>
