@@ -5,6 +5,20 @@ import { useTranslation } from "react-i18next";
 import { useNiche } from "@/hooks/useNiche";
 import { useNavigate } from "react-router-dom";
 
+interface Plan {
+  name: string;
+  description: string;
+  price: string;
+  priceLabel: string;
+  trial: string;
+  monthlyEquivalent?: string;
+  features: string[];
+  popular: boolean;
+  bestValue?: boolean;
+  planIndex: number;
+  showTrialButton: boolean;
+}
+
 const allFeatures = [
   "7 dias grátis para testar", "Agendamentos ilimitados", "Pagamentos PIX, Crédito e Débito",
   "Split automático de comissões", "Cashback configurável", "WhatsApp automático",
@@ -12,21 +26,26 @@ const allFeatures = [
   "Sistema de afiliados", "Gestão de estoque e produtos", "Exportação de dados", "Suporte via chat",
 ];
 
-const plans = (t: any) => [
-  { 
-    name: t("monthly"), description: t("perfect_to_start"), 
-    prices: [{ label: t("first_month"), price: "19,90" }, { label: t("from_second_month"), price: "29,90" }], 
-    features: allFeatures, popular: false, planIndex: 0, showTrialButton: true 
+const plans = (t: any): Plan[] => [
+  {
+    name: t("monthly"), description: t("perfect_to_start"),
+    price: "19,90", priceLabel: t("first_month"),
+    trial: t("from_second_month_price", { price: "29,90" }) || "A partir do 2º mês: R$29,90",
+    features: allFeatures, popular: false, planIndex: 0, showTrialButton: true,
   },
-  { 
-    name: t("quarterly"), description: t("smart_economy"), 
-    price: "79,90", priceLabel: t("per_3_months"), monthlyEquivalent: `26,63${t("per_month")}`, 
-    features: allFeatures, popular: true, planIndex: 1, showTrialButton: false 
+  {
+    name: t("quarterly"), description: t("smart_economy"),
+    price: "79,90", priceLabel: t("per_3_months"),
+    trial: `${t("equivalent_to") || "Equivale a"} R$26,63${t("per_month") || "/mês"}`,
+    monthlyEquivalent: `26,63${t("per_month")}`,
+    features: allFeatures, popular: true, planIndex: 1, showTrialButton: false,
   },
-  { 
-    name: t("annual"), description: t("max_economy"), 
-    price: "199,90", priceLabel: t("per_year"), monthlyEquivalent: `16,65${t("per_month")}`, 
-    features: allFeatures, popular: false, bestValue: true, planIndex: 2, showTrialButton: false 
+  {
+    name: t("annual"), description: t("max_economy"),
+    price: "199,90", priceLabel: t("per_year"),
+    trial: `${t("equivalent_to") || "Equivale a"} R$16,65${t("per_month") || "/mês"}`,
+    monthlyEquivalent: `16,65${t("per_month")}`,
+    features: allFeatures, popular: false, bestValue: true, planIndex: 2, showTrialButton: false,
   },
 ];
 
