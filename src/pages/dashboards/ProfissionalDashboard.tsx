@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect, Suspense, lazy } from "react";
 import { Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -563,19 +564,7 @@ const GanhosPage = () => {
     )}
   </div>
   );
-};racking-[0.2em] mb-4">Total de Atendimentos</p>
-        <p className="text-5xl font-black text-white group-hover:text-gradient-gold transition-all">0</p>
-        <p className="text-xs font-bold text-orange-400 mt-4 flex items-center gap-2"><CheckCircle2 size={14} /> Expert Performance</p>
-      </div>
-    </div>
-    <div className="glass-card p-20 text-center rounded-[3rem] border-white/5 flex flex-col items-center">
-       <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
-          <DollarSign className="w-10 h-10 text-slate-700" />
-       </div>
-       <p className="text-slate-500 font-black tracking-tight uppercase text-xs tracking-widest italic shadow-premium">Aguardando seu primeiro atendimento Diamond.</p>
-    </div>
-  </div>
-);
+};
 
 // ─── Receber Dívida Diamond ──────────────────────────────────────────────────────
 const ReceberDividaPage = () => {

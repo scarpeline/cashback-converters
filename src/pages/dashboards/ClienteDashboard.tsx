@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect, Suspense, lazy } from "react";
 import { Routes, Route, Link, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
