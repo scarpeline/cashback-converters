@@ -24,6 +24,10 @@ import CommissionsPanel from "@/components/partners/CommissionsPanel";
 import ReferralsPanel from "@/components/partners/ReferralsPanel";
 import ReferralCodeDisplay from "@/components/partners/ReferralCodeDisplay";
 import { usePartnerByUserId } from "@/hooks/usePartners";
+import EarningsCalculator from "@/components/partners/EarningsCalculator";
+import NetworkVisualizer from "@/components/partners/NetworkVisualizer";
+import UpgradeCard from "@/components/partners/UpgradeCard";
+import { usePartnerCommissionConfig } from "@/hooks/usePartnerCommissionConfig";
 
 const AfiliadoDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -157,40 +161,94 @@ function getLevel(n: number) { return AFFILIATE_LEVELS.find(l => n >= l.min && n
 
 const DashboardHome = () => {
   const { user } = useAuth();
+  const { data: partner } = usePartnerByUserId(user?.id || '');
   const [affiliate, setAffiliate] = useState<any>(null);
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const { config } = usePartnerCommissionConfig();
 
   useEffect(() => {
     if (!user) return;
     (supabase as any).from("affiliates").select("*").eq("user_id", user.id).maybeSingle().then(({ data }) => setAffiliate(data));
   }, [user]);
 
+  useEffect(() => {
+    if (!partner?.id) return;
+    (supabase as any)
+      .from("partners")
+      .select("id, users:user_id(name), status")
+      .eq("parent_id", partner.id)
+      .then(({ data }: { data: any[] | null }) => {
+        if (data) {
+          setReferrals(data.map((r: any) => ({
+            id: r.id,
+            name: r.users?.name || "Indicado",
+            status: (r.status === "ativo" ? "ativo" : r.status === "trial" ? "trial" : "inativo") as "ativo" | "trial" | "inativo",
+          })));
+        }
+      });
+  }, [partner?.id]);
+
+  const level = getLevel(affiliate?.total_referrals || 0);
+
   return (
     <div className="space-y-6">
-      <div><h1 className="font-display text-2xl font-bold">Dashboard do Afiliado</h1><p className="text-muted-foreground">Acompanhe seus ganhos e indicações</p>
-        {affiliate && (
-          <span className={`inline-flex items-center gap-1 mt-2 px-3 py-1 rounded-full text-sm font-medium ${getLevel(affiliate.total_referrals || 0).color}`}>
-            ⭐ {getLevel(affiliate.total_referrals || 0).label} • {affiliate.total_referrals || 0} indicações
+      {/* Header com nível */}
+      <div>
+        <h1 className="font-display text-2xl font-bold">Dashboard do Afiliado</h1>
+        <p className="text-muted-foreground">Acompanhe seus ganhos e indicações</p>
+        <div className="flex items-center gap-3 mt-2 flex-wrap">
+          <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${level.color}`}>
+            ⭐ {level.label}
           </span>
-        )}
+          {affiliate && (
+            <span className="text-sm text-muted-foreground">{affiliate.total_referrals || 0} indicações totais</span>
+          )}
+        </div>
       </div>
+
+      {/* Cards de métricas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-gradient-card border-primary/20">
           <CardHeader className="pb-2"><CardDescription>Ganhos Totais</CardDescription><CardTitle className="text-2xl text-gradient-gold">R$ {Number(affiliate?.total_earnings || 0).toFixed(2)}</CardTitle></CardHeader>
           <CardContent><p className="text-xs text-muted-foreground flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Desde o início</p></CardContent>
         </Card>
         <Card><CardHeader className="pb-2"><CardDescription>Saldo Disponível</CardDescription><CardTitle className="text-2xl">R$ {Number(affiliate?.pending_earnings || 0).toFixed(2)}</CardTitle></CardHeader><CardContent><p className="text-xs text-muted-foreground">Para saque</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardDescription>Empresas Ativas</CardDescription><CardTitle className="text-2xl">{affiliate?.active_referrals || 0}</CardTitle></CardHeader><CardContent><p className="text-xs text-muted-foreground">Mínimo 3 para saque</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardDescription>Ganhos Pendentes</CardDescription><CardTitle className="text-2xl">R$ {Number(affiliate?.pending_earnings || 0).toFixed(2)}</CardTitle></CardHeader><CardContent><p className="text-xs text-muted-foreground">Aguardando confirmação</p></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>Indicados Ativos</CardDescription><CardTitle className="text-2xl">{affiliate?.active_referrals || 0}</CardTitle></CardHeader><CardContent><p className="text-xs text-muted-foreground">Mínimo 3 para saque</p></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>Pendentes</CardDescription><CardTitle className="text-2xl">R$ {Number(affiliate?.pending_earnings || 0).toFixed(2)}</CardTitle></CardHeader><CardContent><p className="text-xs text-muted-foreground">Aguardando confirmação</p></CardContent></Card>
       </div>
-      <Card><CardHeader><CardTitle>Como você ganha</CardTitle></CardHeader>
+
+      {/* Calculadora de ganhos */}
+      <EarningsCalculator partnerType="afiliado" />
+
+      {/* Rede visual */}
+      <NetworkVisualizer partnerType="afiliado" directReferrals={referrals} />
+
+      {/* Card de upgrade (apenas para afiliados) */}
+      {partner?.type === "afiliado" && (
+        <UpgradeCard currentType="afiliado" onUpgrade={() => {}} />
+      )}
+
+      {/* Regras de comissão */}
+      <Card><CardHeader><CardTitle>Suas Comissões</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-muted rounded-lg text-center"><p className="text-2xl font-bold text-gradient-gold">{affiliate?.commission_first || 60}%</p><p className="text-sm text-muted-foreground">Primeira mensalidade</p></div>
-            <div className="p-4 bg-muted rounded-lg text-center"><p className="text-2xl font-bold text-gradient-gold">{affiliate?.commission_recurring || 20}%</p><p className="text-sm text-muted-foreground">Mensalidades recorrentes</p></div>
-            <div className="p-4 bg-muted rounded-lg text-center"><p className="text-2xl font-bold text-gradient-gold">{affiliate?.commission_saas_tax || 10}%</p><p className="text-sm text-muted-foreground">Taxa SaaS (0,5%)</p></div>
+            <div className="p-4 bg-muted rounded-lg text-center">
+              <p className="text-2xl font-bold text-gradient-gold">{config.comissao_adesao_afiliado}%</p>
+              <p className="text-sm text-muted-foreground">Sobre adesão</p>
+            </div>
+            <div className="p-4 bg-muted rounded-lg text-center">
+              <p className="text-2xl font-bold text-gradient-gold">{config.comissao_recorrente_afiliado}%</p>
+              <p className="text-sm text-muted-foreground">Mensalidades recorrentes</p>
+            </div>
+            <div className="p-4 bg-muted rounded-lg text-center">
+              <p className="text-2xl font-bold text-gradient-gold">R$ {config.valor_mensalidade}</p>
+              <p className="text-sm text-muted-foreground">Mensalidade base</p>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Saque */}
       <Card><CardHeader><CardTitle className="flex items-center gap-2"><Wallet className="w-5 h-5" />Saque</CardTitle></CardHeader>
         <CardContent>
           <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
@@ -199,6 +257,8 @@ const DashboardHome = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Progressão de Nível */}
       <Card>
         <CardHeader><CardTitle>Progressão de Nível</CardTitle></CardHeader>
         <CardContent>

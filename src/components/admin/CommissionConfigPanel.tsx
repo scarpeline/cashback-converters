@@ -49,6 +49,9 @@ export function CommissionConfigPanel() {
   const [config, setConfig] = useState<RoleConfig>(DEFAULT);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [precoFranqueado, setPrecoFranqueado] = useState("997");
+  const [precoDiretor, setPrecoDiretor] = useState("2997");
+  const [precoAssinatura, setPrecoAssinatura] = useState("97");
 
   useEffect(() => { load(); }, []);
 
@@ -77,6 +80,17 @@ export function CommissionConfigPanel() {
         diretor_recorrente_meses:      String(map["diretor_franqueado__indicacao_direta"]?.regras?.meses ?? 24),
       });
     }
+
+    const { data: settings } = await (supabase as any)
+      .from("integration_settings")
+      .select("service_name, base_url")
+      .in("service_name", ["preco_franqueado", "preco_diretor", "preco_assinatura"]);
+    (settings || []).forEach((s: any) => {
+      if (s.service_name === "preco_franqueado") setPrecoFranqueado(s.base_url || "997");
+      if (s.service_name === "preco_diretor") setPrecoDiretor(s.base_url || "2997");
+      if (s.service_name === "preco_assinatura") setPrecoAssinatura(s.base_url || "97");
+    });
+
     setLoading(false);
   };
 
@@ -154,6 +168,13 @@ export function CommissionConfigPanel() {
         .upsert(rows, { onConflict: "tipo_parceria,tipo_comissao" });
 
       if (error) throw error;
+
+      await (supabase as any).from("integration_settings").upsert([
+        { service_name: "preco_franqueado", environment: "production", is_active: true, base_url: precoFranqueado },
+        { service_name: "preco_diretor", environment: "production", is_active: true, base_url: precoDiretor },
+        { service_name: "preco_assinatura", environment: "production", is_active: true, base_url: precoAssinatura },
+      ], { onConflict: "service_name,environment" });
+
       toast.success("Configuração de comissões salva com sucesso!");
       await load();
     } catch (err: any) {
@@ -361,6 +382,64 @@ export function CommissionConfigPanel() {
               <p className="text-white">Afiliados: <strong>{config.diretor_indicacao_direta_pct}%</strong></p>
               <p className="text-white">Franqueados: <strong>{config.diretor_indicacao_indireta_pct}%</strong></p>
               <p className="text-white">Duração: <strong>{config.diretor_recorrente_meses} meses</strong></p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Preços de Upgrade */}
+      <Card className="border-slate-200">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            💰 Preços de Upgrade
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Valor que o parceiro paga para fazer upgrade de nível. Sincronizado com a landing page e painéis.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-slate-700 block">Preço Franqueado</label>
+              <p className="text-xs text-slate-400">Investimento para se tornar franqueado</p>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min="0"
+                  value={precoFranqueado}
+                  onChange={e => setPrecoFranqueado(e.target.value)}
+                  className="h-10 w-32 text-slate-900 border-slate-200 font-bold"
+                />
+                <span className="text-sm font-bold text-slate-500">R$</span>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-slate-700 block">Preço Diretor</label>
+              <p className="text-xs text-slate-400">Investimento para se tornar diretor</p>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min="0"
+                  value={precoDiretor}
+                  onChange={e => setPrecoDiretor(e.target.value)}
+                  className="h-10 w-32 text-slate-900 border-slate-200 font-bold"
+                />
+                <span className="text-sm font-bold text-slate-500">R$</span>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-slate-700 block">Preço da Assinatura</label>
+              <p className="text-xs text-slate-400">Mensalidade base do sistema</p>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min="0"
+                  value={precoAssinatura}
+                  onChange={e => setPrecoAssinatura(e.target.value)}
+                  className="h-10 w-32 text-slate-900 border-slate-200 font-bold"
+                />
+                <span className="text-sm font-bold text-slate-500">R$/mês</span>
+              </div>
             </div>
           </div>
         </CardContent>

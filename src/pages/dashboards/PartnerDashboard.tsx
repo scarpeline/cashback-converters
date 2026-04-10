@@ -3,6 +3,8 @@
 
 import { useAuth } from '@/lib/auth';
 import { usePartnerByUserId, useDirectReferralsCount, usePartnerCommissionSummary } from '@/hooks/usePartners';
+import FranqueadoDashboard from '@/pages/dashboards/FranqueadoDashboard';
+import DiretorDashboard from '@/pages/dashboards/DiretorDashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
