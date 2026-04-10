@@ -58,17 +58,18 @@ const Pricing = () => {
   const currentPlans = plans(t);
 
   return (
-    <section id="pricing" className="py-20 px-4 bg-slate-50">
+    <section id="pricing" className="py-24 px-4 bg-white">
       <div className="container mx-auto">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-sm font-medium text-blue-600 mb-6">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-200 text-sm font-semibold text-indigo-600 mb-6">
             <Sparkles className="w-4 h-4" />
             Preços Transparentes
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
-            Escolha o plano ideal para <span className="text-orange-500">seu negócio</span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 mb-4 tracking-tight">
+            Escolha o plano ideal para{" "}
+            <span className="bg-gradient-to-r from-indigo-600 to-cyan-600 bg-clip-text text-transparent">seu negócio</span>
           </h2>
-          <p className="text-slate-600">
+          <p className="text-slate-500 text-lg">
             7 dias grátis em todos os planos. Sem cartão de crédito. Cancele quando quiser.
           </p>
         </div>
@@ -77,12 +78,12 @@ const Pricing = () => {
           {currentPlans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 bg-white border ${
-                plan.popular ? "border-orange-200 shadow-xl shadow-orange-500/10" : "border-slate-200"
+              className={`relative rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 bg-white border ${
+                plan.popular ? "border-indigo-300 shadow-xl shadow-indigo-500/10 ring-1 ring-indigo-200" : "border-slate-200"
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-sm font-semibold bg-orange-500 text-white">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-sm font-bold bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-lg">
                   Mais Popular
                 </div>
               )}
