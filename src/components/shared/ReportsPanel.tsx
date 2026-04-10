@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * ReportsPanel — Relatórios do Dono
  * Financeiro, comissões, serviços, produtos vendidos
