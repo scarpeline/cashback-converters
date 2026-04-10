@@ -113,9 +113,9 @@ const Pricing = () => {
 
               <Link to="/onboarding" className="block mb-6">
                 <Button
-                  className={`w-full font-semibold py-5 ${
+                  className={`w-full font-semibold py-5 rounded-xl ${
                     plan.popular
-                      ? "bg-orange-500 hover:bg-orange-600 text-white"
+                      ? "bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white shadow-lg shadow-indigo-500/20"
                       : "border-slate-300 text-slate-700 hover:bg-slate-50"
                   }`}
                   variant={plan.popular ? "default" : "outline"}
