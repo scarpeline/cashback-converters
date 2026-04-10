@@ -563,6 +563,7 @@ const GanhosPage = () => {
     )}
   </div>
   );
+};
 
 // ─── Receber Dívida Diamond ──────────────────────────────────────────────────────
 const ReceberDividaPage = () => {
