@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { usePartnerCommissionConfig } from "@/hooks/usePartnerCommissionConfig";
+import { usePartnerCommissionConfig, calcTotalCommission } from "@/hooks/usePartnerCommissionConfig";
 
 // ─── Icon helpers ─────────────────────────────────────────────────────────────
 const IconUser = ({ color = "currentColor", size = 20 }: { color?: string; size?: number }) => (
@@ -82,23 +82,25 @@ const PartnershipPage = () => {
   const [dirClientesPorAfiliado, setDirClientesPorAfiliado] = useState(5);
 
   // ── Calculations ──────────────────────────────────────────────────────────
+  // Afiliado: adesão + recorrente escalonado (12 meses padrão)
+  const AF_MESES = 12;
   const afAdesao = afClientes * config.preco_assinatura * (config.afiliado_adesao_pct / 100);
-  const afRecorrente =
-    afClientes * config.preco_assinatura * (config.afiliado_recorrente_pct / 100) * config.afiliado_recorrente_meses;
+  const afRecorrente = calcTotalCommission(config.afiliado_escalonado, AF_MESES, config.preco_assinatura) * afClientes;
   const afTotal = afAdesao + afRecorrente;
 
+  // Franqueado: adesão + recorrente escalonado
+  const FR_MESES = 12;
   const frTotalClientes = frAfiliados * frClientesPorAfiliado;
   const frAdesao = frTotalClientes * config.preco_assinatura * (config.franqueado_adesao_pct / 100);
-  const frRecorrente =
-    frTotalClientes * config.preco_assinatura * (config.franqueado_recorrente_pct / 100) * config.franqueado_recorrente_meses;
+  const frRecorrente = calcTotalCommission(config.franqueado_escalonado, FR_MESES, config.preco_assinatura) * frTotalClientes;
   const frTotal = frAdesao + frRecorrente;
 
+  // Diretor: escalonado sobre afiliados + franqueados
+  const DIR_MESES = config.diretor_afiliados_escalonado.meses_escalonados + 8; // ~12 meses
   const dirTotalAfiliados = dirFranqueados * dirAfiliadosPorFranqueado;
   const dirTotalClientes = dirTotalAfiliados * dirClientesPorAfiliado;
-  const dirGanhoAfiliados =
-    dirTotalClientes * config.preco_assinatura * (config.diretor_afiliados_pct / 100) * config.diretor_recorrente_meses;
-  const dirGanhoFranqueados =
-    dirTotalClientes * config.preco_assinatura * (config.diretor_franqueados_pct / 100) * config.diretor_recorrente_meses;
+  const dirGanhoAfiliados = calcTotalCommission(config.diretor_afiliados_escalonado, DIR_MESES, config.preco_assinatura) * dirTotalClientes;
+  const dirGanhoFranqueados = calcTotalCommission(config.diretor_franqueados_escalonado, DIR_MESES, config.preco_assinatura) * dirTotalClientes;
   const dirTotal = dirGanhoAfiliados + dirGanhoFranqueados;
 
   return (
@@ -145,7 +147,8 @@ const PartnershipPage = () => {
               </div>
               <ul className="space-y-2 text-sm text-slate-300 flex-1">
                 <li>✅ {config.afiliado_adesao_pct}% na adesão</li>
-                <li>✅ {config.afiliado_recorrente_pct}% recorrente por {config.afiliado_recorrente_meses} meses</li>
+                <li>✅ Mês 1-4: {config.afiliado_escalonado.pct_alto}% / {config.afiliado_escalonado.pct_baixo}% alternado</li>
+                <li>✅ Mês 5+: {config.afiliado_escalonado.pct_fixo}% fixo recorrente</li>
                 <li>✅ Link de indicação personalizado</li>
                 <li>✅ Dashboard básico</li>
               </ul>
@@ -172,7 +175,8 @@ const PartnershipPage = () => {
               </div>
               <ul className="space-y-2 text-sm text-slate-300 flex-1">
                 <li>✅ {config.franqueado_adesao_pct}% sobre adesões da rede</li>
-                <li>✅ {config.franqueado_recorrente_pct}% recorrente por {config.franqueado_recorrente_meses} meses</li>
+                <li>✅ Mês 1-4: {config.franqueado_escalonado.pct_alto}% / {config.franqueado_escalonado.pct_baixo}% alternado</li>
+                <li>✅ Mês 5+: {config.franqueado_escalonado.pct_fixo}% fixo recorrente</li>
                 <li>✅ Gerencia afiliados</li>
                 <li>✅ Dashboard avançado</li>
               </ul>
@@ -195,9 +199,10 @@ const PartnershipPage = () => {
                 <p className="text-slate-400 text-xs">investimento único</p>
               </div>
               <ul className="space-y-2 text-sm text-slate-300 flex-1">
-                <li>✅ {config.diretor_afiliados_pct}% sobre rede de afiliados</li>
-                <li>✅ {config.diretor_franqueados_pct}% sobre rede de franqueados</li>
-                <li>✅ Por {config.diretor_recorrente_meses} meses</li>
+                <li>✅ Mês 1-4: {config.diretor_afiliados_escalonado.pct_alto}% / {config.diretor_afiliados_escalonado.pct_baixo}% sobre afiliados</li>
+                <li>✅ Mês 5+: {config.diretor_afiliados_escalonado.pct_fixo}% fixo sobre afiliados</li>
+                <li>✅ Mês 1-4: {config.diretor_franqueados_escalonado.pct_alto}% / {config.diretor_franqueados_escalonado.pct_baixo}% sobre franqueados</li>
+                <li>✅ Mês 5+: {config.diretor_franqueados_escalonado.pct_fixo}% fixo sobre franqueados</li>
                 <li>✅ Visão total da rede</li>
               </ul>
               <Link
@@ -258,7 +263,7 @@ const PartnershipPage = () => {
                     <p className="text-xl font-black text-orange-400">{brl(afAdesao)}</p>
                   </div>
                   <div className="bg-slate-700 rounded-xl p-4">
-                    <p className="text-xs text-slate-400 mb-1">Recorrente ({config.afiliado_recorrente_meses} meses)</p>
+                    <p className="text-xs text-slate-400 mb-1">Recorrente (12 meses escalonado)</p>
                     <p className="text-xl font-black text-orange-400">{brl(afRecorrente)}</p>
                   </div>
                   <div className="bg-orange-500/20 border border-orange-500/40 rounded-xl p-4">
@@ -301,7 +306,7 @@ const PartnershipPage = () => {
                     <p className="text-xl font-black text-blue-400">{brl(frAdesao)}</p>
                   </div>
                   <div className="bg-slate-700 rounded-xl p-4">
-                    <p className="text-xs text-slate-400 mb-1">Recorrente ({config.franqueado_recorrente_meses} meses)</p>
+                    <p className="text-xs text-slate-400 mb-1">Recorrente (12 meses escalonado)</p>
                     <p className="text-xl font-black text-blue-400">{brl(frRecorrente)}</p>
                   </div>
                   <div className="bg-blue-500/20 border border-blue-500/40 rounded-xl p-4">
@@ -359,7 +364,7 @@ const PartnershipPage = () => {
                     <p className="text-xl font-black text-purple-400">{brl(dirGanhoFranqueados)}</p>
                   </div>
                   <div className="bg-purple-500/20 border border-purple-500/40 rounded-xl p-4">
-                    <p className="text-xs text-purple-300 mb-1">Total ({config.diretor_recorrente_meses} meses)</p>
+                    <p className="text-xs text-purple-300 mb-1">Total (escalonado)</p>
                     <p className="text-xl font-black text-purple-400">{brl(dirTotal)}</p>
                   </div>
                 </div>
