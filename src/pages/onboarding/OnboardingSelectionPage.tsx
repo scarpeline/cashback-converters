@@ -34,6 +34,7 @@ const SECTORS = [
   { key: "terapias_alternativas", label: "Terapias Alternativas",   icon: "🌿",  desc: "Acupuntura, reiki, meditação, yoga." },
   { key: "moda_imagem",           label: "Moda & Imagem",           icon: "👗",  desc: "Personal stylist, consultores de imagem, alfaiates." },
   { key: "musica_artes",          label: "Música & Artes",          icon: "🎵",  desc: "Professores de música, artistas, ateliês." },
+  { key: "academia",              label: "Academia",                icon: "🏟️",  desc: "Academias de ginástica, musculação e fitness." },
 ];
 
 // ── Especialidades embutidas (fallback quando banco não retorna dados) ─────────
@@ -135,6 +136,14 @@ const FALLBACK_SPECIALTIES: Record<string, { specialty: string; display_name: st
     { specialty: "danca",             display_name: "Dança",              icon: "💃", services_count: 2 },
     { specialty: "teatro",            display_name: "Teatro",             icon: "🎭", services_count: 2 },
   ],
+  academia: [
+    { specialty: "musculacao",        display_name: "Musculação",         icon: "💪", services_count: 3 },
+    { specialty: "ginastica",         display_name: "Ginástica",          icon: "🤸", services_count: 2 },
+    { specialty: "funcional",         display_name: "Treino Funcional",   icon: "🏋️", services_count: 2 },
+    { specialty: "zumba",             display_name: "Zumba / Dança Fit",  icon: "💃", services_count: 2 },
+    { specialty: "natacao_academia",  display_name: "Natação",            icon: "🏊", services_count: 2 },
+    { specialty: "spinning_academia", display_name: "Spinning",           icon: "🚴", services_count: 2 },
+  ],
 };
 
 // Labels específicos por nicho para o dashboard
@@ -156,12 +165,11 @@ const NICHE_LABELS: Record<string, { professionals: string; services: string; ap
   terapias_alternativas: { professionals: "Terapeutas",     services: "Terapias",           appointments: "Sessões",      clients: "Pacientes" },
   moda_imagem:           { professionals: "Consultores",    services: "Consultorias",       appointments: "Consultas",    clients: "Clientes" },
   musica_artes:          { professionals: "Professores",    services: "Aulas",              appointments: "Aulas",        clients: "Alunos" },
+  academia:              { professionals: "Instrutores",    services: "Modalidades",        appointments: "Treinos",      clients: "Alunos" },
 };
 
-// Passos para dono: Perfil → Setor → Especialidade → Negócio → Pagamentos
-// Passos para profissional: Perfil → Área → Especialidade → Seus Dados
-const STEPS_OWNER = ["Perfil", "Setor", "Especialidade", "Negócio", "Pagamentos"];
-const STEPS_PROF  = ["Perfil", "Área", "Especialidade", "Seus Dados"];
+// Passos: Setor → Especialidade → Negócio → Pagamentos
+const STEPS_OWNER = ["Setor", "Especialidade", "Negócio", "Pagamentos"];
 
 const OnboardingSelectionPage = () => {
   const navigate = useNavigate();
@@ -169,7 +177,6 @@ const OnboardingSelectionPage = () => {
   const { selectedSector, setSelectedSector, selectedSpecialty, setSelectedSpecialty } = useOnboarding();
 
   const [step, setStep] = useState(1);
-  const [userType, setUserType] = useState<"owner" | "professional" | null>(null);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
@@ -179,11 +186,8 @@ const OnboardingSelectionPage = () => {
     phone: profile?.whatsapp || "",
     description: "",
   });
-  // Para profissional autônomo: setor próprio (não usa o contexto global)
-  const [profSector, setProfSector] = useState<string | null>(null);
-  const [profSpecialty, setProfSpecialty] = useState<string | null>(null);
 
-  // Dados de pagamento (step 5 — apenas dono)
+  // Dados de pagamento (step 4)
   const [paymentForm, setPaymentForm] = useState<{
     account_type: "pf" | "pj" | "";
     pix_key: string;
@@ -195,32 +199,25 @@ const OnboardingSelectionPage = () => {
     pix_key_type: "cpf",
     skip_payment: false,
   });
-
-  // PIX para profissional
-  const [profPixKey, setProfPixKey] = useState("");
   const [profPixKeyType, setProfPixKeyType] = useState<"cpf" | "email" | "phone" | "random">("cpf");
 
-  const currentSteps = userType === "professional" ? STEPS_PROF : STEPS_OWNER;
-
   // Fetch specialties from sector_presets — com fallback embutido
-  const activeSector = userType === "professional" ? profSector : selectedSector;
   const { data: dbSpecialties, isLoading: loadingSpecialties } = useQuery({
-    queryKey: ["sector_specialties", activeSector],
+    queryKey: ["sector_specialties", selectedSector],
     queryFn: async () => {
-      if (!activeSector) return [];
+      if (!selectedSector) return [];
       const { data, error } = await (supabase as any)
         .from("sector_presets")
         .select("id, sector, specialty, display_name, description, icon, default_services")
-        .eq("sector", activeSector)
+        .eq("sector", selectedSector)
         .order("display_name");
       if (!error && data && data.length > 0) return data;
-      // Fallback: legacy keys
       const altMap: Record<string, string> = {
         beleza_estetica: "beleza", saude_bem_estar: "saude",
         educacao_mentorias: "educacao", servicos_domiciliares: "servicos",
         juridico_financeiro: "juridico", espacos_locacao: "espacos",
       };
-      const alt = altMap[activeSector];
+      const alt = altMap[selectedSector];
       if (alt) {
         const { data: d2 } = await (supabase as any)
           .from("sector_presets")
@@ -230,51 +227,33 @@ const OnboardingSelectionPage = () => {
       }
       return [];
     },
-    enabled: !!activeSector,
+    enabled: !!selectedSector,
   });
 
-  // Usa dados do banco se existirem, senão usa fallback embutido
   const specialties = (dbSpecialties && dbSpecialties.length > 0)
     ? dbSpecialties
-    : (activeSector ? (FALLBACK_SPECIALTIES[activeSector] || []).map((s, i) => ({
-        id: `fallback-${i}`, sector: activeSector, ...s,
+    : (selectedSector ? (FALLBACK_SPECIALTIES[selectedSector] || []).map((s, i) => ({
+        id: `fallback-${i}`, sector: selectedSector, ...s,
         default_services: Array(s.services_count).fill(null),
       })) : []);
 
-  const handleSelectType = (type: "owner" | "professional") => {
-    setUserType(type);
+  const handleSelectSector = (key: string) => {
+    setSelectedSector(key);
+    setSelectedSpecialty(null);
     setStep(2);
   };
 
-  const handleSelectSector = (key: string) => {
-    if (userType === "professional") {
-      setProfSector(key);
-      setProfSpecialty(null);
-    } else {
-      setSelectedSector(key);
-      setSelectedSpecialty(null);
-    }
+  const handleSelectSpecialty = (specialty: string) => {
+    setSelectedSpecialty(specialty);
     setStep(3);
   };
 
-  const handleSelectSpecialty = (specialty: string) => {
-    if (userType === "professional") {
-      setProfSpecialty(specialty);
-    } else {
-      setSelectedSpecialty(specialty);
-    }
-    setStep(userType === "professional" ? 4 : 4);
-  };
-
-  // Voltar inteligente por tipo de usuário
   const handleBack = () => {
-    if (step === 2) { setStep(1); setUserType(null); return; }
+    if (step === 2) { setStep(1); setSelectedSector(null); return; }
     if (step === 3) { setStep(2); return; }
     if (step === 4) { setStep(3); return; }
-    if (step === 5) { setStep(4); return; }
   };
 
-  // Finalizar cadastro de DONO (com ou sem pagamento)
   const _createBarbershop = async () => {
     const newErrors: Record<string, string> = {};
     if (!form.name || form.name.length < 2) newErrors.name = "Nome obrigatório (mín. 2 caracteres)";
@@ -339,29 +318,25 @@ const OnboardingSelectionPage = () => {
     return barbershopId;
   };
 
-  // Avança do step 4 para step 5 (pagamentos)
-  const handleFinishOwner = async () => {
+  // Step 3 → step 4 (pagamentos)
+  const handleAdvanceToPayment = () => {
     const newErrors: Record<string, string> = {};
     if (!form.name || form.name.length < 2) newErrors.name = "Nome obrigatório (mín. 2 caracteres)";
     if (!form.address || form.address.length < 5) newErrors.address = "Endereço obrigatório";
     if (form.cpf_cnpj.replace(/\D/g, "").length < 11) newErrors.cpf_cnpj = "CPF/CNPJ inválido";
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
-    setStep(5);
+    setStep(4);
   };
 
-  // Finalizar com pagamento configurado
-  const handleFinishOwnerWithPayment = async () => {
+  const handleFinishWithPayment = async () => {
     if (!user) return;
     setSaving(true);
     try {
       const barbershopId = await _createBarbershop();
-      if (!barbershopId) return;
+      if (!barbershopId) { setSaving(false); return; }
 
-      if (!paymentForm.skip_payment && paymentForm.pix_key && paymentForm.account_type) {
-        await (supabase as any).from("profiles").update({
-          pix_key: paymentForm.pix_key,
-        }).eq("user_id", user.id);
-
+      if (paymentForm.pix_key && paymentForm.account_type) {
+        await (supabase as any).from("profiles").update({ pix_key: paymentForm.pix_key }).eq("user_id", user.id);
         try {
           await supabase.functions.invoke("process-payment", {
             body: {
@@ -374,7 +349,7 @@ const OnboardingSelectionPage = () => {
             }
           });
         } catch (e) {
-          console.warn("Subconta Asaas não criada agora, pode ser feita depois:", e);
+          console.warn("Subconta Asaas não criada agora:", e);
         }
       }
 
@@ -387,13 +362,12 @@ const OnboardingSelectionPage = () => {
     }
   };
 
-  // Finalizar pulando pagamento
   const handleSkipPayment = async () => {
     if (!user) return;
     setSaving(true);
     try {
       const barbershopId = await _createBarbershop();
-      if (!barbershopId) return;
+      if (!barbershopId) { setSaving(false); return; }
       toast.success("Cadastro concluído! Bem-vindo ao sistema 🎉");
       navigate("/painel-dono");
     } catch (err: any) {
@@ -403,58 +377,6 @@ const OnboardingSelectionPage = () => {
     }
   };
 
-  // Finalizar cadastro de PROFISSIONAL AUTÔNOMO
-  const handleFinishProfessional = async () => {
-    const newErrors: Record<string, string> = {};
-    if (!form.name || form.name.length < 2) newErrors.name = "Nome obrigatório (mín. 2 caracteres)";
-    if (form.cpf_cnpj.replace(/\D/g, "").length < 11) newErrors.cpf_cnpj = "CPF/CNPJ inválido";
-    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
-    if (!user) return;
-
-    setSaving(true);
-    try {
-      // 1. Atualizar perfil
-      await (supabase as any).from("profiles").update({
-        name: form.name,
-        whatsapp: form.phone || null,
-        cpf_cnpj: form.cpf_cnpj || null,
-        ...(profPixKey ? { pix_key: profPixKey } : {}),
-      }).eq("user_id", user.id);
-
-      // 2. Garantir role profissional
-      await (supabase as any).from("user_roles")
-        .upsert({ user_id: user.id, role: "profissional" }, { onConflict: "user_id,role" });
-
-      // 3. Criar registro de profissional autônomo (sem barbershop vinculado)
-      const { data: existingProf } = await (supabase as any)
-        .from("professionals")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (!existingProf) {
-        await (supabase as any).from("professionals").insert({
-          user_id: user.id,
-          name: form.name,
-          email: user.email || null,
-          whatsapp: form.phone || null,
-          is_active: true,
-          commission_percentage: 100, // autônomo fica com 100%
-        });
-      }
-
-      toast.success("Perfil criado! Bem-vindo ao sistema 🎉");
-      // Forçar reload para atualizar roles no contexto
-      window.location.href = "/painel-profissional";
-    } catch (err: any) {
-      toast.error("Erro: " + (err.message || "Tente novamente."));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleFinish = userType === "professional" ? handleFinishProfessional : handleFinishOwnerWithPayment;
-
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-12">
       <div className="absolute top-4 right-4">
@@ -462,19 +384,23 @@ const OnboardingSelectionPage = () => {
       </div>
 
       <div className="w-full max-w-2xl">
-        {/* Logo + title */}
+        {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 border border-orange-100 text-orange-500 text-xs font-medium mb-4">
             <Sparkles className="w-3 h-3" />
             Agenda Universal
           </div>
-          <h1 className="text-2xl font-semibold text-slate-900">Configure seu negócio</h1>
-          <p className="text-sm text-slate-500 mt-1">Leva menos de 2 minutos</p>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Em qual segmento você atua?
+          </h1>
+          <p className="text-sm text-slate-500 mt-2">
+            Vamos configurar tudo automaticamente para o seu tipo de negócio
+          </p>
         </div>
 
         {/* Progress */}
         <div className="flex items-center justify-center gap-0 mb-10">
-          {currentSteps.map((label, i) => {
+          {STEPS_OWNER.map((label, i) => {
             const s = i + 1;
             const done = s < step;
             const active = s === step;
@@ -490,7 +416,7 @@ const OnboardingSelectionPage = () => {
                   </div>
                   <span className={`text-[10px] font-medium ${active ? "text-orange-500" : "text-slate-400"}`}>{label}</span>
                 </div>
-                {s < currentSteps.length && (
+                {s < STEPS_OWNER.length && (
                   <div className={`w-12 h-0.5 mb-4 mx-1 ${done ? "bg-orange-500" : "bg-slate-200"}`} />
                 )}
               </React.Fragment>
@@ -498,79 +424,34 @@ const OnboardingSelectionPage = () => {
           })}
         </div>
 
-        {/* ── STEP 1: Tipo de usuário ── */}
+        {/* ── STEP 1: Setor ── */}
         {step === 1 && (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900 text-center mb-6">Como você vai usar o sistema?</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => handleSelectType("owner")}
-                className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-200 hover:border-orange-400 hover:bg-orange-50 transition-all group text-left"
-              >
-                <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center group-hover:bg-orange-500 transition-colors">
-                  <Building2 className="w-6 h-6 text-orange-500 group-hover:text-white transition-colors" />
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900 text-sm">Dono de Negócio</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Gerencie equipe, agenda e financeiro</p>
-                </div>
-              </button>
-              <button
-                onClick={() => handleSelectType("professional")}
-                className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-200 hover:border-orange-400 hover:bg-orange-50 transition-all group text-left"
-              >
-                <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center group-hover:bg-orange-500 transition-colors">
-                  <Scissors className="w-6 h-6 text-slate-600 group-hover:text-white transition-colors" />
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900 text-sm">Profissional Autônomo</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Agenda pessoal e link de agendamento</p>
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 2: Setor ── */}
-        {step === 2 && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">
-              {userType === "professional" ? "Qual é a sua área de atuação?" : "Qual é o seu setor?"}
-            </h2>
-            <p className="text-sm text-slate-500 text-center mb-6">Vamos personalizar tudo para o seu tipo de negócio</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {SECTORS.map((sector) => {
-                const active = userType === "professional" ? profSector === sector.key : selectedSector === sector.key;
-                return (
-                  <button
-                    key={sector.key}
-                    onClick={() => handleSelectSector(sector.key)}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-[1.02] text-center ${
-                      active ? "border-orange-500 bg-orange-50" : "border-slate-200 hover:border-orange-300 hover:bg-slate-50"
-                    }`}
-                  >
-                    <span className="text-3xl">{sector.icon}</span>
-                    <span className="text-xs font-semibold text-slate-800 leading-tight">{sector.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex justify-start pt-2">
-              <button onClick={handleBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors">
-                <ChevronLeft className="w-4 h-4" /> Voltar
-              </button>
+              {SECTORS.map((sector) => (
+                <button
+                  key={sector.key}
+                  onClick={() => handleSelectSector(sector.key)}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-[1.02] text-center ${
+                    selectedSector === sector.key
+                      ? "border-orange-500 bg-orange-50"
+                      : "border-slate-200 hover:border-orange-300 hover:bg-slate-50"
+                  }`}
+                >
+                  <span className="text-3xl">{sector.icon}</span>
+                  <span className="text-xs font-semibold text-slate-800 leading-tight">{sector.label}</span>
+                </button>
+              ))}
             </div>
           </div>
         )}
 
-        {/* ── STEP 3: Especialidade ── */}
-        {step === 3 && (
+        {/* ── STEP 2: Especialidade ── */}
+        {step === 2 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">Qual é sua especialidade?</h2>
             <p className="text-sm text-slate-500 text-center mb-6">
-              {userType === "professional"
-                ? "Isso vai personalizar seu perfil e link de agendamento"
-                : "Vamos pré-configurar seus serviços, automações e políticas automaticamente"}
+              Vamos pré-configurar seus serviços, automações e políticas automaticamente
             </p>
 
             {loadingSpecialties ? (
@@ -579,33 +460,30 @@ const OnboardingSelectionPage = () => {
               </div>
             ) : specialties.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {specialties.map((spec: any) => {
-                  const active = userType === "professional"
-                    ? profSpecialty === spec.specialty
-                    : selectedSpecialty === spec.specialty;
-                  return (
-                    <button
-                      key={spec.id || spec.specialty}
-                      onClick={() => handleSelectSpecialty(spec.specialty)}
-                      className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-[1.02] text-center ${
-                        active ? "border-orange-500 bg-orange-50" : "border-slate-200 hover:border-orange-300 hover:bg-slate-50"
-                      }`}
-                    >
-                      {active && (
-                        <div className="absolute -top-2 -right-2 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
-                          <Check className="w-3 h-3 text-white" />
-                        </div>
-                      )}
-                      {spec.icon && <span className="text-2xl">{spec.icon}</span>}
-                      <span className="text-sm font-semibold text-slate-800">{spec.display_name || spec.specialty}</span>
-                      {(spec.services_count || spec.default_services?.length) > 0 && (
-                        <span className="text-[10px] text-slate-400">
-                          {spec.services_count || spec.default_services?.length} serviços inclusos
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+                {specialties.map((spec: any) => (
+                  <button
+                    key={spec.id || spec.specialty}
+                    onClick={() => handleSelectSpecialty(spec.specialty)}
+                    className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-[1.02] text-center ${
+                      selectedSpecialty === spec.specialty
+                        ? "border-orange-500 bg-orange-50"
+                        : "border-slate-200 hover:border-orange-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    {selectedSpecialty === spec.specialty && (
+                      <div className="absolute -top-2 -right-2 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                    )}
+                    {spec.icon && <span className="text-2xl">{spec.icon}</span>}
+                    <span className="text-sm font-semibold text-slate-800">{spec.display_name || spec.specialty}</span>
+                    {(spec.services_count || spec.default_services?.length) > 0 && (
+                      <span className="text-[10px] text-slate-400">
+                        {spec.services_count || spec.default_services?.length} serviços inclusos
+                      </span>
+                    )}
+                  </button>
+                ))}
               </div>
             ) : (
               <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl">
@@ -618,72 +496,51 @@ const OnboardingSelectionPage = () => {
               <button onClick={handleBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors">
                 <ChevronLeft className="w-4 h-4" /> Voltar
               </button>
-              {userType === "owner" ? (
-                <button onClick={() => setStep(4)} className="flex items-center gap-1 text-sm text-orange-500 hover:text-orange-600 transition-colors">
-                  {selectedSpecialty ? "Continuar" : "Pular"} <ChevronRight className="w-4 h-4" />
-                </button>
-              ) : (
-                <button onClick={() => setStep(4)} className="flex items-center gap-1 text-sm text-orange-500 hover:text-orange-600 transition-colors">
-                  {profSpecialty ? "Continuar" : "Pular"} <ChevronRight className="w-4 h-4" />
-                </button>
-              )}
+              <button onClick={() => setStep(3)} className="flex items-center gap-1 text-sm text-orange-500 hover:text-orange-600 transition-colors">
+                {selectedSpecialty ? "Continuar" : "Pular"} <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         )}
 
-        {/* ── STEP 4: Dados finais ── */}
-        {step === 4 && (
+        {/* ── STEP 3: Dados do negócio ── */}
+        {step === 3 && (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">
-              {userType === "professional" ? "Seus dados profissionais" : "Dados do seu negócio"}
-            </h2>
+            <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">Dados do seu negócio</h2>
 
-            {/* Badge do setor/especialidade selecionados */}
-            {(userType === "owner" ? selectedSector : profSector) && (
+            {selectedSector && (
               <div className="flex items-center justify-center gap-2 mb-4">
-                <span className="text-2xl">
-                  {SECTORS.find(s => s.key === (userType === "owner" ? selectedSector : profSector))?.icon}
-                </span>
+                <span className="text-2xl">{SECTORS.find(s => s.key === selectedSector)?.icon}</span>
                 <span className="text-sm font-medium text-slate-700">
-                  {SECTORS.find(s => s.key === (userType === "owner" ? selectedSector : profSector))?.label}
-                  {(userType === "owner" ? selectedSpecialty : profSpecialty) && (
-                    ` · ${userType === "owner" ? selectedSpecialty : profSpecialty}`
-                  )}
+                  {SECTORS.find(s => s.key === selectedSector)?.label}
+                  {selectedSpecialty && ` · ${selectedSpecialty}`}
                 </span>
               </div>
             )}
 
             <div className="space-y-3 max-w-md mx-auto">
               <div>
-                <label className="text-sm font-medium text-slate-700">
-                  {userType === "professional" ? "Seu nome completo *" : "Nome do estabelecimento *"}
-                </label>
+                <label className="text-sm font-medium text-slate-700">Nome do estabelecimento *</label>
                 <Input
-                  placeholder={userType === "professional" ? "Ex: João Silva" : "Ex: Studio Maria, Clínica Saúde+"}
+                  placeholder="Ex: Studio Maria, Clínica Saúde+"
                   value={form.name}
                   onChange={e => setForm({ ...form, name: e.target.value })}
                   className={`mt-1 h-11 text-slate-900 border-slate-200 ${errors.name ? "border-red-400" : ""}`}
                 />
                 {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
               </div>
-
-              {userType === "owner" && (
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Endereço completo *</label>
-                  <Input
-                    placeholder="Rua, número, bairro, cidade"
-                    value={form.address}
-                    onChange={e => setForm({ ...form, address: e.target.value })}
-                    className={`mt-1 h-11 text-slate-900 border-slate-200 ${errors.address ? "border-red-400" : ""}`}
-                  />
-                  {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address}</p>}
-                </div>
-              )}
-
               <div>
-                <label className="text-sm font-medium text-slate-700">
-                  {userType === "professional" ? "CPF *" : "CPF ou CNPJ *"}
-                </label>
+                <label className="text-sm font-medium text-slate-700">Endereço completo *</label>
+                <Input
+                  placeholder="Rua, número, bairro, cidade"
+                  value={form.address}
+                  onChange={e => setForm({ ...form, address: e.target.value })}
+                  className={`mt-1 h-11 text-slate-900 border-slate-200 ${errors.address ? "border-red-400" : ""}`}
+                />
+                {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address}</p>}
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700">CPF ou CNPJ *</label>
                 <Input
                   placeholder="000.000.000-00"
                   value={form.cpf_cnpj}
@@ -692,7 +549,6 @@ const OnboardingSelectionPage = () => {
                 />
                 {errors.cpf_cnpj && <p className="text-xs text-red-500 mt-1">{errors.cpf_cnpj}</p>}
               </div>
-
               <div>
                 <label className="text-sm font-medium text-slate-700">WhatsApp</label>
                 <Input
@@ -703,55 +559,14 @@ const OnboardingSelectionPage = () => {
                 />
               </div>
 
-              {/* Preview do que será configurado */}
-              <div className="p-3 bg-orange-50 border border-orange-100 rounded-xl">
-                <p className="text-xs font-medium text-orange-600 mb-1">
-                  {userType === "professional" ? "Você terá acesso a:" : "O que será configurado automaticamente:"}
-                </p>
-                <ul className="text-xs text-orange-500 space-y-0.5">
-                  {userType === "professional" ? (
-                    <>
-                      <li>✓ Agenda pessoal com link de agendamento</li>
-                      <li>✓ Controle de comissões e pagamentos</li>
-                      <li>✓ Notificações automáticas via WhatsApp</li>
-                    </>
-                  ) : (
-                    <>
-                      {(selectedSpecialty) && <li>✓ Serviços pré-configurados para {selectedSpecialty}</li>}
-                      <li>✓ Automações de lembrete e confirmação</li>
-                      <li>✓ Políticas de agendamento</li>
-                    </>
-                  )}
-                </ul>
-              </div>
-
-              {/* PIX para profissional */}
-              {userType === "professional" && (
-                <div className="space-y-3">
-                  <div className="p-3 bg-orange-50 border border-orange-100 rounded-xl">
-                    <p className="text-xs text-orange-600">
-                      💳 Configure sua chave PIX para receber pagamentos dos seus clientes diretamente na sua conta. Você pode configurar depois nas configurações.
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">Chave PIX (opcional)</label>
-                    <select
-                      value={profPixKeyType}
-                      onChange={e => setProfPixKeyType(e.target.value as typeof profPixKeyType)}
-                      className="mt-1 w-full h-11 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 bg-white"
-                    >
-                      <option value="cpf">CPF</option>
-                      <option value="email">E-mail</option>
-                      <option value="phone">Telefone</option>
-                      <option value="random">Chave aleatória</option>
-                    </select>
-                  </div>
-                  <Input
-                    placeholder="Valor da chave PIX"
-                    value={profPixKey}
-                    onChange={e => setProfPixKey(e.target.value)}
-                    className="h-11 text-slate-900 border-slate-200"
-                  />
+              {selectedSpecialty && (
+                <div className="p-3 bg-orange-50 border border-orange-100 rounded-xl">
+                  <p className="text-xs font-medium text-orange-600 mb-1">O que será configurado automaticamente:</p>
+                  <ul className="text-xs text-orange-500 space-y-0.5">
+                    <li>✓ Serviços pré-configurados para {selectedSpecialty}</li>
+                    <li>✓ Automações de lembrete e confirmação</li>
+                    <li>✓ Políticas de agendamento</li>
+                  </ul>
                 </div>
               )}
 
@@ -759,47 +574,30 @@ const OnboardingSelectionPage = () => {
                 <button onClick={handleBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors px-3">
                   <ChevronLeft className="w-4 h-4" /> Voltar
                 </button>
-                {userType === "professional" ? (
-                  <button
-                    onClick={handleFinishProfessional}
-                    disabled={saving}
-                    className="flex-1 h-11 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-                  >
-                    {saving
-                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Configurando...</>
-                      : <>Criar meu perfil <ArrowRight className="w-4 h-4" /></>
-                    }
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleFinishOwner}
-                    disabled={saving}
-                    className="flex-1 h-11 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-                  >
-                    Continuar <ChevronRight className="w-4 h-4" />
-                  </button>
-                )}
+                <button
+                  onClick={handleAdvanceToPayment}
+                  className="flex-1 h-11 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  Continuar <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* ── STEP 5: Dados de Pagamento (apenas dono) ── */}
-        {step === 5 && userType === "owner" && (
+        {/* ── STEP 4: Pagamentos ── */}
+        {step === 4 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">Dados de Pagamento</h2>
 
-            {/* Banner informativo */}
             <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl">
               <p className="text-sm font-medium text-orange-700 mb-1">💳 Para receber pagamentos diretamente na sua conta</p>
               <p className="text-xs text-orange-600">
-                Configure sua chave PIX e crie sua subconta Asaas gratuitamente.
-                Você receberá os pagamentos dos seus clientes automaticamente.
+                Configure sua chave PIX e crie sua subconta Asaas gratuitamente. Você receberá os pagamentos dos seus clientes automaticamente.
               </p>
             </div>
 
             <div className="space-y-4 max-w-md mx-auto">
-              {/* Tipo de conta */}
               <div>
                 <label className="text-sm font-medium text-slate-700 block mb-2">Tipo de conta</label>
                 <div className="grid grid-cols-2 gap-3">
@@ -819,13 +617,12 @@ const OnboardingSelectionPage = () => {
                 </div>
               </div>
 
-              {/* Chave PIX */}
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-2">Chave PIX recebedor</label>
+                <label className="text-sm font-medium text-slate-700 block mb-1">Tipo de chave PIX</label>
                 <select
                   value={paymentForm.pix_key_type}
                   onChange={e => setPaymentForm(p => ({ ...p, pix_key_type: e.target.value as typeof p.pix_key_type }))}
-                  className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 bg-white mb-2"
+                  className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 bg-white"
                 >
                   <option value="cpf">CPF</option>
                   <option value="cnpj">CNPJ</option>
@@ -833,42 +630,42 @@ const OnboardingSelectionPage = () => {
                   <option value="phone">Telefone</option>
                   <option value="random">Chave aleatória</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-700 block mb-1">Chave PIX recebedor</label>
                 <Input
-                  placeholder="Valor da chave PIX"
+                  placeholder="Informe sua chave PIX"
                   value={paymentForm.pix_key}
                   onChange={e => setPaymentForm(p => ({ ...p, pix_key: e.target.value }))}
                   className="h-11 text-slate-900 border-slate-200"
                 />
               </div>
 
-              {/* Aviso subconta Asaas */}
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
                 <p className="text-xs text-slate-500">
                   ℹ️ Ao finalizar, criaremos sua subconta Asaas automaticamente usando os dados informados. Isso permite receber pagamentos diretamente na sua conta.
                 </p>
               </div>
 
-              {/* Botão principal */}
-              <button
-                onClick={handleFinishOwnerWithPayment}
-                disabled={saving}
-                className="w-full h-11 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-              >
-                {saving
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Configurando...</>
-                  : <>Finalizar e Ativar Pagamentos <ArrowRight className="w-4 h-4" /></>
-                }
-              </button>
-
-              {/* Pular */}
-              <div className="flex items-center justify-between">
-                <button onClick={handleBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors">
+              <div className="flex gap-3 pt-2">
+                <button onClick={handleBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors px-3">
                   <ChevronLeft className="w-4 h-4" /> Voltar
                 </button>
                 <button
+                  onClick={handleFinishWithPayment}
+                  disabled={saving}
+                  className="flex-1 h-11 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Configurando...</> : <>Finalizar e Ativar Pagamentos <ArrowRight className="w-4 h-4" /></>}
+                </button>
+              </div>
+
+              <div className="text-center">
+                <button
                   onClick={handleSkipPayment}
                   disabled={saving}
-                  className="text-xs text-slate-400 hover:text-slate-600 transition-colors underline"
+                  className="text-sm text-slate-400 hover:text-slate-600 transition-colors underline"
                 >
                   Configurar depois
                 </button>
