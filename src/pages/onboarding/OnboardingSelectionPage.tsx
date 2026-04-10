@@ -16,6 +16,7 @@ import LanguageSelector from "@/components/LanguageSelector";
 
 // ── Sectors ──────────────────────────────────────────────────────────────────
 const SECTORS = [
+  // Existentes
   { key: "beleza_estetica",       label: "Beleza & Estética",       icon: "✂️",  desc: "Salões, barbearias, nail designers, esteticistas." },
   { key: "saude_bem_estar",       label: "Saúde & Bem-Estar",       icon: "❤️",  desc: "Clínicas, fisioterapeutas, psicólogos, nutricionistas." },
   { key: "educacao_mentorias",    label: "Educação & Mentorias",    icon: "📚",  desc: "Professores, coaches, consultores, idiomas." },
@@ -24,6 +25,15 @@ const SECTORS = [
   { key: "servicos_domiciliares", label: "Serviços Domiciliares",   icon: "🏠",  desc: "Eletricistas, encanadores, diaristas." },
   { key: "juridico_financeiro",   label: "Jurídico & Financeiro",   icon: "💼",  desc: "Advogados, contadores, consultores." },
   { key: "espacos_locacao",       label: "Espaços & Locação",       icon: "🔑",  desc: "Salas, estúdios, quadras, coworking." },
+  // Novos setores
+  { key: "esportes_fitness",      label: "Esportes & Fitness",      icon: "🏋️",  desc: "Personal trainers, academias, crossfit, natação." },
+  { key: "tatuagem_piercing",     label: "Tatuagem & Piercing",     icon: "🎨",  desc: "Estúdios de tatuagem, piercing e body art." },
+  { key: "fotografia_video",      label: "Fotografia & Vídeo",      icon: "📸",  desc: "Fotógrafos, videomakers, ensaios e eventos." },
+  { key: "gastronomia_eventos",   label: "Gastronomia & Eventos",   icon: "🍽️",  desc: "Chefs, buffets, bartenders, confeiteiros." },
+  { key: "tecnologia_ti",         label: "Tecnologia & TI",         icon: "💻",  desc: "Suporte técnico, desenvolvimento, consultoria." },
+  { key: "terapias_alternativas", label: "Terapias Alternativas",   icon: "🌿",  desc: "Acupuntura, reiki, meditação, yoga." },
+  { key: "moda_imagem",           label: "Moda & Imagem",           icon: "👗",  desc: "Personal stylist, consultores de imagem, alfaiates." },
+  { key: "musica_artes",          label: "Música & Artes",          icon: "🎵",  desc: "Professores de música, artistas, ateliês." },
 ];
 
 // ── Especialidades embutidas (fallback quando banco não retorna dados) ─────────
@@ -72,6 +82,59 @@ const FALLBACK_SPECIALTIES: Record<string, { specialty: string; display_name: st
     { specialty: "estudio",        display_name: "Estúdio",          icon: "🎬", services_count: 2 },
     { specialty: "quadra",         display_name: "Quadra Esportiva", icon: "⚽", services_count: 2 },
   ],
+  // Novos setores
+  esportes_fitness: [
+    { specialty: "personal_trainer",  display_name: "Personal Trainer",   icon: "🏋️", services_count: 3 },
+    { specialty: "crossfit",          display_name: "CrossFit",           icon: "💪", services_count: 2 },
+    { specialty: "natacao",           display_name: "Natação",            icon: "🏊", services_count: 2 },
+    { specialty: "yoga",              display_name: "Yoga",               icon: "🧘", services_count: 2 },
+    { specialty: "artes_marciais",    display_name: "Artes Marciais",     icon: "🥋", services_count: 2 },
+    { specialty: "spinning_bike",     display_name: "Spinning / Bike",    icon: "🚴", services_count: 2 },
+  ],
+  tatuagem_piercing: [
+    { specialty: "tatuagem",          display_name: "Tatuagem",           icon: "🖊️", services_count: 3 },
+    { specialty: "piercing",          display_name: "Piercing",           icon: "💎", services_count: 2 },
+    { specialty: "micropigmentacao",  display_name: "Micropigmentação",   icon: "✏️", services_count: 3 },
+    { specialty: "laser_remocao",     display_name: "Remoção a Laser",    icon: "⚡", services_count: 2 },
+  ],
+  fotografia_video: [
+    { specialty: "fotografo_eventos", display_name: "Fotógrafo de Eventos", icon: "📸", services_count: 3 },
+    { specialty: "ensaio_fotografico",display_name: "Ensaio Fotográfico",   icon: "🤳", services_count: 3 },
+    { specialty: "videomaker",        display_name: "Videomaker",           icon: "🎬", services_count: 2 },
+    { specialty: "fotografo_produto", display_name: "Foto de Produto",      icon: "📦", services_count: 2 },
+  ],
+  gastronomia_eventos: [
+    { specialty: "chef_particular",   display_name: "Chef Particular",    icon: "👨‍🍳", services_count: 3 },
+    { specialty: "confeiteiro",       display_name: "Confeiteiro",        icon: "🎂", services_count: 3 },
+    { specialty: "bartender",         display_name: "Bartender",          icon: "🍹", services_count: 2 },
+    { specialty: "buffet",            display_name: "Buffet & Eventos",   icon: "🍽️", services_count: 2 },
+  ],
+  tecnologia_ti: [
+    { specialty: "suporte_tecnico",   display_name: "Suporte Técnico",    icon: "🖥️", services_count: 3 },
+    { specialty: "dev_freelancer",    display_name: "Dev Freelancer",     icon: "💻", services_count: 2 },
+    { specialty: "consultoria_ti",    display_name: "Consultoria TI",     icon: "🔧", services_count: 2 },
+    { specialty: "designer_grafico",  display_name: "Designer Gráfico",   icon: "🎨", services_count: 2 },
+  ],
+  terapias_alternativas: [
+    { specialty: "acupuntura",        display_name: "Acupuntura",         icon: "🪡", services_count: 2 },
+    { specialty: "reiki",             display_name: "Reiki",              icon: "✨", services_count: 2 },
+    { specialty: "meditacao",         display_name: "Meditação",          icon: "🧘", services_count: 2 },
+    { specialty: "terapia_holistica", display_name: "Terapia Holística",  icon: "🌿", services_count: 2 },
+    { specialty: "hipnoterapia",      display_name: "Hipnoterapia",       icon: "🌀", services_count: 2 },
+  ],
+  moda_imagem: [
+    { specialty: "personal_stylist",  display_name: "Personal Stylist",   icon: "👗", services_count: 2 },
+    { specialty: "consultor_imagem",  display_name: "Consultor de Imagem",icon: "🪞", services_count: 2 },
+    { specialty: "alfaiate",          display_name: "Alfaiate",           icon: "🧵", services_count: 3 },
+    { specialty: "colorista_pessoal", display_name: "Colorista Pessoal",  icon: "🎨", services_count: 2 },
+  ],
+  musica_artes: [
+    { specialty: "aulas_musica",      display_name: "Aulas de Música",    icon: "🎸", services_count: 2 },
+    { specialty: "aulas_canto",       display_name: "Aulas de Canto",     icon: "🎤", services_count: 2 },
+    { specialty: "atelie_artes",      display_name: "Ateliê de Artes",    icon: "🖌️", services_count: 2 },
+    { specialty: "danca",             display_name: "Dança",              icon: "💃", services_count: 2 },
+    { specialty: "teatro",            display_name: "Teatro",             icon: "🎭", services_count: 2 },
+  ],
 };
 
 // Labels específicos por nicho para o dashboard
@@ -84,6 +147,15 @@ const NICHE_LABELS: Record<string, { professionals: string; services: string; ap
   servicos_domiciliares: { professionals: "Profissionais",  services: "Serviços",           appointments: "Visitas",      clients: "Clientes" },
   juridico_financeiro:   { professionals: "Especialistas",  services: "Consultorias",       appointments: "Consultas",    clients: "Clientes" },
   espacos_locacao:       { professionals: "Gestores",       services: "Espaços",            appointments: "Reservas",     clients: "Locatários" },
+  // Novos setores
+  esportes_fitness:      { professionals: "Instrutores",    services: "Treinos/Aulas",      appointments: "Treinos",      clients: "Alunos" },
+  tatuagem_piercing:     { professionals: "Artistas",       services: "Trabalhos",          appointments: "Sessões",      clients: "Clientes" },
+  fotografia_video:      { professionals: "Fotógrafos",     services: "Ensaios/Produções",  appointments: "Sessões",      clients: "Clientes" },
+  gastronomia_eventos:   { professionals: "Chefs",          services: "Serviços",           appointments: "Eventos",      clients: "Clientes" },
+  tecnologia_ti:         { professionals: "Especialistas",  services: "Serviços TI",        appointments: "Atendimentos", clients: "Clientes" },
+  terapias_alternativas: { professionals: "Terapeutas",     services: "Terapias",           appointments: "Sessões",      clients: "Pacientes" },
+  moda_imagem:           { professionals: "Consultores",    services: "Consultorias",       appointments: "Consultas",    clients: "Clientes" },
+  musica_artes:          { professionals: "Professores",    services: "Aulas",              appointments: "Aulas",        clients: "Alunos" },
 };
 
 // Passos para dono: Perfil → Setor → Especialidade → Negócio
