@@ -59,6 +59,8 @@ import { lazy, Suspense } from "react";
 import { CadastroContadorPanel } from "@/components/contabilidade/CadastroContadorPanel";
 import { ConfigComissoesPanel } from "@/components/contabilidade/ConfigComissoesPanel";
 import { CommissionConfigPanel } from "@/components/admin/CommissionConfigPanel";
+import { PartnerLandingContentPanel } from "@/components/admin/PartnerLandingContentPanel";
+import { PricingConfigPanel } from "@/components/admin/PricingConfigPanel";
 import { WebhookManagementPanel } from "@/components/admin/WebhookManagementPanel";
 import { IntegrationTestsPanel } from "@/components/admin/IntegrationTestsPanel";
 import { RealTimeMetricsPanel } from "@/components/admin/RealTimeMetricsPanel";
@@ -157,6 +159,8 @@ const SuperAdminDashboard = () => {
         { name: "Visibilidade Landing", href: `${basePath}/visibilidade`, icon: Eye },
         { name: "Configurações", href: `${basePath}/configuracoes`, icon: Settings },
         { name: "Comissões Parceiros", href: `${basePath}/comissoes-parceiros`, icon: TrendingUp },
+        { name: "Textos Landing Parceiros", href: `${basePath}/landing-parceiros`, icon: MessageCircle },
+        { name: "Preços Landing Page", href: `${basePath}/precos-landing`, icon: CreditCard },
       ],
     },
   ], [basePath]);
@@ -338,6 +342,8 @@ const SuperAdminDashboard = () => {
             <Route path="visibilidade" element={<LandingVisibilidadePage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
             <Route path="comissoes-parceiros" element={<ComissoesParceirosPage />} />
+            <Route path="landing-parceiros" element={<LandingParceirosPage />} />
+            <Route path="precos-landing" element={<PrecosLandingPage />} />
           </Routes>
         </main>
       </div>
@@ -3894,5 +3900,31 @@ const ComissoesParceirosPage = () => (
       </p>
     </div>
     <CommissionConfigPanel />
+  </div>
+);
+
+// ============ TEXTOS LANDING PARCEIROS ============
+const LandingParceirosPage = () => (
+  <div className="space-y-6">
+    <div>
+      <h1 className="font-display text-2xl font-bold">Textos — Landing de Parceiros</h1>
+      <p className="text-muted-foreground text-sm mt-1">
+        Edite os textos exibidos na página <code>/seja-um-franqueado</code>. Alterações refletem imediatamente.
+      </p>
+    </div>
+    <PartnerLandingContentPanel />
+  </div>
+);
+
+// ============ PREÇOS LANDING PAGE ============
+const PrecosLandingPage = () => (
+  <div className="space-y-6">
+    <div>
+      <h1 className="font-display text-2xl font-bold">Preços — Landing Page Principal</h1>
+      <p className="text-muted-foreground text-sm mt-1">
+        Edite os planos, preços, funcionalidades e taxas exibidos na seção de preços da landing page.
+      </p>
+    </div>
+    <PricingConfigPanel />
   </div>
 );
