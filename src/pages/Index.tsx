@@ -1,9 +1,9 @@
 import Header from "@/components/landing/Header";
 import Hero from "@/components/landing/Hero";
-import PaymentMethodsSection from "@/components/landing/PaymentMethodsSection";
-import IntegrationBlocks from "@/components/landing/IntegrationBlocks";
+import HowItWorks from "@/components/landing/HowItWorks";
 import Features from "@/components/landing/Features";
-import AllFeatures from "@/components/landing/AllFeatures";
+import PortfolioCarousel from "@/components/landing/PortfolioCarousel";
+import SocialProof from "@/components/landing/SocialProof";
 import Pricing from "@/components/landing/Pricing";
 import CTA from "@/components/landing/CTA";
 import Footer from "@/components/landing/Footer";
@@ -15,10 +15,10 @@ const Index = () => {
       <Header />
       <main className="pt-16">
         <Hero />
-        <PaymentMethodsSection />
-        <IntegrationBlocks />
+        <HowItWorks />
         <Features />
-        <AllFeatures />
+        <PortfolioCarousel />
+        <SocialProof />
         <Pricing />
         <CTA />
       </main>
