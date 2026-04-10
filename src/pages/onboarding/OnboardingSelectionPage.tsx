@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2, Scissors, ChevronRight, ChevronLeft,
-  ArrowRight, Lock, Check, Loader2, Sparkles,
+  ArrowRight, Lock, Check, Loader2, Sparkles, User,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -26,6 +26,54 @@ const SECTORS = [
   { key: "espacos_locacao",       label: "Espaços & Locação",       icon: "🔑",  desc: "Salas, estúdios, quadras, coworking." },
 ];
 
+// ── Especialidades embutidas (fallback quando banco não retorna dados) ─────────
+const FALLBACK_SPECIALTIES: Record<string, { specialty: string; display_name: string; icon: string; services_count: number }[]> = {
+  beleza_estetica: [
+    { specialty: "barbearia",      display_name: "Barbearia",       icon: "✂️", services_count: 3 },
+    { specialty: "salao_de_beleza",display_name: "Salão de Beleza", icon: "💇", services_count: 3 },
+    { specialty: "nail_designer",  display_name: "Nail Designer",   icon: "💅", services_count: 3 },
+    { specialty: "esteticista",    display_name: "Esteticista",     icon: "✨", services_count: 3 },
+    { specialty: "maquiadora",     display_name: "Maquiadora",      icon: "🎨", services_count: 2 },
+  ],
+  saude_bem_estar: [
+    { specialty: "fisioterapia",   display_name: "Fisioterapia",    icon: "🏥", services_count: 2 },
+    { specialty: "pilates",        display_name: "Pilates",         icon: "🧘", services_count: 2 },
+    { specialty: "psicologia",     display_name: "Psicologia",      icon: "🧠", services_count: 2 },
+    { specialty: "nutricao",       display_name: "Nutrição",        icon: "🍎", services_count: 2 },
+    { specialty: "massagem",       display_name: "Massoterapia",    icon: "💆", services_count: 2 },
+  ],
+  educacao_mentorias: [
+    { specialty: "aulas_particulares", display_name: "Aulas Particulares", icon: "📖", services_count: 2 },
+    { specialty: "coaching",           display_name: "Coaching",           icon: "🎯", services_count: 2 },
+    { specialty: "idiomas",            display_name: "Idiomas",            icon: "🌍", services_count: 2 },
+  ],
+  automotivo: [
+    { specialty: "oficina",            display_name: "Oficina Mecânica",   icon: "🔧", services_count: 2 },
+    { specialty: "estetica_automotiva",display_name: "Estética Automotiva",icon: "🚗", services_count: 2 },
+    { specialty: "lava_rapido",        display_name: "Lava-Rápido",        icon: "💧", services_count: 2 },
+  ],
+  pets: [
+    { specialty: "banho_tosa",    display_name: "Banho & Tosa",    icon: "🛁", services_count: 3 },
+    { specialty: "veterinario",   display_name: "Veterinário",     icon: "🏥", services_count: 2 },
+    { specialty: "adestramento",  display_name: "Adestramento",    icon: "🐾", services_count: 2 },
+  ],
+  servicos_domiciliares: [
+    { specialty: "eletricista",   display_name: "Eletricista",     icon: "⚡", services_count: 2 },
+    { specialty: "encanador",     display_name: "Encanador",       icon: "💧", services_count: 2 },
+    { specialty: "diarista",      display_name: "Diarista",        icon: "🏠", services_count: 2 },
+  ],
+  juridico_financeiro: [
+    { specialty: "advogado",           display_name: "Advogado",           icon: "⚖️", services_count: 2 },
+    { specialty: "contador",           display_name: "Contador",           icon: "🧮", services_count: 2 },
+    { specialty: "consultor_financeiro",display_name: "Consultor Financeiro",icon: "📈", services_count: 2 },
+  ],
+  espacos_locacao: [
+    { specialty: "salas_reuniao",  display_name: "Salas de Reunião", icon: "🏢", services_count: 2 },
+    { specialty: "estudio",        display_name: "Estúdio",          icon: "🎬", services_count: 2 },
+    { specialty: "quadra",         display_name: "Quadra Esportiva", icon: "⚽", services_count: 2 },
+  ],
+};
+
 // Labels específicos por nicho para o dashboard
 const NICHE_LABELS: Record<string, { professionals: string; services: string; appointments: string; clients: string }> = {
   beleza_estetica:       { professionals: "Profissionais",  services: "Serviços",          appointments: "Agendamentos", clients: "Clientes" },
@@ -38,7 +86,10 @@ const NICHE_LABELS: Record<string, { professionals: string; services: string; ap
   espacos_locacao:       { professionals: "Gestores",       services: "Espaços",            appointments: "Reservas",     clients: "Locatários" },
 };
 
-const STEPS = ["Perfil", "Setor", "Especialidade", "Negócio"];
+// Passos para dono: Perfil → Setor → Especialidade → Negócio
+// Passos para profissional: Perfil → Setor → Especialidade → Dados pessoais
+const STEPS_OWNER = ["Perfil", "Setor", "Especialidade", "Negócio"];
+const STEPS_PROF  = ["Perfil", "Especialidade", "Seus Dados"];
 
 const OnboardingSelectionPage = () => {
   const navigate = useNavigate();
@@ -56,63 +107,85 @@ const OnboardingSelectionPage = () => {
     phone: profile?.whatsapp || "",
     description: "",
   });
+  // Para profissional autônomo: setor próprio (não usa o contexto global)
+  const [profSector, setProfSector] = useState<string | null>(null);
+  const [profSpecialty, setProfSpecialty] = useState<string | null>(null);
 
-  // Fetch specialties from sector_presets using the sector key directly
-  const { data: specialties, isLoading: loadingSpecialties } = useQuery({
-    queryKey: ["sector_specialties", selectedSector],
+  const currentSteps = userType === "professional" ? STEPS_PROF : STEPS_OWNER;
+
+  // Fetch specialties from sector_presets — com fallback embutido
+  const activeSector = userType === "professional" ? profSector : selectedSector;
+  const { data: dbSpecialties, isLoading: loadingSpecialties } = useQuery({
+    queryKey: ["sector_specialties", activeSector],
     queryFn: async () => {
-      if (!selectedSector) return [];
-      // Try exact match first
+      if (!activeSector) return [];
       const { data, error } = await (supabase as any)
         .from("sector_presets")
         .select("id, sector, specialty, display_name, description, icon, default_services")
-        .eq("sector", selectedSector)
+        .eq("sector", activeSector)
         .order("display_name");
       if (!error && data && data.length > 0) return data;
-      // Fallback: try legacy sector key mapping
+      // Fallback: legacy keys
       const altMap: Record<string, string> = {
-        beleza_estetica: "beleza",
-        saude_bem_estar: "saude",
-        educacao_mentorias: "educacao",
-        servicos_domiciliares: "servicos",
-        juridico_financeiro: "juridico",
-        espacos_locacao: "espacos",
+        beleza_estetica: "beleza", saude_bem_estar: "saude",
+        educacao_mentorias: "educacao", servicos_domiciliares: "servicos",
+        juridico_financeiro: "juridico", espacos_locacao: "espacos",
       };
-      const alt = altMap[selectedSector];
+      const alt = altMap[activeSector];
       if (alt) {
         const { data: d2 } = await (supabase as any)
           .from("sector_presets")
           .select("id, sector, specialty, display_name, description, icon, default_services")
-          .eq("sector", alt)
-          .order("display_name");
-        return d2 || [];
+          .eq("sector", alt).order("display_name");
+        if (d2 && d2.length > 0) return d2;
       }
       return [];
     },
-    enabled: !!selectedSector,
+    enabled: !!activeSector,
   });
+
+  // Usa dados do banco se existirem, senão usa fallback embutido
+  const specialties = (dbSpecialties && dbSpecialties.length > 0)
+    ? dbSpecialties
+    : (activeSector ? (FALLBACK_SPECIALTIES[activeSector] || []).map((s, i) => ({
+        id: `fallback-${i}`, sector: activeSector, ...s,
+        default_services: Array(s.services_count).fill(null),
+      })) : []);
 
   const handleSelectType = (type: "owner" | "professional") => {
     setUserType(type);
-    if (type === "professional") {
-      navigate("/painel-profissional");
-      return;
-    }
     setStep(2);
   };
 
   const handleSelectSector = (key: string) => {
-    setSelectedSector(key);
-    setSelectedSpecialty(null);
+    if (userType === "professional") {
+      setProfSector(key);
+      setProfSpecialty(null);
+    } else {
+      setSelectedSector(key);
+      setSelectedSpecialty(null);
+    }
     setStep(3);
   };
 
   const handleSelectSpecialty = (specialty: string) => {
-    setSelectedSpecialty(specialty);
-    setStep(4);
+    if (userType === "professional") {
+      setProfSpecialty(specialty);
+    } else {
+      setSelectedSpecialty(specialty);
+    }
+    setStep(userType === "professional" ? 3 : 4);
   };
 
-  const handleFinish = async () => {
+  // Voltar inteligente por tipo de usuário
+  const handleBack = () => {
+    if (step === 2) { setStep(1); setUserType(null); return; }
+    if (step === 3) { setStep(2); return; }
+    if (step === 4) { setStep(3); return; }
+  };
+
+  // Finalizar cadastro de DONO
+  const handleFinishOwner = async () => {
     const newErrors: Record<string, string> = {};
     if (!form.name || form.name.length < 2) newErrors.name = "Nome obrigatório (mín. 2 caracteres)";
     if (!form.address || form.address.length < 5) newErrors.address = "Endereço obrigatório";
@@ -127,21 +200,14 @@ const OnboardingSelectionPage = () => {
         .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `negocio-${user.id.slice(0, 8)}`;
 
       const nicheLabels = selectedSector ? NICHE_LABELS[selectedSector] : null;
-
       const payload = {
-        owner_user_id: user.id,
-        name: form.name,
-        address: form.address,
-        phone: form.phone || null,
-        description: form.description || null,
-        sector: selectedSector || null,
-        specialty: selectedSpecialty || null,
+        owner_user_id: user.id, name: form.name, address: form.address,
+        phone: form.phone || null, description: form.description || null,
+        sector: selectedSector || null, specialty: selectedSpecialty || null,
         onboarding_status: "configured",
-        // Store niche labels in metadata for dynamic UI
         ...(nicheLabels ? { niche_labels: nicheLabels } : {}),
       };
 
-      // Check existing barbershop
       const { data: existingList } = await (supabase as any)
         .from("barbershops").select("id, slug")
         .eq("owner_user_id", user.id).order("created_at", { ascending: true }).limit(1);
@@ -168,30 +234,15 @@ const OnboardingSelectionPage = () => {
         barbershopId = inserted.id;
       }
 
-      // Apply full preset (services + automations + policies + resources)
       if (selectedSector && selectedSpecialty && specialties?.length) {
         const preset = specialties.find((s: any) =>
           s.specialty === selectedSpecialty || s.display_name === selectedSpecialty
         );
-        if (preset) {
+        if (preset && preset.id && !preset.id.startsWith("fallback")) {
           await applyInitialPreset(user.id, barbershopId, selectedSector, selectedSpecialty, preset);
-        } else {
-          // Apply services only from any matching preset
-          const anyPreset = specialties[0];
-          if (anyPreset?.default_services?.length) {
-            const svcs = anyPreset.default_services.map((s: any) => ({
-              barbershop_id: barbershopId,
-              name: s.name,
-              duration_minutes: s.duration || 30,
-              price: s.price || 0,
-              is_active: true,
-            }));
-            await (supabase as any).from("services").insert(svcs);
-          }
         }
       }
 
-      // Update profile CPF
       if (form.cpf_cnpj) {
         await (supabase as any).from("profiles")
           .update({ cpf_cnpj: form.cpf_cnpj }).eq("user_id", user.id);
@@ -206,9 +257,59 @@ const OnboardingSelectionPage = () => {
     }
   };
 
+  // Finalizar cadastro de PROFISSIONAL AUTÔNOMO
+  const handleFinishProfessional = async () => {
+    const newErrors: Record<string, string> = {};
+    if (!form.name || form.name.length < 2) newErrors.name = "Nome obrigatório (mín. 2 caracteres)";
+    if (form.cpf_cnpj.replace(/\D/g, "").length < 11) newErrors.cpf_cnpj = "CPF/CNPJ inválido";
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+    if (!user) return;
+
+    setSaving(true);
+    try {
+      // 1. Atualizar perfil
+      await (supabase as any).from("profiles").update({
+        name: form.name,
+        whatsapp: form.phone || null,
+        cpf_cnpj: form.cpf_cnpj || null,
+      }).eq("user_id", user.id);
+
+      // 2. Garantir role profissional
+      await (supabase as any).from("user_roles")
+        .upsert({ user_id: user.id, role: "profissional" }, { onConflict: "user_id,role" });
+
+      // 3. Criar registro de profissional autônomo (sem barbershop vinculado)
+      const { data: existingProf } = await (supabase as any)
+        .from("professionals")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!existingProf) {
+        await (supabase as any).from("professionals").insert({
+          user_id: user.id,
+          name: form.name,
+          email: user.email || null,
+          whatsapp: form.phone || null,
+          is_active: true,
+          commission_percentage: 100, // autônomo fica com 100%
+        });
+      }
+
+      toast.success("Perfil criado! Bem-vindo ao sistema 🎉");
+      // Forçar reload para atualizar roles no contexto
+      window.location.href = "/painel-profissional";
+    } catch (err: any) {
+      toast.error("Erro: " + (err.message || "Tente novamente."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleFinish = userType === "professional" ? handleFinishProfessional : handleFinishOwner;
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-12">
-      {/* Language selector */}
       <div className="absolute top-4 right-4">
         <LanguageSelector />
       </div>
@@ -226,7 +327,7 @@ const OnboardingSelectionPage = () => {
 
         {/* Progress */}
         <div className="flex items-center justify-center gap-0 mb-10">
-          {STEPS.map((label, i) => {
+          {currentSteps.map((label, i) => {
             const s = i + 1;
             const done = s < step;
             const active = s === step;
@@ -242,7 +343,7 @@ const OnboardingSelectionPage = () => {
                   </div>
                   <span className={`text-[10px] font-medium ${active ? "text-orange-500" : "text-slate-400"}`}>{label}</span>
                 </div>
-                {s < STEPS.length && (
+                {s < currentSteps.length && (
                   <div className={`w-12 h-0.5 mb-4 mx-1 ${done ? "bg-orange-500" : "bg-slate-200"}`} />
                 )}
               </React.Fragment>
@@ -286,26 +387,29 @@ const OnboardingSelectionPage = () => {
         {/* ── STEP 2: Setor ── */}
         {step === 2 && (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">Qual é o seu setor?</h2>
+            <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">
+              {userType === "professional" ? "Qual é a sua área de atuação?" : "Qual é o seu setor?"}
+            </h2>
             <p className="text-sm text-slate-500 text-center mb-6">Vamos personalizar tudo para o seu tipo de negócio</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {SECTORS.map((sector) => (
-                <button
-                  key={sector.key}
-                  onClick={() => handleSelectSector(sector.key)}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-[1.02] text-center ${
-                    selectedSector === sector.key
-                      ? "border-orange-500 bg-orange-50"
-                      : "border-slate-200 hover:border-orange-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-3xl">{sector.icon}</span>
-                  <span className="text-xs font-semibold text-slate-800 leading-tight">{sector.label}</span>
-                </button>
-              ))}
+              {SECTORS.map((sector) => {
+                const active = userType === "professional" ? profSector === sector.key : selectedSector === sector.key;
+                return (
+                  <button
+                    key={sector.key}
+                    onClick={() => handleSelectSector(sector.key)}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-[1.02] text-center ${
+                      active ? "border-orange-500 bg-orange-50" : "border-slate-200 hover:border-orange-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    <span className="text-3xl">{sector.icon}</span>
+                    <span className="text-xs font-semibold text-slate-800 leading-tight">{sector.label}</span>
+                  </button>
+                );
+              })}
             </div>
             <div className="flex justify-start pt-2">
-              <button onClick={() => setStep(1)} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors">
+              <button onClick={handleBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors">
                 <ChevronLeft className="w-4 h-4" /> Voltar
               </button>
             </div>
@@ -317,74 +421,98 @@ const OnboardingSelectionPage = () => {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">Qual é sua especialidade?</h2>
             <p className="text-sm text-slate-500 text-center mb-6">
-              Vamos pré-configurar seus serviços, automações e políticas automaticamente
+              {userType === "professional"
+                ? "Isso vai personalizar seu perfil e link de agendamento"
+                : "Vamos pré-configurar seus serviços, automações e políticas automaticamente"}
             </p>
 
             {loadingSpecialties ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
               </div>
-            ) : specialties && specialties.length > 0 ? (
+            ) : specialties.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {specialties.map((spec: any) => (
-                  <button
-                    key={spec.id}
-                    onClick={() => handleSelectSpecialty(spec.specialty)}
-                    className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-[1.02] text-center ${
-                      selectedSpecialty === spec.specialty
-                        ? "border-orange-500 bg-orange-50"
-                        : "border-slate-200 hover:border-orange-300 hover:bg-slate-50"
-                    }`}
-                  >
-                    {selectedSpecialty === spec.specialty && (
-                      <div className="absolute -top-2 -right-2 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
-                        <Check className="w-3 h-3 text-white" />
-                      </div>
-                    )}
-                    <span className="text-sm font-semibold text-slate-800">{spec.display_name || spec.specialty}</span>
-                    {spec.default_services?.length > 0 && (
-                      <span className="text-[10px] text-slate-400">{spec.default_services.length} serviços inclusos</span>
-                    )}
-                  </button>
-                ))}
+                {specialties.map((spec: any) => {
+                  const active = userType === "professional"
+                    ? profSpecialty === spec.specialty
+                    : selectedSpecialty === spec.specialty;
+                  return (
+                    <button
+                      key={spec.id || spec.specialty}
+                      onClick={() => handleSelectSpecialty(spec.specialty)}
+                      className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-[1.02] text-center ${
+                        active ? "border-orange-500 bg-orange-50" : "border-slate-200 hover:border-orange-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      {active && (
+                        <div className="absolute -top-2 -right-2 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                      {spec.icon && <span className="text-2xl">{spec.icon}</span>}
+                      <span className="text-sm font-semibold text-slate-800">{spec.display_name || spec.specialty}</span>
+                      {(spec.services_count || spec.default_services?.length) > 0 && (
+                        <span className="text-[10px] text-slate-400">
+                          {spec.services_count || spec.default_services?.length} serviços inclusos
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl">
-                <p className="text-sm text-slate-500">Nenhuma especialidade pré-definida para este setor.</p>
+                <p className="text-sm text-slate-500">Nenhuma especialidade encontrada para este setor.</p>
                 <p className="text-xs text-slate-400 mt-1">Você configurará seus serviços manualmente.</p>
               </div>
             )}
 
             <div className="flex items-center justify-between pt-2">
-              <button onClick={() => setStep(2)} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors">
+              <button onClick={handleBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors">
                 <ChevronLeft className="w-4 h-4" /> Voltar
               </button>
-              <button onClick={() => setStep(4)} className="flex items-center gap-1 text-sm text-orange-500 hover:text-orange-600 transition-colors">
-                {selectedSpecialty ? "Continuar" : "Pular"} <ChevronRight className="w-4 h-4" />
-              </button>
+              {userType === "owner" ? (
+                <button onClick={() => setStep(4)} className="flex items-center gap-1 text-sm text-orange-500 hover:text-orange-600 transition-colors">
+                  {selectedSpecialty ? "Continuar" : "Pular"} <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button onClick={() => setStep(4)} className="flex items-center gap-1 text-sm text-orange-500 hover:text-orange-600 transition-colors">
+                  {profSpecialty ? "Continuar" : "Pular"} <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
         )}
 
-        {/* ── STEP 4: Dados do negócio ── */}
+        {/* ── STEP 4: Dados finais ── */}
         {step === 4 && (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">Dados do seu negócio</h2>
-            {selectedSector && (
+            <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">
+              {userType === "professional" ? "Seus dados profissionais" : "Dados do seu negócio"}
+            </h2>
+
+            {/* Badge do setor/especialidade selecionados */}
+            {(userType === "owner" ? selectedSector : profSector) && (
               <div className="flex items-center justify-center gap-2 mb-4">
-                <span className="text-2xl">{SECTORS.find(s => s.key === selectedSector)?.icon}</span>
+                <span className="text-2xl">
+                  {SECTORS.find(s => s.key === (userType === "owner" ? selectedSector : profSector))?.icon}
+                </span>
                 <span className="text-sm font-medium text-slate-700">
-                  {SECTORS.find(s => s.key === selectedSector)?.label}
-                  {selectedSpecialty && ` · ${selectedSpecialty}`}
+                  {SECTORS.find(s => s.key === (userType === "owner" ? selectedSector : profSector))?.label}
+                  {(userType === "owner" ? selectedSpecialty : profSpecialty) && (
+                    ` · ${userType === "owner" ? selectedSpecialty : profSpecialty}`
+                  )}
                 </span>
               </div>
             )}
 
             <div className="space-y-3 max-w-md mx-auto">
               <div>
-                <label className="text-sm font-medium text-slate-700">Nome do estabelecimento *</label>
+                <label className="text-sm font-medium text-slate-700">
+                  {userType === "professional" ? "Seu nome completo *" : "Nome do estabelecimento *"}
+                </label>
                 <Input
-                  placeholder="Ex: Studio Maria, Clínica Saúde+"
+                  placeholder={userType === "professional" ? "Ex: João Silva" : "Ex: Studio Maria, Clínica Saúde+"}
                   value={form.name}
                   onChange={e => setForm({ ...form, name: e.target.value })}
                   className={`mt-1 h-11 text-slate-900 border-slate-200 ${errors.name ? "border-red-400" : ""}`}
@@ -392,19 +520,23 @@ const OnboardingSelectionPage = () => {
                 {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-slate-700">Endereço completo *</label>
-                <Input
-                  placeholder="Rua, número, bairro, cidade"
-                  value={form.address}
-                  onChange={e => setForm({ ...form, address: e.target.value })}
-                  className={`mt-1 h-11 text-slate-900 border-slate-200 ${errors.address ? "border-red-400" : ""}`}
-                />
-                {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address}</p>}
-              </div>
+              {userType === "owner" && (
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Endereço completo *</label>
+                  <Input
+                    placeholder="Rua, número, bairro, cidade"
+                    value={form.address}
+                    onChange={e => setForm({ ...form, address: e.target.value })}
+                    className={`mt-1 h-11 text-slate-900 border-slate-200 ${errors.address ? "border-red-400" : ""}`}
+                  />
+                  {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address}</p>}
+                </div>
+              )}
 
               <div>
-                <label className="text-sm font-medium text-slate-700">CPF ou CNPJ *</label>
+                <label className="text-sm font-medium text-slate-700">
+                  {userType === "professional" ? "CPF *" : "CPF ou CNPJ *"}
+                </label>
                 <Input
                   placeholder="000.000.000-00"
                   value={form.cpf_cnpj}
@@ -424,24 +556,30 @@ const OnboardingSelectionPage = () => {
                 />
               </div>
 
-              {selectedSpecialty && specialties?.length > 0 && (
-                <div className="p-3 bg-orange-50 border border-orange-100 rounded-xl">
-                  <p className="text-xs font-medium text-orange-600 mb-1">O que será configurado automaticamente:</p>
-                  <ul className="text-xs text-orange-500 space-y-0.5">
-                    {(() => {
-                      const preset = specialties.find((s: any) => s.specialty === selectedSpecialty);
-                      return [
-                        preset?.default_services?.length && `✓ ${preset.default_services.length} serviços pré-configurados`,
-                        "✓ Automações de lembrete e confirmação",
-                        "✓ Políticas de agendamento",
-                      ].filter(Boolean).map((item, i) => <li key={i}>{item}</li>);
-                    })()}
-                  </ul>
-                </div>
-              )}
+              {/* Preview do que será configurado */}
+              <div className="p-3 bg-orange-50 border border-orange-100 rounded-xl">
+                <p className="text-xs font-medium text-orange-600 mb-1">
+                  {userType === "professional" ? "Você terá acesso a:" : "O que será configurado automaticamente:"}
+                </p>
+                <ul className="text-xs text-orange-500 space-y-0.5">
+                  {userType === "professional" ? (
+                    <>
+                      <li>✓ Agenda pessoal com link de agendamento</li>
+                      <li>✓ Controle de comissões e pagamentos</li>
+                      <li>✓ Notificações automáticas via WhatsApp</li>
+                    </>
+                  ) : (
+                    <>
+                      {(selectedSpecialty) && <li>✓ Serviços pré-configurados para {selectedSpecialty}</li>}
+                      <li>✓ Automações de lembrete e confirmação</li>
+                      <li>✓ Políticas de agendamento</li>
+                    </>
+                  )}
+                </ul>
+              </div>
 
               <div className="flex gap-3 pt-2">
-                <button onClick={() => setStep(3)} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors px-3">
+                <button onClick={handleBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors px-3">
                   <ChevronLeft className="w-4 h-4" /> Voltar
                 </button>
                 <button
@@ -449,7 +587,10 @@ const OnboardingSelectionPage = () => {
                   disabled={saving}
                   className="flex-1 h-11 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Configurando...</> : <>Finalizar Cadastro <ArrowRight className="w-4 h-4" /></>}
+                  {saving
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Configurando...</>
+                    : <>{userType === "professional" ? "Criar meu perfil" : "Finalizar Cadastro"} <ArrowRight className="w-4 h-4" /></>
+                  }
                 </button>
               </div>
             </div>
