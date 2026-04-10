@@ -18,6 +18,7 @@ type Barbershop = {
   address: string | null;
   phone: string | null;
   description: string | null;
+  slug: string | null;
 };
 
 type Product = {
@@ -47,14 +48,27 @@ export default function VitrinePage() {
   useEffect(() => {
     if (!barbershopId) { setNotFound(true); setLoading(false); return; }
     (async () => {
-      const { data: shop } = await (supabase as any)
+      // Try by id first, then by slug
+      let shop: Barbershop | null = null;
+      const { data: byId } = await (supabase as any)
         .from("barbershops")
-        .select("id, name, address, phone, description")
+        .select("id, name, address, phone, description, slug")
         .eq("id", barbershopId)
         .maybeSingle();
 
+      if (byId) {
+        shop = byId as Barbershop;
+      } else {
+        const { data: bySlug } = await (supabase as any)
+          .from("barbershops")
+          .select("id, name, address, phone, description, slug")
+          .eq("slug", barbershopId)
+          .maybeSingle();
+        if (bySlug) shop = bySlug as Barbershop;
+      }
+
       if (!shop) { setNotFound(true); setLoading(false); return; }
-      setBarbershop(shop as Barbershop);
+      setBarbershop(shop);
 
       const [prodsRes, rafflesRes] = await Promise.all([
         (supabase as any).from("stock_items").select("id, name, sell_price, quantity").eq("barbershop_id", barbershopId).eq("is_active", true).order("name"),
@@ -85,7 +99,7 @@ export default function VitrinePage() {
     );
   }
 
-  const bookingUrl = `/app`;
+  const bookingUrl = barbershop.slug ? `/agendar/${barbershop.slug}` : `/app`;
 
   return (
     <div className="min-h-screen bg-background">

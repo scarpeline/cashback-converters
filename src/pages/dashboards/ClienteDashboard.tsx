@@ -276,9 +276,32 @@ const ClienteDashboard = () => {
 const HomeHub = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [barbershops, setBarbershops] = useState<{ id: string; name: string; address: string; rating: number; services: number }[]>([]);
   const [loadingShops, setLoadingShops] = useState(true);
+  const [cashbackBalance, setCashbackBalance] = useState(0);
+  const [loyaltyLevel, setLoyaltyLevel] = useState(1);
+
+  useEffect(() => {
+    if (!user) return;
+    (supabase as any)
+      .from("profiles")
+      .select("cashback_balance, total_cashback_earned")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }: { data: any }) => {
+        if (data) {
+          setCashbackBalance(Number(data.cashback_balance || 0));
+          const total = Number(data.total_cashback_earned || 0);
+          if (total >= 500) setLoyaltyLevel(5);
+          else if (total >= 200) setLoyaltyLevel(4);
+          else if (total >= 100) setLoyaltyLevel(3);
+          else if (total >= 50) setLoyaltyLevel(2);
+          else setLoyaltyLevel(1);
+        }
+      });
+  }, [user]);
 
   useEffect(() => {
     (supabase as any)
@@ -319,8 +342,8 @@ const HomeHub = () => {
         </div>
         <div className="flex gap-4">
            {[
-             { label: "Cashback", val: "R$ 0,00", icon: Gift, color: "text-emerald-400" },
-             { label: "Fidelidade", val: "Nível 5", icon: Star, color: "text-orange-400" },
+             { label: "Cashback", val: `R$ ${cashbackBalance.toFixed(2)}`, icon: Gift, color: "text-emerald-400" },
+             { label: "Fidelidade", val: `Nível ${loyaltyLevel}`, icon: Star, color: "text-orange-400" },
            ].map((stat) => (
              <div key={stat.label} className="bg-white/5 backdrop-blur-3xl p-5 md:p-6 rounded-[2.2rem] border border-white/5 flex flex-col min-w-[160px] shadow-2xl relative group overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-gold opacity-0 group-hover:opacity-5 transition-opacity" />
@@ -609,7 +632,85 @@ const HubHeader = ({ title, subtitle, gradient, icon }: { title: string; subtitl
 );
 
 // ─── Legacy Pages Stubs for Completeness ───────────────────────────────────────────────────────
-const HistoricoPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Histórico" subtitle="Expert Selection" gradient="from-slate-400 to-slate-200" icon={<History size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">No Historical Data Recorded</p></div></div>;
+const HistoricoPage = () => {
+  const { user } = useAuth();
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    (supabase as any)
+      .from("appointments")
+      .select(`
+        id, scheduled_at, status,
+        services:service_id(name, price),
+        professionals:professional_id(name),
+        barbershops:barbershop_id(name)
+      `)
+      .eq("client_user_id", user.id)
+      .lt("scheduled_at", new Date().toISOString())
+      .order("scheduled_at", { ascending: false })
+      .limit(20)
+      .then(({ data }: { data: any[] | null }) => {
+        setAppointments(data || []);
+        setLoading(false);
+      });
+  }, [user]);
+
+  const statusLabel: Record<string, { label: string; color: string }> = {
+    scheduled: { label: "Confirmado", color: "text-emerald-400" },
+    pending: { label: "Pendente", color: "text-orange-400" },
+    cancelled: { label: "Cancelado", color: "text-rose-400" },
+    completed: { label: "Concluído", color: "text-slate-400" },
+  };
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <HubHeader title="Histórico" subtitle="Expert Selection" gradient="from-slate-400 to-slate-200" icon={<History size={24} />} />
+      {loading ? (
+        <div className="space-y-4">
+          {[1,2,3].map(i => <div key={i} className="h-24 bg-white/5 rounded-[2rem] animate-pulse" />)}
+        </div>
+      ) : appointments.length === 0 ? (
+        <div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20">
+          <p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">Nenhum atendimento ainda</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {appointments.map((apt, idx) => {
+            const st = statusLabel[apt.status] || { label: apt.status, color: "text-slate-400" };
+            const date = new Date(apt.scheduled_at);
+            return (
+              <div key={apt.id}
+                style={{ animationDelay: `${idx * 80}ms` }}
+                className="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-white/10 transition-all duration-500 flex flex-col md:flex-row md:items-center gap-6 animate-in slide-in-from-bottom bg-slate-900/20">
+                <div className="w-16 h-16 rounded-[1.5rem] bg-slate-800/60 flex flex-col items-center justify-center border border-white/5 flex-shrink-0">
+                  <span className="text-xl font-black text-slate-300 leading-none">{date.getDate()}</span>
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{date.toLocaleString("pt-BR", { month: "short" })}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-black text-white text-lg truncate">{apt.services?.name || "Serviço"}</p>
+                  <p className="text-slate-500 text-sm font-medium mt-1 truncate">
+                    {apt.professionals?.name} · {apt.barbershops?.name}
+                  </p>
+                  <p className="text-slate-600 text-xs font-bold mt-1">
+                    {date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <span className={`text-xs font-black uppercase tracking-widest ${st.color}`}>{st.label}</span>
+                  {apt.services?.price && (
+                    <span className="text-lg font-black text-white">R$ {Number(apt.services.price).toFixed(2)}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 const MeusplanosPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Assinatura" subtitle="Planos Diamond e Black" gradient="from-purple-400 to-pink-400" icon={<Award size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">No Active Premium Subscriptions</p></div></div>;
 const IndicarPage = () => {
   const { user } = useAuth();
@@ -655,8 +756,166 @@ const IndicarPage = () => {
 const AcaoEntreAmigosPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Sorteios" subtitle="Ações Entre Membros Diamond" gradient="from-pink-400 to-rose-400" icon={<Star size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">Searching for Available Slots...</p></div></div>;
 const MinhasDividasPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Extrato Financeiro" subtitle="Débitos com Terceiros Elite" gradient="from-rose-400 to-red-400" icon={<ShoppingBag size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-emerald-400 font-black uppercase text-xs tracking-widest italic animate-pulse">Conta Auditada: Zero Pendências Diamond 🎉</p></div></div>;
 const ServicosContabeisPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Contabilidade" subtitle="Expert Financial Hub" gradient="from-orange-500 to-orange-600" icon={<FileText size={24} />} /><div className="bg-slate-900/20 rounded-[3rem] border border-white/5 overflow-hidden"><SolicitarServicoFiscalPage /></div></div>;
-const SuportePage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Suporte VIP" subtitle="Concierge Diamond 24/7" gradient="from-violet-400 to-purple-400" icon={<MessageCircle size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">Ativando Conexão Criptografada...</p></div></div>;
-const NotificacoesPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Alerta Diamond" subtitle="Notificações Críticas de Sistema" gradient="from-amber-400 to-orange-400" icon={<Bell size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">No Urgent Alerts at the moment</p></div></div>;
+const SuportePage = () => {
+  const { user } = useAuth();
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<any[]>([]);
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    (supabase as any)
+      .from("support_chats")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("status", "open")
+      .maybeSingle()
+      .then(async ({ data: chat }: { data: any }) => {
+        let id = chat?.id;
+        if (!id) {
+          const { data: newChat } = await (supabase as any)
+            .from("support_chats")
+            .insert({ user_id: user.id, status: "open" })
+            .select("id")
+            .single();
+          id = newChat?.id;
+        }
+        setChatId(id);
+        const { data: msgs } = await (supabase as any)
+          .from("support_messages")
+          .select("*")
+          .eq("chat_id", id)
+          .order("created_at");
+        setMessages(msgs || []);
+        setLoading(false);
+      });
+  }, [user]);
+
+  const sendMessage = async () => {
+    if (!message.trim() || !chatId || !user) return;
+    const { data } = await (supabase as any)
+      .from("support_messages")
+      .insert({ chat_id: chatId, sender_id: user.id, message, is_from_support: false })
+      .select()
+      .single();
+    if (data) setMessages(m => [...m, data]);
+    setMessage("");
+  };
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <HubHeader title="Suporte VIP" subtitle="Concierge Diamond 24/7" gradient="from-violet-400 to-purple-400" icon={<MessageCircle size={24} />} />
+      <div className="glass-card rounded-[3rem] border border-white/5 bg-slate-900/20 flex flex-col overflow-hidden" style={{ minHeight: 480 }}>
+        <div className="flex-1 overflow-y-auto p-8 space-y-4">
+          {loading ? (
+            <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-violet-400" /></div>
+          ) : messages.length === 0 ? (
+            <div className="text-center py-16">
+              <MessageCircle className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+              <p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-50 italic">Inicie uma conversa com o suporte</p>
+            </div>
+          ) : (
+            messages.map((msg) => (
+              <div key={msg.id} className={`flex ${msg.is_from_support ? "justify-start" : "justify-end"}`}>
+                <div className={`max-w-[75%] px-6 py-4 rounded-[1.5rem] text-sm font-medium ${msg.is_from_support ? "bg-white/5 text-slate-200 rounded-tl-sm" : "bg-violet-500/20 text-white rounded-tr-sm border border-violet-500/20"}`}>
+                  <p>{msg.message}</p>
+                  <p className="text-[10px] text-slate-500 mt-1 font-bold">
+                    {new Date(msg.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="border-t border-white/5 p-6 flex gap-4">
+          <input
+            type="text"
+            value={message}
+            onChange={e => setMessage(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && sendMessage()}
+            placeholder="Digite sua mensagem..."
+            className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/40 transition-all font-medium"
+          />
+          <Button
+            onClick={sendMessage}
+            disabled={!message.trim() || !chatId}
+            className="bg-violet-500/20 hover:bg-violet-500/40 border border-violet-500/30 text-violet-300 font-black rounded-2xl h-14 px-8 transition-all uppercase tracking-widest text-xs">
+            Enviar
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+const NotificacoesPage = () => {
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    (supabase as any)
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(30)
+      .then(({ data }: { data: any[] | null }) => {
+        setNotifications(data || []);
+        setLoading(false);
+      });
+  }, [user]);
+
+  const markRead = async (id: string) => {
+    await (supabase as any).from("notifications").update({ is_read: true }).eq("id", id);
+    setNotifications(n => n.map(x => x.id === id ? { ...x, is_read: true } : x));
+  };
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <HubHeader title="Alerta Diamond" subtitle="Notificações Críticas de Sistema" gradient="from-amber-400 to-orange-400" icon={<Bell size={24} />} />
+      {loading ? (
+        <div className="space-y-4">
+          {[1,2,3].map(i => <div key={i} className="h-20 bg-white/5 rounded-[2rem] animate-pulse" />)}
+        </div>
+      ) : notifications.length === 0 ? (
+        <div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20">
+          <Bell className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+          <p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">Nenhuma notificação no momento</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {notifications.map((notif, idx) => (
+            <div key={notif.id}
+              style={{ animationDelay: `${idx * 60}ms` }}
+              className={`glass-card p-6 rounded-[2rem] border transition-all duration-500 flex items-start gap-5 animate-in slide-in-from-bottom ${notif.is_read ? "border-white/5 bg-slate-900/10 opacity-60" : "border-amber-500/20 bg-amber-500/5"}`}>
+              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${notif.is_read ? "bg-white/5" : "bg-amber-500/10"}`}>
+                <Bell className={`w-5 h-5 ${notif.is_read ? "text-slate-600" : "text-amber-400"}`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`font-black text-sm truncate ${notif.is_read ? "text-slate-400" : "text-white"}`}>{notif.title || "Notificação"}</p>
+                {notif.message && <p className="text-slate-500 text-xs font-medium mt-1 line-clamp-2">{notif.message}</p>}
+                <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest mt-2">
+                  {new Date(notif.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                </p>
+              </div>
+              {!notif.is_read && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => markRead(notif.id)}
+                  className="text-[10px] font-black uppercase tracking-widest text-amber-400 hover:text-white hover:bg-white/5 rounded-xl h-8 px-4 flex-shrink-0">
+                  Lida
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 const IAPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Expert Advisor" subtitle="Sua Inteligência de Estilo Avançada" gradient="from-orange-400 to-orange-600" icon={<Zap size={24} />} /><div className="bg-slate-950/40 rounded-[3rem] border border-white/5 overflow-hidden backdrop-blur-3xl"><AIChat /></div></div>;
 const PerfilPage = () => {
   const { user, profile } = useAuth();

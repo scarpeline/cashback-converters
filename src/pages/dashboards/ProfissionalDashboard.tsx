@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Calendar, DollarSign, User, LogOut, Menu, X,
   Zap, ChevronRight, ChevronDown, TrendingUp, FileText,
   Share2, CreditCard, Wallet, Clock, Star, Bell, Search, 
-  HelpCircle, Scissors, Users, CheckCircle2, Award
+  HelpCircle, Scissors, Users, CheckCircle2, Award, Loader2, Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -189,7 +189,38 @@ const ProfissionalDashboard = () => {
 
 // ─── Home Diamond ─────────────────────────────────────────────────────────────────────
 const ProfHome = () => {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
+  const [metrics, setMetrics] = useState({ todayAppointments: 0, projectedEarnings: 0, score: 100 });
+
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().split("T")[0];
+    (supabase as any).from("professionals")
+      .select("id, commission_percentage")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(async ({ data: prof }: { data: any }) => {
+        if (!prof) return;
+        const { count: todayCount } = await (supabase as any)
+          .from("appointments")
+          .select("*", { count: "exact", head: true })
+          .eq("professional_id", prof.id)
+          .gte("scheduled_at", `${today}T00:00:00`)
+          .lte("scheduled_at", `${today}T23:59:59`)
+          .neq("status", "cancelled");
+        const { data: todayApts } = await (supabase as any)
+          .from("appointments")
+          .select("services:service_id(price)")
+          .eq("professional_id", prof.id)
+          .gte("scheduled_at", `${today}T00:00:00`)
+          .lte("scheduled_at", `${today}T23:59:59`)
+          .neq("status", "cancelled");
+        const totalValue = (todayApts || []).reduce((acc: number, a: any) => acc + Number(a.services?.price || 0), 0);
+        const projected = totalValue * (Number(prof.commission_percentage) / 100);
+        setMetrics({ todayAppointments: todayCount || 0, projectedEarnings: projected, score: 100 });
+      });
+  }, [user]);
+
   const hubs = [
     { label: "Agenda", desc: "Fluxo de cadeiras e horários", icon: Calendar, color: "text-orange-400 bg-orange-400/10", path: "/painel-profissional/agenda" },
     { label: "Financeiro", desc: "Relatórios de ganhos e faturas", icon: DollarSign, color: "text-emerald-400 bg-emerald-500/10", path: "/painel-profissional/financeiro" },
@@ -221,11 +252,11 @@ const ProfHome = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {[
-          { label: "Agendamentos Hoje", value: "0", icon: <Calendar className="text-orange-400" />, sub: "Cadeiras Ocupadas", gradient: "from-orange-500/5 to-transparent" },
-          { label: "Projeção de Ganhos", value: "R$ 0,00", icon: <DollarSign className="text-emerald-400" />, sub: "Bruto Estimado", gradient: "from-emerald-500/5 to-transparent" },
-          { label: "Score Profissional", value: "100%", icon: <Star className="text-yellow-400 fill-yellow-400/20" />, sub: "Excelência Diamond", gradient: "from-yellow-500/5 to-transparent" },
+          { label: "Agendamentos Hoje", value: String(metrics.todayAppointments), icon: <Calendar className="text-orange-400" />, sub: "Cadeiras Ocupadas", gradient: "from-orange-500/5 to-transparent" },
+          { label: "Projeção de Ganhos", value: `R$ ${metrics.projectedEarnings.toFixed(2)}`, icon: <DollarSign className="text-emerald-400" />, sub: "Bruto Estimado", gradient: "from-emerald-500/5 to-transparent" },
+          { label: "Score Profissional", value: `${metrics.score}%`, icon: <Star className="text-yellow-400 fill-yellow-400/20" />, sub: "Excelência Diamond", gradient: "from-yellow-500/5 to-transparent" },
         ].map((m, idx) => (
-          <div key={m.label} 
+          <div key={m.label}
             style={{ animationDelay: `${idx * 150}ms` }}
             className={`bg-slate-900/40 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] p-8 hover:border-orange-500/30 transition-all duration-700 group relative overflow-hidden animate-in zoom-in-95`}>
             <div className={`absolute inset-0 bg-gradient-to-br ${m.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
@@ -447,18 +478,92 @@ const PerfilHub = () => {
 };
 
 // ─── Ganhos Diamond ──────────────────────────────────────────────────────────────
-const GanhosPage = () => (
+const GanhosPage = () => {
+  const { user } = useAuth();
+  const [data, setData] = useState({ totalYear: 0, totalMonth: 0, pending: 0, history: [] as any[] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    (supabase as any).from("professionals")
+      .select("id, commission_percentage")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(async ({ data: prof }: { data: any }) => {
+        if (!prof) { setLoading(false); return; }
+        const now = new Date();
+        const yearStart = `${now.getFullYear()}-01-01T00:00:00`;
+        const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01T00:00:00`;
+        const { data: payments } = await (supabase as any)
+          .from("payments")
+          .select("amount, status, created_at, appointments:appointment_id(professional_id)")
+          .gte("created_at", yearStart)
+          .order("created_at", { ascending: false })
+          .limit(50);
+        const myPayments = (payments || []).filter((p: any) => p.appointments?.professional_id === prof.id);
+        const commPct = Number(prof.commission_percentage) / 100;
+        const totalYear = myPayments.filter((p: any) => p.status === "paid").reduce((acc: number, p: any) => acc + Number(p.amount) * commPct, 0);
+        const totalMonth = myPayments.filter((p: any) => p.status === "paid" && p.created_at >= monthStart).reduce((acc: number, p: any) => acc + Number(p.amount) * commPct, 0);
+        const pending = myPayments.filter((p: any) => p.status === "pending").reduce((acc: number, p: any) => acc + Number(p.amount) * commPct, 0);
+        setData({ totalYear, totalMonth, pending, history: myPayments.slice(0, 10) });
+        setLoading(false);
+      });
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-400" />
+      </div>
+    );
+  }
+
+  return (
   <div className="space-y-8 animate-in slide-in-from-bottom duration-700">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="p-10 bg-white/5 rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-4">Ganhos em 2024</p>
-        <p className="text-5xl font-black text-white group-hover:text-gradient-gold transition-all">R$ 0,00</p>
-        <p className="text-xs font-bold text-emerald-400 mt-4 flex items-center gap-2"><TrendingUp size={14} /> +0% vs mês anterior</p>
+        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-4">Ganhos em {new Date().getFullYear()}</p>
+        <p className="text-5xl font-black text-white group-hover:text-gradient-gold transition-all">R$ {data.totalYear.toFixed(2)}</p>
+        <p className="text-xs font-bold text-emerald-400 mt-4 flex items-center gap-2"><TrendingUp size={14} /> Acumulado no ano</p>
       </div>
       <div className="p-10 bg-white/5 rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-br from-orange-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-4">Total de Atendimentos</p>
+        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-4">Ganhos este mês</p>
+        <p className="text-5xl font-black text-white group-hover:text-gradient-gold transition-all">R$ {data.totalMonth.toFixed(2)}</p>
+        <p className="text-xs font-bold text-orange-400 mt-4 flex items-center gap-2"><CheckCircle2 size={14} /> Expert Performance</p>
+      </div>
+    </div>
+    {data.pending > 0 && (
+      <div className="p-6 bg-yellow-500/10 rounded-[2rem] border border-yellow-500/20">
+        <p className="text-[10px] text-yellow-400 font-black uppercase tracking-widest mb-1">Pendente de Pagamento</p>
+        <p className="text-3xl font-black text-yellow-300">R$ {data.pending.toFixed(2)}</p>
+      </div>
+    )}
+    {data.history.length === 0 ? (
+      <div className="glass-card p-20 text-center rounded-[3rem] border-white/5 flex flex-col items-center">
+        <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
+          <DollarSign className="w-10 h-10 text-slate-700" />
+        </div>
+        <p className="text-slate-500 font-black tracking-tight uppercase text-xs tracking-widest italic shadow-premium">Aguardando seu primeiro atendimento Diamond.</p>
+      </div>
+    ) : (
+      <div className="space-y-3">
+        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Histórico Recente</p>
+        {data.history.map((p: any, idx: number) => (
+          <div key={idx} className="flex items-center justify-between p-5 bg-white/5 rounded-[1.8rem] border border-white/5">
+            <div>
+              <p className="text-xs text-slate-400 font-bold">{new Date(p.created_at).toLocaleDateString("pt-BR")}</p>
+              <p className={`text-[10px] font-black uppercase tracking-widest mt-0.5 ${p.status === "paid" ? "text-emerald-400" : "text-yellow-400"}`}>{p.status === "paid" ? "Pago" : "Pendente"}</p>
+            </div>
+            <p className="text-xl font-black text-white">R$ {Number(p.amount).toFixed(2)}</p>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+  );
+};racking-[0.2em] mb-4">Total de Atendimentos</p>
         <p className="text-5xl font-black text-white group-hover:text-gradient-gold transition-all">0</p>
         <p className="text-xs font-bold text-orange-400 mt-4 flex items-center gap-2"><CheckCircle2 size={14} /> Expert Performance</p>
       </div>

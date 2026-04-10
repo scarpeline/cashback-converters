@@ -114,6 +114,26 @@ export const NotificationBell = () => {
     }
   }, [user]);
 
+  // Subscription em tempo real para novas notificações
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`notifications:${user.id}`)
+      .on('postgres_changes' as any, {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${user.id}`,
+      }, (payload: any) => {
+        toast.info(payload.new.title, { description: payload.new.message });
+        loadNotifications();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
   const handleNotificationAction = async (
     notification: Notification,
     action: 'finalize' | 'cancel'

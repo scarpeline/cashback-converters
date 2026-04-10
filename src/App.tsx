@@ -71,6 +71,7 @@ const LandingPageB2B = lazy(
 const OnboardingSelectionPage = lazy(
   () => import("./pages/onboarding/OnboardingSelectionPage"),
 );
+const BookingPage = lazy(() => import("./pages/public/BookingPage"));
 
 /**
  * QueryClient configurado para produção:
@@ -113,6 +114,7 @@ function AppRoutes() {
         <Route path="/install" element={<InstallPage />} />
         <Route path="/analise-custos" element={<CostAnalysisPage />} />
         <Route path="/v/:barbershopId" element={<VitrinePage />} />
+        <Route path="/agendar/:slug" element={<BookingPage />} />
         <Route path="/para-empresas" element={<LandingPageB2B />} />
         <Route path="/onboarding" element={<OnboardingSelectionPage />} />
 
