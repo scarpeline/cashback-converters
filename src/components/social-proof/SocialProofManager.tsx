@@ -41,6 +41,7 @@ export function SocialProofManager({ barbershopId, showPageSelector = false }: S
     action_type: "none" as "none" | "vitrine" | "agendar",
     show_in_vitrine: false,
     booking_link: "",
+    image_url: "",
   });
 
   const fetchProofs = useCallback(async () => {
@@ -65,12 +66,13 @@ export function SocialProofManager({ barbershopId, showPageSelector = false }: S
       action_type: (p.action_type || "none") as "none" | "vitrine" | "agendar",
       show_in_vitrine: !!p.show_in_vitrine,
       booking_link: p.booking_link || "",
+      image_url: p.image_url || "",
     });
   };
 
   const resetForm = () => {
     setEditingId(null);
-    setForm({ message: "", type: "fake", pages: ["landing"], action_type: "none", show_in_vitrine: false, booking_link: "" });
+    setForm({ message: "", type: "fake", pages: ["landing"], action_type: "none", show_in_vitrine: false, booking_link: "", image_url: "" });
   };
 
   const handleSave = async () => {
@@ -85,6 +87,7 @@ export function SocialProofManager({ barbershopId, showPageSelector = false }: S
       action_type: form.action_type,
       show_in_vitrine: form.show_in_vitrine,
       booking_link: form.booking_link || null,
+      image_url: form.image_url || null,
     };
     if (barbershopId) payload.barbershop_id = barbershopId;
 
@@ -155,10 +158,23 @@ export function SocialProofManager({ barbershopId, showPageSelector = false }: S
               <Label>Mensagem <span className="text-destructive">*</span></Label>
               <Input
                 className="mt-1"
-                placeholder='Ex: "João acabou de agendar um corte!"'
+                placeholder='Ex: "**João** acabou de agendar um corte!"'
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
               />
+              <p className="text-[11px] text-muted-foreground mt-1">Use <code className="bg-muted px-1 rounded">**texto**</code> para negrito. Ex: <strong>João</strong> agendou.</p>
+            </div>
+            <div>
+              <Label>Imagem / Avatar (URL opcional)</Label>
+              <Input
+                className="mt-1"
+                placeholder="https://exemplo.com/foto.jpg"
+                value={form.image_url}
+                onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+              />
+              {form.image_url && (
+                <img src={form.image_url} alt="preview" className="mt-2 w-10 h-10 rounded-full object-cover border border-border" />
+              )}
             </div>
             <div>
               <Label>Tipo</Label>

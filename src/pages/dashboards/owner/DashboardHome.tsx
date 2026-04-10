@@ -101,11 +101,11 @@ export const DashboardHome = () => {
 
       {/* Cabeçalho */}
       <div>
-        <p className="text-sm text-slate-500 mb-1">{saudacao}</p>
+        <p className="text-sm font-medium text-slate-600 mb-1">{saudacao}</p>
         <h1 className="text-2xl font-bold text-slate-900">
           {barbershop?.name || "Minha Empresa"}
         </h1>
-        <p className="text-sm text-slate-500 mt-1">Visão geral do dia de hoje</p>
+        <p className="text-sm font-medium text-slate-600 mt-1">Visão geral do dia de hoje</p>
       </div>
 
       {/* Botões de ação */}
@@ -119,7 +119,7 @@ export const DashboardHome = () => {
         </button>
         <button
           onClick={() => navigate("/painel-dono/operacoes")}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-sm font-medium text-white hover:bg-orange-600 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Acessar Agenda
@@ -130,18 +130,18 @@ export const DashboardHome = () => {
 
       {/* Métricas */}
       <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Hoje</p>
+        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-4">Hoje</p>
         <div className="grid grid-cols-3 gap-6">
           <div>
-            <p className="text-xs text-slate-500 mb-1">Faturamento</p>
+            <p className="text-xs font-semibold text-slate-600 mb-1">Faturamento</p>
             <p className="text-xl font-bold text-slate-900">R$ {metrics.todayRevenue.toFixed(2)}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-500 mb-1">{appointmentsLabel}</p>
+            <p className="text-xs font-semibold text-slate-600 mb-1">{appointmentsLabel}</p>
             <p className="text-xl font-bold text-slate-900">{metrics.todayAppointments}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-500 mb-1">{clientsLabel}</p>
+            <p className="text-xs font-semibold text-slate-600 mb-1">{clientsLabel}</p>
             <p className="text-xl font-bold text-slate-900">{metrics.activeClients}</p>
           </div>
         </div>
@@ -151,7 +151,7 @@ export const DashboardHome = () => {
 
       {/* Navegação rápida */}
       <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Acessar</p>
+        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-4">Acessar</p>
         <div className="space-y-1">
           <NavRow
             icon={<Zap className="w-4 h-4" />}
@@ -204,7 +204,7 @@ export const DashboardHome = () => {
         </div>
         <button
           onClick={() => navigate("/painel-dono/crescimento")}
-          className="flex-shrink-0 flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          className="flex-shrink-0 flex items-center gap-1 text-sm font-medium text-orange-600 hover:text-orange-700 transition-colors"
         >
           Configurar <ArrowUpRight className="w-3.5 h-3.5" />
         </button>
@@ -227,15 +227,15 @@ const NavRow = ({
 }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-center gap-4 px-3 py-3 rounded-xl hover:bg-slate-50 transition-colors group text-left"
+    className="w-full flex items-center gap-4 px-3 py-3 rounded-xl hover:bg-slate-100 transition-colors group text-left"
   >
-    <span className="text-slate-400 group-hover:text-blue-600 transition-colors flex-shrink-0">
+    <span className="text-slate-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
       {icon}
     </span>
     <div className="flex-1 min-w-0">
       <p className="text-sm font-semibold text-slate-900">{label}</p>
-      <p className="text-xs text-slate-500 truncate">{desc}</p>
+      <p className="text-xs font-medium text-slate-600 truncate">{desc}</p>
     </div>
-    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 flex-shrink-0 transition-colors" />
+    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 flex-shrink-0 transition-colors" />
   </button>
 );

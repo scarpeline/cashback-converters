@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, Star, Crown, Zap, Shield, Sparkles } from 'lucide-react';

@@ -1,6 +1,4 @@
-// @ts-nocheck
-import { useState } from "react";
-import React from "react";
+import React, { useState } from "react";
 import { useBarbershop } from "./hooks";
 import {
   MessageCircle,

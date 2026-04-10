@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect, Suspense, lazy } from "react";
 import { Routes, Route, Link, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -278,7 +277,35 @@ const HomeHub = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const filtered = MOCK_BARBERSHOPS.filter(b => b.name.toLowerCase().includes(search.toLowerCase()));
+  const [barbershops, setBarbershops] = useState<{ id: string; name: string; address: string; rating: number; services: number }[]>([]);
+  const [loadingShops, setLoadingShops] = useState(true);
+
+  useEffect(() => {
+    (supabase as any)
+      .from("barbershops")
+      .select("id, name, address")
+      .eq("is_active", true)
+      .order("name")
+      .limit(20)
+      .then(async ({ data }: { data: any[] | null }) => {
+        if (!data) { setLoadingShops(false); return; }
+        // Enriquecer com contagem de serviços
+        const enriched = await Promise.all(
+          data.map(async (b) => {
+            const { count } = await (supabase as any)
+              .from("services")
+              .select("*", { count: "exact", head: true })
+              .eq("barbershop_id", b.id)
+              .eq("is_active", true);
+            return { id: b.id, name: b.name, address: b.address || "Endereço não informado", rating: 5.0, services: count || 0 };
+          })
+        );
+        setBarbershops(enriched);
+        setLoadingShops(false);
+      });
+  }, []);
+
+  const filtered = barbershops.filter(b => b.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="space-y-12 animate-in fade-in duration-1000 slide-in-from-bottom-4">
@@ -336,7 +363,15 @@ const HomeHub = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filtered.map((shop, idx) => (
+          {loadingShops ? (
+            [1,2,3].map(i => <div key={i} className="h-72 bg-white/5 rounded-[3rem] animate-pulse" />)
+          ) : filtered.length === 0 ? (
+            <div className="col-span-3 text-center py-20">
+              <p className="text-slate-600 font-black uppercase text-xs tracking-widest italic">
+                {search ? "Nenhum salão encontrado para sua busca." : "Nenhum salão disponível no momento."}
+              </p>
+            </div>
+          ) : filtered.map((shop, idx) => (
             <div key={shop.id}
               style={{ animationDelay: `${idx * 200}ms` }}
               className="bg-slate-900/20 backdrop-blur-3xl border border-white/5 rounded-[3rem] p-10 flex flex-col gap-8 hover:border-orange-500/30 transition-all duration-700 group cursor-pointer relative overflow-hidden animate-in zoom-in-95"
@@ -455,21 +490,92 @@ const CashbackPage = () => {
 // ─── Help Hub Section Section ──────────────────────────────────────────────────────
 const AgendamentosHub = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const [appointments, setAppointments] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+      if (!user) return;
+      (supabase as any)
+        .from("appointments")
+        .select(`
+          id, scheduled_at, status, notes,
+          services:service_id (name, price, duration_minutes),
+          professionals:professional_id (name, avatar_url),
+          barbershops:barbershop_id (name, address)
+        `)
+        .eq("client_user_id", user.id)
+        .gte("scheduled_at", new Date().toISOString())
+        .order("scheduled_at", { ascending: true })
+        .limit(10)
+        .then(({ data }: { data: any[] | null }) => {
+          setAppointments(data || []);
+          setLoading(false);
+        });
+    }, [user]);
+
+    const statusLabel: Record<string, { label: string; color: string }> = {
+      scheduled: { label: "Confirmado", color: "text-emerald-400" },
+      pending: { label: "Pendente", color: "text-orange-400" },
+      cancelled: { label: "Cancelado", color: "text-rose-400" },
+      completed: { label: "Concluído", color: "text-slate-400" },
+    };
+
     return (
       <div className="space-y-12 animate-in fade-in duration-1000">
         <HubHeader title="Meus Horários" subtitle="Gestão de Atendimentos Confirmados" gradient="from-orange-500 to-orange-400" icon={<Clock size={24} />} />
-        <div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20 backdrop-blur-4xl flex flex-col items-center animate-in zoom-in-95 duration-1000">
-           <div className="w-24 h-24 rounded-[2.5rem] bg-white/5 flex items-center justify-center mb-10 shadow-premium border border-white/5 group relative">
-              <div className="absolute inset-0 bg-gradient-gold opacity-5 blur-[10px] rounded-full group-hover:opacity-20 transition-opacity" />
-              <Calendar className="w-10 h-10 text-slate-700 relative z-10" />
-           </div>
-           <h2 className="text-3xl font-black text-white mb-4 tracking-tighter">Agenda Silenciosa</h2>
-           <p className="text-slate-500 font-medium text-lg max-w-md mx-auto leading-relaxed mb-10">Você ainda não desfrutou de um atendimento Elite. Suas experiências Diamond aparecerão aqui.</p>
-           <Button onClick={() => navigate("/app")}
-             className="bg-gradient-gold text-black font-black rounded-2xl h-16 px-10 text-sm shadow-gold hover:scale-105 transition-all uppercase tracking-[0.2em] diamond-glow">
-             Iniciar Agendamento Pro
-           </Button>
-        </div>
+
+        {loading ? (
+          <div className="space-y-4">
+            {[1,2,3].map(i => <div key={i} className="h-24 bg-white/5 rounded-[2rem] animate-pulse" />)}
+          </div>
+        ) : appointments.length === 0 ? (
+          <div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20 backdrop-blur-4xl flex flex-col items-center animate-in zoom-in-95 duration-1000">
+             <div className="w-24 h-24 rounded-[2.5rem] bg-white/5 flex items-center justify-center mb-10 shadow-premium border border-white/5 relative">
+                <div className="absolute inset-0 bg-gradient-gold opacity-5 blur-[10px] rounded-full" />
+                <Calendar className="w-10 h-10 text-slate-700 relative z-10" />
+             </div>
+             <h2 className="text-3xl font-black text-white mb-4 tracking-tighter">Agenda Silenciosa</h2>
+             <p className="text-slate-500 font-medium text-lg max-w-md mx-auto leading-relaxed mb-10">Você ainda não tem agendamentos futuros. Suas experiências Diamond aparecerão aqui.</p>
+             <Button onClick={() => navigate("/app")}
+               className="bg-gradient-gold text-black font-black rounded-2xl h-16 px-10 text-sm shadow-gold hover:scale-105 transition-all uppercase tracking-[0.2em] diamond-glow">
+               Iniciar Agendamento Pro
+             </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {appointments.map((apt, idx) => {
+              const st = statusLabel[apt.status] || { label: apt.status, color: "text-slate-400" };
+              const date = new Date(apt.scheduled_at);
+              return (
+                <div key={apt.id}
+                  style={{ animationDelay: `${idx * 100}ms` }}
+                  className="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-orange-500/20 transition-all duration-500 flex flex-col md:flex-row md:items-center gap-6 animate-in slide-in-from-bottom">
+                  <div className="w-16 h-16 rounded-[1.5rem] bg-orange-500/10 flex flex-col items-center justify-center border border-orange-500/20 flex-shrink-0">
+                    <span className="text-xl font-black text-orange-400 leading-none">{date.getDate()}</span>
+                    <span className="text-[9px] font-black text-orange-400/60 uppercase tracking-widest">{date.toLocaleString("pt-BR", { month: "short" })}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-black text-white text-lg truncate">{apt.services?.name || "Serviço"}</p>
+                    <p className="text-slate-500 text-sm font-medium mt-1 truncate">
+                      {apt.professionals?.name} · {apt.barbershops?.name}
+                    </p>
+                    <p className="text-slate-600 text-xs font-bold mt-1">
+                      {date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                      {apt.services?.duration_minutes ? ` · ${apt.services.duration_minutes} min` : ""}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className={`text-xs font-black uppercase tracking-widest ${st.color}`}>{st.label}</span>
+                    {apt.services?.price && (
+                      <span className="text-lg font-black text-white">R$ {Number(apt.services.price).toFixed(2)}</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   };
@@ -505,19 +611,90 @@ const HubHeader = ({ title, subtitle, gradient, icon }: { title: string; subtitl
 // ─── Legacy Pages Stubs for Completeness ───────────────────────────────────────────────────────
 const HistoricoPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Histórico" subtitle="Expert Selection" gradient="from-slate-400 to-slate-200" icon={<History size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">No Historical Data Recorded</p></div></div>;
 const MeusplanosPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Assinatura" subtitle="Planos Diamond e Black" gradient="from-purple-400 to-pink-400" icon={<Award size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">No Active Premium Subscriptions</p></div></div>;
-const IndicarPage = () => <div className="space-y-8 animate-in fade-in duration-500"><HubHeader title="Indique & Ganhe" subtitle="Expanda a Rede Diamond" gradient="from-orange-400 to-amber-400" icon={<Share2 size={24} />} /><div className="p-10 bg-slate-900/40 border border-white/5 rounded-[3rem] shadow-gold text-center"><p className="text-Gradient-gold text-4xl font-black mb-4 tracking-tighter">SCB-EXPERT-24</p><p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Seu código exclusivo de embaixador</p><Button className="mt-8 bg-white/5 border border-white/10 rounded-2xl h-14 px-10 font-bold text-xs uppercase tracking-widest hover:bg-gradient-gold hover:text-black transition-all">Copiar Invite Diamond</Button></div></div>;
+const IndicarPage = () => {
+  const { user } = useAuth();
+  const [code, setCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    (supabase as any)
+      .from("affiliates")
+      .select("referral_code")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }: { data: any }) => setCode(data?.referral_code || null));
+  }, [user]);
+
+  const handleCopy = () => {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <HubHeader title="Indique & Ganhe" subtitle="Expanda a Rede Diamond" gradient="from-orange-400 to-amber-400" icon={<Share2 size={24} />} />
+      <div className="p-10 bg-slate-900/40 border border-white/5 rounded-[3rem] shadow-gold text-center">
+        {code ? (
+          <>
+            <p className="text-gradient-gold text-4xl font-black mb-4 tracking-tighter">{code}</p>
+            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Seu código exclusivo de embaixador</p>
+            <Button onClick={handleCopy} className="mt-8 bg-white/5 border border-white/10 rounded-2xl h-14 px-10 font-bold text-xs uppercase tracking-widest hover:bg-gradient-gold hover:text-black transition-all">
+              {copied ? "Copiado!" : "Copiar Invite Diamond"}
+            </Button>
+          </>
+        ) : (
+          <p className="text-slate-500 font-bold uppercase text-xs tracking-widest">Você ainda não possui um código de indicação. Torne-se um afiliado para receber o seu.</p>
+        )}
+      </div>
+    </div>
+  );
+};
 const AcaoEntreAmigosPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Sorteios" subtitle="Ações Entre Membros Diamond" gradient="from-pink-400 to-rose-400" icon={<Star size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">Searching for Available Slots...</p></div></div>;
 const MinhasDividasPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Extrato Financeiro" subtitle="Débitos com Terceiros Elite" gradient="from-rose-400 to-red-400" icon={<ShoppingBag size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-emerald-400 font-black uppercase text-xs tracking-widest italic animate-pulse">Conta Auditada: Zero Pendências Diamond 🎉</p></div></div>;
 const ServicosContabeisPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Contabilidade" subtitle="Expert Financial Hub" gradient="from-orange-500 to-orange-600" icon={<FileText size={24} />} /><div className="bg-slate-900/20 rounded-[3rem] border border-white/5 overflow-hidden"><SolicitarServicoFiscalPage /></div></div>;
 const SuportePage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Suporte VIP" subtitle="Concierge Diamond 24/7" gradient="from-violet-400 to-purple-400" icon={<MessageCircle size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">Ativando Conexão Criptografada...</p></div></div>;
 const NotificacoesPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Alerta Diamond" subtitle="Notificações Críticas de Sistema" gradient="from-amber-400 to-orange-400" icon={<Bell size={24} />} /><div className="glass-card p-20 text-center rounded-[3rem] border-white/5 bg-slate-900/20"><p className="text-slate-500 font-black uppercase text-xs tracking-widest opacity-30 italic">No Urgent Alerts at the moment</p></div></div>;
 const IAPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Expert Advisor" subtitle="Sua Inteligência de Estilo Avançada" gradient="from-orange-400 to-orange-600" icon={<Zap size={24} />} /><div className="bg-slate-950/40 rounded-[3rem] border border-white/5 overflow-hidden backdrop-blur-3xl"><AIChat /></div></div>;
-const PerfilPage = () => <div className="space-y-6 animate-in fade-in duration-500"><HubHeader title="Identidade" subtitle="Gestão de Perfil Diamond Members" gradient="from-slate-400 to-slate-200" icon={<User size={24} />} /><div className="glass-card p-10 rounded-[3rem] border-white/5 bg-slate-900/20 max-w-md"><div className="flex items-center gap-6 mb-10"><Avatar className="w-20 h-20 border-2 border-orange-500/50 shadow-gold"><AvatarImage src="https://i.pravatar.cc/300" /><AvatarFallback>CL</AvatarFallback></Avatar><div><p className="text-2xl font-black text-white leading-none">Diamond Member</p><p className="text-[10px] text-orange-400 font-black uppercase tracking-widest mt-2">Active Partnership</p></div></div><div className="space-y-4"><div className="p-6 bg-white/5 rounded-2xl border border-white/5"><p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Expert Name</p><p className="text-white font-black">Cliente VIP Diamond</p></div><div className="p-6 bg-white/5 rounded-2xl border border-white/5"><p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Verified WhatsApp</p><p className="text-white font-black">+55 (00) 00000-0000</p></div><Button className="w-full bg-gradient-gold text-black font-black rounded-2xl h-14 mt-6 shadow-gold">Editar Perfil Diamond</Button></div></div></div>;
-
-const MOCK_BARBERSHOPS = [
-  { id: "1", name: "Elite Gentleman", address: "Avenida das Esmeraldas, 100", rating: 5.0, services: 12 },
-  { id: "2", name: "Corte & Diamond", address: "Rua do Ouro, 777", rating: 4.9, services: 8 },
-  { id: "3", name: "Royal Style Hub", address: "Praça da Realeza, 1", rating: 4.8, services: 15 },
-];
+const PerfilPage = () => {
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <HubHeader title="Identidade" subtitle="Gestão de Perfil Diamond Members" gradient="from-slate-400 to-slate-200" icon={<User size={24} />} />
+      <div className="glass-card p-10 rounded-[3rem] border-white/5 bg-slate-900/20 max-w-md">
+        <div className="flex items-center gap-6 mb-10">
+          <Avatar className="w-20 h-20 border-2 border-orange-500/50 shadow-gold">
+            <AvatarImage src={profile?.avatar_url || ""} />
+            <AvatarFallback className="bg-slate-800 text-slate-400 font-black text-xl uppercase">{profile?.name?.charAt(0) || "C"}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-2xl font-black text-white leading-none">{profile?.name || "Diamond Member"}</p>
+            <p className="text-[10px] text-orange-400 font-black uppercase tracking-widest mt-2">Active Partnership</p>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
+            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Nome</p>
+            <p className="text-white font-black">{profile?.name || "—"}</p>
+          </div>
+          <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
+            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">E-mail</p>
+            <p className="text-white font-black">{user?.email || "—"}</p>
+          </div>
+          <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
+            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">WhatsApp</p>
+            <p className="text-white font-black">{profile?.whatsapp || "Não informado"}</p>
+          </div>
+          <Suspense fallback={null}>
+            <ProfilePhotoUpload />
+          </Suspense>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default ClienteDashboard;

@@ -1,7 +1,10 @@
 // Dashboard de Parceiros - Super Admin
 // Versão integrada com sistema real (sem dependências inexistentes)
 
+import { useState, useEffect } from 'react';
 import { usePartnerStats, usePartners } from '@/hooks/usePartners';
+import { supabase } from '@/integrations/supabase/client';
+import { formatCurrency } from '@/lib/formatters';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,8 +21,18 @@ import { formatCurrency } from '@/lib/formatters';
 export default function PartnersDashboard() {
   const { stats, isLoading } = usePartnerStats();
   const { data: partners = [] } = usePartners();
+  const [totalPago, setTotalPago] = useState(0);
 
-  const totalPago = 0; // campo não existe na tabela partners — placeholder para futuro
+  useEffect(() => {
+    (supabase as any)
+      .from("partner_commissions")
+      .select("amount")
+      .eq("status", "paid")
+      .then(({ data }: { data: { amount: number }[] | null }) => {
+        const total = (data || []).reduce((acc, c) => acc + Number(c.amount || 0), 0);
+        setTotalPago(total);
+      });
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -42,7 +55,7 @@ export default function PartnersDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -68,8 +81,8 @@ export default function PartnersDashboard() {
                 <p className="text-sm text-muted-foreground">Indicações Totais</p>
                 <p className="text-2xl font-bold">{stats.totalIndicados}</p>
               </div>
-              <div className="p-3 rounded-full bg-blue-500/10">
-                <TrendingUp className="w-6 h-6 text-blue-500" />
+              <div className="p-3 rounded-full bg-orange-400/10">
+                <TrendingUp className="w-6 h-6 text-orange-500" />
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-2">Total de clientes indicados</p>
@@ -105,6 +118,21 @@ export default function PartnersDashboard() {
             <p className="text-xs text-muted-foreground mt-2">
               {stats.byType.franqueado} franqueados · {stats.byType.diretor} diretores
             </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Pago em Comissões</p>
+                <p className="text-2xl font-bold">{formatCurrency(totalPago)}</p>
+              </div>
+              <div className="p-3 rounded-full bg-emerald-500/10">
+                <DollarSign className="w-6 h-6 text-emerald-500" />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">Comissões com status "pago"</p>
           </CardContent>
         </Card>
       </div>

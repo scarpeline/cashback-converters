@@ -62,33 +62,32 @@ const OnboardingSelectionPage = () => {
     queryKey: ["sector_specialties", selectedSector],
     queryFn: async () => {
       if (!selectedSector) return [];
+      // Try exact match first
       const { data, error } = await (supabase as any)
         .from("sector_presets")
         .select("id, sector, specialty, display_name, description, icon, default_services")
         .eq("sector", selectedSector)
         .order("display_name");
-      if (error) {
-        // Try alternate sector key mapping
-        const altMap: Record<string, string> = {
-          beleza_estetica: "beleza",
-          saude_bem_estar: "saude",
-          educacao_mentorias: "educacao",
-          servicos_domiciliares: "servicos",
-          juridico_financeiro: "juridico",
-          espacos_locacao: "espacos",
-        };
-        const alt = altMap[selectedSector];
-        if (alt) {
-          const { data: d2 } = await (supabase as any)
-            .from("sector_presets")
-            .select("id, sector, specialty, display_name, description, icon, default_services")
-            .eq("sector", alt)
-            .order("display_name");
-          return d2 || [];
-        }
-        return [];
+      if (!error && data && data.length > 0) return data;
+      // Fallback: try legacy sector key mapping
+      const altMap: Record<string, string> = {
+        beleza_estetica: "beleza",
+        saude_bem_estar: "saude",
+        educacao_mentorias: "educacao",
+        servicos_domiciliares: "servicos",
+        juridico_financeiro: "juridico",
+        espacos_locacao: "espacos",
+      };
+      const alt = altMap[selectedSector];
+      if (alt) {
+        const { data: d2 } = await (supabase as any)
+          .from("sector_presets")
+          .select("id, sector, specialty, display_name, description, icon, default_services")
+          .eq("sector", alt)
+          .order("display_name");
+        return d2 || [];
       }
-      return data || [];
+      return [];
     },
     enabled: !!selectedSector,
   });

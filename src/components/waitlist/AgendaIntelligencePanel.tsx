@@ -346,7 +346,7 @@ export const AgendaIntelligencePanel = ({ barbershopId }: AgendaIntelligencePane
                       <p className="text-xs text-muted-foreground">Ofertas enviadas hoje</p>
                     </div>
                     <div className="text-center p-3 bg-muted rounded-lg">
-                      <p className="text-2xl font-bold text-blue-600">0</p>
+                      <p className="text-2xl font-bold text-orange-600">0</p>
                       <p className="text-xs text-muted-foreground">Aceitas esta semana</p>
                     </div>
                     <div className="text-center p-3 bg-muted rounded-lg">

@@ -1,8 +1,4 @@
-// @ts-nocheck
 import { createClient } from '@/lib/supabase';
-import { Database } from '@/integrations/supabase/types';
-
-type DatabaseType = Database;
 
 export interface ActivityRule {
   daysInactive: number;

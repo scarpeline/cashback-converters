@@ -112,7 +112,7 @@ const formatDate = (d: string) =>
 const severityColor = (s: string) => {
   if (s === "critical") return "bg-destructive/10 text-destructive border-destructive/30";
   if (s === "warning") return "bg-yellow-500/10 text-yellow-700 border-yellow-500/30";
-  return "bg-blue-500/10 text-blue-700 border-blue-500/30";
+  return "bg-orange-400/10 text-orange-700 border-orange-400/30";
 };
 
 const taxStatusLabel: Record<string, string> = {

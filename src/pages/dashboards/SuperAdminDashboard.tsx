@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useState, useEffect, useMemo, useCallback } from "react";import { Routes, Route, Link, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useMemo, useCallback } from "react";import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { SocialProofManager } from "@/components/social-proof/SocialProofManager";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";

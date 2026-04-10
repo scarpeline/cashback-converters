@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Hook para IA aprimorada com memória
 import { useState, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';

@@ -190,13 +190,13 @@ const DonoDashboard = () => {
                                     } ${
                                         active
                                             ? 'bg-orange-500 text-white font-semibold'
-                                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                                            : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
                                     }`}
                                 >
-                                    <span className={`flex-shrink-0 ${active ? 'text-white' : 'text-slate-400 group-hover:text-orange-500'}`}>
+                                    <span className={`flex-shrink-0 ${active ? 'text-white' : 'text-slate-500 group-hover:text-orange-500'}`}>
                                         {React.cloneElement(item.icon as React.ReactElement, { size: 17 })}
                                     </span>
-                                    {!sidebarCollapsed && <span className="text-sm">{item.label}</span>}
+                                    {!sidebarCollapsed && <span className="text-sm font-medium">{item.label}</span>}
                                 </Link>
                             );
                         }
@@ -219,18 +219,18 @@ const DonoDashboard = () => {
                                     } ${
                                         active
                                             ? 'bg-orange-500 text-white font-semibold'
-                                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                                            : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
                                     }`}
                                 >
-                                    <span className={`flex-shrink-0 ${active ? 'text-white' : 'text-slate-400 group-hover:text-orange-500'}`}>
+                                    <span className={`flex-shrink-0 ${active ? 'text-white' : 'text-slate-500 group-hover:text-orange-500'}`}>
                                         {React.cloneElement(item.icon as React.ReactElement, { size: 17 })}
                                     </span>
                                     {!sidebarCollapsed && (
                                         <>
-                                            <span className="text-sm flex-1 text-left">{item.label}</span>
+                                            <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
                                             <ChevronDown
                                                 size={13}
-                                                className={`text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+                                                className={`text-slate-500 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
                                             />
                                         </>
                                     )}
@@ -238,14 +238,14 @@ const DonoDashboard = () => {
 
                                 {!sidebarCollapsed && (
                                     <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'}`}>
-                                        <div className="ml-4 pl-3 border-l border-slate-100 mt-0.5 space-y-0.5">
+                                        <div className="ml-4 pl-3 border-l-2 border-slate-200 mt-0.5 space-y-0.5">
                                             {item.children!.map((sub) => (
                                                 <Link
                                                     key={sub.label}
                                                     to={sub.path}
-                                                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-orange-500 hover:bg-orange-50 transition-all duration-200"
+                                                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200"
                                                 >
-                                                    <span className="text-slate-400">{sub.icon}</span>
+                                                    <span className="text-slate-500">{sub.icon}</span>
                                                     {sub.label}
                                                 </Link>
                                             ))}
@@ -258,24 +258,24 @@ const DonoDashboard = () => {
                 </nav>
 
                 {/* Footer — user + logout */}
-                <div className="px-2 py-4 border-t border-slate-100 space-y-1">
+                <div className="px-2 py-4 border-t border-slate-200 space-y-1">
                     {!sidebarCollapsed && (
                         <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl">
                             <Avatar className="w-8 h-8 flex-shrink-0">
                                 <AvatarImage src={profile?.avatar_url || ""} />
-                                <AvatarFallback className="bg-orange-100 text-orange-500 text-xs font-bold uppercase">
+                                <AvatarFallback className="bg-orange-100 text-orange-600 text-xs font-bold uppercase">
                                     {profile?.name?.charAt(0) || "U"}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-slate-800 truncate leading-tight">{profile?.name || "Usuário"}</p>
+                                <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{profile?.name || "Usuário"}</p>
                             </div>
                         </div>
                     )}
                     <button
                         onClick={() => signOut()}
                         title="Sair"
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all duration-200 ${sidebarCollapsed ? 'justify-center' : ''}`}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 font-medium hover:text-red-600 hover:bg-red-50 transition-all duration-200 ${sidebarCollapsed ? 'justify-center' : ''}`}
                     >
                         <LogOut className="w-4 h-4 flex-shrink-0" />
                         {!sidebarCollapsed && <span className="text-sm">Sair</span>}
@@ -302,14 +302,14 @@ const DonoDashboard = () => {
                     : ''
             }`}>
                 {/* Header */}
-                <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-100 px-6 flex items-center justify-between">
+                <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between">
                     <div className="flex items-center gap-4 flex-1">
-                        <div className="hidden md:flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 w-96 focus-within:border-orange-400 focus-within:bg-white transition-all duration-200">
-                            <Search className="w-4 h-4 text-slate-400" />
+                        <div className="hidden md:flex items-center gap-3 bg-slate-100 border border-slate-300 rounded-xl px-4 py-2 w-96 focus-within:border-orange-400 focus-within:bg-white transition-all duration-200">
+                            <Search className="w-4 h-4 text-slate-500" />
                             <input 
                                 type="text" 
                                 placeholder="Buscar clientes ou agendamentos..." 
-                                className="bg-transparent border-none text-sm text-slate-700 placeholder-slate-400 focus:outline-none w-full"
+                                className="bg-transparent border-none text-sm text-slate-900 placeholder-slate-500 focus:outline-none w-full font-medium"
                             />
                         </div>
                     </div>
@@ -317,14 +317,14 @@ const DonoDashboard = () => {
                     <div className="flex items-center gap-3">
                         <LanguageSelector />
                         
-                        <button className="relative p-2 text-slate-400 hover:text-slate-700 transition-colors rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200">
+                        <button className="relative p-2 text-slate-600 hover:text-slate-900 transition-colors rounded-xl hover:bg-slate-100 border border-transparent hover:border-slate-200">
                             <Bell className="w-5 h-5" />
                             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full" />
                         </button>
 
-                        <div className="hidden xl:flex items-center gap-2 pl-3 border-l border-slate-100">
-                            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                            <p className="text-xs text-slate-400">100% Online</p>
+                        <div className="hidden xl:flex items-center gap-2 pl-3 border-l border-slate-200">
+                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                            <p className="text-sm font-medium text-slate-700">100% Online</p>
                         </div>
                     </div>
                 </header>

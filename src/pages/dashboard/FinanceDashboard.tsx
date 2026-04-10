@@ -298,8 +298,8 @@ export default function FinanceDashboard() {
         <Card className="cursor-pointer hover:shadow-md transition-shadow">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-blue-500/10">
-                <CreditCard className="w-6 h-6 text-blue-500" />
+              <div className="p-3 rounded-full bg-orange-400/10">
+                <CreditCard className="w-6 h-6 text-orange-500" />
               </div>
               <div>
                 <p className="font-semibold">Comissões</p>

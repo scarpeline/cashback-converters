@@ -288,9 +288,9 @@ export const AutomationSettingsPanel = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-orange-50">
             <div className="flex items-center gap-3">
-              <Shield className="w-5 h-5 text-blue-600" />
+              <Shield className="w-5 h-5 text-orange-600" />
               <div>
                 <Label className="font-medium">Bloquear automações para clientes com agendamento na semana</Label>
                 <p className="text-sm text-muted-foreground mt-1">

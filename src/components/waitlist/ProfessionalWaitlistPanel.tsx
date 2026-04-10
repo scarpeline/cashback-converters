@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * ProfessionalWaitlistPanel - Painel para Profissionais gerenciarem fila de espera
  * 
@@ -9,7 +8,7 @@
  * - Realocar clientes
  */
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -177,7 +176,7 @@ export const ProfessionalWaitlistPanel = ({ barbershopId, professionalId }: Prof
 
   const getPreferenceIcon = (accepts: { other: boolean; nearby: boolean; any: boolean }) => {
     if (accepts.any) return <Calendar className="w-4 h-4 text-green-600" />;
-    if (accepts.nearby) return <Clock className="w-4 h-4 text-blue-600" />;
+    if (accepts.nearby) return <Clock className="w-4 h-4 text-orange-600" />;
     if (accepts.other) return <Users className="w-4 h-4 text-orange-600" />;
     return <User className="w-4 h-4 text-purple-600" />;
   };

@@ -1,10 +1,9 @@
-// @ts-nocheck
 /**
  * ReportsPanel — Relatórios do Dono
  * Financeiro, comissões, serviços, produtos vendidos
  * Usa useReports + useFinanceDashboard existentes
  */
-import { useState } from "react";
+import React, { useState } from "react";
 import { useFinancialReport, useAppointmentReport, useClientReport } from "@/hooks/useReports";
 import { formatCurrency } from "@/lib/formatters";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -218,7 +217,7 @@ export function ReportsPanel({ barbershopId }: ReportsPanelProps) {
                   <CardDescription>Recorrentes</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-2xl font-bold text-blue-500">{clients?.returningClients ?? 0}</p>
+                  <p className="text-2xl font-bold text-orange-500">{clients?.returningClients ?? 0}</p>
                 </CardContent>
               </Card>
             </div>
