@@ -53,6 +53,10 @@ const PartnerDashboard = () => {
     );
   }
 
+  // Roteamento por tipo de parceiro
+  if (partner.type === 'franqueado') return <FranqueadoDashboard />;
+  if (partner.type === 'diretor') return <DiretorDashboard />;
+
   const activityStatus = getActivityStatus(0); // sem campo dias_parado na tabela real, assume ativo
 
   return (
