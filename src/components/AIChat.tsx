@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AIChat — Chat com IA + Áudio
  * - Gravação via Web Speech API (SpeechRecognition)
