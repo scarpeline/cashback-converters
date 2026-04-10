@@ -58,6 +58,7 @@ import { toast } from "sonner";
 import { lazy, Suspense } from "react";
 import { CadastroContadorPanel } from "@/components/contabilidade/CadastroContadorPanel";
 import { ConfigComissoesPanel } from "@/components/contabilidade/ConfigComissoesPanel";
+import { CommissionConfigPanel } from "@/components/admin/CommissionConfigPanel";
 import { WebhookManagementPanel } from "@/components/admin/WebhookManagementPanel";
 import { IntegrationTestsPanel } from "@/components/admin/IntegrationTestsPanel";
 import { RealTimeMetricsPanel } from "@/components/admin/RealTimeMetricsPanel";
@@ -155,6 +156,7 @@ const SuperAdminDashboard = () => {
         { name: "Prova Social", href: `${basePath}/prova-social`, icon: Activity },
         { name: "Visibilidade Landing", href: `${basePath}/visibilidade`, icon: Eye },
         { name: "Configurações", href: `${basePath}/configuracoes`, icon: Settings },
+        { name: "Comissões Parceiros", href: `${basePath}/comissoes-parceiros`, icon: TrendingUp },
       ],
     },
   ], [basePath]);
@@ -335,6 +337,7 @@ const SuperAdminDashboard = () => {
             <Route path="ia" element={<AIDashboardPage />} />
             <Route path="visibilidade" element={<LandingVisibilidadePage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
+            <Route path="comissoes-parceiros" element={<ComissoesParceirosPage />} />
           </Routes>
         </main>
       </div>
@@ -3880,3 +3883,16 @@ const LandingVisibilidadePage = () => {
 };
 
 export default SuperAdminDashboard;
+
+// ============ COMISSÕES DE PARCEIROS ============
+const ComissoesParceirosPage = () => (
+  <div className="space-y-6">
+    <div>
+      <h1 className="font-display text-2xl font-bold">Comissões de Parceiros</h1>
+      <p className="text-muted-foreground text-sm mt-1">
+        Configure os percentuais e duração das comissões para afiliados, franqueados e diretores.
+      </p>
+    </div>
+    <CommissionConfigPanel />
+  </div>
+);
