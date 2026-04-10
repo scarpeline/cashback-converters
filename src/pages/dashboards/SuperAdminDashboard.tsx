@@ -2950,6 +2950,10 @@ const ConfiguracoesPage = () => {
   });
   const [editPkg, setEditPkg] = useState<any>(null);
 
+  // Trial config
+  const [trialDays, setTrialDays] = useState("14");
+  const [savingTrial, setSavingTrial] = useState(false);
+
   useEffect(() => {
     supabase
       .from("integration_settings")
@@ -2967,6 +2971,15 @@ const ConfiguracoesPage = () => {
       .then(({ data }) => {
         if (data?.base_url) setSaasFee(data.base_url);
       });
+    // Carregar configuração de trial
+    (supabase as any)
+      .from("integration_settings")
+      .select("base_url")
+      .eq("service_name", "trial_days")
+      .maybeSingle()
+      .then(({ data }: any) => {
+        if (data?.base_url) setTrialDays(data.base_url);
+      });
     supabase
       .from("subscription_plans" as any)
       .select("*")
@@ -2981,6 +2994,27 @@ const ConfiguracoesPage = () => {
       .order("created_at", { ascending: true })
       .then(({ data }) => setPackages(data || []));
   }, []);
+
+  const saveTrialDays = async () => {
+    const days = parseInt(trialDays);
+    if (isNaN(days) || days < 1 || days > 90) {
+      toast.error("Informe um valor entre 1 e 90 dias.");
+      return;
+    }
+    setSavingTrial(true);
+    const { error } = await (supabase as any).from("integration_settings").upsert(
+      {
+        service_name: "trial_days",
+        environment: "production",
+        is_active: true,
+        base_url: String(days),
+      },
+      { onConflict: "service_name,environment" },
+    );
+    setSavingTrial(false);
+    if (error) toast.error(error.message);
+    else toast.success(`Período de teste configurado para ${days} dias!`);
+  };
 
   const saveSupportPhone = async () => {
     setSaving(true);
@@ -3124,6 +3158,60 @@ const ConfiguracoesPage = () => {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Configurações</h1>
+
+      {/* ── Período de Teste (Trial) ── */}
+      <Card className="border-orange-200 bg-orange-50/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="text-xl">🎁</span>
+            Período de Teste Gratuito
+          </CardTitle>
+          <CardDescription>
+            Define quantos dias os novos usuários têm de acesso gratuito ao criar uma conta.
+            Aplica-se a todos os novos cadastros.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="flex gap-2">
+              {["7", "14", "30"].map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setTrialDays(d)}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                    trialDays === d
+                      ? "border-orange-500 bg-orange-500 text-white"
+                      : "border-slate-200 text-slate-600 hover:border-orange-300"
+                  }`}
+                >
+                  {d} dias
+                </button>
+              ))}
+            </div>
+            <span className="text-slate-400 text-sm">ou</span>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min="1"
+                max="90"
+                value={trialDays}
+                onChange={(e) => setTrialDays(e.target.value)}
+                className="w-24 h-10"
+                placeholder="dias"
+              />
+              <span className="text-sm text-slate-500">dias personalizados</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="gold" onClick={saveTrialDays} disabled={savingTrial} className="h-10">
+              {savingTrial ? "Salvando..." : `Salvar — ${trialDays} dias de teste`}
+            </Button>
+            <p className="text-xs text-slate-400">
+              Configuração atual: <strong className="text-orange-600">{trialDays} dias</strong>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

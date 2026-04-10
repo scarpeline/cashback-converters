@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { formatCpfCnpjBR, formatWhatsAppBR } from "@/lib/input-masks";
 import { applyInitialPreset } from "@/services/onboardingService";
 import LanguageSelector from "@/components/LanguageSelector";
+import { useTrialDays } from "@/hooks/useTrialDays";
 
 // ── Sectors ──────────────────────────────────────────────────────────────────
 const SECTORS = [
@@ -35,6 +36,7 @@ const SECTORS = [
   { key: "moda_imagem",           label: "Moda & Imagem",           icon: "👗",  desc: "Personal stylist, consultores de imagem, alfaiates." },
   { key: "musica_artes",          label: "Música & Artes",          icon: "🎵",  desc: "Professores de música, artistas, ateliês." },
   { key: "academia",              label: "Academia",                icon: "🏟️",  desc: "Academias de ginástica, musculação e fitness." },
+  { key: "religiao",              label: "Religião & Igrejas",      icon: "⛪",  desc: "Igrejas, templos, centros espirituais e pastorais." },
 ];
 
 // ── Especialidades embutidas (fallback quando banco não retorna dados) ─────────
@@ -144,6 +146,14 @@ const FALLBACK_SPECIALTIES: Record<string, { specialty: string; display_name: st
     { specialty: "natacao_academia",  display_name: "Natação",            icon: "🏊", services_count: 2 },
     { specialty: "spinning_academia", display_name: "Spinning",           icon: "🚴", services_count: 2 },
   ],
+  religiao: [
+    { specialty: "igreja_evangelica", display_name: "Igreja Evangélica",  icon: "✝️", services_count: 2 },
+    { specialty: "igreja_catolica",   display_name: "Igreja Católica",    icon: "⛪", services_count: 2 },
+    { specialty: "centro_espirita",   display_name: "Centro Espírita",    icon: "🌟", services_count: 2 },
+    { specialty: "templo_budista",    display_name: "Templo Budista",     icon: "🪷", services_count: 2 },
+    { specialty: "pastoral",          display_name: "Pastoral / Ministério", icon: "🙏", services_count: 2 },
+    { specialty: "outro_religioso",   display_name: "Outro",              icon: "🕊️", services_count: 2 },
+  ],
 };
 
 // Labels específicos por nicho para o dashboard
@@ -166,6 +176,7 @@ const NICHE_LABELS: Record<string, { professionals: string; services: string; ap
   moda_imagem:           { professionals: "Consultores",    services: "Consultorias",       appointments: "Consultas",    clients: "Clientes" },
   musica_artes:          { professionals: "Professores",    services: "Aulas",              appointments: "Aulas",        clients: "Alunos" },
   academia:              { professionals: "Instrutores",    services: "Modalidades",        appointments: "Treinos",      clients: "Alunos" },
+  religiao:              { professionals: "Líderes",        services: "Atividades",         appointments: "Encontros",    clients: "Membros" },
 };
 
 // Passos: Setor → Especialidade → Negócio → Pagamentos
@@ -186,6 +197,8 @@ const OnboardingSelectionPage = () => {
     phone: profile?.whatsapp || "",
     description: "",
   });
+
+  const trialDays = useTrialDays();
 
   // Dados de pagamento (step 4)
   const [paymentForm, setPaymentForm] = useState<{
@@ -267,11 +280,14 @@ const OnboardingSelectionPage = () => {
       .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `negocio-${user.id.slice(0, 8)}`;
 
     const nicheLabels = selectedSector ? NICHE_LABELS[selectedSector] : null;
+    const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString();
     const payload = {
       owner_user_id: user.id, name: form.name, address: form.address,
       phone: form.phone || null, description: form.description || null,
       sector: selectedSector || null, specialty: selectedSpecialty || null,
       onboarding_status: "configured",
+      subscription_status: "trial",
+      subscription_ends_at: trialEndsAt,
       ...(nicheLabels ? { niche_labels: nicheLabels } : {}),
     };
 
@@ -595,6 +611,13 @@ const OnboardingSelectionPage = () => {
               <p className="text-xs text-orange-600">
                 Configure sua chave PIX e crie sua subconta Asaas gratuitamente. Você receberá os pagamentos dos seus clientes automaticamente.
               </p>
+            </div>
+
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+              <p className="text-sm font-medium text-emerald-700">
+                🎁 Você tem <strong>{trialDays} dias grátis</strong> para testar tudo sem pagar nada.
+              </p>
+              <p className="text-xs text-emerald-600 mt-0.5">Sem cartão de crédito. Cancele quando quiser.</p>
             </div>
 
             <div className="space-y-4 max-w-md mx-auto">
