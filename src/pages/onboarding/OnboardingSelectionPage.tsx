@@ -158,10 +158,10 @@ const NICHE_LABELS: Record<string, { professionals: string; services: string; ap
   musica_artes:          { professionals: "Professores",    services: "Aulas",              appointments: "Aulas",        clients: "Alunos" },
 };
 
-// Passos para dono: Perfil → Setor → Especialidade → Negócio
-// Passos para profissional: Perfil → Setor → Especialidade → Dados pessoais
-const STEPS_OWNER = ["Perfil", "Setor", "Especialidade", "Negócio"];
-const STEPS_PROF  = ["Perfil", "Especialidade", "Seus Dados"];
+// Passos para dono: Perfil → Setor → Especialidade → Negócio → Pagamentos
+// Passos para profissional: Perfil → Área → Especialidade → Seus Dados
+const STEPS_OWNER = ["Perfil", "Setor", "Especialidade", "Negócio", "Pagamentos"];
+const STEPS_PROF  = ["Perfil", "Área", "Especialidade", "Seus Dados"];
 
 const OnboardingSelectionPage = () => {
   const navigate = useNavigate();
@@ -182,6 +182,23 @@ const OnboardingSelectionPage = () => {
   // Para profissional autônomo: setor próprio (não usa o contexto global)
   const [profSector, setProfSector] = useState<string | null>(null);
   const [profSpecialty, setProfSpecialty] = useState<string | null>(null);
+
+  // Dados de pagamento (step 5 — apenas dono)
+  const [paymentForm, setPaymentForm] = useState<{
+    account_type: "pf" | "pj" | "";
+    pix_key: string;
+    pix_key_type: "cpf" | "cnpj" | "email" | "phone" | "random";
+    skip_payment: boolean;
+  }>({
+    account_type: "",
+    pix_key: "",
+    pix_key_type: "cpf",
+    skip_payment: false,
+  });
+
+  // PIX para profissional
+  const [profPixKey, setProfPixKey] = useState("");
+  const [profPixKeyType, setProfPixKeyType] = useState<"cpf" | "email" | "phone" | "random">("cpf");
 
   const currentSteps = userType === "professional" ? STEPS_PROF : STEPS_OWNER;
 
@@ -246,7 +263,7 @@ const OnboardingSelectionPage = () => {
     } else {
       setSelectedSpecialty(specialty);
     }
-    setStep(userType === "professional" ? 3 : 4);
+    setStep(userType === "professional" ? 4 : 4);
   };
 
   // Voltar inteligente por tipo de usuário
@@ -254,72 +271,129 @@ const OnboardingSelectionPage = () => {
     if (step === 2) { setStep(1); setUserType(null); return; }
     if (step === 3) { setStep(2); return; }
     if (step === 4) { setStep(3); return; }
+    if (step === 5) { setStep(4); return; }
   };
 
-  // Finalizar cadastro de DONO
+  // Finalizar cadastro de DONO (com ou sem pagamento)
+  const _createBarbershop = async () => {
+    const newErrors: Record<string, string> = {};
+    if (!form.name || form.name.length < 2) newErrors.name = "Nome obrigatório (mín. 2 caracteres)";
+    if (!form.address || form.address.length < 5) newErrors.address = "Endereço obrigatório";
+    if (form.cpf_cnpj.replace(/\D/g, "").length < 11) newErrors.cpf_cnpj = "CPF/CNPJ inválido";
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return null; }
+    if (!user) return null;
+
+    const baseSlug = form.name
+      .toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `negocio-${user.id.slice(0, 8)}`;
+
+    const nicheLabels = selectedSector ? NICHE_LABELS[selectedSector] : null;
+    const payload = {
+      owner_user_id: user.id, name: form.name, address: form.address,
+      phone: form.phone || null, description: form.description || null,
+      sector: selectedSector || null, specialty: selectedSpecialty || null,
+      onboarding_status: "configured",
+      ...(nicheLabels ? { niche_labels: nicheLabels } : {}),
+    };
+
+    const { data: existingList } = await (supabase as any)
+      .from("barbershops").select("id, slug")
+      .eq("owner_user_id", user.id).order("created_at", { ascending: true }).limit(1);
+
+    const existing = existingList?.[0];
+    let barbershopId: string;
+
+    if (existing) {
+      const { error } = await (supabase as any).from("barbershops")
+        .update({ ...payload, slug: existing.slug || baseSlug }).eq("id", existing.id);
+      if (error) throw error;
+      barbershopId = existing.id;
+    } else {
+      let slugToUse = baseSlug;
+      let { data: inserted, error } = await (supabase as any).from("barbershops")
+        .insert({ ...payload, slug: slugToUse }).select("id").single();
+      if (error?.message?.includes("barbershops_slug_key")) {
+        slugToUse = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+        const retry = await (supabase as any).from("barbershops")
+          .insert({ ...payload, slug: slugToUse }).select("id").single();
+        if (retry.error) throw retry.error;
+        inserted = retry.data;
+      } else if (error) throw error;
+      barbershopId = inserted.id;
+    }
+
+    if (selectedSector && selectedSpecialty && specialties?.length) {
+      const preset = specialties.find((s: any) =>
+        s.specialty === selectedSpecialty || s.display_name === selectedSpecialty
+      );
+      if (preset && preset.id && !preset.id.startsWith("fallback")) {
+        await applyInitialPreset(user.id, barbershopId, selectedSector, selectedSpecialty, preset);
+      }
+    }
+
+    if (form.cpf_cnpj) {
+      await (supabase as any).from("profiles")
+        .update({ cpf_cnpj: form.cpf_cnpj }).eq("user_id", user.id);
+    }
+
+    return barbershopId;
+  };
+
+  // Avança do step 4 para step 5 (pagamentos)
   const handleFinishOwner = async () => {
     const newErrors: Record<string, string> = {};
     if (!form.name || form.name.length < 2) newErrors.name = "Nome obrigatório (mín. 2 caracteres)";
     if (!form.address || form.address.length < 5) newErrors.address = "Endereço obrigatório";
     if (form.cpf_cnpj.replace(/\D/g, "").length < 11) newErrors.cpf_cnpj = "CPF/CNPJ inválido";
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
-    if (!user) return;
+    setStep(5);
+  };
 
+  // Finalizar com pagamento configurado
+  const handleFinishOwnerWithPayment = async () => {
+    if (!user) return;
     setSaving(true);
     try {
-      const baseSlug = form.name
-        .toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `negocio-${user.id.slice(0, 8)}`;
+      const barbershopId = await _createBarbershop();
+      if (!barbershopId) return;
 
-      const nicheLabels = selectedSector ? NICHE_LABELS[selectedSector] : null;
-      const payload = {
-        owner_user_id: user.id, name: form.name, address: form.address,
-        phone: form.phone || null, description: form.description || null,
-        sector: selectedSector || null, specialty: selectedSpecialty || null,
-        onboarding_status: "configured",
-        ...(nicheLabels ? { niche_labels: nicheLabels } : {}),
-      };
+      if (!paymentForm.skip_payment && paymentForm.pix_key && paymentForm.account_type) {
+        await (supabase as any).from("profiles").update({
+          pix_key: paymentForm.pix_key,
+        }).eq("user_id", user.id);
 
-      const { data: existingList } = await (supabase as any)
-        .from("barbershops").select("id, slug")
-        .eq("owner_user_id", user.id).order("created_at", { ascending: true }).limit(1);
-
-      const existing = existingList?.[0];
-      let barbershopId: string;
-
-      if (existing) {
-        const { error } = await (supabase as any).from("barbershops")
-          .update({ ...payload, slug: existing.slug || baseSlug }).eq("id", existing.id);
-        if (error) throw error;
-        barbershopId = existing.id;
-      } else {
-        let slugToUse = baseSlug;
-        let { data: inserted, error } = await (supabase as any).from("barbershops")
-          .insert({ ...payload, slug: slugToUse }).select("id").single();
-        if (error?.message?.includes("barbershops_slug_key")) {
-          slugToUse = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
-          const retry = await (supabase as any).from("barbershops")
-            .insert({ ...payload, slug: slugToUse }).select("id").single();
-          if (retry.error) throw retry.error;
-          inserted = retry.data;
-        } else if (error) throw error;
-        barbershopId = inserted.id;
-      }
-
-      if (selectedSector && selectedSpecialty && specialties?.length) {
-        const preset = specialties.find((s: any) =>
-          s.specialty === selectedSpecialty || s.display_name === selectedSpecialty
-        );
-        if (preset && preset.id && !preset.id.startsWith("fallback")) {
-          await applyInitialPreset(user.id, barbershopId, selectedSector, selectedSpecialty, preset);
+        try {
+          await supabase.functions.invoke("process-payment", {
+            body: {
+              action: "create-barbershop-account",
+              barbershop_id: barbershopId,
+              name: form.name,
+              email: user.email,
+              cpf_cnpj: form.cpf_cnpj.replace(/\D/g, ""),
+              mobile_phone: form.phone,
+            }
+          });
+        } catch (e) {
+          console.warn("Subconta Asaas não criada agora, pode ser feita depois:", e);
         }
       }
 
-      if (form.cpf_cnpj) {
-        await (supabase as any).from("profiles")
-          .update({ cpf_cnpj: form.cpf_cnpj }).eq("user_id", user.id);
-      }
+      toast.success("Cadastro concluído! Bem-vindo ao sistema 🎉");
+      navigate("/painel-dono");
+    } catch (err: any) {
+      toast.error("Erro: " + (err.message || "Tente novamente."));
+    } finally {
+      setSaving(false);
+    }
+  };
 
+  // Finalizar pulando pagamento
+  const handleSkipPayment = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const barbershopId = await _createBarbershop();
+      if (!barbershopId) return;
       toast.success("Cadastro concluído! Bem-vindo ao sistema 🎉");
       navigate("/painel-dono");
     } catch (err: any) {
@@ -344,6 +418,7 @@ const OnboardingSelectionPage = () => {
         name: form.name,
         whatsapp: form.phone || null,
         cpf_cnpj: form.cpf_cnpj || null,
+        ...(profPixKey ? { pix_key: profPixKey } : {}),
       }).eq("user_id", user.id);
 
       // 2. Garantir role profissional
@@ -378,7 +453,7 @@ const OnboardingSelectionPage = () => {
     }
   };
 
-  const handleFinish = userType === "professional" ? handleFinishProfessional : handleFinishOwner;
+  const handleFinish = userType === "professional" ? handleFinishProfessional : handleFinishOwnerWithPayment;
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-12">
@@ -650,19 +725,152 @@ const OnboardingSelectionPage = () => {
                 </ul>
               </div>
 
+              {/* PIX para profissional */}
+              {userType === "professional" && (
+                <div className="space-y-3">
+                  <div className="p-3 bg-orange-50 border border-orange-100 rounded-xl">
+                    <p className="text-xs text-orange-600">
+                      💳 Configure sua chave PIX para receber pagamentos dos seus clientes diretamente na sua conta. Você pode configurar depois nas configurações.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Chave PIX (opcional)</label>
+                    <select
+                      value={profPixKeyType}
+                      onChange={e => setProfPixKeyType(e.target.value as typeof profPixKeyType)}
+                      className="mt-1 w-full h-11 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 bg-white"
+                    >
+                      <option value="cpf">CPF</option>
+                      <option value="email">E-mail</option>
+                      <option value="phone">Telefone</option>
+                      <option value="random">Chave aleatória</option>
+                    </select>
+                  </div>
+                  <Input
+                    placeholder="Valor da chave PIX"
+                    value={profPixKey}
+                    onChange={e => setProfPixKey(e.target.value)}
+                    className="h-11 text-slate-900 border-slate-200"
+                  />
+                </div>
+              )}
+
               <div className="flex gap-3 pt-2">
                 <button onClick={handleBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors px-3">
                   <ChevronLeft className="w-4 h-4" /> Voltar
                 </button>
-                <button
-                  onClick={handleFinish}
-                  disabled={saving}
-                  className="flex-1 h-11 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                {userType === "professional" ? (
+                  <button
+                    onClick={handleFinishProfessional}
+                    disabled={saving}
+                    className="flex-1 h-11 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                  >
+                    {saving
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Configurando...</>
+                      : <>Criar meu perfil <ArrowRight className="w-4 h-4" /></>
+                    }
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleFinishOwner}
+                    disabled={saving}
+                    className="flex-1 h-11 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                  >
+                    Continuar <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 5: Dados de Pagamento (apenas dono) ── */}
+        {step === 5 && userType === "owner" && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">Dados de Pagamento</h2>
+
+            {/* Banner informativo */}
+            <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl">
+              <p className="text-sm font-medium text-orange-700 mb-1">💳 Para receber pagamentos diretamente na sua conta</p>
+              <p className="text-xs text-orange-600">
+                Configure sua chave PIX e crie sua subconta Asaas gratuitamente.
+                Você receberá os pagamentos dos seus clientes automaticamente.
+              </p>
+            </div>
+
+            <div className="space-y-4 max-w-md mx-auto">
+              {/* Tipo de conta */}
+              <div>
+                <label className="text-sm font-medium text-slate-700 block mb-2">Tipo de conta</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {(["pf", "pj"] as const).map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => setPaymentForm(p => ({ ...p, account_type: type }))}
+                      className={`p-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                        paymentForm.account_type === type
+                          ? "border-orange-500 bg-orange-50 text-orange-700"
+                          : "border-slate-200 text-slate-600 hover:border-orange-300"
+                      }`}
+                    >
+                      {type === "pf" ? "Pessoa Física (CPF)" : "Pessoa Jurídica (CNPJ)"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Chave PIX */}
+              <div>
+                <label className="text-sm font-medium text-slate-700 block mb-2">Chave PIX recebedor</label>
+                <select
+                  value={paymentForm.pix_key_type}
+                  onChange={e => setPaymentForm(p => ({ ...p, pix_key_type: e.target.value as typeof p.pix_key_type }))}
+                  className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 bg-white mb-2"
                 >
-                  {saving
-                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Configurando...</>
-                    : <>{userType === "professional" ? "Criar meu perfil" : "Finalizar Cadastro"} <ArrowRight className="w-4 h-4" /></>
-                  }
+                  <option value="cpf">CPF</option>
+                  <option value="cnpj">CNPJ</option>
+                  <option value="email">E-mail</option>
+                  <option value="phone">Telefone</option>
+                  <option value="random">Chave aleatória</option>
+                </select>
+                <Input
+                  placeholder="Valor da chave PIX"
+                  value={paymentForm.pix_key}
+                  onChange={e => setPaymentForm(p => ({ ...p, pix_key: e.target.value }))}
+                  className="h-11 text-slate-900 border-slate-200"
+                />
+              </div>
+
+              {/* Aviso subconta Asaas */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <p className="text-xs text-slate-500">
+                  ℹ️ Ao finalizar, criaremos sua subconta Asaas automaticamente usando os dados informados. Isso permite receber pagamentos diretamente na sua conta.
+                </p>
+              </div>
+
+              {/* Botão principal */}
+              <button
+                onClick={handleFinishOwnerWithPayment}
+                disabled={saving}
+                className="w-full h-11 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {saving
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Configurando...</>
+                  : <>Finalizar e Ativar Pagamentos <ArrowRight className="w-4 h-4" /></>
+                }
+              </button>
+
+              {/* Pular */}
+              <div className="flex items-center justify-between">
+                <button onClick={handleBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors">
+                  <ChevronLeft className="w-4 h-4" /> Voltar
+                </button>
+                <button
+                  onClick={handleSkipPayment}
+                  disabled={saving}
+                  className="text-xs text-slate-400 hover:text-slate-600 transition-colors underline"
+                >
+                  Configurar depois
                 </button>
               </div>
             </div>
