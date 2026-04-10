@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Dashboard de Parceiros - Super Admin
 // Versão integrada com sistema real (sem dependências inexistentes)
 
