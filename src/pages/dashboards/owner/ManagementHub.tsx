@@ -11,20 +11,20 @@ import {
   Plus, 
   Edit, 
   Trash2, 
-  Check, 
-  X, 
   Camera,
   Package,
-  Building,
   Star,
   ShieldCheck,
   Zap,
   Tag,
   HelpCircle,
-  Clock
+  Clock,
+  BookOpen,
+  Link2,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -36,11 +36,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ServiceMediaPanel } from "@/components/media/ServiceMediaPanel";
+import { DigitalProductsHub } from "@/components/digital/DigitalProductsHub";
+import { PaymentLinksHub } from "@/components/payments/PaymentLinksHub";
 
 export const ManagementHub = () => {
-  const [activeTab, setActiveTab] = useState<"professionals" | "services" | "inventory">("professionals");
+  const [activeTab, setActiveTab] = useState<"professionals" | "services" | "inventory" | "digital" | "charges">("professionals");
   const profLabel = useDynamicLabel("professionals");
   const servLabel = useDynamicLabel("services");
+  const { barbershop } = useBarbershop();
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -52,7 +62,7 @@ export const ManagementHub = () => {
           <p className="text-slate-400 font-medium">Controle sua equipe, cardápio de serviços e ativos</p>
         </div>
         
-        <div className="flex bg-slate-900/50 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl">
+        <div className="flex flex-wrap bg-slate-900/50 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl gap-1">
           <Button 
             variant={activeTab === "professionals" ? "gold" : "ghost"} 
             size="sm" 
@@ -77,6 +87,24 @@ export const ManagementHub = () => {
           >
             Estoque
           </Button>
+          <Button 
+            variant={activeTab === "digital" ? "gold" : "ghost"} 
+            size="sm" 
+            className="rounded-xl font-bold"
+            onClick={() => setActiveTab("digital")}
+          >
+            <BookOpen className="w-3.5 h-3.5 mr-1.5" />
+            Loja Digital
+          </Button>
+          <Button 
+            variant={activeTab === "charges" ? "gold" : "ghost"} 
+            size="sm" 
+            className="rounded-xl font-bold"
+            onClick={() => setActiveTab("charges")}
+          >
+            <Link2 className="w-3.5 h-3.5 mr-1.5" />
+            Cobranças
+          </Button>
         </div>
       </div>
 
@@ -84,6 +112,8 @@ export const ManagementHub = () => {
         {activeTab === "professionals" && <ProfissionaisPage />}
         {activeTab === "services" && <ServicosPage />}
         {activeTab === "inventory" && <EstoquePage />}
+        {activeTab === "digital" && barbershop && <DigitalProductsHub barbershopId={barbershop.id} />}
+        {activeTab === "charges" && barbershop && <PaymentLinksHub barbershopId={barbershop.id} />}
       </div>
     </div>
   );
@@ -277,6 +307,8 @@ const ServicosPage = () => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState("30");
+  const [mediaServiceId, setMediaServiceId] = useState<string | null>(null);
+  const [mediaServiceName, setMediaServiceName] = useState("");
 
   const resetForm = () => { setName(""); setPrice(""); setDuration("30"); setEditingId(null); setShowAdd(false); };
 
@@ -311,6 +343,21 @@ const ServicosPage = () => {
 
   return (
     <div className="space-y-8">
+      {/* Media modal */}
+      <Dialog open={!!mediaServiceId} onOpenChange={open => { if (!open) setMediaServiceId(null); }}>
+        <DialogContent className="bg-slate-950 border-white/10 rounded-[2.5rem] max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white font-black flex items-center gap-2">
+              <Camera className="w-5 h-5 text-orange-400" />
+              Mídia — {mediaServiceName}
+            </DialogTitle>
+          </DialogHeader>
+          {barbershop && mediaServiceId && (
+            <ServiceMediaPanel barbershopId={barbershop.id} serviceId={mediaServiceId} />
+          )}
+        </DialogContent>
+      </Dialog>
+
       <div className="flex justify-end">
         <Button variant="gold" className="rounded-2xl h-12 px-8 font-black shadow-gold diamond-glow" onClick={() => { resetForm(); setShowAdd(!showAdd); }}>
           <Plus className="w-5 h-5 mr-2" /> {showAdd ? "Fechar" : "Novo Serviço"}
@@ -365,6 +412,7 @@ const ServicosPage = () => {
                    <Tag className="w-6 h-6 text-orange-400" />
                 </div>
                 <div className="p-2 opacity-0 group-hover:opacity-100 transition-premium flex gap-1">
+                   <Button variant="ghost" size="icon" className="rounded-xl h-9 w-9 hover:bg-orange-500/10" onClick={() => { setMediaServiceId(s.id); setMediaServiceName(s.name); }} title="Fotos & Vídeos"><Camera className="w-4 h-4 text-orange-400" /></Button>
                    <Button variant="ghost" size="icon" className="rounded-xl h-9 w-9 hover:bg-white/5" onClick={() => handleEdit(s)}><Edit className="w-4 h-4 text-slate-400" /></Button>
                    <Button variant="ghost" size="icon" className="rounded-xl h-9 w-9 hover:bg-red-500/10" onClick={() => handleDelete(s.id, s.name)}><Trash2 className="w-4 h-4 text-red-400" /></Button>
                 </div>
