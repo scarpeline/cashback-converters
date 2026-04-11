@@ -4,7 +4,7 @@
   "loading": "Carregando...",
   "login": "Entrar",
   "get_started": "Começar Grátis",
-  "trial_days": "7 dias grátis para testar",
+  "trial_days": "14 dias grátis para testar",
   "no_credit_card": "Sem cartão de crédito. Cancele quando quiser.",
   "app_fee_desc": "Taxas integradas ASAAS + app — transparência total",
   "marketing_highlight": "Enquanto outros sistemas só agendam, nós transformamos cada cliente em uma máquina de indicações",
@@ -27,7 +27,7 @@
   "pricing_badge": "Preços que Cabem no seu Bolso",
   "pricing_title": "Comece grátis,",
   "pricing_title_highlight": "fature mais",
-  "pricing_subtitle": "7 dias grátis. Sem cartão. Sem compromisso. Resultados imediatos.",
+  "pricing_subtitle": "14 dias grátis. Sem cartão. Sem compromisso. Resultados imediatos.",
   "monthly": "Mensal",
   "quarterly": "Trimestral",
   "annual": "Anual",
@@ -201,7 +201,7 @@
     "active_companies": "Empresas ativas",
     "monthly_processed": "Processados mensalmente",
     "guaranteed_uptime": "Uptime garantido",
-    "free_trial_days": "7 dias teste grátis",
+    "free_trial_days": "14 dias teste grátis",
     "full_schedule": "AGENDA CHEIA!",
     "and_have": "e tenha a",
     "complete_management": "Gestão completa com",
@@ -217,7 +217,7 @@
     "active": "ativas",
     "time_saving": "Economia de tempo",
     "free_trial": "Teste grátis",
-    "seven_days": "7 dias"
+    "seven_days": "14 dias"
   },
   "features": {
     "badge": "Recursos Exclusivos",
@@ -260,7 +260,7 @@
     "title": "Preços que Cabem no seu Bolso",
     "subtitle": "Comece grátis, ",
     "subtitle_highlight": "fature mais",
-    "trial_info": "7 dias grátis. Sem cartão. Sem compromisso. Resultados imediatos.",
+    "trial_info": "14 dias grátis. Sem cartão. Sem compromisso. Resultados imediatos.",
     "best_value": "Melhor Custo-Benefício",
     "per_3_months": "/3 meses",
     "equivalent_to": "equivalente a",
@@ -317,7 +317,7 @@
     "login": "Entrar",
     "register": "Cadastrar",
     "logout": "Sair",
-    "start_free_trial": "Começar 7 Dias Grátis",
+    "start_free_trial": "Começar 14 Dias Grátis",
     "see_features": "Ver Funcionalidades",
     "features": "Funcionalidades",
     "pricing": "Preços"

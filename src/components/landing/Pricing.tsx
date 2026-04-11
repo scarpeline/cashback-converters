@@ -22,7 +22,7 @@ interface Plan {
 }
 
 const allFeatures = [
-  "7 dias grátis para testar", "Agendamentos ilimitados", "Pagamentos PIX, Crédito e Débito",
+  "14 dias grátis para testar", "Agendamentos ilimitados", "Pagamentos PIX, Crédito e Débito",
   "Split automático de comissões", "Cashback configurável", "WhatsApp automático",
   "Dashboard financeiro completo", "Relatórios e métricas", "Múltiplos profissionais",
   "Sistema de afiliados", "Gestão de estoque e produtos", "Exportação de dados", "Suporte via chat",
@@ -31,22 +31,22 @@ const allFeatures = [
 const plans = (t: any): Plan[] => [
   {
     name: t("monthly"), description: t("perfect_to_start"),
-    price: "19,90", priceLabel: t("first_month"),
-    trial: t("from_second_month_price", { price: "29,90" }) || "A partir do 2º mês: R$29,90",
+    price: "29,90", priceLabel: t("per_month"),
+    trial: "14 dias grátis para testar",
     features: allFeatures, popular: false, planIndex: 0, showTrialButton: true,
   },
   {
-    name: t("quarterly"), description: t("smart_economy"),
-    price: "79,90", priceLabel: t("per_3_months"),
-    trial: `${t("equivalent_to") || "Equivale a"} R$26,63${t("per_month") || "/mês"}`,
-    monthlyEquivalent: `26,63${t("per_month")}`,
+    name: "Semestral", description: t("smart_economy"),
+    price: "169,90", priceLabel: t("per_6_months") || "/6 meses",
+    trial: `${t("equivalent_to") || "Equivale a"} R$28,32${t("per_month") || "/mês"}`,
+    monthlyEquivalent: `28,32${t("per_month")}`,
     features: allFeatures, popular: true, planIndex: 1, showTrialButton: false,
   },
   {
     name: t("annual"), description: t("max_economy"),
-    price: "199,90", priceLabel: t("per_year"),
-    trial: `${t("equivalent_to") || "Equivale a"} R$16,65${t("per_month") || "/mês"}`,
-    monthlyEquivalent: `16,65${t("per_month")}`,
+    price: "299,90", priceLabel: t("per_year"),
+    trial: `${t("equivalent_to") || "Equivale a"} R$24,99${t("per_month") || "/mês"}`,
+    monthlyEquivalent: `24,99${t("per_month")}`,
     features: allFeatures, popular: false, bestValue: true, planIndex: 2, showTrialButton: false,
   },
 ];
@@ -70,7 +70,7 @@ const Pricing = () => {
             <span className="bg-gradient-to-r from-indigo-600 to-cyan-600 bg-clip-text text-transparent">seu negócio</span>
           </h2>
           <p className="text-slate-500 text-lg">
-            7 dias grátis em todos os planos. Sem cartão de crédito. Cancele quando quiser.
+            14 dias grátis em todos os planos. Sem cartão de crédito. Cancele quando quiser.
           </p>
         </div>
 

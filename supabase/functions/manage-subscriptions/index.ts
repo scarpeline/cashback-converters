@@ -42,22 +42,22 @@ async function asaasFetch(path: string, options: RequestInit = {}) {
 const PLANS = [
   {
     name: "SalãoCashBack - Mensal",
-    description: "Plano mensal com 7 dias grátis. 1º mês R$19,90, depois R$29,90/mês.",
-    value: 19.90,
+    description: "Plano mensal com 14 dias grátis. R$29,90/mês.",
+    value: 29.90,
     cycle: "MONTHLY",
     externalReference: "plan_mensal",
   },
   {
-    name: "SalãoCashBack - Trimestral",
-    description: "Plano trimestral - Economize 11%. R$79,90 a cada 3 meses.",
-    value: 79.90,
-    cycle: "QUARTERLY",
-    externalReference: "plan_trimestral",
+    name: "SalãoCashBack - Semestral",
+    description: "Plano semestral - Economize 5%. R$169,90 a cada 6 meses.",
+    value: 169.90,
+    cycle: "SEMESTERLY",
+    externalReference: "plan_semestral",
   },
   {
     name: "SalãoCashBack - Anual",
-    description: "Plano anual - Economize 44%. R$199,90/ano.",
-    value: 199.90,
+    description: "Plano anual - Economize 16%. R$299,90/ano.",
+    value: 299.90,
     cycle: "YEARLY",
     externalReference: "plan_anual",
   },
@@ -95,7 +95,7 @@ async function createSubscription(customerId: string, planIndex: number, userId:
   if (!plan) throw new Error("Invalid plan index");
 
   const nextDueDate = new Date();
-  nextDueDate.setDate(nextDueDate.getDate() + 7); // 7 dias grátis
+  nextDueDate.setDate(nextDueDate.getDate() + 14); // 14 dias grátis
   const dueDateStr = nextDueDate.toISOString().split("T")[0];
 
   const subscription = await asaasFetch("/subscriptions", {
