@@ -1,75 +1,79 @@
-import { Calendar, Zap, CreditCard, Gift, Bot, BarChart3 } from "lucide-react";
+import {
+  Calendar, CreditCard, Gift, MessageSquare, Bot, Users, Zap
+} from "lucide-react";
 
 const features = [
   {
+    title: "Agenda Inteligente 24h",
+    description: "Clientes agendam online a qualquer hora, direto pelo celular. Você só precisa aparecer.",
     icon: Calendar,
-    gradient: "from-indigo-500 to-indigo-600",
-    pain: "Chega de WhatsApp lotado",
-    solution: "Agenda online 24h. Cliente marca sozinho, você só aparece.",
+    color: "text-blue-500",
+    bg: "bg-blue-50",
   },
   {
-    icon: Zap,
-    gradient: "from-amber-500 to-orange-500",
-    pain: "Ninguém mais falta sem avisar",
-    solution: "Lembretes automáticos 24h antes. Reduza faltas em 70%.",
-  },
-  {
-    icon: CreditCard,
-    gradient: "from-emerald-500 to-emerald-600",
-    pain: "Receba na hora, sem complicação",
-    solution: "PIX integrado com split automático. Cada centavo na conta certa.",
-  },
-  {
-    icon: Gift,
-    gradient: "from-pink-500 to-rose-500",
-    pain: "Cliente que volta vale 5x mais",
-    solution: "Cashback automático. Eles voltam para usar o crédito.",
-  },
-  {
+    title: "IA no WhatsApp",
+    description: "Assistente inteligente atende por texto e áudio, agenda e remarca automaticamente.",
     icon: Bot,
-    gradient: "from-violet-500 to-purple-600",
-    pain: "IA que atende por você",
-    solution: "Assistente no WhatsApp responde, agenda e remarca. Até de madrugada.",
+    color: "text-purple-500",
+    bg: "bg-purple-50",
   },
   {
-    icon: BarChart3,
-    gradient: "from-cyan-500 to-cyan-600",
-    pain: "Saiba exatamente quanto ganhou",
-    solution: "Dashboard financeiro em tempo real. Comissões, repasses, tudo claro.",
+    title: "Lembretes Automáticos",
+    description: "Confirmações e lembretes automáticos por WhatsApp. Reduza faltas em até 70%.",
+    icon: Zap,
+    color: "text-orange-500",
+    bg: "bg-orange-50",
+  },
+  {
+    title: "Cashback Automatizado",
+    description: "Fidelize clientes devolvendo parte do valor. Eles voltam para usar o crédito.",
+    icon: Gift,
+    color: "text-pink-500",
+    bg: "bg-pink-50",
+  },
+  {
+    title: "Pagamentos Integrados",
+    description: "PIX, cartão, split de comissões. Tudo cai na conta certa automaticamente.",
+    icon: CreditCard,
+    color: "text-green-500",
+    bg: "bg-green-50",
+  },
+  {
+    title: "Programa de Parceiros",
+    description: "Transforme clientes em vendedores. Cada indicação gera comissão automática.",
+    icon: Users,
+    color: "text-cyan-500",
+    bg: "bg-cyan-50",
   },
 ];
 
 const Features = () => {
   return (
-    <section id="features" className="py-24 px-4 bg-slate-50">
+    <section id="features" className="py-20 px-4 bg-white">
       <div className="container mx-auto">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-200 text-sm font-semibold text-indigo-600 mb-6">
-            ⚡ Funcionalidades
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-sm font-medium text-blue-600 mb-6">
+            Funcionalidades
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 mb-4 tracking-tight">
-            Cada problema que você tem,{" "}
-            <span className="bg-gradient-to-r from-indigo-600 to-cyan-600 bg-clip-text text-transparent">a gente resolve</span>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
+            Tudo que seu negócio precisa em <span className="text-orange-500">uma plataforma</span>
           </h2>
-          <p className="text-slate-500 text-lg">
-            Pare de perder clientes por falta de organização. Automatize tudo e foque no que importa.
+          <p className="text-slate-600">
+            Escolha seu segmento, configure em minutos e comece a receber agendamentos
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((f) => (
-            <div
-              key={f.pain}
-              className="group p-7 rounded-2xl bg-white border border-slate-200 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 hover:-translate-y-1 hover:border-indigo-200"
-            >
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${f.gradient} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform shadow-lg`}>
-                <f.icon className="w-7 h-7 text-white" />
+          {features.map((feature) => (
+            <div key={feature.title} className="group p-6 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300 border border-transparent hover:border-slate-100">
+              <div className={`w-12 h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                <feature.icon className={`w-6 h-6 ${feature.color}`} />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2">
-                {f.pain}
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                {feature.title}
               </h3>
-              <p className="text-sm text-slate-500 leading-relaxed">
-                {f.solution}
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {feature.description}
               </p>
             </div>
           ))}
