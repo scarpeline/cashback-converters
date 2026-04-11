@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import {
   ArrowLeft, Eye, EyeOff, Loader2,
   User, Scissors, Store, Mail,
+  CheckCircle, Calendar, MessageCircle, DollarSign,
+  ClipboardList, BarChart3, Users, Package, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole, getDashboardForRole } from "@/lib/auth";
@@ -32,6 +34,73 @@ const signupSchema = z.object({
   pix: z.string().optional(),
 });
 
+// ── Popup de boas-vindas ──────────────────────────────────────────────────────
+const GUIDE_STEPS = [
+  { icon: <Calendar className="w-5 h-5 text-orange-500" />, label: "Configurar Agendamento Online" },
+  { icon: <MessageCircle className="w-5 h-5 text-green-500" />, label: "Ativar WhatsApp Automático" },
+  { icon: <Users className="w-5 h-5 text-blue-500" />, label: "Cadastrar Profissionais" },
+  { icon: <Package className="w-5 h-5 text-purple-500" />, label: "Controlar Pacotes e Sessões" },
+  { icon: <ClipboardList className="w-5 h-5 text-pink-500" />, label: "Ficha de Anamnese e Contratos" },
+  { icon: <DollarSign className="w-5 h-5 text-emerald-500" />, label: "Contas a Pagar e a Receber" },
+  { icon: <BarChart3 className="w-5 h-5 text-indigo-500" />, label: "Relatórios e Gráficos" },
+];
+
+function WelcomePopup({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+        {/* Header verde */}
+        <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-6 text-center relative">
+          <button onClick={onClose} className="absolute top-3 right-3 text-white/70 hover:text-white transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+            <CheckCircle className="w-9 h-9 text-green-500" />
+          </div>
+          <h2 className="text-xl font-black text-white">CADASTRO EFETUADO COM SUCESSO!</h2>
+          <p className="text-green-100 text-sm mt-1">Seja bem-vindo(a) ao SalãoCashBack 🎉</p>
+        </div>
+
+        {/* Atenção spam */}
+        <div className="bg-yellow-50 border-b border-yellow-200 px-5 py-3 text-center">
+          <p className="text-yellow-800 text-sm font-bold">⚠️ ATENÇÃO</p>
+          <p className="text-yellow-700 text-xs mt-0.5">
+            O e-mail com a senha pode cair na <strong>Caixa de SPAM ou Lixo eletrônico</strong>.
+            Verifique lá por gentileza.
+          </p>
+        </div>
+
+        {/* Guia passo a passo */}
+        <div className="p-5">
+          <p className="text-sm font-bold text-slate-700 mb-3 text-center">
+            📋 Guia Passo a Passo — Configure seu sistema:
+          </p>
+          <div className="space-y-2">
+            {GUIDE_STEPS.map((step, i) => (
+              <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 hover:border-orange-200 hover:bg-orange-50 transition-all cursor-default">
+                <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center flex-shrink-0">
+                  {step.icon}
+                </div>
+                <span className="text-sm font-semibold text-slate-700">{step.label}</span>
+                <div className="ml-auto w-5 h-5 rounded-full border-2 border-slate-200 flex-shrink-0" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="px-5 pb-5">
+          <button
+            onClick={onClose}
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-colors text-sm"
+          >
+            Ok, entendi! Vamos começar 🚀
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const LoginPage = () => {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
@@ -46,8 +115,9 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
   const [formData, setFormData] = useState({
-    name: "", whatsapp: "", email: "", password: "", cpfCnpj: "", pix: ""
+    name: "", whatsapp: "", email: "", confirmEmail: "", password: "", cpfCnpj: "", pix: ""
   });
 
   useEffect(() => {
@@ -84,6 +154,11 @@ const LoginPage = () => {
         const d: Record<string, string> = { name: formData.name, whatsapp: formData.whatsapp, password: formData.password };
         if (isBusinessUser) d.email = formData.email;
         signupSchema.parse(d);
+        // Validação extra: confirmar e-mail
+        if (isBusinessUser && formData.email !== formData.confirmEmail) {
+          setErrors(prev => ({ ...prev, confirmEmail: "Os e-mails não coincidem" }));
+          return false;
+        }
       }
       return true;
     } catch (err) {
@@ -129,7 +204,7 @@ const LoginPage = () => {
           setLoading(false);
           return;
         }
-        if (isBusinessUser) { toast.success(t("auth.signup_success_business")); navigate("/onboarding", { replace: true }); }
+        if (isBusinessUser) { toast.success(t("auth.signup_success_business")); setShowWelcomePopup(true); }
         else { toast.success(t("auth.signup_success_client")); setMode("login"); }
         setLoginType(userType === "dono" ? "dono" : "cliente");
       }
@@ -147,6 +222,9 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4 py-12">
+      {showWelcomePopup && (
+        <WelcomePopup onClose={() => { setShowWelcomePopup(false); navigate("/onboarding", { replace: true }); }} />
+      )}
       <div className="w-full max-w-sm">
 
         {/* Top nav */}
@@ -278,6 +356,27 @@ const LoginPage = () => {
                 autoComplete="email"
               />
               {(errors.email || errors.identifier) && <p className="text-xs text-red-500 mt-1">{errors.email || errors.identifier}</p>}
+            </div>
+          )}
+
+          {mode === "signup" && isBusinessUser && (
+            <div>
+              <Label htmlFor="confirmEmail" className="text-sm font-medium text-slate-700">Confirmar E-mail</Label>
+              <Input
+                id="confirmEmail" type="email" placeholder="Digite o e-mail novamente"
+                value={formData.confirmEmail} onChange={e => setFormData({ ...formData, confirmEmail: e.target.value })}
+                className={`mt-1 h-11 text-slate-900 border-slate-200 focus:border-orange-400 focus:ring-orange-400/20 ${
+                  formData.confirmEmail && formData.email !== formData.confirmEmail ? "border-red-300" : 
+                  formData.confirmEmail && formData.email === formData.confirmEmail ? "border-green-400" : ""
+                }`}
+                autoComplete="email"
+              />
+              {formData.confirmEmail && formData.email === formData.confirmEmail && (
+                <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> E-mails coincidem
+                </p>
+              )}
+              {errors.confirmEmail && <p className="text-xs text-red-500 mt-1">{errors.confirmEmail}</p>}
             </div>
           )}
 
