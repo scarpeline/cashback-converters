@@ -40,21 +40,21 @@ interface ProfPlan {
 const PROF_PLANS: ProfPlan[] = [
   {
     professionals: 1,
-    monthlyPrice: "29,90",
-    semestralPrice: "169,90",
-    annualPrice: "299,90",
-    annualMonthly: "24,99",
+    monthlyPrice: "19,90",
+    semestralPrice: "109,90",
+    annualPrice: "199,90",
+    annualMonthly: "16,65",
     popular: false,
     color: "text-orange-600",
     bgColor: "bg-orange-500",
     borderColor: "border-orange-200",
   },
   {
-    professionals: 3,
-    monthlyPrice: "49,90",
-    semestralPrice: "269,90",
-    annualPrice: "479,90",
-    annualMonthly: "39,99",
+    professionals: 2,
+    monthlyPrice: "29,90",
+    semestralPrice: "169,90",
+    annualPrice: "299,90",
+    annualMonthly: "24,99",
     popular: false,
     color: "text-blue-600",
     bgColor: "bg-blue-500",
@@ -62,10 +62,10 @@ const PROF_PLANS: ProfPlan[] = [
   },
   {
     professionals: 5,
-    monthlyPrice: "69,90",
-    semestralPrice: "369,90",
-    annualPrice: "659,90",
-    annualMonthly: "54,99",
+    monthlyPrice: "49,90",
+    semestralPrice: "269,90",
+    annualPrice: "479,90",
+    annualMonthly: "39,99",
     popular: true,
     color: "text-green-600",
     bgColor: "bg-green-500",
@@ -73,10 +73,10 @@ const PROF_PLANS: ProfPlan[] = [
   },
   {
     professionals: 10,
-    monthlyPrice: "99,90",
-    semestralPrice: "529,90",
-    annualPrice: "959,90",
-    annualMonthly: "79,99",
+    monthlyPrice: "79,90",
+    semestralPrice: "429,90",
+    annualPrice: "799,90",
+    annualMonthly: "66,65",
     popular: false,
     color: "text-purple-600",
     bgColor: "bg-purple-500",
@@ -156,12 +156,20 @@ function PlanCard({ plan, period }: { plan: ProfPlan; period: Period }) {
 
         <button
           onClick={() => setShowAll(!showAll)}
-          className="flex items-center gap-1 text-xs text-orange-500 font-semibold hover:text-orange-600 transition-colors w-full justify-center py-2 border border-orange-200 rounded-lg hover:bg-orange-50"
+          className={`flex items-center gap-1.5 text-sm font-black w-full justify-center py-2.5 rounded-xl border-2 transition-all duration-200 ${
+            showAll
+              ? "border-slate-300 text-slate-500 bg-slate-50 hover:bg-slate-100"
+              : `border-current ${plan.color} bg-white hover:bg-opacity-10`
+          }`}
+          style={!showAll ? { backgroundColor: "transparent" } : undefined}
         >
           {showAll ? (
-            <><ChevronUp className="w-3 h-3" /> Ver menos</>
+            <><ChevronUp className="w-4 h-4" /> Ver menos</>
           ) : (
-            <><ChevronDown className="w-3 h-3" /> Ver todas as {ALL_FEATURES.length} funcionalidades</>
+            <span className={`flex items-center gap-1.5 ${plan.color}`}>
+              <ChevronDown className="w-4 h-4" />
+              Ver todas as <strong>{ALL_FEATURES.length} funcionalidades</strong>
+            </span>
           )}
         </button>
 
