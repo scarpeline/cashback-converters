@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WhatsAppAccountsPanel } from "@/components/whatsapp/WhatsAppAccountsPanel";
 import { WhatsAppMonitoringPanel } from "@/components/whatsapp/WhatsAppMonitoringPanel";
+import { WhatsAppConectarPanel } from "@/components/whatsapp/WhatsAppConectarPanel";
 import { MessagePackagesPanel } from "@/components/whatsapp/MessagePackagesPanel";
 import { MessageReportsPanel } from "@/components/whatsapp/MessageReportsPanel";
 import { WeeklySchedulePanel } from "@/components/messaging/WeeklySchedulePanel";
@@ -42,7 +43,7 @@ type CRMSubTab = "fluxos" | "aniversarios" | "nps";
 
 // ─── Sub-tab configs ──────────────────────────────────────────────────────────
 const whatsappTabs: { id: WhatsAppSubTab; label: string; icon: React.ReactNode }[] = [
-  { id: "contas", label: "Contas", icon: <Phone size={14} /> },
+  { id: "contas", label: "Conectar", icon: <Phone size={14} /> },
   { id: "monitoramento", label: "Status Real", icon: <Activity size={14} /> },
   { id: "pacotes", label: "Pacotes", icon: <Package size={14} /> },
 ];
@@ -114,7 +115,7 @@ export const CommunicationHub = () => {
             <SubTabBar tabs={whatsappTabs} active={waTab} onChange={(v) => setWaTab(v as WhatsAppSubTab)} />
             <div className="glass-card p-6 md:p-10 rounded-[3.5rem] border-white/5 bg-slate-950/20 backdrop-blur-4xl shadow-premium min-h-[500px]">
                <div className="animate-in fade-in zoom-in-95 duration-500">
-                  {waTab === "contas" && <WhatsAppAccountsPanel barbershopId={barbershop?.id || ""} />}
+                  {waTab === "contas" && <WhatsAppConectarPanel />}
                   {waTab === "monitoramento" && <WhatsAppMonitoringPanel barbershopId={barbershop?.id || ""} />}
                   {waTab === "pacotes" && <MessagePackagesPanel barbershopId={barbershop?.id || ""} />}
                </div>
