@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useBarbershop, useServices, useProfessionals } from "./hooks";
 import { useAuditLog } from "./useAuditLog";
 import { useDynamicLabel } from "@/lib/dynamicLabels";
+import { useProfessionalLimits } from "@/hooks/useProfessionalLimits";
 import { ProfessionalSchema, ServiceSchema } from "@/lib/validations";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { uploadImage } from "@/lib/upload-image";
 import { SkeletonHub } from "@/components/ui/SkeletonHub";
+import { ProfessionalLimitBadge, ProfessionalLimitAlert } from "@/components/professionals/ProfessionalLimitBadge";
 import { 
   Tooltip,
   TooltipContent,
@@ -123,6 +125,7 @@ const ProfissionaisPage = () => {
   const { barbershop } = useBarbershop();
   const { logAction } = useAuditLog(barbershop?.id || "");
   const { professionals, refetch, loading: loadingProfs } = useProfessionals(barbershop?.id);
+  const { canAddProfessional, isAtLimit } = useProfessionalLimits();
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -137,6 +140,13 @@ const ProfissionaisPage = () => {
 
   const handleCreate = async () => {
     if (!barbershop) return;
+    
+    // Check limit only for new professionals (not editing)
+    if (!editingId && !canAddProfessional) {
+      toast.error("Você atingiu o limite de profissionais do seu plano. Faça upgrade para adicionar mais.");
+      return;
+    }
+    
     const validation = ProfessionalSchema.safeParse({ name, email, phone: pix, role: "profissional", commission_pct: Number(comm), is_active: true });
     if (!validation.success) { toast.error(validation.error.issues[0].message); return; }
 
@@ -146,7 +156,14 @@ const ProfissionaisPage = () => {
       toast.success("Profissional atualizado!");
     } else {
       const { error } = await (supabase as any).from("professionals").insert([{ barbershop_id: barbershop.id, name, email: email || null, commission_percentage: Number(comm), pix_key: pix || null, avatar_url: photoUrl || null, is_active: true }]);
-      if (error) { toast.error(error.message); return; }
+      if (error) { 
+        if (error.message.includes('Professional limit reached')) {
+          toast.error("Limite de profissionais atingido. Faça upgrade do seu plano.");
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
       toast.success("Profissional cadastrado!");
     }
     await logAction('SETTINGS_CHANGE', 'professionals', editingId || undefined, { name, email, comm });
@@ -176,8 +193,23 @@ const ProfissionaisPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button variant="gold" className="rounded-2xl font-black shadow-gold h-12 px-8 diamond-glow" onClick={() => { resetForm(); setShowAdd(!showAdd); }}>
+      <ProfessionalLimitAlert />
+      
+      <div className="flex justify-between items-center">
+        <ProfessionalLimitBadge />
+        <Button 
+          variant="gold" 
+          className="rounded-2xl font-black shadow-gold h-12 px-8 diamond-glow" 
+          onClick={() => { 
+            if (!editingId && isAtLimit) {
+              toast.error("Limite de profissionais atingido. Faça upgrade para adicionar mais.");
+              return;
+            }
+            resetForm(); 
+            setShowAdd(!showAdd); 
+          }}
+          disabled={!editingId && isAtLimit}
+        >
           <Plus className="w-5 h-5 mr-2" /> {showAdd ? "Fechar" : "Novo Integrante"}
         </Button>
       </div>
