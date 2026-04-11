@@ -4,6 +4,7 @@ import { useAuditLog } from "./useAuditLog";
 import { WithdrawSchema } from "@/lib/validations";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ContasPanel } from "@/components/financeiro/ContasPanel";
 import { 
   DollarSign, 
   TrendingUp, 
@@ -40,7 +41,7 @@ import { HubSkeleton, SkeletonHub } from "@/components/ui/SkeletonHub";import {
 } from "@/components/ui/tooltip";
 
 export const FinancialHub = () => {
-  const [activeTab, setActiveTab] = useState<"overview" | "payouts" | "subscription">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "payouts" | "contas" | "subscription">("overview");
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -52,11 +53,11 @@ export const FinancialHub = () => {
           <p className="text-slate-400 font-medium italic opacity-70 tracking-tight">Gestão de Fluxo Real & Repasses Automatizados Diamond</p>
         </div>
         
-        <div className="flex bg-slate-900/50 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl shadow-2xl">
+        <div className="flex flex-wrap bg-slate-900/50 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl shadow-2xl gap-1">
           <Button 
             variant={activeTab === "overview" ? "gold" : "ghost"} 
             size="sm" 
-            className="rounded-xl font-black uppercase text-[10px] tracking-widest px-6"
+            className="rounded-xl font-black uppercase text-[10px] tracking-widest px-4"
             onClick={() => setActiveTab("overview")}
           >
             Visão Geral
@@ -64,15 +65,23 @@ export const FinancialHub = () => {
           <Button 
             variant={activeTab === "payouts" ? "gold" : "ghost"} 
             size="sm" 
-            className="rounded-xl font-black uppercase text-[10px] tracking-widest px-6"
+            className="rounded-xl font-black uppercase text-[10px] tracking-widest px-4"
             onClick={() => setActiveTab("payouts")}
           >
             Repasses
           </Button>
           <Button 
+            variant={activeTab === "contas" ? "gold" : "ghost"} 
+            size="sm" 
+            className="rounded-xl font-black uppercase text-[10px] tracking-widest px-4"
+            onClick={() => setActiveTab("contas")}
+          >
+            Contas
+          </Button>
+          <Button 
             variant={activeTab === "subscription" ? "gold" : "ghost"} 
             size="sm" 
-            className="rounded-xl font-black uppercase text-[10px] tracking-widest px-6"
+            className="rounded-xl font-black uppercase text-[10px] tracking-widest px-4"
             onClick={() => setActiveTab("subscription")}
           >
             Plano
@@ -83,6 +92,7 @@ export const FinancialHub = () => {
       <div className="grid grid-cols-1 gap-6">
         {activeTab === "overview" && <FinancialOverview />}
         {activeTab === "payouts" && <PayoutsPage />}
+        {activeTab === "contas" && <ContasPanel />}
         {activeTab === "subscription" && (
           <div className="space-y-8">
             <SubscriptionStatus />

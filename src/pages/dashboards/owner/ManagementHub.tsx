@@ -6,6 +6,7 @@ import { useProfessionalLimits } from "@/hooks/useProfessionalLimits";
 import { ProfessionalSchema, ServiceSchema } from "@/lib/validations";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { FichaAnamnesePanel } from "@/components/clientes/FichaAnamnesePanel";
 import { 
   Users, 
   Scissors, 
@@ -22,7 +23,8 @@ import {
   Clock,
   BookOpen,
   Link2,
-  X
+  X,
+  ClipboardList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -49,7 +51,7 @@ import { DigitalProductsHub } from "@/components/digital/DigitalProductsHub";
 import { PaymentLinksHub } from "@/components/payments/PaymentLinksHub";
 
 export const ManagementHub = () => {
-  const [activeTab, setActiveTab] = useState<"professionals" | "services" | "inventory" | "digital" | "charges">("professionals");
+  const [activeTab, setActiveTab] = useState<"professionals" | "services" | "inventory" | "digital" | "charges" | "anamnese">("professionals");
   const profLabel = useDynamicLabel("professionals");
   const servLabel = useDynamicLabel("services");
   const { barbershop } = useBarbershop();
@@ -65,47 +67,17 @@ export const ManagementHub = () => {
         </div>
         
         <div className="flex flex-wrap bg-slate-900/50 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl gap-1">
-          <Button 
-            variant={activeTab === "professionals" ? "gold" : "ghost"} 
-            size="sm" 
-            className="rounded-xl font-bold"
-            onClick={() => setActiveTab("professionals")}
-          >
-            {profLabel}
+          <Button variant={activeTab === "professionals" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("professionals")}>{profLabel}</Button>
+          <Button variant={activeTab === "services" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("services")}>{servLabel}</Button>
+          <Button variant={activeTab === "inventory" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("inventory")}>Estoque</Button>
+          <Button variant={activeTab === "anamnese" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("anamnese")}>
+            <ClipboardList className="w-3.5 h-3.5 mr-1.5" />Anamnese
           </Button>
-          <Button 
-            variant={activeTab === "services" ? "gold" : "ghost"} 
-            size="sm" 
-            className="rounded-xl font-bold"
-            onClick={() => setActiveTab("services")}
-          >
-            {servLabel}
+          <Button variant={activeTab === "digital" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("digital")}>
+            <BookOpen className="w-3.5 h-3.5 mr-1.5" />Loja Digital
           </Button>
-          <Button 
-            variant={activeTab === "inventory" ? "gold" : "ghost"} 
-            size="sm" 
-            className="rounded-xl font-bold"
-            onClick={() => setActiveTab("inventory")}
-          >
-            Estoque
-          </Button>
-          <Button 
-            variant={activeTab === "digital" ? "gold" : "ghost"} 
-            size="sm" 
-            className="rounded-xl font-bold"
-            onClick={() => setActiveTab("digital")}
-          >
-            <BookOpen className="w-3.5 h-3.5 mr-1.5" />
-            Loja Digital
-          </Button>
-          <Button 
-            variant={activeTab === "charges" ? "gold" : "ghost"} 
-            size="sm" 
-            className="rounded-xl font-bold"
-            onClick={() => setActiveTab("charges")}
-          >
-            <Link2 className="w-3.5 h-3.5 mr-1.5" />
-            Cobranças
+          <Button variant={activeTab === "charges" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("charges")}>
+            <Link2 className="w-3.5 h-3.5 mr-1.5" />Cobranças
           </Button>
         </div>
       </div>
@@ -114,6 +86,7 @@ export const ManagementHub = () => {
         {activeTab === "professionals" && <ProfissionaisPage />}
         {activeTab === "services" && <ServicosPage />}
         {activeTab === "inventory" && <EstoquePage />}
+        {activeTab === "anamnese" && <FichaAnamnesePanel />}
         {activeTab === "digital" && barbershop && <DigitalProductsHub barbershopId={barbershop.id} />}
         {activeTab === "charges" && barbershop && <PaymentLinksHub barbershopId={barbershop.id} />}
       </div>

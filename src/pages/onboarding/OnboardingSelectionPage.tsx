@@ -37,6 +37,7 @@ const SECTORS = [
   { key: "musica_artes",          label: "Música & Artes",          icon: "🎵",  desc: "Professores de música, artistas, ateliês." },
   { key: "academia",              label: "Academia",                icon: "🏟️",  desc: "Academias de ginástica, musculação e fitness." },
   { key: "religiao",              label: "Religião & Igrejas",      icon: "⛪",  desc: "Igrejas, templos, centros espirituais e pastorais." },
+  { key: "otica",                 label: "Ótica",                   icon: "👓",  desc: "Óticas, optometristas, oftalmologistas e clínicas de visão." },
 ];
 
 // ── Especialidades embutidas (fallback quando banco não retorna dados) ─────────
@@ -154,6 +155,14 @@ const FALLBACK_SPECIALTIES: Record<string, { specialty: string; display_name: st
     { specialty: "pastoral",          display_name: "Pastoral / Ministério", icon: "🙏", services_count: 2 },
     { specialty: "outro_religioso",   display_name: "Outro",              icon: "🕊️", services_count: 2 },
   ],
+  otica: [
+    { specialty: "optometrista",      display_name: "Optometrista",       icon: "👁️", services_count: 3 },
+    { specialty: "oftalmologista",    display_name: "Oftalmologista",     icon: "🔬", services_count: 3 },
+    { specialty: "otica_loja",        display_name: "Ótica / Loja",       icon: "👓", services_count: 3 },
+    { specialty: "lentes_contato",    display_name: "Lentes de Contato",  icon: "🔵", services_count: 2 },
+    { specialty: "exame_vista",       display_name: "Exame de Vista",     icon: "📋", services_count: 2 },
+    { specialty: "cirurgia_refrativa",display_name: "Cirurgia Refrativa", icon: "⚡", services_count: 2 },
+  ],
 };
 
 // Labels específicos por nicho para o dashboard
@@ -177,6 +186,7 @@ const NICHE_LABELS: Record<string, { professionals: string; services: string; ap
   musica_artes:          { professionals: "Professores",    services: "Aulas",              appointments: "Aulas",        clients: "Alunos" },
   academia:              { professionals: "Instrutores",    services: "Modalidades",        appointments: "Treinos",      clients: "Alunos" },
   religiao:              { professionals: "Líderes",        services: "Atividades",         appointments: "Encontros",    clients: "Membros" },
+  otica:                 { professionals: "Especialistas",  services: "Exames/Serviços",    appointments: "Consultas",    clients: "Pacientes" },
 };
 
 // Passos: Setor → Especialidade → Negócio → Pagamentos
