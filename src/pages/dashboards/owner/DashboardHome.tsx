@@ -126,6 +126,36 @@ export const DashboardHome = () => {
         </button>
       </div>
 
+      {/* Link de agendamento visível */}
+      {bookingLink && (
+        <div className="rounded-2xl border-2 border-orange-100 bg-orange-50 p-4">
+          <p className="text-xs font-semibold text-orange-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5" />
+            Seu link de agendamento
+          </p>
+          <div className="flex items-center gap-2">
+            <a
+              href={bookingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 text-sm font-mono text-orange-700 bg-white border border-orange-200 rounded-xl px-3 py-2 truncate hover:text-orange-900 transition-colors"
+            >
+              {bookingLink}
+            </a>
+            <button
+              onClick={handleShare}
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition-colors"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              Copiar
+            </button>
+          </div>
+          <p className="text-xs text-orange-500 mt-2">
+            Envie este link para seus clientes agendarem online, sem precisar ligar.
+          </p>
+        </div>
+      )}
+
       <hr className="border-slate-200" />
 
       {/* Métricas */}
