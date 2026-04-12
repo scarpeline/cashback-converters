@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useBarbershop } from "./hooks";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { 
   TrendingUp, 
   Gift, 
@@ -16,16 +17,20 @@ import {
   Bell,
   CheckCircle,
   Plus,
-  ChevronRight
+  ChevronRight,
+  Trophy,
+  Percent,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoyaltyPanel } from "@/components/gamification/LoyaltyPanel";
+import { RankingClientesPanel } from "@/components/clientes/RankingClientesPanel";
+import { ComissaoDetalhadaPanel } from "@/components/financeiro/ComissaoDetalhadaPanel";
 
 export const GrowthHub = () => {
-  const [activeTab, setActiveTab] = useState<"marketing" | "loyalty" | "cashback">("marketing");
+  const [activeTab, setActiveTab] = useState<"marketing" | "loyalty" | "cashback" | "ranking" | "comissao">("marketing");
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -37,30 +42,15 @@ export const GrowthHub = () => {
           <p className="text-slate-400 font-medium">Atraia, fidelize e aumente o faturamento com IA</p>
         </div>
         
-        <div className="flex bg-slate-900/50 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl">
-          <Button 
-            variant={activeTab === "marketing" ? "gold" : "ghost"} 
-            size="sm" 
-            className="rounded-xl font-bold"
-            onClick={() => setActiveTab("marketing")}
-          >
-            Marketing
+        <div className="flex flex-wrap bg-slate-900/50 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl gap-1">
+          <Button variant={activeTab === "marketing" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("marketing")}>Marketing</Button>
+          <Button variant={activeTab === "loyalty" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("loyalty")}>Fidelidade</Button>
+          <Button variant={activeTab === "cashback" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("cashback")}>Cashback</Button>
+          <Button variant={activeTab === "ranking" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("ranking")}>
+            <Trophy className="w-3.5 h-3.5 mr-1.5" />Ranking
           </Button>
-          <Button 
-            variant={activeTab === "loyalty" ? "gold" : "ghost"} 
-            size="sm" 
-            className="rounded-xl font-bold"
-            onClick={() => setActiveTab("loyalty")}
-          >
-            Fidelidade
-          </Button>
-          <Button 
-            variant={activeTab === "cashback" ? "gold" : "ghost"} 
-            size="sm" 
-            className="rounded-xl font-bold"
-            onClick={() => setActiveTab("cashback")}
-          >
-            Cashback
+          <Button variant={activeTab === "comissao" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("comissao")}>
+            <Percent className="w-3.5 h-3.5 mr-1.5" />Comissões
           </Button>
         </div>
       </div>
@@ -69,6 +59,16 @@ export const GrowthHub = () => {
         {activeTab === "marketing" && <MarketingCenter />}
         {activeTab === "loyalty" && <LoyaltyCenter />}
         {activeTab === "cashback" && <CashbackCenter />}
+        {activeTab === "ranking" && (
+          <div className="glass-card p-6 md:p-8 rounded-[3rem] border-white/5 bg-slate-950/20">
+            <RankingClientesPanel />
+          </div>
+        )}
+        {activeTab === "comissao" && (
+          <div className="glass-card p-6 md:p-8 rounded-[3rem] border-white/5 bg-slate-950/20">
+            <ComissaoDetalhadaPanel />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -76,6 +76,11 @@ export const GrowthHub = () => {
 
 const MarketingCenter = () => {
     const { barbershop } = useBarbershop();
+    const navigate = useNavigate();
+
+    const handleReativacao = () => navigate("/painel-dono/comunicacao");
+    const handleProvasSocial = () => toast.info("Configure avaliações em Configurações → Dados da Empresa");
+    const handlePixels = () => toast.info("Integração de Pixels disponível em breve no plano Enterprise");
     
     return (
         <div className="space-y-8">
@@ -90,7 +95,7 @@ const MarketingCenter = () => {
                     </CardHeader>
                     <CardContent>
                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-4">Detectamos clientes que não voltam há 30 dias e enviamos uma oferta automática.</p>
-                       <Button variant="gold" size="sm" className="w-full mt-2 rounded-xl font-black shadow-gold-sm transition-premium hover:scale-[1.02] active:scale-[0.98]">Ligar Motor de Vendas</Button>
+                       <Button variant="gold" size="sm" className="w-full mt-2 rounded-xl font-black shadow-gold-sm transition-premium hover:scale-[1.02] active:scale-[0.98]" onClick={handleReativacao}>Ligar Motor de Vendas</Button>
                     </CardContent>
                 </Card>
 
@@ -104,7 +109,7 @@ const MarketingCenter = () => {
                     </CardHeader>
                     <CardContent>
                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-4">Exiba as melhores avaliações do Google e Instagram diretamente no seu agendamento.</p>
-                       <Button variant="ghost" size="sm" className="w-full mt-2 rounded-xl font-black border border-white/5 bg-white/5 hover:bg-white/10 transition-premium">Configurar Feed 3D</Button>
+                       <Button variant="ghost" size="sm" className="w-full mt-2 rounded-xl font-black border border-white/5 bg-white/5 hover:bg-white/10 transition-premium" onClick={handleProvasSocial}>Configurar Feed 3D</Button>
                     </CardContent>
                 </Card>
 
@@ -117,7 +122,7 @@ const MarketingCenter = () => {
                     </CardHeader>
                     <CardContent>
                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-4">Integre Meta, Google e TikTok Pixel para traquear conversões e otimizar anúncios de alta escala.</p>
-                       <Button variant="ghost" size="sm" className="w-full mt-2 rounded-xl font-black border border-white/10 hover:bg-white/5 hover:text-white transition-premium">Gerenciar Conectores</Button>
+                       <Button variant="ghost" size="sm" className="w-full mt-2 rounded-xl font-black border border-white/10 hover:bg-white/5 hover:text-white transition-premium" onClick={handlePixels}>Gerenciar Conectores</Button>
                     </CardContent>
                 </Card>
             </div>
