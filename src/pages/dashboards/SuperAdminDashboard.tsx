@@ -62,8 +62,6 @@ import { ConfigComissoesPanel } from "@/components/contabilidade/ConfigComissoes
 import { CommissionConfigPanel } from "@/components/admin/CommissionConfigPanel";
 import { PartnerLandingContentPanel } from "@/components/admin/PartnerLandingContentPanel";
 import { PricingConfigPanel } from "@/components/admin/PricingConfigPanel";
-import { WebhookManagementPanel } from "@/components/admin/WebhookManagementPanel";
-import { IntegrationTestsPanel } from "@/components/admin/IntegrationTestsPanel";
 import { RealTimeMetricsPanel } from "@/components/admin/RealTimeMetricsPanel";
 import { RemarketingPanel } from "@/components/admin/RemarketingPanel";
 import { AIDashboard } from "@/components/AIDashboard";
@@ -75,9 +73,6 @@ const AIDashboardPage = () => (
   </div>
 );
 
-const IntegrationSettingsPage = lazy(
-  () => import("@/pages/admin/IntegrationSettingsPage"),
-);
 const PartnersPage = lazy(() => import("@/pages/super-admin/PartnersPage"));
 const CommissionsPage = lazy(() => import("@/pages/admin/CommissionsPage"));
 
@@ -151,9 +146,6 @@ const SuperAdminDashboard = () => {
       label: "Sistema & Dev",
       icon: Settings,
       items: [
-        { name: "Webhooks", href: `${basePath}/webhooks`, icon: LinkIcon },
-        { name: "Testes API", href: `${basePath}/testes-api`, icon: TestTube },
-        { name: "Integrações", href: `${basePath}/integracoes`, icon: Plug },
         { name: "Pixels Globais", href: `${basePath}/pixels`, icon: Image },
         { name: "IA Dashboard", href: `${basePath}/ia`, icon: Activity },
         { name: "Prova Social", href: `${basePath}/prova-social`, icon: Activity },
@@ -316,20 +308,10 @@ const SuperAdminDashboard = () => {
               path="servicos-contabeis"
               element={<ServicosContabeisAdminPage />}
             />
-            <Route path="webhooks" element={<WebhooksPage />} />
-            <Route path="testes-api" element={<TestesAPIPage />} />
             <Route path="financeiro" element={<FinanceiroPage />} />
             <Route
               path="prova-social"
               element={<SocialProofManager showPageSelector />}
-            />
-            <Route
-              path="integracoes"
-              element={
-                <Suspense fallback={<PageFallback />}>
-                  <IntegrationSettingsPage />
-                </Suspense>
-              }
             />
             <Route path="pixels" element={<PixelsPage />} />
             <Route
@@ -1831,20 +1813,6 @@ const ContadoresPage = () => {
     </div>
   );
 };
-
-// ============ WEBHOOKS ============
-const WebhooksPage = () => (
-  <div className="space-y-6">
-    <WebhookManagementPanel />
-  </div>
-);
-
-// ============ TESTES DE API ============
-const TestesAPIPage = () => (
-  <div className="space-y-6">
-    <IntegrationTestsPanel />
-  </div>
-);
 
 // ============ SERVIÇOS CONTÁBEIS (aprovar alterações do contador) ============
 const ServicosContabeisAdminPage = () => {
