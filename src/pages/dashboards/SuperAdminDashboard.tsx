@@ -93,22 +93,33 @@ const SuperAdminDashboard = () => {
   // Grouped navigation
   const navGroups = useMemo(() => [
     {
+      id: "visao-geral",
+      label: "Visão Geral",
+      icon: LayoutDashboard,
+      items: [
+        { name: "Dashboard", href: `${basePath}`, icon: LayoutDashboard },
+      ],
+    },
+    {
       id: "usuarios",
       label: "Usuários & Parceiros",
       icon: Users,
       items: [
         { name: "Usuários", href: `${basePath}/usuarios`, icon: Users },
+        { name: "Negócios", href: `${basePath}/barbearias`, icon: Building2 },
         { name: "Parceiros", href: `${basePath}/parceiros`, icon: Users },
-        { name: "Comissões Parceiros", href: `${basePath}/comissoes`, icon: DollarSign },
         { name: "Afiliados", href: `${basePath}/afiliados`, icon: Users },
+        { name: "Comissões Parceiros", href: `${basePath}/comissoes-parceiros`, icon: TrendingUp },
       ],
     },
     {
-      id: "negocios",
-      label: "Negócios",
-      icon: Building2,
+      id: "financeiro",
+      label: "Financeiro",
+      icon: DollarSign,
       items: [
-        { name: "Barbearias", href: `${basePath}/barbearias`, icon: Building2 },
+        { name: "Receita & Transações", href: `${basePath}/financeiro`, icon: DollarSign },
+        { name: "Comissões", href: `${basePath}/comissoes`, icon: DollarSign },
+        { name: "Planos & Preços", href: `${basePath}/precos-landing`, icon: CreditCard },
         { name: "Produtos", href: `${basePath}/produtos`, icon: Package },
       ],
     },
@@ -123,37 +134,34 @@ const SuperAdminDashboard = () => {
       ],
     },
     {
-      id: "financeiro",
-      label: "Financeiro",
-      icon: DollarSign,
-      items: [
-        { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
-        { name: "Remarketing", href: `${basePath}/remarketing`, icon: TrendingUp },
-      ],
-    },
-    {
       id: "comunicacao",
       label: "Comunicação",
       icon: MessageCircle,
       items: [
+        { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
         { name: "Mensagens Sistema", href: `${basePath}/mensagens-sistema`, icon: MessageCircle },
         { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
-        { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
+        { name: "Remarketing", href: `${basePath}/remarketing`, icon: TrendingUp },
+        { name: "IA Dashboard", href: `${basePath}/ia`, icon: Activity },
+      ],
+    },
+    {
+      id: "marketing",
+      label: "Marketing & Landing",
+      icon: Image,
+      items: [
+        { name: "Visibilidade Landing", href: `${basePath}/visibilidade`, icon: Eye },
+        { name: "Prova Social", href: `${basePath}/prova-social`, icon: Activity },
+        { name: "Pixels Globais", href: `${basePath}/pixels`, icon: Image },
+        { name: "Textos Parceiros", href: `${basePath}/landing-parceiros`, icon: MessageCircle },
       ],
     },
     {
       id: "sistema",
-      label: "Sistema & Dev",
+      label: "Configurações",
       icon: Settings,
       items: [
-        { name: "Pixels Globais", href: `${basePath}/pixels`, icon: Image },
-        { name: "IA Dashboard", href: `${basePath}/ia`, icon: Activity },
-        { name: "Prova Social", href: `${basePath}/prova-social`, icon: Activity },
-        { name: "Visibilidade Landing", href: `${basePath}/visibilidade`, icon: Eye },
-        { name: "Configurações", href: `${basePath}/configuracoes`, icon: Settings },
-        { name: "Comissões Parceiros", href: `${basePath}/comissoes-parceiros`, icon: TrendingUp },
-        { name: "Textos Landing Parceiros", href: `${basePath}/landing-parceiros`, icon: MessageCircle },
-        { name: "Preços Landing Page", href: `${basePath}/precos-landing`, icon: CreditCard },
+        { name: "Configurações Gerais", href: `${basePath}/configuracoes`, icon: Settings },
       ],
     },
   ], [basePath]);
@@ -216,16 +224,6 @@ const SuperAdminDashboard = () => {
             </p>
           </div>
           <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-            {/* Dashboard direto */}
-            <Link
-              to={basePath}
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(basePath) ? "bg-destructive text-destructive-foreground" : "text-sidebar-foreground/60 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground"}`}
-            >
-              <LayoutDashboard className="w-5 h-5" />
-              Dashboard
-            </Link>
-
             {/* Grupos colapsáveis */}
             {navGroups.map((group) => {
               const isGroupActive = group.items.some(item => isActive(item.href));
