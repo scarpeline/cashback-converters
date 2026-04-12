@@ -16,7 +16,8 @@ import {
   HelpCircle,
   History,
   Target,
-  Sparkles
+  Sparkles,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,7 @@ import { MessagePackagesPanel } from "@/components/whatsapp/MessagePackagesPanel
 import { MessageReportsPanel } from "@/components/whatsapp/MessageReportsPanel";
 import { WeeklySchedulePanel } from "@/components/messaging/WeeklySchedulePanel";
 import { ClientReactivationDashboard } from "@/components/automation/ReactivationDashboard";
+import { SMSConfigPanel } from "@/components/sms/SMSConfigPanel";
 import { 
   Tooltip,
   TooltipContent,
@@ -35,7 +37,7 @@ import {
 } from "@/components/ui/tooltip";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type MainTab = "whatsapp" | "mensagens" | "campanhas" | "crm";
+type MainTab = "whatsapp" | "sms" | "mensagens" | "campanhas" | "crm";
 type WhatsAppSubTab = "contas" | "monitoramento" | "pacotes";
 type MensagensSubTab = "agenda" | "relatorios";
 type CampanhasSubTab = "reativacao";
@@ -69,6 +71,7 @@ export const CommunicationHub = () => {
 
   const mainTabs: { id: MainTab; label: string; icon: React.ReactNode; badge?: string }[] = [
     { id: "whatsapp", label: "WhatsApp", icon: <Smartphone size={16} /> },
+    { id: "sms", label: "SMS", icon: <MessageSquare size={16} /> },
     { id: "mensagens", label: "Mensagens", icon: <MessageCircle size={16} /> },
     { id: "campanhas", label: "Reativação", icon: <UserCheck size={16} /> },
     { id: "crm", label: "Diamond CRM", icon: <Zap size={16} />, badge: "NEW" },
@@ -119,6 +122,14 @@ export const CommunicationHub = () => {
                   {waTab === "monitoramento" && <WhatsAppMonitoringPanel barbershopId={barbershop?.id || ""} />}
                   {waTab === "pacotes" && <MessagePackagesPanel barbershopId={barbershop?.id || ""} />}
                </div>
+            </div>
+          </div>
+        )}
+
+        {mainTab === "sms" && (
+          <div className="glass-card p-6 md:p-10 rounded-[3.5rem] border-white/5 bg-slate-950/20 backdrop-blur-4xl shadow-premium min-h-[500px]">
+            <div className="animate-in fade-in zoom-in-95 duration-500">
+              <SMSConfigPanel />
             </div>
           </div>
         )}
