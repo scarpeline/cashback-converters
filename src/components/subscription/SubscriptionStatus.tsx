@@ -181,7 +181,7 @@ export function SubscriptionStatus() {
           {subscription.status === 'trial' && (
             <Button 
               className="flex-1" 
-              onClick={() => window.location.href = '/pricing'}
+              onClick={() => window.location.href = '/painel-dono/financeiro?tab=subscription'}
             >
               Upgrade de Plano
             </Button>
@@ -190,12 +190,18 @@ export function SubscriptionStatus() {
           {isActive && (
             <>
               <Button 
-                variant="outline" 
+                variant="outline"
+                onClick={() => window.location.href = '/painel-dono/financeiro?tab=subscription'}
               >
                 Gerenciar Assinatura
               </Button>
               <Button 
                 variant="outline"
+                onClick={() => {
+                  if (confirm('Tem certeza que deseja cancelar sua assinatura? Você perderá acesso ao final do período pago.')) {
+                    window.location.href = 'mailto:suporte@salaocashback.com.br?subject=Cancelamento de Assinatura';
+                  }
+                }}
               >
                 Cancelar
               </Button>
@@ -205,7 +211,7 @@ export function SubscriptionStatus() {
           {isExpired && (
             <Button 
               className="flex-1"
-              onClick={() => window.location.href = '/pricing'}
+              onClick={() => window.location.href = '/painel-dono/financeiro?tab=subscription'}
             >
               Renovar Assinatura
             </Button>

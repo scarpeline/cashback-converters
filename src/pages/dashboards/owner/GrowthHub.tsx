@@ -181,6 +181,33 @@ const LoyaltyCenter = () => {
 };
 
 const CashbackCenter = () => {
+    const { barbershop } = useBarbershop();
+    const [cashbackStats, setCashbackStats] = useState({ clientesUsaram: 0, taxaRetorno: 0, conversao: 0 });
+
+    useEffect(() => {
+      if (!barbershop?.id) return;
+      (async () => {
+        const { data: apts } = await (supabase as any)
+          .from("appointments")
+          .select("client_name, status")
+          .eq("barbershop_id", barbershop.id)
+          .eq("status", "completed");
+
+        const total = apts?.length || 0;
+        const uniqueClients = new Set((apts || []).map((a: any) => a.client_name)).size;
+        const { data: cashbacks } = await (supabase as any)
+          .from("cashback_transactions")
+          .select("id, client_user_id")
+          .eq("barbershop_id", barbershop.id)
+          .eq("status", "used");
+
+        const usaram = new Set((cashbacks || []).map((c: any) => c.client_user_id)).size;
+        const taxaRetorno = uniqueClients > 0 ? Math.round((usaram / uniqueClients) * 100) : 0;
+        const conversao = total > 0 ? Math.round(((cashbacks?.length || 0) / total) * 100) : 0;
+        setCashbackStats({ clientesUsaram: usaram, taxaRetorno: Math.min(taxaRetorno, 100), conversao: Math.min(conversao, 100) });
+      })();
+    }, [barbershop?.id]);
+
     return (
         <div className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
@@ -214,7 +241,7 @@ const CashbackCenter = () => {
                      <div className="flex -space-x-2">
                         {[1, 2, 3].map(i => <div key={i} className={`w-6 h-6 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[8px] font-black text-white`}>U{i}</div>)}
                      </div>
-                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">128 clientes já usaram este mês</span>
+                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">{cashbackStats.clientesUsaram} clientes já usaram este mês</span>
                   </div>
                </Card>
 
@@ -231,20 +258,20 @@ const CashbackCenter = () => {
                         <div className="space-y-2">
                            <div className="flex justify-between items-end">
                               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Taxa de Retorno</span>
-                              <span className="text-xl font-black text-white">68%</span>
+                              <span className="text-xl font-black text-white">{cashbackStats.taxaRetorno}%</span>
                            </div>
                            <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-white/5">
-                              <div className="h-full bg-gradient-gold w-[68%] shadow-gold-sm transition-all duration-1000" />
+                              <div className="h-full bg-gradient-gold shadow-gold-sm transition-all duration-1000" style={{ width: `${cashbackStats.taxaRetorno}%` }} />
                            </div>
                         </div>
                         
                         <div className="space-y-2">
                            <div className="flex justify-between items-end">
                               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Conversão Cashback</span>
-                              <span className="text-xl font-black text-white">42%</span>
+                              <span className="text-xl font-black text-white">{cashbackStats.conversao}%</span>
                            </div>
                            <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-white/5">
-                              <div className="h-full bg-orange-400 w-[42%] shadow-orange-400/20 transition-all duration-1000 delay-300" />
+                              <div className="h-full bg-orange-400 shadow-orange-400/20 transition-all duration-1000 delay-300" style={{ width: `${cashbackStats.conversao}%` }} />
                            </div>
                         </div>
                      </div>

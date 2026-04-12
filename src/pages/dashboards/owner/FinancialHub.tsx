@@ -307,8 +307,14 @@ const FinancialOverview = () => {
                   <p className="text-slate-500 text-sm font-medium uppercase tracking-[0.2em] mt-1 border-l-2 border-orange-500 pl-3">Sincronização em Tempo Real (Asaas)</p>
                </div>
                <div className="flex gap-3">
-                  <Button variant="ghost" className="bg-white/5 border border-white/10 rounded-2xl px-6 h-12 font-black text-xs uppercase tracking-widest text-slate-400 hover:text-white transition-all">Exportar PDF Expert</Button>
-                  <Button variant="gold" className="rounded-2xl px-6 h-12 font-black text-xs uppercase tracking-widest shadow-gold">Gerar Relatórios</Button>
+                  <Button variant="ghost" className="bg-white/5 border border-white/10 rounded-2xl px-6 h-12 font-black text-xs uppercase tracking-widest text-slate-400 hover:text-white transition-all" onClick={() => {
+                     const rows = [['Data','Descrição','Valor','Status']];
+                     const csv = rows.map(r => r.join(',')).join('\n');
+                     const blob = new Blob([csv], { type: 'text/csv' });
+                     const url = URL.createObjectURL(blob);
+                     const a = document.createElement('a'); a.href = url; a.download = 'financeiro.csv'; a.click();
+                  }}>Exportar CSV</Button>
+                  <Button variant="gold" className="rounded-2xl px-6 h-12 font-black text-xs uppercase tracking-widest shadow-gold" onClick={() => window.location.href = '/painel-dono/financeiro'}>Gerar Relatórios</Button>
                </div>
             </div>
             
