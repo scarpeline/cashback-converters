@@ -53,6 +53,7 @@ import {
   Globe,
   ShieldOff,
   ChevronDown,
+  Smartphone,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -143,6 +144,7 @@ const SuperAdminDashboard = () => {
         { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
         { name: "Remarketing", href: `${basePath}/remarketing`, icon: TrendingUp },
         { name: "IA Dashboard", href: `${basePath}/ia`, icon: Activity },
+        { name: "WhatsApp Global", href: `${basePath}/whatsapp`, icon: Smartphone },
       ],
     },
     {
@@ -322,6 +324,7 @@ const SuperAdminDashboard = () => {
             <Route path="ia" element={<AIDashboardPage />} />
             <Route path="visibilidade" element={<LandingVisibilidadePage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
+            <Route path="whatsapp" element={<WhatsAppGlobalPage />} />
             <Route path="comissoes-parceiros" element={<ComissoesParceirosPage />} />
             <Route path="landing-parceiros" element={<LandingParceirosPage />} />
             <Route path="precos-landing" element={<PrecosLandingPage />} />
@@ -3895,3 +3898,209 @@ const PrecosLandingPage = () => (
     <PricingConfigPanel />
   </div>
 );
+
+// ============ WHATSAPP GLOBAL (Super Admin) ============
+const WhatsAppGlobalPage = () => {
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ nickname: "", phone: "", type: "web", sid: "", token: "", twilioPhone: "" });
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const { data } = await (supabase as any)
+      .from("whatsapp_connections")
+      .select("*, barbershops(name)")
+      .order("created_at", { ascending: false });
+    setAccounts(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const save = async () => {
+    if (!form.phone) { toast.error("Informe o número"); return; }
+    setSaving(true);
+    const { error } = await (supabase as any).from("whatsapp_connections").insert({
+      nickname: form.nickname || "WhatsApp Admin",
+      phone_number: form.phone,
+      connection_type: form.type,
+      status: form.type === "api" ? "connected" : "connecting",
+      is_primary: accounts.length === 0,
+      notify_disconnect: true,
+      twilio_sid: form.type === "api" ? form.sid : null,
+      twilio_auth_token: form.type === "api" ? form.token : null,
+      twilio_phone: form.type === "api" ? form.twilioPhone : null,
+    });
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Conta adicionada!");
+    setShowForm(false);
+    setForm({ nickname: "", phone: "", type: "web", sid: "", token: "", twilioPhone: "" });
+    load();
+  };
+
+  const toggleStatus = async (id: string, current: string) => {
+    const next = current === "connected" ? "disconnected" : "connected";
+    await (supabase as any).from("whatsapp_connections").update({ status: next }).eq("id", id);
+    load();
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("Remover esta conexão?")) return;
+    await (supabase as any).from("whatsapp_connections").delete().eq("id", id);
+    load();
+  };
+
+  const statusColor: Record<string, string> = {
+    connected: "bg-green-100 text-green-700",
+    disconnected: "bg-red-100 text-red-700",
+    connecting: "bg-yellow-100 text-yellow-700",
+    error: "bg-orange-100 text-orange-700",
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+            <Smartphone className="w-6 h-6 text-green-500" /> WhatsApp Global
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Gerencie todas as conexões WhatsApp do sistema (Web e API Twilio).
+          </p>
+        </div>
+        <Button onClick={() => setShowForm(!showForm)} className="bg-green-500 hover:bg-green-600 text-white">
+          <Plus className="w-4 h-4 mr-2" /> Nova Conexão
+        </Button>
+      </div>
+
+      {/* Formulário */}
+      {showForm && (
+        <Card className="border-green-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Nova Conexão WhatsApp</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Tipo */}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { val: "web", label: "WhatsApp Web (QR Code)", desc: "Conecta via QR Code. Requer celular online." },
+                { val: "api", label: "API Twilio", desc: "Mais estável. Funciona 24/7 sem celular." },
+              ].map(opt => (
+                <button key={opt.val} onClick={() => setForm(f => ({ ...f, type: opt.val }))}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${form.type === opt.val ? "border-green-500 bg-green-50" : "border-slate-200 hover:border-slate-300"}`}>
+                  <p className={`font-bold text-sm ${form.type === opt.val ? "text-green-700" : "text-slate-700"}`}>{opt.label}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Apelido</Label>
+                <Input placeholder="Ex: WhatsApp Principal" value={form.nickname} onChange={e => setForm(f => ({ ...f, nickname: e.target.value }))} className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-xs">Número WhatsApp</Label>
+                <Input placeholder="+55 11 99999-9999" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="mt-1" />
+              </div>
+            </div>
+
+            {form.type === "api" && (
+              <div className="space-y-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <p className="text-xs font-bold text-blue-700">Credenciais Twilio (salvas com segurança no banco)</p>
+                <div>
+                  <Label className="text-xs">Account SID</Label>
+                  <Input className="mt-1 font-mono text-xs" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value={form.sid} onChange={e => setForm(f => ({ ...f, sid: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Auth Token</Label>
+                  <Input className="mt-1 font-mono text-xs" type="password" placeholder="••••••••••••••••••••••••••••••••" value={form.token} onChange={e => setForm(f => ({ ...f, token: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Número Twilio</Label>
+                  <Input className="mt-1 text-xs" placeholder="+14155238886" value={form.twilioPhone} onChange={e => setForm(f => ({ ...f, twilioPhone: e.target.value }))} />
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+              <Button onClick={save} disabled={saving} className="bg-green-500 hover:bg-green-600 text-white">
+                {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : "Salvar Conexão"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Lista */}
+      {loading ? (
+        <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-green-500" /></div>
+      ) : accounts.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <Smartphone className="w-12 h-12 mx-auto mb-3 opacity-20" />
+            <p>Nenhuma conexão WhatsApp configurada</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {accounts.map((acc: any) => (
+            <Card key={acc.id} className="border-slate-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${acc.connection_type === "api" ? "bg-blue-100" : "bg-green-100"}`}>
+                      <Smartphone className={`w-5 h-5 ${acc.connection_type === "api" ? "text-blue-600" : "text-green-600"}`} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm">{acc.nickname}</p>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusColor[acc.status] || "bg-slate-100 text-slate-500"}`}>
+                          {acc.status}
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold">
+                          {acc.connection_type === "api" ? "API Twilio" : "WhatsApp Web"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{acc.phone_number}</p>
+                      {acc.barbershops?.name && (
+                        <p className="text-xs text-blue-600">{acc.barbershops.name}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline"
+                      onClick={() => toggleStatus(acc.id, acc.status)}
+                      className={acc.status === "connected" ? "border-red-200 text-red-600 hover:bg-red-50" : "border-green-200 text-green-600 hover:bg-green-50"}>
+                      {acc.status === "connected" ? "Desconectar" : "Conectar"}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => remove(acc.id)} className="text-red-400 hover:text-red-600 hover:bg-red-50">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Info */}
+      <Card className="border-yellow-200 bg-yellow-50">
+        <CardContent className="p-4">
+          <p className="text-sm font-bold text-yellow-800 mb-2">⚠️ Sobre WhatsApp Web</p>
+          <ul className="text-xs text-yellow-700 space-y-1">
+            <li>• Requer celular conectado à internet 24/7</li>
+            <li>• Pode ser banido se enviar mensagens em massa</li>
+            <li>• Recomendamos usar número secundário</li>
+            <li>• <strong>API Twilio</strong> é mais estável e sem risco de banimento</li>
+          </ul>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
