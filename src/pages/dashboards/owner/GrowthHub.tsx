@@ -79,8 +79,8 @@ const MarketingCenter = () => {
     const navigate = useNavigate();
 
     const handleReativacao = () => navigate("/painel-dono/comunicacao");
-    const handleProvasSocial = () => toast.info("Configure avaliações em Configurações → Dados da Empresa");
-    const handlePixels = () => toast.info("Integração de Pixels disponível em breve no plano Enterprise");
+    const handleProvasSocial = () => navigate("/painel-dono/configuracoes");
+    const handlePixels = () => navigate("/painel-dono/configuracoes");
     
     return (
         <div className="space-y-8">
@@ -166,7 +166,7 @@ const LoyaltyCenter = () => {
                         <p className="text-[10px] font-black text-slate-500 mb-1">PROGRAMAS ATIVOS</p>
                         <p className="text-xl font-black text-white">02</p>
                      </div>
-                     <Button variant="gold" className="w-full h-12 rounded-2xl font-black shadow-gold">Novo Programa</Button>
+                     <Button variant="gold" className="w-full h-12 rounded-2xl font-black shadow-gold" onClick={() => navigate("/painel-dono/gestao")}>Novo Programa</Button>
                   </div>
                </Card>
                
@@ -231,7 +231,7 @@ const CashbackCenter = () => {
                      </div>
                      <div className="h-px w-full sm:h-12 sm:w-px bg-white/5" />
                      <div className="flex-1 w-full">
-                        <Button variant="gold" className="w-full rounded-2xl h-14 font-black shadow-gold flex items-center justify-center gap-2">
+                        <Button variant="gold" className="w-full rounded-2xl h-14 font-black shadow-gold flex items-center justify-center gap-2" onClick={() => navigate("/painel-dono/configuracoes")}>
                            <Zap size={18} /> Ajustar Estratégia
                         </Button>
                      </div>
@@ -279,7 +279,7 @@ const CashbackCenter = () => {
                      <p className="mt-8 text-[10px] font-black text-slate-600 uppercase tracking-widest text-center pt-6 border-t border-white/5">Últimos 30 dias de operação</p>
                   </div>
                   
-                  <Card className="glass-card p-8 rounded-[2.5rem] border-white/5 bg-slate-950/40 flex items-center gap-6 group hover:border-white/10 transition-premium cursor-pointer">
+                  <Card className="glass-card p-8 rounded-[2.5rem] border-white/5 bg-slate-950/40 flex items-center gap-6 group hover:border-white/10 transition-premium cursor-pointer" onClick={() => navigate("/painel-dono/comunicacao")}>
                      <div className="w-16 h-16 rounded-[2rem] bg-slate-900 border border-white/5 flex items-center justify-center transition-premium group-hover:scale-110 group-hover:border-orange-400/30">
                         <Share2 className="w-7 h-7 text-slate-500 group-hover:text-orange-400 transition-colors" />
                      </div>

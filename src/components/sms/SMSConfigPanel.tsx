@@ -295,7 +295,9 @@ export function SMSConfigPanel() {
                 {SMS_PACKAGES.map((pkg) => (
                   <button
                     key={pkg.qty}
-                    onClick={() => toast.info(`Redirecionando para pagamento de ${pkg.label}...`)}
+                    onClick={() => {
+                      window.location.href = `/painel-dono/financeiro?tab=subscription`;
+                    }}
                     className="p-3 bg-white border-2 border-orange-200 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-all text-center group"
                   >
                     <p className="font-black text-orange-600 text-sm group-hover:text-orange-700">{pkg.label}</p>
