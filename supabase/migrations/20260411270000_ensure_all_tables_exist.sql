@@ -1,10 +1,6 @@
--- =============================================
--- Migration: Ensure all new tables exist
--- Created: 2026-04-11
--- Garante que todas as tabelas criadas hoje existam
--- =============================================
+-- Migration: Ensure all new tables exist (safe to run multiple times)
 
--- 1. contas_financeiras (Contas a Pagar/Receber)
+-- 1. contas_financeiras
 CREATE TABLE IF NOT EXISTS public.contas_financeiras (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   barbershop_id uuid NOT NULL REFERENCES public.barbershops(id) ON DELETE CASCADE,
@@ -102,7 +98,7 @@ CREATE TABLE IF NOT EXISTS public.integration_tokens (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   barbershop_id uuid NOT NULL REFERENCES public.barbershops(id) ON DELETE CASCADE,
   token text NOT NULL UNIQUE,
-  name text NOT NULL DEFAULT 'Token de Integração',
+  name text NOT NULL DEFAULT 'Token de Integracao',
   permissions text[] NOT NULL DEFAULT ARRAY['booking:create', 'booking:read', 'services:read'],
   expires_at timestamptz,
   is_active boolean DEFAULT true,
@@ -136,7 +132,7 @@ CREATE POLICY "Owners read logs" ON public.integration_token_logs
     WHERE barbershop_id IN (SELECT id FROM public.barbershops WHERE owner_user_id = auth.uid())
   ));
 
--- 7. Colunas extras em appointments (source tracking)
+-- 7. Colunas extras em appointments
 ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS source text DEFAULT 'direct';
 ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS source_token_id uuid REFERENCES public.integration_tokens(id);
 ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS source_metadata jsonb;
@@ -230,12 +226,7 @@ CREATE POLICY "Owners read events" ON public.meta_webhook_events
   FOR SELECT TO authenticated
   USING (barbershop_id IN (SELECT id FROM public.barbershops WHERE owner_user_id = auth.uid()));
 
--- Feature flag para Meta (desativado por padrão)
-INSERT INTO public.feature_flags (feature_key, feature_name, description, enabled)
-VALUES ('meta_social_integration', 'Integração Instagram & Facebook', 'Resposta automática a comentários e DMs via Meta Graph API.', false)
-ON CONFLICT (feature_key) DO NOTHING;
-
--- Índices gerais
+-- Indices
 CREATE INDEX IF NOT EXISTS idx_contas_barbershop ON public.contas_financeiras(barbershop_id);
 CREATE INDEX IF NOT EXISTS idx_fichas_barbershop ON public.fichas_anamnese(barbershop_id);
 CREATE INDEX IF NOT EXISTS idx_wa_connections_barbershop ON public.whatsapp_connections(barbershop_id);
