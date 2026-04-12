@@ -17,12 +17,20 @@ export function useProfessionalLimits() {
     queryFn: async () => {
       if (!barbershop?.id) return null;
 
-      const { data, error } = await supabase.rpc("get_professional_slots", {
-        p_barbershop_id: barbershop.id,
-      });
+      const { count, error } = await supabase
+        .from("professionals")
+        .select("*", { count: "exact", head: true })
+        .eq("barbershop_id", barbershop.id)
+        .eq("is_active", true);
 
       if (error) throw error;
-      return data?.[0] as ProfessionalSlots | null;
+      const current = count ?? 0;
+      return {
+        current_count: current,
+        max_allowed: 50,
+        remaining: 50 - current,
+        is_unlimited: false,
+      } as ProfessionalSlots;
     },
     enabled: !!barbershop?.id,
     staleTime: 30 * 1000, // 30 seconds
