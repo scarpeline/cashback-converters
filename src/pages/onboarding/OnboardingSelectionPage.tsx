@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2, Scissors, ChevronRight, ChevronLeft,
-  ArrowRight, Lock, Check, Loader2, Sparkles, User,
+  ArrowRight, ArrowLeft, Lock, Check, Loader2, Sparkles, User,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -298,7 +298,6 @@ const OnboardingSelectionPage = () => {
       onboarding_status: "configured",
       subscription_status: "trial",
       subscription_ends_at: trialEndsAt,
-      ...(nicheLabels ? { niche_labels: nicheLabels } : {}),
     };
 
     const { data: existingList } = await (supabase as any)
@@ -468,6 +467,14 @@ const OnboardingSelectionPage = () => {
                   <span className="text-xs font-semibold text-slate-800 leading-tight">{sector.label}</span>
                 </button>
               ))}
+            </div>
+            <div className="flex justify-start pt-2">
+              <button
+                onClick={() => navigate("/login")}
+                className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-orange-500 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" /> Voltar ao login
+              </button>
             </div>
           </div>
         )}
