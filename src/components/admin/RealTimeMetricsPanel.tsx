@@ -409,9 +409,9 @@ export const RealTimeMetricsPanel = () => {
           <CardContent>
             <div className="space-y-3">
               {[
-                { label: "Novos usuários",    value: metrics?.newUsersToday ?? 0,    suffix: "hoje",   color: "text-blue-600" },
-                { label: "Agendamentos",       value: metrics?.appointmentsToday ?? 0, suffix: "hoje",  color: "text-green-600" },
-                { label: "Receita do mês",     value: `R$${((metrics?.monthlyRevenue ?? 0)).toFixed(0)}`, suffix: "", color: "text-orange-600" },
+                { label: "Novos usuários",    value: metrics?.totalUsers ?? 0,    suffix: "total",   color: "text-blue-600" },
+                { label: "Agendamentos",       value: metrics?.todayAppointments ?? 0, suffix: "hoje",  color: "text-green-600" },
+                { label: "Receita do mês",     value: `R$${((metrics?.monthRevenue ?? 0)).toFixed(0)}`, suffix: "", color: "text-orange-600" },
                 { label: "Taxa de conversão",  value: "68%",                          suffix: "média",  color: "text-purple-600" },
               ].map(item => (
                 <div key={item.label} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
