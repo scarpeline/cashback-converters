@@ -1,16 +1,19 @@
 /**
  * BookingPage – Agendamento público sem login
  * Rota: /agendar/:slug
+ * 
+ * Suporta parâmetros de integração via URL:
+ * ?token=<api_token>&service=<service_id>&prof=<professional_id>&ref=<external_ref>&source=<app_name>
  */
 
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Loader2, Calendar, Scissors, User, Clock, CheckCircle2,
-  ChevronRight, MapPin, Phone, ArrowLeft
+  ChevronRight, MapPin, Phone, ArrowLeft, Zap, ExternalLink,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -79,11 +82,23 @@ function getNext14Days() {
 
 export default function BookingPage() {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
+
+  // Parâmetros de integração vindos do app externo
+  const integrationToken = searchParams.get("token");
+  const preServiceId     = searchParams.get("service");
+  const preProfId        = searchParams.get("prof");
+  const externalRef      = searchParams.get("ref");
+  const sourceName       = searchParams.get("source") || "direct";
+  const returnUrl        = searchParams.get("return_url"); // URL para voltar ao app externo
+
   const [barbershop, setBarbershop] = useState<Barbershop | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+  const [sourceApp, setSourceApp] = useState<string | null>(null);
 
   const [step, setStep] = useState<Step>("service");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -96,6 +111,7 @@ export default function BookingPage() {
   const [clientWhatsapp, setClientWhatsapp] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!slug) { setNotFound(true); setLoading(false); return; }
@@ -114,11 +130,45 @@ export default function BookingPage() {
         (supabase as any).from("professionals").select("id, name, specialty, avatar_url").eq("barbershop_id", shop.id).eq("is_active", true).order("name"),
       ]);
 
-      setServices((svcRes.data || []) as Service[]);
-      setProfessionals((profRes.data || []) as Professional[]);
+      const svcs: Service[] = svcRes.data || [];
+      const profs: Professional[] = profRes.data || [];
+      setServices(svcs);
+      setProfessionals(profs);
+
+      // Validar token de integração e pré-selecionar dados
+      if (integrationToken) {
+        try {
+          const res = await fetch(`${window.location.origin}/functions/v1/integration-token`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "validate", token: integrationToken }),
+          });
+          const result = await res.json();
+          if (result.valid) {
+            setTokenValid(true);
+            setSourceApp(sourceName);
+          }
+        } catch { /* token inválido, continua sem integração */ }
+      }
+
+      // Pré-selecionar serviço se veio na URL
+      if (preServiceId) {
+        const svc = svcs.find(s => s.id === preServiceId);
+        if (svc) { setSelectedService(svc); setStep("professional"); }
+      }
+
+      // Pré-selecionar profissional se veio na URL
+      if (preProfId) {
+        const prof = profs.find(p => p.id === preProfId);
+        if (prof) {
+          setSelectedProfessional(prof);
+          if (preServiceId) setStep("datetime");
+        }
+      }
+
       setLoading(false);
     })();
-  }, [slug]);
+  }, [slug, integrationToken, preServiceId, preProfId, sourceName]);
 
   useEffect(() => {
     if (!selectedProfessional || !selectedDate || !barbershop) return;
@@ -145,7 +195,19 @@ export default function BookingPage() {
   const handleSubmit = async () => {
     if (!barbershop || !selectedService || !selectedProfessional || !selectedSlot || !clientName || !clientWhatsapp) return;
     setSubmitting(true);
-    const { error } = await (supabase as any).from("appointments").insert({
+
+    // Busca token_id se houver integração
+    let tokenId: string | null = null;
+    if (integrationToken) {
+      const { data: tk } = await (supabase as any)
+        .from("integration_tokens")
+        .select("id")
+        .eq("token", integrationToken)
+        .maybeSingle();
+      tokenId = tk?.id || null;
+    }
+
+    const { data: apt, error } = await (supabase as any).from("appointments").insert({
       barbershop_id: barbershop.id,
       service_id: selectedService.id,
       professional_id: selectedProfessional.id,
@@ -153,12 +215,14 @@ export default function BookingPage() {
       client_name: clientName,
       client_whatsapp: clientWhatsapp.replace(/\D/g, ""),
       status: "scheduled",
-    });
+      source: sourceName,
+      source_token_id: tokenId,
+      source_metadata: externalRef ? { external_ref: externalRef, source_app: sourceName } : null,
+    }).select("id").single();
+
     setSubmitting(false);
-    if (error) {
-      alert("Erro ao agendar. Tente novamente.");
-      return;
-    }
+    if (error) { alert("Erro ao agendar. Tente novamente."); return; }
+    setAppointmentId(apt?.id || null);
     setDone(true);
   };
 
@@ -181,6 +245,11 @@ export default function BookingPage() {
   }
 
   if (done) {
+    // Monta URL de retorno com dados do agendamento
+    const returnWithData = returnUrl
+      ? `${returnUrl}?appointment_id=${appointmentId}&status=confirmed&ref=${externalRef || ""}&service=${selectedService?.name || ""}`
+      : null;
+
     return (
       <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center px-4 gap-6">
         <div className="bg-white rounded-3xl shadow-lg p-8 max-w-md w-full text-center space-y-4">
@@ -188,16 +257,36 @@ export default function BookingPage() {
             <CheckCircle2 className="w-10 h-10 text-green-500" />
           </div>
           <h2 className="text-2xl font-bold text-gray-800">Agendamento Confirmado!</h2>
+
+          {/* Badge de origem */}
+          {sourceApp && sourceApp !== "direct" && (
+            <div className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 text-xs font-semibold px-3 py-1.5 rounded-full border border-blue-200">
+              <Zap className="w-3 h-3" />
+              Agendado via {sourceApp}
+            </div>
+          )}
+
           <div className="text-left bg-orange-50 rounded-2xl p-4 space-y-2 text-sm">
-            <p><span className="font-semibold text-gray-600">Barbearia:</span> {barbershop.name}</p>
+            <p><span className="font-semibold text-gray-600">Barbearia:</span> {barbershop?.name}</p>
             <p><span className="font-semibold text-gray-600">Serviço:</span> {selectedService?.name}</p>
             <p><span className="font-semibold text-gray-600">Profissional:</span> {selectedProfessional?.name}</p>
             <p><span className="font-semibold text-gray-600">Data:</span> {formatDate(selectedDate)}</p>
             <p><span className="font-semibold text-gray-600">Horário:</span> {selectedSlot ? formatTime(selectedSlot) : ""}</p>
             <p><span className="font-semibold text-gray-600">Nome:</span> {clientName}</p>
+            {appointmentId && <p className="text-xs text-gray-400">ID: {appointmentId}</p>}
           </div>
           <p className="text-xs text-gray-500">Guarde essas informações. Em caso de dúvidas, entre em contato com a barbearia.</p>
-          {barbershop.phone && (
+
+          {/* Botão voltar ao app externo */}
+          {returnWithData && (
+            <a href={returnWithData}>
+              <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-2xl mb-2">
+                <ExternalLink className="w-4 h-4 mr-2" /> Voltar para {sourceApp || "o app"}
+              </Button>
+            </a>
+          )}
+
+          {barbershop?.phone && (
             <a href={`https://wa.me/55${barbershop.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
               <Button className="w-full bg-green-500 hover:bg-green-600 text-white rounded-2xl">
                 <Phone className="w-4 h-4 mr-2" /> Falar no WhatsApp
@@ -221,6 +310,17 @@ export default function BookingPage() {
 
   return (
     <div className="min-h-screen bg-orange-50">
+      {/* Banner de integração */}
+      {tokenValid && sourceApp && (
+        <div className="bg-blue-500 text-white text-xs text-center py-2 px-4 flex items-center justify-center gap-2">
+          <Zap className="w-3.5 h-3.5" />
+          Agendamento integrado via <strong>{sourceApp}</strong>
+          {returnUrl && (
+            <a href={returnUrl} className="underline ml-1 opacity-80 hover:opacity-100">← Voltar</a>
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-white border-b border-orange-100 sticky top-0 z-10 shadow-sm">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">

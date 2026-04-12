@@ -29,10 +29,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import BookingPoliciesPanel from "@/components/settings/BookingPoliciesPanel";
 import ResourcesPanel from "@/components/settings/ResourcesPanel";
+import { IntegrationAPIPanel } from "@/components/settings/IntegrationAPIPanel";
 import { WhatsAppAccountsPanel } from "@/components/whatsapp/WhatsAppAccountsPanel";
 
 export const SettingsHub = () => {
-  const [activeTab, setActiveTab] = useState<"profile" | "hours" | "whatsapp" | "policies">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "hours" | "whatsapp" | "policies" | "api">("profile");
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -77,6 +78,14 @@ export const SettingsHub = () => {
           >
             Políticas
           </Button>
+          <Button 
+            variant={activeTab === "api" ? "gold" : "ghost"} 
+            size="sm" 
+            className="rounded-xl font-bold"
+            onClick={() => setActiveTab("api")}
+          >
+            API
+          </Button>
         </div>
       </div>
 
@@ -85,6 +94,11 @@ export const SettingsHub = () => {
         {activeTab === "hours" && <OpeningHoursSettings />}
         {activeTab === "whatsapp" && <WhatsAppSettings />}
         {activeTab === "policies" && <PolicySettings />}
+        {activeTab === "api" && (
+          <div className="glass-card p-6 md:p-8 rounded-[3rem] border-white/5">
+            <IntegrationAPIPanel />
+          </div>
+        )}
       </div>
     </div>
   );
