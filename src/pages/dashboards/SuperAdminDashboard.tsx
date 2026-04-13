@@ -54,6 +54,7 @@ import {
   ShieldOff,
   ChevronDown,
   Smartphone,
+  Save,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -2545,126 +2546,164 @@ const MensagensSistemaPage = () => {
 const MessagingCostCalculator = () => {
   const [qtyPerShop, setQtyPerShop] = useState(15);
   const [totalShops, setTotalShops] = useState(10);
-  // Twilio costs (approx BRL): SMS to Brazil ~R$0.21, WhatsApp utility ~R$0.15
-  const SMS_COST_BRL = 0.21;
-  const WA_COST_BRL = 0.15;
+  const [saving, setSaving] = useState(false);
 
-  const smsCostTotal = qtyPerShop * totalShops * SMS_COST_BRL;
-  const waCostTotal = qtyPerShop * totalShops * WA_COST_BRL;
-  const totalCost = smsCostTotal + waCostTotal;
+  // Custos Twilio (editáveis)
+  const [smsCost, setSmsCost] = useState(0.21);
+  const [waCost, setWaCost] = useState(0.15);
 
-  // Suggested resale with margins
-  const smsResaleUnit = SMS_COST_BRL * 3; // 200% margin
-  const waResaleUnit = WA_COST_BRL * 3;
-  const smsResaleTotal = qtyPerShop * totalShops * smsResaleUnit;
-  const waResaleTotal = qtyPerShop * totalShops * waResaleUnit;
-  const totalResale = smsResaleTotal + waResaleTotal;
-  const profit = totalResale - totalCost;
+  // Preços de revenda (editáveis — salvos no banco)
+  const [smsResale, setSmsResale] = useState(0.63);
+  const [waResale, setWaResale] = useState(0.45);
+
+  // Carrega preços salvos
+  useEffect(() => {
+    (supabase as any)
+      .from("integration_settings")
+      .select("service_name, base_url")
+      .in("service_name", ["sms_cost_unit", "wa_cost_unit", "sms_resale_unit", "wa_resale_unit"])
+      .then(({ data }: any) => {
+        (data || []).forEach((s: any) => {
+          const v = parseFloat(s.base_url);
+          if (!isNaN(v)) {
+            if (s.service_name === "sms_cost_unit") setSmsCost(v);
+            if (s.service_name === "wa_cost_unit") setWaCost(v);
+            if (s.service_name === "sms_resale_unit") setSmsResale(v);
+            if (s.service_name === "wa_resale_unit") setWaResale(v);
+          }
+        });
+      });
+  }, []);
+
+  const saveResalePrices = async () => {
+    setSaving(true);
+    await (supabase as any).from("integration_settings").upsert([
+      { service_name: "sms_cost_unit",    environment: "production", is_active: true, base_url: String(smsCost) },
+      { service_name: "wa_cost_unit",     environment: "production", is_active: true, base_url: String(waCost) },
+      { service_name: "sms_resale_unit",  environment: "production", is_active: true, base_url: String(smsResale) },
+      { service_name: "wa_resale_unit",   environment: "production", is_active: true, base_url: String(waResale) },
+    ], { onConflict: "service_name,environment" });
+    setSaving(false);
+    toast.success("Preços de revenda salvos! Sincronizados com os pacotes.");
+  };
+
+  const smsCostTotal    = qtyPerShop * totalShops * smsCost;
+  const waCostTotal     = qtyPerShop * totalShops * waCost;
+  const totalCost       = smsCostTotal + waCostTotal;
+  const smsResaleTotal  = qtyPerShop * totalShops * smsResale;
+  const waResaleTotal   = qtyPerShop * totalShops * waResale;
+  const totalResale     = smsResaleTotal + waResaleTotal;
+  const profit          = totalResale - totalCost;
+  const smsMargem       = smsCost > 0 ? (((smsResale - smsCost) / smsCost) * 100).toFixed(0) : "0";
+  const waMargem        = waCost  > 0 ? (((waResale  - waCost)  / waCost)  * 100).toFixed(0) : "0";
 
   const fmt = (v: number) => `R$ ${v.toFixed(2)}`;
 
   return (
     <Card className="border-primary/20">
       <CardHeader>
-        <CardTitle>
-          <Calculator className="w-5 h-5 inline mr-2" />
-          Calculadora de Custo × Revenda
-        </CardTitle>
-        <CardDescription>
-          Estime custo via API (Twilio) e lucro na revenda de pacotes
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>
+              <Calculator className="w-5 h-5 inline mr-2" />
+              Calculadora de Custo × Revenda
+            </CardTitle>
+            <CardDescription>
+              Defina o custo real (Twilio) e o preço de revenda para os assinantes
+            </CardDescription>
+          </div>
+          <Button onClick={saveResalePrices} disabled={saving} className="bg-orange-500 hover:bg-orange-600 text-white">
+            {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+            {saving ? "Salvando..." : "Salvar Preços"}
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5">
+        {/* Simulação */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Msgs por barbearia</Label>
-            <Input
-              type="number"
-              min={1}
-              value={qtyPerShop}
-              onChange={(e) => setQtyPerShop(+e.target.value || 1)}
-              className="mt-1"
-            />
+            <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Msgs por barbearia (simulação)</Label>
+            <Input type="number" min={1} value={qtyPerShop} onChange={e => setQtyPerShop(+e.target.value || 1)} className="mt-1" />
           </div>
           <div>
-            <Label>Total de barbearias</Label>
-            <Input
-              type="number"
-              min={1}
-              value={totalShops}
-              onChange={(e) => setTotalShops(+e.target.value || 1)}
-              className="mt-1"
-            />
+            <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Total de barbearias (simulação)</Label>
+            <Input type="number" min={1} value={totalShops} onChange={e => setTotalShops(+e.target.value || 1)} className="mt-1" />
           </div>
         </div>
 
+        {/* Preços editáveis */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+          <div>
+            <Label className="text-xs font-bold text-red-600 uppercase tracking-wider">Custo SMS/un (Twilio)</Label>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-slate-500">R$</span>
+              <Input type="number" step="0.01" min="0" value={smsCost}
+                onChange={e => setSmsCost(parseFloat(e.target.value) || 0)}
+                className="font-mono font-bold text-red-600 border-red-200" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs font-bold text-red-600 uppercase tracking-wider">Custo WhatsApp/un (Twilio)</Label>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-slate-500">R$</span>
+              <Input type="number" step="0.01" min="0" value={waCost}
+                onChange={e => setWaCost(parseFloat(e.target.value) || 0)}
+                className="font-mono font-bold text-red-600 border-red-200" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+              Revenda SMS/un <span className="text-green-600 normal-case font-normal">(+{smsMargem}%)</span>
+            </Label>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-slate-500">R$</span>
+              <Input type="number" step="0.01" min="0" value={smsResale}
+                onChange={e => setSmsResale(parseFloat(e.target.value) || 0)}
+                className="font-mono font-bold text-orange-600 border-orange-200" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+              Revenda WhatsApp/un <span className="text-green-600 normal-case font-normal">(+{waMargem}%)</span>
+            </Label>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-slate-500">R$</span>
+              <Input type="number" step="0.01" min="0" value={waResale}
+                onChange={e => setWaResale(parseFloat(e.target.value) || 0)}
+                className="font-mono font-bold text-orange-600 border-orange-200" />
+            </div>
+          </div>
+        </div>
+
+        {/* Resultado */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20">
-            <p className="text-xs font-medium text-destructive uppercase mb-2">
-              Custo API (Twilio)
-            </p>
+            <p className="text-xs font-bold text-destructive uppercase mb-2">Custo API (Twilio)</p>
             <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span>
-                  SMS ({qtyPerShop}×{totalShops})
-                </span>
-                <span className="font-mono">{fmt(smsCostTotal)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>
-                  WhatsApp ({qtyPerShop}×{totalShops})
-                </span>
-                <span className="font-mono">{fmt(waCostTotal)}</span>
-              </div>
-              <div className="flex justify-between font-bold border-t border-destructive/20 pt-1">
-                <span>Total Custo</span>
-                <span className="font-mono">{fmt(totalCost)}</span>
-              </div>
+              <div className="flex justify-between"><span>SMS ({qtyPerShop}×{totalShops})</span><span className="font-mono">{fmt(smsCostTotal)}</span></div>
+              <div className="flex justify-between"><span>WhatsApp ({qtyPerShop}×{totalShops})</span><span className="font-mono">{fmt(waCostTotal)}</span></div>
+              <div className="flex justify-between font-bold border-t border-destructive/20 pt-1"><span>Total Custo</span><span className="font-mono">{fmt(totalCost)}</span></div>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-2">
-              SMS: {fmt(SMS_COST_BRL)}/un • WhatsApp: {fmt(WA_COST_BRL)}/un
-            </p>
+            <p className="text-[10px] text-muted-foreground mt-2">SMS: {fmt(smsCost)}/un • WhatsApp: {fmt(waCost)}/un</p>
           </div>
 
           <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-            <p className="text-xs font-medium text-primary uppercase mb-2">
-              Revenda Sugerida (3×)
-            </p>
+            <p className="text-xs font-bold text-primary uppercase mb-2">Revenda Configurada</p>
             <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span>
-                  SMS ({qtyPerShop}×{totalShops})
-                </span>
-                <span className="font-mono">{fmt(smsResaleTotal)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>
-                  WhatsApp ({qtyPerShop}×{totalShops})
-                </span>
-                <span className="font-mono">{fmt(waResaleTotal)}</span>
-              </div>
-              <div className="flex justify-between font-bold border-t border-primary/20 pt-1">
-                <span>Total Revenda</span>
-                <span className="font-mono">{fmt(totalResale)}</span>
-              </div>
+              <div className="flex justify-between"><span>SMS ({qtyPerShop}×{totalShops})</span><span className="font-mono">{fmt(smsResaleTotal)}</span></div>
+              <div className="flex justify-between"><span>WhatsApp ({qtyPerShop}×{totalShops})</span><span className="font-mono">{fmt(waResaleTotal)}</span></div>
+              <div className="flex justify-between font-bold border-t border-primary/20 pt-1"><span>Total Revenda</span><span className="font-mono">{fmt(totalResale)}</span></div>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-2">
-              SMS: {fmt(smsResaleUnit)}/un • WhatsApp: {fmt(waResaleUnit)}/un
-            </p>
+            <p className="text-[10px] text-muted-foreground mt-2">SMS: {fmt(smsResale)}/un • WhatsApp: {fmt(waResale)}/un</p>
           </div>
 
           <div className="p-3 rounded-lg bg-success/5 border border-success/20">
-            <p className="text-xs font-medium text-success uppercase mb-2">
-              Lucro Estimado
-            </p>
+            <p className="text-xs font-bold text-success uppercase mb-2">Lucro Estimado</p>
             <p className="text-2xl font-bold text-success">{fmt(profit)}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Margem:{" "}
-              {totalCost > 0 ? ((profit / totalCost) * 100).toFixed(0) : 0}%
+              Margem: {totalCost > 0 ? ((profit / totalCost) * 100).toFixed(0) : 0}%
             </p>
-            <p className="text-[10px] text-muted-foreground mt-2">
-              Lucro por barbearia: {fmt(profit / totalShops)}
-            </p>
+            <p className="text-[10px] text-muted-foreground mt-2">Lucro por barbearia: {fmt(profit / Math.max(totalShops, 1))}</p>
           </div>
         </div>
       </CardContent>
