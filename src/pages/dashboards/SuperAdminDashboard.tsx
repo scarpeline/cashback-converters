@@ -411,7 +411,7 @@ const DashboardHome = () => {
         barbershops: b.count || 0,
         affiliates: a.count || 0,
       }),
-    );
+    ).catch(() => {}); // tabelas podem não existir ainda
   }, []);
 
   const openDashboard = (path: string) => {

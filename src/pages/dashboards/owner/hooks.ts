@@ -42,27 +42,16 @@ export function useServices(barbershopId: string | undefined) {
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const fetch = async () => {
-    if (!barbershopId) {
-      setServices([]);
-      setLoading(false);
-      return;
-    }
-
+  const fetch = useCallback(async () => {
+    if (!barbershopId) { setServices([]); setLoading(false); return; }
     setLoading(true);
     const { data } = await (supabase as any)
-      .from("services")
-      .select("*")
-      .eq("barbershop_id", barbershopId)
-      .eq("is_active", true);
+      .from("services").select("*").eq("barbershop_id", barbershopId).eq("is_active", true);
     setServices(data || []);
     setLoading(false);
-  };
-  
-  useEffect(() => {
-    fetch();
   }, [barbershopId]);
   
+  useEffect(() => { fetch(); }, [fetch]);
   return { services, loading, refetch: fetch };
 }
 
@@ -70,27 +59,16 @@ export function useProfessionals(barbershopId: string | undefined) {
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const fetch = async () => {
-    if (!barbershopId) {
-      setProfessionals([]);
-      setLoading(false);
-      return;
-    }
-
+  const fetch = useCallback(async () => {
+    if (!barbershopId) { setProfessionals([]); setLoading(false); return; }
     setLoading(true);
     const { data } = await (supabase as any)
-      .from("professionals")
-      .select("*")
-      .eq("barbershop_id", barbershopId)
-      .eq("is_active", true);
+      .from("professionals").select("*").eq("barbershop_id", barbershopId).eq("is_active", true);
     setProfessionals(data || []);
     setLoading(false);
-  };
-  
-  useEffect(() => {
-    fetch();
   }, [barbershopId]);
   
+  useEffect(() => { fetch(); }, [fetch]);
   return { professionals, loading, refetch: fetch };
 }
 
@@ -98,13 +76,8 @@ export function useAppointments(barbershopId: string | undefined) {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const fetch = async () => {
-    if (!barbershopId) {
-      setAppointments([]);
-      setLoading(false);
-      return;
-    }
-
+  const fetch = useCallback(async () => {
+    if (!barbershopId) { setAppointments([]); setLoading(false); return; }
     setLoading(true);
     const { data } = await (supabase as any)
       .from("appointments")
@@ -113,11 +86,9 @@ export function useAppointments(barbershopId: string | undefined) {
       .order("scheduled_at", { ascending: true });
     setAppointments(data || []);
     setLoading(false);
-  };
-  
-  useEffect(() => {
-    fetch();
   }, [barbershopId]);
+  
+  useEffect(() => { fetch(); }, [fetch]);
   
   return { appointments, loading, refetch: fetch };
 }

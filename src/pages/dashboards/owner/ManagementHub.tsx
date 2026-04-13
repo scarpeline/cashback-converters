@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useBarbershop, useServices, useProfessionals } from "./hooks";
 import { useAuditLog } from "./useAuditLog";
 import { useDynamicLabel } from "@/lib/dynamicLabels";
@@ -341,7 +341,8 @@ const ServicosPage = () => {
 
   const handleDelete = async (id: string, svcName: string) => {
     if (!confirm(`Remover "${svcName}"?`)) return;
-    await (supabase as any).from("services").update({ is_active: false }).eq("id", id);
+    const { error } = await (supabase as any).from("services").update({ is_active: false }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
     toast.success("Serviço removido");
     refetch();
   };
@@ -458,15 +459,15 @@ const EstoquePage = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", quantity: "0", unit: "un", min_stock: "1" });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!barbershop?.id) return;
     setLoading(true);
     const { data } = await (supabase as any).from("inventory_items").select("*").eq("barbershop_id", barbershop.id).order("name");
     setItems(data || []);
     setLoading(false);
-  };
+  }, [barbershop?.id]);
 
-  useEffect(() => { load(); }, [barbershop?.id]);
+  useEffect(() => { load(); }, [load]);
 
   const handleAdd = async () => {
     if (!form.name.trim() || !barbershop?.id) return;
@@ -485,14 +486,16 @@ const EstoquePage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await (supabase as any).from("inventory_items").delete().eq("id", id);
+    const { error } = await (supabase as any).from("inventory_items").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
     toast.success("Item removido");
     load();
   };
 
   const handleQtyChange = async (id: string, delta: number, current: number) => {
     const newQty = Math.max(0, current + delta);
-    await (supabase as any).from("inventory_items").update({ quantity: newQty }).eq("id", id);
+    const { error } = await (supabase as any).from("inventory_items").update({ quantity: newQty }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
     load();
   };
 

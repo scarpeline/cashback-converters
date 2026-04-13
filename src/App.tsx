@@ -62,9 +62,6 @@ const PartnerDashboard = lazy(
 const NotificationsPage = lazy(
   () => import("./pages/partners/NotificationsPage"),
 );
-const BookingPoliciesPage = lazy(
-  () => import("./components/settings/BookingPoliciesPanel"),
-);
 const LandingPageB2B = lazy(
   () => import("./components/landing/LandingPageB2B"),
 );

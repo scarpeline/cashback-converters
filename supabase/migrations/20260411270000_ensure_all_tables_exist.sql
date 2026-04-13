@@ -232,3 +232,4 @@ CREATE INDEX IF NOT EXISTS idx_fichas_barbershop ON public.fichas_anamnese(barbe
 CREATE INDEX IF NOT EXISTS idx_wa_connections_barbershop ON public.whatsapp_connections(barbershop_id);
 CREATE INDEX IF NOT EXISTS idx_integration_tokens_token ON public.integration_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_meta_accounts_barbershop ON public.meta_social_accounts(barbershop_id);
+https://github.com/scarpeline/cashback-converters.git

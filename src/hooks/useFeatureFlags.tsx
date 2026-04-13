@@ -20,7 +20,7 @@ export function useFeatureFlags() {
 
   useEffect(() => {
     loadFeatureFlags();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadFeatureFlags = async () => {
     try {

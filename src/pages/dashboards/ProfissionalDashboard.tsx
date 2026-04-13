@@ -576,7 +576,9 @@ const ReceberDividaPage = () => {
 
   const reload = () => {
     if (!user) return;
-    supabase.from("debts").select("*").eq("professional_user_id", user.id).order("created_at", { ascending: false }).then(({ data }: any) => setDebts(data || []));
+    supabase.from("debts").select("*").eq("professional_user_id", user.id).order("created_at", { ascending: false })
+      .then(({ data }: any) => setDebts(data || []))
+      .catch(() => setDebts([]));
   };
   useEffect(() => { reload(); }, [user?.id]);
 

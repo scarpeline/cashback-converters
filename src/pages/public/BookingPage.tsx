@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -221,7 +222,7 @@ export default function BookingPage() {
     }).select("id").single();
 
     setSubmitting(false);
-    if (error) { alert("Erro ao agendar. Tente novamente."); return; }
+    if (error) { toast.error("Erro ao agendar. Tente novamente."); return; }
     setAppointmentId(apt?.id || null);
     setDone(true);
   };
