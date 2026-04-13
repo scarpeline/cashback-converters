@@ -543,7 +543,7 @@ export const ProfessionalWaitlistPanel = ({ barbershopId, professionalId }: Prof
                       <SelectValue placeholder="Selecione um profissional" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sem preferência</SelectItem>
+                      <SelectItem value="none">Sem preferência</SelectItem>
                       {/* Aqui viria a lista de profissionais da barbearia */}
                     </SelectContent>
                   </Select>

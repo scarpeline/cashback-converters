@@ -213,7 +213,7 @@ export default function PartnerForm({
                 <SelectValue placeholder="Selecione o parceiro pai" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nenhum (Parceiro raiz)</SelectItem>
+                <SelectItem value="root">Nenhum (Parceiro raiz)</SelectItem>
                 {activePartners.map(partner => (
                   <SelectItem key={partner.id} value={partner.id}>
                     <div className="flex items-center gap-2">

@@ -1004,7 +1004,7 @@ const ProdutosPage = () => {
   const [formData, setFormData] = useState({ name: '', description: '', price: '', gateway_product_id: '', gateway_price_id: '' });
 
   useEffect(() => {
-    (supabase as any).from('products').select('*').then(({ data }) => {
+    (supabase as any).from('store_products').select('*').then(({ data }) => {
       setProducts(data || []);
       setLoading(false);
     });
@@ -1017,21 +1017,21 @@ const ProdutosPage = () => {
     }
     setCreating(true);
     const { error } = editingProduct
-      ? await (supabase as any).from('products').update(formData).eq('id', editingProduct.id)
-      : await (supabase as any).from('products').insert([formData]);
+      ? await (supabase as any).from('store_products').update(formData).eq('id', editingProduct.id)
+      : await (supabase as any).from('store_products').insert([formData]);
     setCreating(false);
     if (error) toast.error(error.message);
     else {
       toast.success(editingProduct ? 'Produto atualizado' : 'Produto criado');
       setFormData({ name: '', description: '', price: '', gateway_product_id: '', gateway_price_id: '' });
       setEditingProduct(null);
-      (supabase as any).from('products').select('*').then(({ data }) => setProducts(data || []));
+      (supabase as any).from('store_products').select('*').then(({ data }) => setProducts(data || []));
     }
   };
 
   const deleteProduct = async (id: string) => {
     if (!confirm('Tem certeza?')) return;
-    const { error } = await (supabase as any).from('products').delete().eq('id', id);
+    const { error } = await (supabase as any).from('store_products').delete().eq('id', id);
     if (error) toast.error(error.message);
     else {
       toast.success('Produto deletado');
@@ -2435,6 +2435,8 @@ const MensagensSistemaPage = () => {
       .from("internal_system_messages" as any)
       .select("*")
       .order("created_at", { ascending: false })
+      .then(({ data }) => setMessages((data as any[]) || []))
+      .catch(() => setMessages([])); // tabela pode não existir
       .then(({ data }: any) => {
         setMessages(data || []);
         setLoading(false);
@@ -3458,192 +3460,143 @@ const ConfiguracoesPage = () => {
         </CardContent>
       </Card>
 
-      {/* Subscription Plans */}
+      {/* Subscription Plans — reorganizado com 3 períodos */}
       <Card>
         <CardHeader>
-          <CardTitle>Planos de Assinatura</CardTitle>
-          <CardDescription>
-            Edite valores, nomes e links de checkout dos planos
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Planos de Assinatura</CardTitle>
+              <CardDescription>
+                Edite valores, nomes e links de checkout. Mensal · Semestral · Anual.
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setEditingPlan(null)}>
+              <Plus className="w-4 h-4 mr-1.5" /> Novo Plano
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {loadingPlans ? (
             <Loader2 className="w-6 h-6 animate-spin mx-auto" />
           ) : plans.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum plano cadastrado.
-            </p>
+            <p className="text-sm text-muted-foreground">Nenhum plano cadastrado.</p>
           ) : (
-            plans.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center gap-3 p-3 rounded-lg border border-border"
-              >
-                <div className="flex-1">
-                  <p className="font-semibold">{p.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {p.duration_months === 0
-                      ? "Grátis"
-                      : `${p.duration_months} mês(es)`}{" "}
-                    • R$ {Number(p.price).toFixed(2)}
-                  </p>
-                  {p.asaas_checkout_id && (
-                    <p className="text-xs text-muted-foreground">
-                      Checkout: {p.asaas_checkout_id}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full ${p.is_active ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}
-                  >
-                    {p.is_active ? "Ativo" : "Inativo"}
-                  </span>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full ${p.show_on_landing ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-800"}`}
-                  >
-                    {p.show_on_landing ? (
-                      <>
-                        <Globe className="w-3 h-3 inline mr-1" />
-                        Landing
-                      </>
-                    ) : (
-                      <>
-                        <EyeOff className="w-3 h-3 inline mr-1" />
-                        Oculto
-                      </>
-                    )}
-                  </span>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditingPlan({ ...p })}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      togglePlanVisibility(p.id, !p.show_on_landing)
-                    }
-                    className={
-                      p.show_on_landing
-                        ? "text-orange-600 hover:bg-orange-50"
-                        : "text-orange-500 hover:bg-orange-50"
-                    }
-                  >
-                    {p.show_on_landing ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Globe className="w-4 h-4" />
-                    )}
+            <div className="space-y-2">
+              {/* Agrupa por período */}
+              {[
+                { label: "🆓 Trial", months: 0 },
+                { label: "📅 Mensal", months: 1 },
+                { label: "📆 Semestral", months: 6 },
+                { label: "🗓️ Anual", months: 12 },
+              ].map(group => {
+                const groupPlans = plans.filter(p =>
+                  group.months === 0 ? p.duration_months === 0 : p.duration_months === group.months
+                );
+                if (groupPlans.length === 0) return null;
+                return (
+                  <div key={group.label}>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{group.label}</p>
+                    {groupPlans.map(p => (
+                      <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card mb-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-sm">{p.name}</p>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${p.is_active ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>
+                              {p.is_active ? "Ativo" : "Inativo"}
+                            </span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${p.show_on_landing ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-slate-500"}`}>
+                              {p.show_on_landing ? "Landing ✓" : "Oculto"}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {p.duration_months === 0 ? "Grátis" : `${p.duration_months} mês(es)`} · R$ {Number(p.price).toFixed(2)}
+                            {p.asaas_checkout_id && <span className="ml-2 font-mono text-[10px] text-slate-400">ID: {p.asaas_checkout_id.slice(0, 12)}...</span>}
+                          </p>
+                        </div>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <Button variant="outline" size="sm" onClick={() => setEditingPlan({ ...p })}>
+                            <Edit className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="outline" size="sm"
+                            onClick={() => togglePlanVisibility(p.id, !p.show_on_landing)}
+                            className={p.show_on_landing ? "text-orange-600 hover:bg-orange-50" : "text-slate-400 hover:bg-slate-50"}>
+                            {p.show_on_landing ? <EyeOff className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+              {/* Planos com outros períodos */}
+              {plans.filter(p => ![0,1,6,12].includes(p.duration_months)).map(p => (
+                <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm">{p.name}</p>
+                    <p className="text-xs text-muted-foreground">{p.duration_months} mês(es) · R$ {Number(p.price).toFixed(2)}</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setEditingPlan({ ...p })}>
+                    <Edit className="w-3.5 h-3.5" />
                   </Button>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
 
       {editingPlan && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader>
-            <CardTitle className="text-sm">
-              Editar Plano: {editingPlan.name}
+        <Card className="border-orange-200 bg-orange-50/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Edit className="w-4 h-4 text-orange-500" />
+              {editingPlan.id ? `Editar: ${editingPlan.name}` : "Novo Plano"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               <div>
-                <Label>Nome</Label>
-                <Input
-                  value={editingPlan.name}
-                  onChange={(e) =>
-                    setEditingPlan({ ...editingPlan, name: e.target.value })
-                  }
-                  className="mt-1"
-                />
+                <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Nome</Label>
+                <Input value={editingPlan.name} onChange={e => setEditingPlan({ ...editingPlan, name: e.target.value })} className="mt-1" />
               </div>
               <div>
-                <Label>Preço (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={editingPlan.price}
-                  onChange={(e) =>
-                    setEditingPlan({ ...editingPlan, price: +e.target.value })
-                  }
-                  className="mt-1"
-                />
+                <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Preço (R$)</Label>
+                <Input type="number" step="0.01" value={editingPlan.price}
+                  onChange={e => setEditingPlan({ ...editingPlan, price: +e.target.value })} className="mt-1 font-bold" />
               </div>
               <div>
-                <Label>Duração (meses)</Label>
-                <Input
-                  type="number"
-                  value={editingPlan.duration_months}
-                  onChange={(e) =>
-                    setEditingPlan({
-                      ...editingPlan,
-                      duration_months: +e.target.value,
-                    })
-                  }
-                  className="mt-1"
-                />
+                <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Duração (meses)</Label>
+                <select value={editingPlan.duration_months}
+                  onChange={e => setEditingPlan({ ...editingPlan, duration_months: +e.target.value })}
+                  className="mt-1 w-full h-10 px-3 text-sm border border-slate-200 rounded-lg bg-white">
+                  <option value={0}>Trial (0 meses)</option>
+                  <option value={1}>Mensal (1 mês)</option>
+                  <option value={3}>Trimestral (3 meses)</option>
+                  <option value={6}>Semestral (6 meses)</option>
+                  <option value={12}>Anual (12 meses)</option>
+                </select>
               </div>
-              <div>
-                <Label>ASAAS Checkout ID</Label>
-                <Input
-                  value={editingPlan.asaas_checkout_id || ""}
-                  onChange={(e) =>
-                    setEditingPlan({
-                      ...editingPlan,
-                      asaas_checkout_id: e.target.value,
-                    })
-                  }
-                  className="mt-1"
-                />
+              <div className="md:col-span-2">
+                <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">ASAAS Checkout ID</Label>
+                <Input value={editingPlan.asaas_checkout_id || ""} placeholder="ex: wyg2cu1i6z2e52el"
+                  onChange={e => setEditingPlan({ ...editingPlan, asaas_checkout_id: e.target.value })} className="mt-1 font-mono text-sm" />
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={editingPlan.is_active}
-                  onChange={(e) =>
-                    setEditingPlan({
-                      ...editingPlan,
-                      is_active: e.target.checked,
-                    })
-                  }
-                  className="rounded"
-                />
+                <input type="checkbox" checked={editingPlan.is_active}
+                  onChange={e => setEditingPlan({ ...editingPlan, is_active: e.target.checked })} className="rounded" />
                 Plano Ativo
               </label>
               <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={editingPlan.show_on_landing || false}
-                  onChange={(e) =>
-                    setEditingPlan({
-                      ...editingPlan,
-                      show_on_landing: e.target.checked,
-                    })
-                  }
-                  className="rounded"
-                />
+                <input type="checkbox" checked={editingPlan.show_on_landing || false}
+                  onChange={e => setEditingPlan({ ...editingPlan, show_on_landing: e.target.checked })} className="rounded" />
                 Mostrar na Landing Page
               </label>
             </div>
             <div className="flex gap-2">
-              <Button variant="gold" onClick={savePlan}>
-                Salvar
-              </Button>
-              <Button variant="ghost" onClick={() => setEditingPlan(null)}>
-                Cancelar
-              </Button>
+              <Button className="bg-orange-500 hover:bg-orange-600 text-white" onClick={savePlan}>Salvar Plano</Button>
+              <Button variant="ghost" onClick={() => setEditingPlan(null)}>Cancelar</Button>
             </div>
           </CardContent>
         </Card>
