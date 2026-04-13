@@ -2436,12 +2436,8 @@ const MensagensSistemaPage = () => {
       .from("internal_system_messages" as any)
       .select("*")
       .order("created_at", { ascending: false })
-      .then(({ data }) => setMessages((data as any[]) || []))
-      .catch(() => setMessages([])); // tabela pode não existir
-      .then(({ data }: any) => {
-        setMessages(data || []);
-        setLoading(false);
-      });
+      .then(({ data }: any) => setMessages(data || []))
+      .catch(() => setMessages([]));
   }, []);
 
   const handlePost = async () => {
