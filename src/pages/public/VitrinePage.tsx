@@ -9,7 +9,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Package, Gift, Calendar, Star, MapPin, Phone } from "lucide-react";
+import { Loader2, Package, Gift, Calendar, Star, MapPin, Phone, ExternalLink } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 type Barbershop = {
@@ -18,6 +18,7 @@ type Barbershop = {
   address: string | null;
   phone: string | null;
   description: string | null;
+  slug: string | null;
 };
 
 type Product = {
@@ -49,7 +50,7 @@ export default function VitrinePage() {
     (async () => {
       const { data: shop } = await (supabase as any)
         .from("barbershops")
-        .select("id, name, address, phone, description")
+        .select("id, name, address, phone, description, slug")
         .eq("id", barbershopId)
         .maybeSingle();
 
@@ -130,6 +131,14 @@ export default function VitrinePage() {
                 <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto">
                   <Phone className="w-5 h-5" />
                   Chamar no WhatsApp
+                </Button>
+              </a>
+            )}
+            {barbershop.slug && (
+              <a href={`https://vitrinecidade.com.br/loja/${barbershop.slug}`} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto border-primary/50 text-primary hover:bg-primary/5">
+                  <ExternalLink className="w-5 h-5" />
+                  Ver no App VitrineCidade
                 </Button>
               </a>
             )}

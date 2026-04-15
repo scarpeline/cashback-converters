@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Calendar } from "lucide-react";
+import { Menu, X, Calendar, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
+import LanguageSelector from "@/components/layout/LanguageSelector";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
     { label: "Funcionalidades", href: "#features" },
+    { label: "Explorar", href: "/explorar" },
     { label: "Planos", href: "#pricing" },
     { label: "Parceiros", href: "/seja-um-franqueado" },
   ];
@@ -40,7 +42,8 @@ const Header = () => {
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-4">
+            <LanguageSelector />
             <Link to="/login">
               <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900">
                 Entrar
@@ -91,10 +94,13 @@ const Header = () => {
                 <Link to="/login" onClick={() => setIsMenuOpen(false)} className="flex-1">
                   <Button variant="outline" className="w-full text-sm">Entrar</Button>
                 </Link>
-                <Link to="/onboarding" onClick={() => setIsMenuOpen(false)} className="flex-1">
-                  <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white text-sm">Criar Conta</Button>
-                </Link>
-              </div>
+                  <Link to="/onboarding" onClick={() => setIsMenuOpen(false)} className="flex-1">
+                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white text-sm">Criar Conta</Button>
+                  </Link>
+                </div>
+                <div className="px-4 py-2 border-t border-slate-100 flex justify-center">
+                  <LanguageSelector />
+                </div>
             </nav>
           </div>
         )}

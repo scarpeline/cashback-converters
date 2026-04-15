@@ -14,19 +14,24 @@ const allFeatures = [
 
 const plans = (t: any) => [
   { 
-    name: t("monthly"), description: t("perfect_to_start"), 
+    name: "Essencial", description: "Até 3 profissionais", 
     prices: [{ label: t("first_month"), price: "19,90" }, { label: t("from_second_month"), price: "29,90" }], 
     features: allFeatures, popular: false, planIndex: 0, showTrialButton: true 
   },
   { 
-    name: t("quarterly"), description: t("smart_economy"), 
-    price: "79,90", priceLabel: t("per_3_months"), monthlyEquivalent: `26,63${t("per_month")}`, 
+    name: "Profissional", description: "Até 10 profissionais", 
+    price: "79,90", priceLabel: t("per_month"),
     features: allFeatures, popular: true, planIndex: 1, showTrialButton: false 
   },
   { 
-    name: t("annual"), description: t("max_economy"), 
-    price: "199,90", priceLabel: t("per_year"), monthlyEquivalent: `16,65${t("per_month")}`, 
-    features: allFeatures, popular: false, bestValue: true, planIndex: 2, showTrialButton: false 
+    name: "Premium", description: "10 a 15 profissionais", 
+    price: "119,90", priceLabel: "por mês",
+    features: allFeatures, popular: false, planIndex: 2, showTrialButton: false 
+  },
+  { 
+    name: "Elite", description: "Acima de 15 profissionais", 
+    price: "159,90", priceLabel: "por mês",
+    features: allFeatures, popular: false, bestValue: true, planIndex: 3, showTrialButton: false 
   },
 ];
 
@@ -52,7 +57,7 @@ const Pricing = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           {currentPlans.map((plan) => (
             <div
               key={plan.name}
@@ -143,7 +148,7 @@ const Pricing = () => {
                 </div>
                 <p className="font-bold text-sm mb-2" style={{ color: "hsl(0 0% 90%)" }}>PIX</p>
                 <div className="border-t pt-2" style={{ borderColor: "hsl(0 0% 100% / 0.06)" }}>
-                  <span className="font-display text-xl font-black" style={{ color: "hsl(160 84% 55%)" }}>1,49%</span>
+                  <span className="font-display text-xl font-black" style={{ color: "hsl(160 84% 55%)" }}>1,19%</span>
                   <p className="text-xs" style={{ color: "hsl(220 15% 55%)" }}>{t("total_per_transaction")}</p>
                 </div>
               </div>
@@ -154,7 +159,7 @@ const Pricing = () => {
                 </div>
                 <p className="font-bold text-sm mb-2" style={{ color: "hsl(0 0% 90%)" }}>{t("credit_card")}</p>
                 <div className="border-t pt-2" style={{ borderColor: "hsl(0 0% 100% / 0.06)" }}>
-                  <span className="font-display text-xl font-black" style={{ color: "hsl(262 83% 68%)" }}>3,49% + R$0,49</span>
+                  <span className="font-display text-xl font-black" style={{ color: "hsl(262 83% 68%)" }}>3,19%</span>
                   <p className="text-xs" style={{ color: "hsl(220 15% 55%)" }}>{t("per_transaction")}</p>
                 </div>
               </div>
@@ -165,7 +170,7 @@ const Pricing = () => {
                 </div>
                 <p className="font-bold text-sm mb-2" style={{ color: "hsl(0 0% 90%)" }}>{t("debit_nfc")}</p>
                 <div className="border-t pt-2" style={{ borderColor: "hsl(0 0% 100% / 0.06)" }}>
-                  <span className="font-display text-xl font-black" style={{ color: "hsl(192 91% 55%)" }}>2,49%</span>
+                  <span className="font-display text-xl font-black" style={{ color: "hsl(192 91% 55%)" }}>2,19%</span>
                   <p className="text-xs" style={{ color: "hsl(220 15% 55%)" }}>{t("total_per_transaction")}</p>
                 </div>
               </div>
