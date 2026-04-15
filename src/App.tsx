@@ -50,6 +50,9 @@ const PaymentSimulationPage = lazy(
 const InstallPage = lazy(() => import("./pages/public/InstallPage"));
 const CostAnalysisPage = lazy(() => import("./pages/public/CostAnalysisPage"));
 const VitrinePage = lazy(() => import("./pages/public/VitrinePage"));
+const BrowseCompaniesPage = lazy(
+  () => import("./pages/public/BrowseCompaniesPage"),
+);
 const ClientReactivationPage = lazy(
   () => import("./pages/dashboards/ClientReactivationPage"),
 );
@@ -111,6 +114,7 @@ function AppRoutes() {
         <Route path="/install" element={<InstallPage />} />
         <Route path="/analise-custos" element={<CostAnalysisPage />} />
         <Route path="/v/:barbershopId" element={<VitrinePage />} />
+        <Route path="/explorar" element={<BrowseCompaniesPage />} />
         <Route path="/agendar/:slug" element={<BookingPage />} />
         <Route path="/para-empresas" element={<LandingPageB2B />} />
         <Route path="/onboarding" element={<OnboardingSelectionPage />} />
