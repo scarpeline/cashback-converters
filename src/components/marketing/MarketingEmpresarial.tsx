@@ -40,6 +40,7 @@ interface MarketingSettings {
 }
 
 const MarketingEmpresarial = ({ isOwner = true }: { isOwner?: boolean }) => {
+  // Componente de marketing empresarial
   const { barbershop } = useBarbershop();
   const [settings, setSettings] = useState<MarketingSettings>({
     video_headline: 'Descubra como aumentar seus clientes com nosso sistema',

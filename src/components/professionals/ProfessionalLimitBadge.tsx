@@ -1,6 +1,6 @@
 import { useProfessionalLimits } from "@/hooks/useProfessionalLimits";
 import { Badge } from "@/components/ui/badge";
-import { Users, AlertCircle, CheckCircle, Infinity } from "lucide-react";
+import { Users, AlertCircle, CheckCircle, Infinity as InfinityIcon } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -20,7 +20,7 @@ export function ProfessionalLimitBadge() {
   if (isUnlimited) {
     return (
       <Badge variant="outline" className="gap-1.5 border-green-200 bg-green-50 text-green-700">
-        <Infinity className="w-3.5 h-3.5" />
+        <InfinityIcon className="w-3.5 h-3.5" />
         <span>Profissionais ilimitados</span>
       </Badge>
     );

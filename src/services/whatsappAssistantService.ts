@@ -162,7 +162,7 @@ export async function processIncomingMessage(params: {
     const clientName = client?.name || params.clientName || 'Cliente';
 
     // 3. Buscar estado da conversa
-    let state = await getConversationState(barbershopId, clientPhone);
+    const state = await getConversationState(barbershopId, clientPhone);
 
     // 4. Detectar intenção
     const { intent, confidence } = detectIntent(message);
@@ -514,7 +514,7 @@ function parseDate(input: string): Date | null {
   }
 
   // dd/mm ou dd/mm/yyyy
-  const match = normalized.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+  const match = normalized.match(/(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?/);
   if (match) {
     const day = parseInt(match[1]);
     const month = parseInt(match[2]) - 1;

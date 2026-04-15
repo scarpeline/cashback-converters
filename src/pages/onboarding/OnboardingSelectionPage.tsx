@@ -313,16 +313,26 @@ const OnboardingSelectionPage = () => {
       if (error) throw error;
       barbershopId = existing.id;
     } else {
-      let slugToUse = baseSlug;
-      let { data: inserted, error } = await (supabase as any).from("barbershops")
-        .insert({ ...payload, slug: slugToUse }).select("id").single();
-      if (error?.message?.includes("barbershops_slug_key")) {
-        slugToUse = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
-        const retry = await (supabase as any).from("barbershops")
+      // Tenta com slug base, depois com sufixo único garantido
+      const slugAttempts = [
+        baseSlug,
+        `${baseSlug}-${user.id.slice(0, 6)}`,
+        `${baseSlug}-${Date.now().toString(36)}`,
+        `negocio-${user.id.slice(0, 12)}`,
+      ];
+
+      let inserted: any = null;
+      let lastError: any = null;
+
+      for (const slugToUse of slugAttempts) {
+        const result = await (supabase as any).from("barbershops")
           .insert({ ...payload, slug: slugToUse }).select("id").single();
-        if (retry.error) throw retry.error;
-        inserted = retry.data;
-      } else if (error) throw error;
+        if (!result.error) { inserted = result.data; break; }
+        lastError = result.error;
+        if (!result.error.message?.includes("barbershops_slug_key")) throw result.error;
+      }
+
+      if (!inserted) throw lastError;
       barbershopId = inserted.id;
     }
 

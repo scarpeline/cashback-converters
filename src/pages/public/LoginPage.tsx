@@ -294,26 +294,15 @@ const LoginPage = () => {
           </div>
         )}
 
-        {/* Signup type selector */}
+        {/* Signup type selector — apenas cliente */}
         {mode === "signup" && (
           <div className="mb-6">
-            <p className="text-xs font-medium text-slate-500 mb-3">{t("auth.signup_type_label")}</p>
-            <div className="grid grid-cols-2 gap-2">
-              {(["cliente", "dono"] as UserType[]).map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setUserType(type)}
-                  className={`flex flex-col items-center gap-2 py-4 rounded-xl border text-sm font-medium transition-all ${
-                    userType === type
-                      ? "border-orange-500 bg-orange-50 text-orange-600"
-                      : "border-slate-200 text-slate-500 hover:border-slate-300"
-                  }`}
-                >
-                  {type === "cliente" ? <User className="w-5 h-5" /> : <Store className="w-5 h-5" />}
-                  {type === "cliente" ? t("auth.role_client") : t("auth.role_business_owner")}
-                </button>
-              ))}
+            <div className="flex items-center gap-2 px-4 py-3 bg-orange-50 border border-orange-200 rounded-xl">
+              <User className="w-5 h-5 text-orange-500" />
+              <div>
+                <p className="text-sm font-semibold text-orange-700">Cadastro de Cliente</p>
+                <p className="text-xs text-orange-500">Para criar sua conta de estabelecimento, acesse <a href="/onboarding" className="underline font-bold">Criar Conta</a> na página inicial.</p>
+              </div>
             </div>
           </div>
         )}
