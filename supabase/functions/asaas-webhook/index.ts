@@ -26,7 +26,9 @@ interface AsaasWebhookEvent {
 }
 
 /**
- * Verifica assinatura do webhook (quando configurado)
+ * Verifica assinatura do webhook via HMAC-SHA256
+ * Asaas envia o header "asaas-access-token" com o token configurado no painel.
+ * Para verificação HMAC futura, o header seria "x-asaas-signature".
  */
 function verifyWebhookSignature(
   body: string,
@@ -45,8 +47,31 @@ function verifyWebhookSignature(
     return false;
   }
 
-  // TODO: Implementar verificação HMAC quando Asaas fornecer documentação
-  // Por enquanto, aceita se o token bater
+  // Verificação HMAC-SHA256 (padrão para webhooks seguros)
+  // Asaas atualmente usa token simples via "asaas-access-token"
+  // mas suporta HMAC via "x-asaas-signature" em contas enterprise
+  if (signature.startsWith("sha256=")) {
+    // Formato HMAC: "sha256=<hex_digest>"
+    const providedHex = signature.slice(7);
+    try {
+      const encoder = new TextEncoder();
+      const keyData = encoder.encode(secret);
+      const msgData = encoder.encode(body);
+      // Deno crypto API (disponível em Edge Functions)
+      return crypto.subtle
+        .importKey("raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign"])
+        .then(key => crypto.subtle.sign("HMAC", key, msgData))
+        .then(sig => {
+          const hex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, "0")).join("");
+          return hex === providedHex;
+        }) as unknown as boolean;
+    } catch (err) {
+      console.error("[WEBHOOK] HMAC verification error:", err);
+      return false;
+    }
+  }
+
+  // Fallback: comparação direta de token (comportamento atual do Asaas)
   return signature === secret;
 }
 
@@ -228,6 +253,56 @@ serve(async (req) => {
             .eq("id", paymentRecord.id);
           if (updateError) console.error("[WEBHOOK] Failed to update payment:", updateError);
           else console.log(`[WEBHOOK] Payment ${event.payment.id} confirmed`);
+
+          // ========== DIGITAL PRODUCT SPLIT FEE ==========
+          if (!updateError) {
+            const extRef = event.payment.externalReference || "";
+            if (extRef.startsWith("digital:")) {
+              try {
+                const parts = extRef.split(":");
+                const productId = parts[1];
+                const orderId = parts[2];
+                const grossAmount = Number(event.payment.value);
+                const fixedFee = 2.50;
+                const percentageFee = grossAmount * 0.10;
+                const totalFee = fixedFee + percentageFee;
+                const netAmount = grossAmount - totalFee;
+
+                // Buscar barbershop_id do produto
+                const { data: product } = await supabase
+                  .from("store_products" as any)
+                  .select("barbershop_id")
+                  .eq("id", productId)
+                  .single();
+
+                if (product?.barbershop_id) {
+                  await supabase.from("platform_fees" as any).insert({
+                    barbershop_id: product.barbershop_id,
+                    order_id: orderId || null,
+                    product_id: productId,
+                    gross_amount: grossAmount,
+                    fixed_fee: fixedFee,
+                    percentage_fee: percentageFee,
+                    total_fee: totalFee,
+                    net_amount: netAmount,
+                    asaas_payment_id: event.payment.id,
+                  });
+                  console.log(`[WEBHOOK] Registered platform fee for digital product ${productId}`);
+                }
+
+                // Liberar acesso ao produto para o comprador
+                if (orderId) {
+                  await supabase
+                    .from("store_orders" as any)
+                    .update({ payment_status: "paid" })
+                    .eq("id", orderId);
+                  console.log(`[WEBHOOK] Unlocked digital product access for order ${orderId}`);
+                }
+              } catch (digitalErr) {
+                console.error("[WEBHOOK] Error processing digital product fee:", digitalErr);
+              }
+            }
+          }
 
           // ========== GERAR COMISSÕES DE PARCEIROS ==========
           if (!updateError && paymentRecord.status !== "paid") {

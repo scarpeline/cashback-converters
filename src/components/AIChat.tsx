@@ -133,13 +133,51 @@ export function AIChat({ clientId, clientName = 'Cliente' }: AIChatProps) {
 
     toast.info('Processando áudio...');
 
-    // Usar Web Speech API via AudioContext para transcrição local
-    // Como fallback, enviamos o nome do arquivo como contexto
-    const fakeTrans = `[Áudio enviado: ${file.name}]`;
-    setMessage(fakeTrans);
-    toast.success('Áudio carregado. Envie para processar.');
+    // Tentar transcrição via Web Speech API (SpeechRecognition)
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      try {
+        const audioUrl = URL.createObjectURL(file);
+        const audio = new Audio(audioUrl);
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'pt-BR';
+        recognition.continuous = false;
+        recognition.interimResults = false;
 
-    // Reset input
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0]?.[0]?.transcript || '';
+          if (transcript) {
+            setMessage(transcript);
+            toast.success('Áudio transcrito com sucesso!');
+          } else {
+            setMessage(`[Áudio: ${file.name}]`);
+            toast.info('Transcrição vazia. Mensagem de contexto inserida.');
+          }
+          URL.revokeObjectURL(audioUrl);
+        };
+
+        recognition.onerror = () => {
+          setMessage(`[Áudio: ${file.name}]`);
+          toast.info('Transcrição não disponível. Contexto do áudio inserido.');
+          URL.revokeObjectURL(audioUrl);
+        };
+
+        audio.onplay = () => recognition.start();
+        audio.play().catch(() => {
+          // Fallback silencioso se autoplay bloqueado
+          setMessage(`[Áudio: ${file.name}]`);
+          toast.info('Reprodução bloqueada pelo navegador. Contexto inserido.');
+        });
+      } catch {
+        setMessage(`[Áudio: ${file.name}]`);
+        toast.info('Contexto do áudio inserido. Envie para processar.');
+      }
+    } else {
+      // Navegador sem suporte a SpeechRecognition
+      setMessage(`[Áudio: ${file.name}]`);
+      toast.info('Seu navegador não suporta transcrição. Contexto inserido.');
+    }
+
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
 

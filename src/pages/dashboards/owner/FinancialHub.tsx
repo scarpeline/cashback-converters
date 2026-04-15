@@ -1,10 +1,10 @@
-// @ts-nocheck
 import { useState, useEffect } from "react";
 import { useBarbershop, useProfessionals } from "./hooks";
 import { useAuditLog } from "./useAuditLog";
 import { WithdrawSchema } from "@/lib/validations";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ContasPanel } from "@/components/financeiro/ContasPanel";
 import { 
   DollarSign, 
   TrendingUp, 
@@ -24,7 +24,8 @@ import {
   ShieldCheck,
   Zap,
   ArrowRight,
-  HelpCircle
+  HelpCircle,
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -32,8 +33,7 @@ import { Input } from "@/components/ui/input";
 import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 import { SubscriptionPlans } from "@/components/subscription/SubscriptionPlans";
 import { Badge } from "@/components/ui/badge";
-import { HubSkeleton, SkeletonHub } from "@/components/ui/SkeletonHub";
-import { 
+import { HubSkeleton, SkeletonHub } from "@/components/ui/SkeletonHub";import { 
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/tooltip";
 
 export const FinancialHub = () => {
-  const [activeTab, setActiveTab] = useState<"overview" | "payouts" | "subscription">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "payouts" | "contas" | "subscription">("overview");
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -53,11 +53,11 @@ export const FinancialHub = () => {
           <p className="text-slate-400 font-medium italic opacity-70 tracking-tight">Gestão de Fluxo Real & Repasses Automatizados Diamond</p>
         </div>
         
-        <div className="flex bg-slate-900/50 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl shadow-2xl">
+        <div className="flex flex-wrap bg-slate-900/50 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl shadow-2xl gap-1">
           <Button 
             variant={activeTab === "overview" ? "gold" : "ghost"} 
             size="sm" 
-            className="rounded-xl font-black uppercase text-[10px] tracking-widest px-6"
+            className="rounded-xl font-black uppercase text-[10px] tracking-widest px-4"
             onClick={() => setActiveTab("overview")}
           >
             Visão Geral
@@ -65,15 +65,23 @@ export const FinancialHub = () => {
           <Button 
             variant={activeTab === "payouts" ? "gold" : "ghost"} 
             size="sm" 
-            className="rounded-xl font-black uppercase text-[10px] tracking-widest px-6"
+            className="rounded-xl font-black uppercase text-[10px] tracking-widest px-4"
             onClick={() => setActiveTab("payouts")}
           >
             Repasses
           </Button>
           <Button 
+            variant={activeTab === "contas" ? "gold" : "ghost"} 
+            size="sm" 
+            className="rounded-xl font-black uppercase text-[10px] tracking-widest px-4"
+            onClick={() => setActiveTab("contas")}
+          >
+            Contas
+          </Button>
+          <Button 
             variant={activeTab === "subscription" ? "gold" : "ghost"} 
             size="sm" 
-            className="rounded-xl font-black uppercase text-[10px] tracking-widest px-6"
+            className="rounded-xl font-black uppercase text-[10px] tracking-widest px-4"
             onClick={() => setActiveTab("subscription")}
           >
             Plano
@@ -84,6 +92,7 @@ export const FinancialHub = () => {
       <div className="grid grid-cols-1 gap-6">
         {activeTab === "overview" && <FinancialOverview />}
         {activeTab === "payouts" && <PayoutsPage />}
+        {activeTab === "contas" && <ContasPanel />}
         {activeTab === "subscription" && (
           <div className="space-y-8">
             <SubscriptionStatus />
@@ -298,8 +307,14 @@ const FinancialOverview = () => {
                   <p className="text-slate-500 text-sm font-medium uppercase tracking-[0.2em] mt-1 border-l-2 border-orange-500 pl-3">Sincronização em Tempo Real (Asaas)</p>
                </div>
                <div className="flex gap-3">
-                  <Button variant="ghost" className="bg-white/5 border border-white/10 rounded-2xl px-6 h-12 font-black text-xs uppercase tracking-widest text-slate-400 hover:text-white transition-all">Exportar PDF Expert</Button>
-                  <Button variant="gold" className="rounded-2xl px-6 h-12 font-black text-xs uppercase tracking-widest shadow-gold">Gerar Relatórios</Button>
+                  <Button variant="ghost" className="bg-white/5 border border-white/10 rounded-2xl px-6 h-12 font-black text-xs uppercase tracking-widest text-slate-400 hover:text-white transition-all" onClick={() => {
+                     const rows = [['Data','Descrição','Valor','Status']];
+                     const csv = rows.map(r => r.join(',')).join('\n');
+                     const blob = new Blob([csv], { type: 'text/csv' });
+                     const url = URL.createObjectURL(blob);
+                     const a = document.createElement('a'); a.href = url; a.download = 'financeiro.csv'; a.click();
+                  }}>Exportar CSV</Button>
+                  <Button variant="gold" className="rounded-2xl px-6 h-12 font-black text-xs uppercase tracking-widest shadow-gold" onClick={() => window.location.href = '/painel-dono/financeiro'}>Gerar Relatórios</Button>
                </div>
             </div>
             

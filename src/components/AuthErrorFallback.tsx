@@ -45,8 +45,8 @@ export function AuthErrorFallback({ error, resetError }: AuthErrorFallbackProps)
           )}
 
           {/* Troubleshooting */}
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-blue-400 mb-2">Dicas:</h3>
+          <div className="bg-orange-400/10 border border-orange-400/20 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-orange-400 mb-2">Dicas:</h3>
             <ul className="text-sm text-slate-300 space-y-1">
               <li>• Verifique sua conexão com a internet</li>
               <li>• Limpe o cache do navegador</li>
@@ -59,7 +59,7 @@ export function AuthErrorFallback({ error, resetError }: AuthErrorFallbackProps)
           <div className="space-y-3">
             <Button
               onClick={handleRefresh}
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-orange-500 hover:bg-orange-600"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
               Tentar Novamente

@@ -65,15 +65,13 @@ const PartnerDashboard = lazy(
 const NotificationsPage = lazy(
   () => import("./pages/partners/NotificationsPage"),
 );
-const BookingPoliciesPage = lazy(
-  () => import("./components/settings/BookingPoliciesPanel"),
-);
 const LandingPageB2B = lazy(
   () => import("./components/landing/LandingPageB2B"),
 );
 const OnboardingSelectionPage = lazy(
   () => import("./pages/onboarding/OnboardingSelectionPage"),
 );
+const BookingPage = lazy(() => import("./pages/public/BookingPage"));
 
 /**
  * QueryClient configurado para produção:
@@ -117,6 +115,7 @@ function AppRoutes() {
         <Route path="/analise-custos" element={<CostAnalysisPage />} />
         <Route path="/v/:barbershopId" element={<VitrinePage />} />
         <Route path="/explorar" element={<BrowseCompaniesPage />} />
+        <Route path="/agendar/:slug" element={<BookingPage />} />
         <Route path="/para-empresas" element={<LandingPageB2B />} />
         <Route path="/onboarding" element={<OnboardingSelectionPage />} />
 

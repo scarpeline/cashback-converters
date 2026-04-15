@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * WaitlistTests - Testes Automatizados para Sistema de Fila Inteligente
  * 

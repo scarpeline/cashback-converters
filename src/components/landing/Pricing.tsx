@@ -1,9 +1,8 @@
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, CreditCard, Smartphone, Wifi } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNiche } from "@/hooks/useNiche";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { Sparkles, Check, Smartphone, CreditCard, Wifi } from "lucide-react";
 
 const allFeatures = [
   "7 dias grátis para testar", "Agendamentos ilimitados", "Pagamentos PIX, Crédito e Débito",
@@ -34,7 +33,6 @@ const plans = (t: any) => [
     features: allFeatures, popular: false, bestValue: true, planIndex: 3, showTrialButton: false 
   },
 ];
-
 const Pricing = () => {
   const { t } = useTranslation();
   const { nicheLabel } = useNiche();
@@ -42,7 +40,7 @@ const Pricing = () => {
   const currentPlans = plans(t);
 
   return (
-    <section id="pricing" className="py-20 px-4 bg-slate-50">
+    <section id="pricing" className="py-24 px-4 bg-white">
       <div className="container mx-auto">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-sm font-medium text-blue-600 mb-6">
@@ -180,9 +178,8 @@ const Pricing = () => {
             <p className="text-center text-xs mt-2" style={{ color: "hsl(220 15% 50%)" }}>{t("pricing.secure_payments")} Asaas</p>
           </div>
         </div>
-
         {/* Partnership CTA */}
-        <div className="max-w-4xl mx-auto mt-20">
+        <div className="max-w-4xl mx-auto">
           <div className="rounded-2xl p-8 lg:p-12 text-center" style={{ background: "linear-gradient(135deg, hsl(262 83% 45%), hsl(192 91% 42%))", border: "2px solid hsl(262 83% 58% / 0.3)" }}>
             <div className="text-4xl mb-4">🚀</div>
             <h3 className="font-display text-2xl lg:text-3xl font-black mb-4 text-white">

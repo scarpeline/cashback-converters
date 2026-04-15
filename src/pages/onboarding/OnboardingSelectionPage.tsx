@@ -1,24 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Building2, 
-  Scissors, 
-  Sparkles, 
-  ChevronRight,
-  ChevronLeft,
-  ArrowRight,
-  ShieldCheck,
-  Zap,
-  Globe,
-  Lock,
-  Check,
-  Loader2,
-  Store,
-  MapPin,
-  CheckCircle
-} from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Building2, Scissors, ChevronRight, ChevronLeft,
+  ArrowRight, ArrowLeft, Lock, Check, Loader2, Sparkles, User,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/lib/auth";
@@ -26,40 +11,195 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { formatCpfCnpjBR, formatWhatsAppBR } from "@/lib/input-masks";
-import LanguageSelector from '@/components/LanguageSelector';
+import { applyInitialPreset } from "@/services/onboardingService";
+import LanguageSelector from "@/components/LanguageSelector";
+import { useTrialDays } from "@/hooks/useTrialDays";
 
-// ── Sectors ──────────────────────────────────────────────────────────
+// ── Sectors ──────────────────────────────────────────────────────────────────
 const SECTORS = [
-  { key: "beleza_estetica", label: "Beleza & Estética", icon: "✂️", description: "Salões, barbearias, nail designers, maquiadoras, esteticistas." },
-  { key: "saude_bem_estar", label: "Saúde & Bem-Estar", icon: "❤️", description: "Clínicas, fisioterapeutas, psicólogos, massagistas, nutricionistas." },
-  { key: "educacao_mentorias", label: "Educação & Mentorias", icon: "📚", description: "Professores, consultores, coaches, escolas de idiomas." },
-  { key: "automotivo", label: "Automotivo", icon: "🚗", description: "Oficinas mecânicas, lava-rápidos, estética automotiva." },
-  { key: "pets", label: "Pets", icon: "🐾", description: "Pet shops, veterinários, adestradores, cuidadores." },
-  { key: "servicos_domiciliares", label: "Serviços Domiciliares", icon: "🏠", description: "Eletricistas, encanadores, diaristas, montadores." },
-  { key: "juridico_financeiro", label: "Jurídico & Financeiro", icon: "💼", description: "Advogados, contadores, consultores financeiros." },
-  { key: "espacos_locacao", label: "Espaços & Locação", icon: "🔑", description: "Salas de reunião, estúdios, quadras, coworking." },
+  // Existentes
+  { key: "beleza_estetica",       label: "Beleza & Estética",       icon: "✂️",  desc: "Salões, barbearias, nail designers, esteticistas." },
+  { key: "saude_bem_estar",       label: "Saúde & Bem-Estar",       icon: "❤️",  desc: "Clínicas, fisioterapeutas, psicólogos, nutricionistas." },
+  { key: "educacao_mentorias",    label: "Educação & Mentorias",    icon: "📚",  desc: "Professores, coaches, consultores, idiomas." },
+  { key: "automotivo",            label: "Automotivo",              icon: "🚗",  desc: "Oficinas, lava-rápidos, estética automotiva." },
+  { key: "pets",                  label: "Pets",                    icon: "🐾",  desc: "Pet shops, veterinários, adestradores." },
+  { key: "servicos_domiciliares", label: "Serviços Domiciliares",   icon: "🏠",  desc: "Eletricistas, encanadores, diaristas." },
+  { key: "juridico_financeiro",   label: "Jurídico & Financeiro",   icon: "💼",  desc: "Advogados, contadores, consultores." },
+  { key: "espacos_locacao",       label: "Espaços & Locação",       icon: "🔑",  desc: "Salas, estúdios, quadras, coworking." },
+  // Novos setores
+  { key: "esportes_fitness",      label: "Esportes & Fitness",      icon: "🏋️",  desc: "Personal trainers, academias, crossfit, natação." },
+  { key: "tatuagem_piercing",     label: "Tatuagem & Piercing",     icon: "🎨",  desc: "Estúdios de tatuagem, piercing e body art." },
+  { key: "fotografia_video",      label: "Fotografia & Vídeo",      icon: "📸",  desc: "Fotógrafos, videomakers, ensaios e eventos." },
+  { key: "gastronomia_eventos",   label: "Gastronomia & Eventos",   icon: "🍽️",  desc: "Chefs, buffets, bartenders, confeiteiros." },
+  { key: "tecnologia_ti",         label: "Tecnologia & TI",         icon: "💻",  desc: "Suporte técnico, desenvolvimento, consultoria." },
+  { key: "terapias_alternativas", label: "Terapias Alternativas",   icon: "🌿",  desc: "Acupuntura, reiki, meditação, yoga." },
+  { key: "moda_imagem",           label: "Moda & Imagem",           icon: "👗",  desc: "Personal stylist, consultores de imagem, alfaiates." },
+  { key: "musica_artes",          label: "Música & Artes",          icon: "🎵",  desc: "Professores de música, artistas, ateliês." },
+  { key: "academia",              label: "Academia",                icon: "🏟️",  desc: "Academias de ginástica, musculação e fitness." },
+  { key: "religiao",              label: "Religião & Igrejas",      icon: "⛪",  desc: "Igrejas, templos, centros espirituais e pastorais." },
+  { key: "otica",                 label: "Ótica",                   icon: "👓",  desc: "Óticas, optometristas, oftalmologistas e clínicas de visão." },
 ];
 
-// Sector key → sector_presets.sector mapping
-const SECTOR_MAP: Record<string, string> = {
-  beleza_estetica: "beleza",
-  saude_bem_estar: "saude",
-  educacao_mentorias: "educacao",
-  automotivo: "automotivo",
-  pets: "pets",
-  servicos_domiciliares: "servicos",
-  juridico_financeiro: "juridico",
-  espacos_locacao: "espacos",
+// ── Especialidades embutidas (fallback quando banco não retorna dados) ─────────
+const FALLBACK_SPECIALTIES: Record<string, { specialty: string; display_name: string; icon: string; services_count: number }[]> = {
+  beleza_estetica: [
+    { specialty: "barbearia",      display_name: "Barbearia",       icon: "✂️", services_count: 3 },
+    { specialty: "salao_de_beleza",display_name: "Salão de Beleza", icon: "💇", services_count: 3 },
+    { specialty: "nail_designer",  display_name: "Nail Designer",   icon: "💅", services_count: 3 },
+    { specialty: "esteticista",    display_name: "Esteticista",     icon: "✨", services_count: 3 },
+    { specialty: "maquiadora",     display_name: "Maquiadora",      icon: "🎨", services_count: 2 },
+  ],
+  saude_bem_estar: [
+    { specialty: "fisioterapia",   display_name: "Fisioterapia",    icon: "🏥", services_count: 2 },
+    { specialty: "pilates",        display_name: "Pilates",         icon: "🧘", services_count: 2 },
+    { specialty: "psicologia",     display_name: "Psicologia",      icon: "🧠", services_count: 2 },
+    { specialty: "nutricao",       display_name: "Nutrição",        icon: "🍎", services_count: 2 },
+    { specialty: "massagem",       display_name: "Massoterapia",    icon: "💆", services_count: 2 },
+  ],
+  educacao_mentorias: [
+    { specialty: "aulas_particulares", display_name: "Aulas Particulares", icon: "📖", services_count: 2 },
+    { specialty: "coaching",           display_name: "Coaching",           icon: "🎯", services_count: 2 },
+    { specialty: "idiomas",            display_name: "Idiomas",            icon: "🌍", services_count: 2 },
+  ],
+  automotivo: [
+    { specialty: "oficina",            display_name: "Oficina Mecânica",   icon: "🔧", services_count: 2 },
+    { specialty: "estetica_automotiva",display_name: "Estética Automotiva",icon: "🚗", services_count: 2 },
+    { specialty: "lava_rapido",        display_name: "Lava-Rápido",        icon: "💧", services_count: 2 },
+  ],
+  pets: [
+    { specialty: "banho_tosa",    display_name: "Banho & Tosa",    icon: "🛁", services_count: 3 },
+    { specialty: "veterinario",   display_name: "Veterinário",     icon: "🏥", services_count: 2 },
+    { specialty: "adestramento",  display_name: "Adestramento",    icon: "🐾", services_count: 2 },
+  ],
+  servicos_domiciliares: [
+    { specialty: "eletricista",   display_name: "Eletricista",     icon: "⚡", services_count: 2 },
+    { specialty: "encanador",     display_name: "Encanador",       icon: "💧", services_count: 2 },
+    { specialty: "diarista",      display_name: "Diarista",        icon: "🏠", services_count: 2 },
+  ],
+  juridico_financeiro: [
+    { specialty: "advogado",           display_name: "Advogado",           icon: "⚖️", services_count: 2 },
+    { specialty: "contador",           display_name: "Contador",           icon: "🧮", services_count: 2 },
+    { specialty: "consultor_financeiro",display_name: "Consultor Financeiro",icon: "📈", services_count: 2 },
+  ],
+  espacos_locacao: [
+    { specialty: "salas_reuniao",  display_name: "Salas de Reunião", icon: "🏢", services_count: 2 },
+    { specialty: "estudio",        display_name: "Estúdio",          icon: "🎬", services_count: 2 },
+    { specialty: "quadra",         display_name: "Quadra Esportiva", icon: "⚽", services_count: 2 },
+  ],
+  // Novos setores
+  esportes_fitness: [
+    { specialty: "personal_trainer",  display_name: "Personal Trainer",   icon: "🏋️", services_count: 3 },
+    { specialty: "crossfit",          display_name: "CrossFit",           icon: "💪", services_count: 2 },
+    { specialty: "natacao",           display_name: "Natação",            icon: "🏊", services_count: 2 },
+    { specialty: "yoga",              display_name: "Yoga",               icon: "🧘", services_count: 2 },
+    { specialty: "artes_marciais",    display_name: "Artes Marciais",     icon: "🥋", services_count: 2 },
+    { specialty: "spinning_bike",     display_name: "Spinning / Bike",    icon: "🚴", services_count: 2 },
+  ],
+  tatuagem_piercing: [
+    { specialty: "tatuagem",          display_name: "Tatuagem",           icon: "🖊️", services_count: 3 },
+    { specialty: "piercing",          display_name: "Piercing",           icon: "💎", services_count: 2 },
+    { specialty: "micropigmentacao",  display_name: "Micropigmentação",   icon: "✏️", services_count: 3 },
+    { specialty: "laser_remocao",     display_name: "Remoção a Laser",    icon: "⚡", services_count: 2 },
+  ],
+  fotografia_video: [
+    { specialty: "fotografo_eventos", display_name: "Fotógrafo de Eventos", icon: "📸", services_count: 3 },
+    { specialty: "ensaio_fotografico",display_name: "Ensaio Fotográfico",   icon: "🤳", services_count: 3 },
+    { specialty: "videomaker",        display_name: "Videomaker",           icon: "🎬", services_count: 2 },
+    { specialty: "fotografo_produto", display_name: "Foto de Produto",      icon: "📦", services_count: 2 },
+  ],
+  gastronomia_eventos: [
+    { specialty: "chef_particular",   display_name: "Chef Particular",    icon: "👨‍🍳", services_count: 3 },
+    { specialty: "confeiteiro",       display_name: "Confeiteiro",        icon: "🎂", services_count: 3 },
+    { specialty: "bartender",         display_name: "Bartender",          icon: "🍹", services_count: 2 },
+    { specialty: "buffet",            display_name: "Buffet & Eventos",   icon: "🍽️", services_count: 2 },
+  ],
+  tecnologia_ti: [
+    { specialty: "suporte_tecnico",   display_name: "Suporte Técnico",    icon: "🖥️", services_count: 3 },
+    { specialty: "dev_freelancer",    display_name: "Dev Freelancer",     icon: "💻", services_count: 2 },
+    { specialty: "consultoria_ti",    display_name: "Consultoria TI",     icon: "🔧", services_count: 2 },
+    { specialty: "designer_grafico",  display_name: "Designer Gráfico",   icon: "🎨", services_count: 2 },
+  ],
+  terapias_alternativas: [
+    { specialty: "acupuntura",        display_name: "Acupuntura",         icon: "🪡", services_count: 2 },
+    { specialty: "reiki",             display_name: "Reiki",              icon: "✨", services_count: 2 },
+    { specialty: "meditacao",         display_name: "Meditação",          icon: "🧘", services_count: 2 },
+    { specialty: "terapia_holistica", display_name: "Terapia Holística",  icon: "🌿", services_count: 2 },
+    { specialty: "hipnoterapia",      display_name: "Hipnoterapia",       icon: "🌀", services_count: 2 },
+  ],
+  moda_imagem: [
+    { specialty: "personal_stylist",  display_name: "Personal Stylist",   icon: "👗", services_count: 2 },
+    { specialty: "consultor_imagem",  display_name: "Consultor de Imagem",icon: "🪞", services_count: 2 },
+    { specialty: "alfaiate",          display_name: "Alfaiate",           icon: "🧵", services_count: 3 },
+    { specialty: "colorista_pessoal", display_name: "Colorista Pessoal",  icon: "🎨", services_count: 2 },
+  ],
+  musica_artes: [
+    { specialty: "aulas_musica",      display_name: "Aulas de Música",    icon: "🎸", services_count: 2 },
+    { specialty: "aulas_canto",       display_name: "Aulas de Canto",     icon: "🎤", services_count: 2 },
+    { specialty: "atelie_artes",      display_name: "Ateliê de Artes",    icon: "🖌️", services_count: 2 },
+    { specialty: "danca",             display_name: "Dança",              icon: "💃", services_count: 2 },
+    { specialty: "teatro",            display_name: "Teatro",             icon: "🎭", services_count: 2 },
+  ],
+  academia: [
+    { specialty: "musculacao",        display_name: "Musculação",         icon: "💪", services_count: 3 },
+    { specialty: "ginastica",         display_name: "Ginástica",          icon: "🤸", services_count: 2 },
+    { specialty: "funcional",         display_name: "Treino Funcional",   icon: "🏋️", services_count: 2 },
+    { specialty: "zumba",             display_name: "Zumba / Dança Fit",  icon: "💃", services_count: 2 },
+    { specialty: "natacao_academia",  display_name: "Natação",            icon: "🏊", services_count: 2 },
+    { specialty: "spinning_academia", display_name: "Spinning",           icon: "🚴", services_count: 2 },
+  ],
+  religiao: [
+    { specialty: "igreja_evangelica", display_name: "Igreja Evangélica",  icon: "✝️", services_count: 2 },
+    { specialty: "igreja_catolica",   display_name: "Igreja Católica",    icon: "⛪", services_count: 2 },
+    { specialty: "centro_espirita",   display_name: "Centro Espírita",    icon: "🌟", services_count: 2 },
+    { specialty: "templo_budista",    display_name: "Templo Budista",     icon: "🪷", services_count: 2 },
+    { specialty: "pastoral",          display_name: "Pastoral / Ministério", icon: "🙏", services_count: 2 },
+    { specialty: "outro_religioso",   display_name: "Outro",              icon: "🕊️", services_count: 2 },
+  ],
+  otica: [
+    { specialty: "optometrista",      display_name: "Optometrista",       icon: "👁️", services_count: 3 },
+    { specialty: "oftalmologista",    display_name: "Oftalmologista",     icon: "🔬", services_count: 3 },
+    { specialty: "otica_loja",        display_name: "Ótica / Loja",       icon: "👓", services_count: 3 },
+    { specialty: "lentes_contato",    display_name: "Lentes de Contato",  icon: "🔵", services_count: 2 },
+    { specialty: "exame_vista",       display_name: "Exame de Vista",     icon: "📋", services_count: 2 },
+    { specialty: "cirurgia_refrativa",display_name: "Cirurgia Refrativa", icon: "⚡", services_count: 2 },
+  ],
 };
+
+// Labels específicos por nicho para o dashboard
+const NICHE_LABELS: Record<string, { professionals: string; services: string; appointments: string; clients: string }> = {
+  beleza_estetica:       { professionals: "Profissionais",  services: "Serviços",          appointments: "Agendamentos", clients: "Clientes" },
+  saude_bem_estar:       { professionals: "Especialistas",  services: "Sessões/Consultas",  appointments: "Consultas",    clients: "Pacientes" },
+  educacao_mentorias:    { professionals: "Professores",    services: "Aulas/Sessões",      appointments: "Aulas",        clients: "Alunos" },
+  automotivo:            { professionals: "Mecânicos",      services: "Serviços",           appointments: "Ordens",       clients: "Clientes" },
+  pets:                  { professionals: "Profissionais",  services: "Serviços Pet",       appointments: "Atendimentos", clients: "Tutores" },
+  servicos_domiciliares: { professionals: "Profissionais",  services: "Serviços",           appointments: "Visitas",      clients: "Clientes" },
+  juridico_financeiro:   { professionals: "Especialistas",  services: "Consultorias",       appointments: "Consultas",    clients: "Clientes" },
+  espacos_locacao:       { professionals: "Gestores",       services: "Espaços",            appointments: "Reservas",     clients: "Locatários" },
+  // Novos setores
+  esportes_fitness:      { professionals: "Instrutores",    services: "Treinos/Aulas",      appointments: "Treinos",      clients: "Alunos" },
+  tatuagem_piercing:     { professionals: "Artistas",       services: "Trabalhos",          appointments: "Sessões",      clients: "Clientes" },
+  fotografia_video:      { professionals: "Fotógrafos",     services: "Ensaios/Produções",  appointments: "Sessões",      clients: "Clientes" },
+  gastronomia_eventos:   { professionals: "Chefs",          services: "Serviços",           appointments: "Eventos",      clients: "Clientes" },
+  tecnologia_ti:         { professionals: "Especialistas",  services: "Serviços TI",        appointments: "Atendimentos", clients: "Clientes" },
+  terapias_alternativas: { professionals: "Terapeutas",     services: "Terapias",           appointments: "Sessões",      clients: "Pacientes" },
+  moda_imagem:           { professionals: "Consultores",    services: "Consultorias",       appointments: "Consultas",    clients: "Clientes" },
+  musica_artes:          { professionals: "Professores",    services: "Aulas",              appointments: "Aulas",        clients: "Alunos" },
+  academia:              { professionals: "Instrutores",    services: "Modalidades",        appointments: "Treinos",      clients: "Alunos" },
+  religiao:              { professionals: "Líderes",        services: "Atividades",         appointments: "Encontros",    clients: "Membros" },
+  otica:                 { professionals: "Especialistas",  services: "Exames/Serviços",    appointments: "Consultas",    clients: "Pacientes" },
+};
+
+// Passos: Setor → Especialidade → Negócio → Pagamentos
+const STEPS_OWNER = ["Setor", "Especialidade", "Negócio", "Pagamentos"];
 
 const OnboardingSelectionPage = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { selectedSector, setSelectedSector, selectedSpecialty, setSelectedSpecialty } = useOnboarding();
-  
-  const [step, setStep] = useState(1); // 1=type, 2=sector, 3=specialty, 4=business details
-  const [userType, setUserType] = useState<'owner' | 'professional' | null>(null);
+
+  const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     name: "",
     address: "",
@@ -67,111 +207,193 @@ const OnboardingSelectionPage = () => {
     phone: profile?.whatsapp || "",
     description: "",
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Fetch specialties for selected sector
-  const dbSector = selectedSector ? SECTOR_MAP[selectedSector] || selectedSector : null;
-  const { data: specialties, isLoading: loadingSpecialties } = useQuery({
-    queryKey: ["sector_specialties", dbSector],
+  const trialDays = useTrialDays();
+
+  // Dados de pagamento (step 4)
+  const [paymentForm, setPaymentForm] = useState<{
+    account_type: "pf" | "pj" | "";
+    pix_key: string;
+    pix_key_type: "cpf" | "cnpj" | "email" | "phone" | "random";
+    skip_payment: boolean;
+  }>({
+    account_type: "",
+    pix_key: "",
+    pix_key_type: "cpf",
+    skip_payment: false,
+  });
+  const [profPixKeyType, setProfPixKeyType] = useState<"cpf" | "email" | "phone" | "random">("cpf");
+
+  // Fetch specialties from sector_presets — com fallback embutido
+  const { data: dbSpecialties, isLoading: loadingSpecialties } = useQuery({
+    queryKey: ["sector_specialties", selectedSector],
     queryFn: async () => {
-      if (!dbSector) return [];
+      if (!selectedSector) return [];
       const { data, error } = await (supabase as any)
         .from("sector_presets")
-        .select("*")
-        .eq("sector", dbSector)
+        .select("id, sector, specialty, display_name, description, icon, default_services")
+        .eq("sector", selectedSector)
         .order("display_name");
-      if (error) throw error;
-      return data || [];
+      if (!error && data && data.length > 0) return data;
+      const altMap: Record<string, string> = {
+        beleza_estetica: "beleza", saude_bem_estar: "saude",
+        educacao_mentorias: "educacao", servicos_domiciliares: "servicos",
+        juridico_financeiro: "juridico", espacos_locacao: "espacos",
+      };
+      const alt = altMap[selectedSector];
+      if (alt) {
+        const { data: d2 } = await (supabase as any)
+          .from("sector_presets")
+          .select("id, sector, specialty, display_name, description, icon, default_services")
+          .eq("sector", alt).order("display_name");
+        if (d2 && d2.length > 0) return d2;
+      }
+      return [];
     },
-    enabled: !!dbSector,
+    enabled: !!selectedSector,
   });
 
-  const handleSelectType = (type: 'owner' | 'professional') => {
-    setUserType(type);
-    if (type === 'professional') {
-      navigate('/painel-profissional');
-      return;
-    }
-    setStep(2);
-  };
+  const specialties = (dbSpecialties && dbSpecialties.length > 0)
+    ? dbSpecialties
+    : (selectedSector ? (FALLBACK_SPECIALTIES[selectedSector] || []).map((s, i) => ({
+        id: `fallback-${i}`, sector: selectedSector, ...s,
+        default_services: Array(s.services_count).fill(null),
+      })) : []);
 
   const handleSelectSector = (key: string) => {
     setSelectedSector(key);
     setSelectedSpecialty(null);
-    setStep(3);
+    setStep(2);
   };
 
   const handleSelectSpecialty = (specialty: string) => {
     setSelectedSpecialty(specialty);
+    setStep(3);
+  };
+
+  const handleBack = () => {
+    if (step === 2) { setStep(1); setSelectedSector(null); return; }
+    if (step === 3) { setStep(2); return; }
+    if (step === 4) { setStep(3); return; }
+  };
+
+  const _createBarbershop = async () => {
+    const newErrors: Record<string, string> = {};
+    if (!form.name || form.name.length < 2) newErrors.name = "Nome obrigatório (mín. 2 caracteres)";
+    if (!form.address || form.address.length < 5) newErrors.address = "Endereço obrigatório";
+    if (form.cpf_cnpj.replace(/\D/g, "").length < 11) newErrors.cpf_cnpj = "CPF/CNPJ inválido";
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return null; }
+    if (!user) return null;
+
+    const baseSlug = form.name
+      .toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `negocio-${user.id.slice(0, 8)}`;
+
+    const nicheLabels = selectedSector ? NICHE_LABELS[selectedSector] : null;
+    const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString();
+    const payload = {
+      owner_user_id: user.id, name: form.name, address: form.address,
+      phone: form.phone || null, description: form.description || null,
+      sector: selectedSector || null, specialty: selectedSpecialty || null,
+      onboarding_status: "configured",
+      subscription_status: "trial",
+      subscription_ends_at: trialEndsAt,
+    };
+
+    const { data: existingList } = await (supabase as any)
+      .from("barbershops").select("id, slug")
+      .eq("owner_user_id", user.id).order("created_at", { ascending: true }).limit(1);
+
+    const existing = existingList?.[0];
+    let barbershopId: string;
+
+    if (existing) {
+      const { error } = await (supabase as any).from("barbershops")
+        .update({ ...payload, slug: existing.slug || baseSlug }).eq("id", existing.id);
+      if (error) throw error;
+      barbershopId = existing.id;
+    } else {
+      let slugToUse = baseSlug;
+      let { data: inserted, error } = await (supabase as any).from("barbershops")
+        .insert({ ...payload, slug: slugToUse }).select("id").single();
+      if (error?.message?.includes("barbershops_slug_key")) {
+        slugToUse = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+        const retry = await (supabase as any).from("barbershops")
+          .insert({ ...payload, slug: slugToUse }).select("id").single();
+        if (retry.error) throw retry.error;
+        inserted = retry.data;
+      } else if (error) throw error;
+      barbershopId = inserted.id;
+    }
+
+    if (selectedSector && selectedSpecialty && specialties?.length) {
+      const preset = specialties.find((s: any) =>
+        s.specialty === selectedSpecialty || s.display_name === selectedSpecialty
+      );
+      if (preset && preset.id && !preset.id.startsWith("fallback")) {
+        await applyInitialPreset(user.id, barbershopId, selectedSector, selectedSpecialty, preset);
+      }
+    }
+
+    if (form.cpf_cnpj) {
+      await (supabase as any).from("profiles")
+        .update({ cpf_cnpj: form.cpf_cnpj }).eq("user_id", user.id);
+    }
+
+    return barbershopId;
+  };
+
+  // Step 3 → step 4 (pagamentos)
+  const handleAdvanceToPayment = () => {
+    const newErrors: Record<string, string> = {};
+    if (!form.name || form.name.length < 2) newErrors.name = "Nome obrigatório (mín. 2 caracteres)";
+    if (!form.address || form.address.length < 5) newErrors.address = "Endereço obrigatório";
+    if (form.cpf_cnpj.replace(/\D/g, "").length < 11) newErrors.cpf_cnpj = "CPF/CNPJ inválido";
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
     setStep(4);
   };
 
-  const handleFinish = async () => {
-    const newErrors: Record<string, string> = {};
-    if (!form.name || form.name.length < 2) newErrors.name = "Nome obrigatório (mín. 2 caracteres)";
-    if (!form.address || form.address.length < 5) newErrors.address = "Endereço obrigatório (mín. 5 caracteres)";
-    if (form.cpf_cnpj.replace(/\D/g, "").length < 11) newErrors.cpf_cnpj = "CPF/CNPJ inválido";
-    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
-
+  const handleFinishWithPayment = async () => {
     if (!user) return;
     setSaving(true);
-
     try {
-      const baseSlug = form.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `negocio-${user.id.slice(0, 8)}`;
+      const barbershopId = await _createBarbershop();
+      if (!barbershopId) { setSaving(false); return; }
 
-      // Check existing
-      const { data: existingList } = await (supabase as any).from("barbershops")
-        .select("id, slug").eq("owner_user_id", user.id).order("created_at", { ascending: true }).limit(1);
-
-      const existing = existingList?.[0];
-      const payload = {
-        owner_user_id: user.id,
-        name: form.name,
-        address: form.address,
-        phone: form.phone || null,
-        description: form.description || null,
-        sector: dbSector || null,
-        specialty: selectedSpecialty || null,
-        onboarding_status: "configured",
-      };
-
-      if (existing) {
-        const { error } = await (supabase as any).from("barbershops").update({ ...payload, slug: existing.slug || baseSlug }).eq("id", existing.id);
-        if (error) throw error;
-      } else {
-        let slugToUse = baseSlug;
-        let { error } = await (supabase as any).from("barbershops").insert({ ...payload, slug: slugToUse });
-        if (error?.message?.includes("barbershops_slug_key")) {
-          slugToUse = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
-          const retry = await (supabase as any).from("barbershops").insert({ ...payload, slug: slugToUse });
-          error = retry.error;
-        }
-        if (error) throw error;
-      }
-
-      // Apply preset services if specialty selected
-      if (selectedSpecialty && specialties?.length) {
-        const preset = specialties.find((s: any) => s.specialty === selectedSpecialty);
-        if (preset?.default_services?.length) {
-          const { data: shop } = await (supabase as any).from("barbershops").select("id").eq("owner_user_id", user.id).order("created_at", { ascending: true }).limit(1).single();
-          if (shop) {
-            const servicesToInsert = preset.default_services.map((s: any) => ({
-              barbershop_id: shop.id,
-              name: s.name,
-              duration_minutes: s.duration || 30,
-              price: s.price || 0,
-              is_active: true,
-            }));
-            await (supabase as any).from("services").insert(servicesToInsert);
-          }
+      if (paymentForm.pix_key && paymentForm.account_type) {
+        await (supabase as any).from("profiles").update({ pix_key: paymentForm.pix_key }).eq("user_id", user.id);
+        try {
+          await supabase.functions.invoke("process-payment", {
+            body: {
+              action: "create-barbershop-account",
+              barbershop_id: barbershopId,
+              name: form.name,
+              email: user.email,
+              cpf_cnpj: form.cpf_cnpj.replace(/\D/g, ""),
+              mobile_phone: form.phone,
+            }
+          });
+        } catch (e) {
+          console.warn("Subconta Asaas não criada agora:", e);
         }
       }
 
-      if (form.cpf_cnpj) {
-        await (supabase as any).from("profiles").update({ cpf_cnpj: form.cpf_cnpj }).eq("user_id", user.id);
-      }
+      toast.success("Cadastro concluído! Bem-vindo ao sistema 🎉");
+      navigate("/painel-dono");
+    } catch (err: any) {
+      toast.error("Erro: " + (err.message || "Tente novamente."));
+    } finally {
+      setSaving(false);
+    }
+  };
 
-      toast.success("Cadastro concluído! 🎉");
+  const handleSkipPayment = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const barbershopId = await _createBarbershop();
+      if (!barbershopId) { setSaving(false); return; }
+      toast.success("Cadastro concluído! Bem-vindo ao sistema 🎉");
       navigate("/painel-dono");
     } catch (err: any) {
       toast.error("Erro: " + (err.message || "Tente novamente."));
@@ -181,231 +403,326 @@ const OnboardingSelectionPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4 overflow-hidden relative">
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[128px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[128px] pointer-events-none" />
-
-      <div className="absolute top-4 right-4 z-50">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-12">
+      <div className="absolute top-4 right-4">
         <LanguageSelector />
       </div>
 
-      <div className="w-full max-w-4xl relative z-10 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-        {/* Progress Bar */}
-        <div className="flex items-center justify-center gap-2 mb-4">
-          {[1, 2, 3, 4].map((s) => (
-            <React.Fragment key={s}>
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all duration-500 ${
-                s < step ? "bg-blue-500 text-white border-blue-500" : s === step ? "border-blue-500 text-blue-400" : "border-slate-700 text-slate-600"
-              }`}>
-                {s < step ? <Check className="w-4 h-4" /> : s}
-              </div>
-              {s < 4 && <div className={`w-8 h-0.5 ${s < step ? "bg-blue-500" : "bg-slate-700"}`} />}
-            </React.Fragment>
-          ))}
+      <div className="w-full max-w-2xl">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 border border-orange-100 text-orange-500 text-xs font-medium mb-4">
+            <Sparkles className="w-3 h-3" />
+            Agenda Universal
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Em qual segmento você atua?
+          </h1>
+          <p className="text-sm text-slate-500 mt-2">
+            Vamos configurar tudo automaticamente para o seu tipo de negócio
+          </p>
         </div>
 
-        {/* STEP 1: User Type */}
+        {/* Progress */}
+        <div className="flex items-center justify-center gap-0 mb-10">
+          {STEPS_OWNER.map((label, i) => {
+            const s = i + 1;
+            const done = s < step;
+            const active = s === step;
+            return (
+              <React.Fragment key={s}>
+                <div className="flex flex-col items-center gap-1">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-all ${
+                    done ? "bg-orange-500 border-orange-500 text-white"
+                    : active ? "border-orange-500 text-orange-500 bg-white"
+                    : "border-slate-200 text-slate-400 bg-white"
+                  }`}>
+                    {done ? <Check className="w-3.5 h-3.5" /> : s}
+                  </div>
+                  <span className={`text-[10px] font-medium ${active ? "text-orange-500" : "text-slate-400"}`}>{label}</span>
+                </div>
+                {s < STEPS_OWNER.length && (
+                  <div className={`w-12 h-0.5 mb-4 mx-1 ${done ? "bg-orange-500" : "bg-slate-200"}`} />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+
+        {/* ── STEP 1: Setor ── */}
         {step === 1 && (
-          <>
-            <header className="text-center space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium">
-                <Sparkles className="w-3 h-3" />
-                <span>Agenda Universal AI</span>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
-                Como você deseja <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">utilizar</span>?
-              </h1>
-            </header>
-
-            <div className="grid md:grid-cols-2 gap-6 pt-4">
-              <Card className="group relative overflow-hidden bg-slate-900/50 border-white/5 hover:border-blue-500/30 transition-all duration-500 cursor-pointer" onClick={() => handleSelectType('owner')}>
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <CardContent className="p-8 space-y-4">
-                  <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-                    <Building2 className="w-7 h-7 text-blue-400" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-white">Dono de Estabelecimento</h2>
-                  <p className="text-slate-400 text-sm">Gerencie equipe, financeiro, marketing e clientes.</p>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-500 text-white">Começar <ChevronRight className="w-4 h-4 ml-1" /></Button>
-                </CardContent>
-              </Card>
-
-              <Card className="group relative overflow-hidden bg-slate-900/50 border-white/5 hover:border-indigo-500/30 transition-all duration-500 cursor-pointer" onClick={() => handleSelectType('professional')}>
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <CardContent className="p-8 space-y-4">
-                  <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-                    <Scissors className="w-7 h-7 text-indigo-400" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-white">Profissional / Autônomo</h2>
-                  <p className="text-slate-400 text-sm">Agenda pessoal, ganhos e link de agendamento.</p>
-                  <Button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white">Começar <ChevronRight className="w-4 h-4 ml-1" /></Button>
-                </CardContent>
-              </Card>
-            </div>
-          </>
-        )}
-
-        {/* STEP 2: Sector Selection */}
-        {step === 2 && (
-          <>
-            <header className="text-center space-y-3">
-              <h1 className="text-3xl md:text-4xl font-bold text-white">Qual é o <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">seu setor</span>?</h1>
-              <p className="text-slate-400">Escolha o segmento do seu negócio para personalizarmos tudo</p>
-            </header>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pt-4">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {SECTORS.map((sector) => (
                 <button
                   key={sector.key}
                   onClick={() => handleSelectSector(sector.key)}
-                  className={`group flex flex-col items-center p-6 rounded-2xl border transition-all duration-300 text-center hover:scale-[1.03] ${
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-[1.02] text-center ${
                     selectedSector === sector.key
-                      ? "bg-blue-500/20 border-blue-500/50 ring-2 ring-blue-500/30"
-                      : "bg-slate-900/50 border-white/5 hover:border-blue-500/20 hover:bg-slate-900/80"
+                      ? "border-orange-500 bg-orange-50"
+                      : "border-slate-200 hover:border-orange-300 hover:bg-slate-50"
                   }`}
                 >
-                  <span className="text-4xl mb-3">{sector.icon}</span>
-                  <span className="font-bold text-white text-sm">{sector.label}</span>
-                  <span className="text-slate-500 text-xs mt-1 leading-tight">{sector.description}</span>
+                  <span className="text-3xl">{sector.icon}</span>
+                  <span className="text-xs font-semibold text-slate-800 leading-tight">{sector.label}</span>
                 </button>
               ))}
             </div>
-
-            <div className="flex justify-start pt-4">
-              <Button variant="ghost" className="text-slate-400" onClick={() => setStep(1)}>
-                <ChevronLeft className="w-4 h-4 mr-1" /> Voltar
-              </Button>
+            <div className="flex justify-start pt-2">
+              <button
+                onClick={() => navigate("/login")}
+                className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-orange-500 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" /> Voltar ao login
+              </button>
             </div>
-          </>
+          </div>
         )}
 
-        {/* STEP 3: Specialty Selection */}
-        {step === 3 && (
-          <>
-            <header className="text-center space-y-3">
-              <h1 className="text-3xl md:text-4xl font-bold text-white">Qual é sua <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">especialidade</span>?</h1>
-              <p className="text-slate-400">Selecionaremos serviços e configurações ideais para você</p>
-            </header>
+        {/* ── STEP 2: Especialidade ── */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">Qual é sua especialidade?</h2>
+            <p className="text-sm text-slate-500 text-center mb-6">
+              Vamos pré-configurar seus serviços, automações e políticas automaticamente
+            </p>
 
             {loadingSpecialties ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+                <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
               </div>
-            ) : specialties && specialties.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 pt-4">
+            ) : specialties.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {specialties.map((spec: any) => (
                   <button
-                    key={spec.id}
+                    key={spec.id || spec.specialty}
                     onClick={() => handleSelectSpecialty(spec.specialty)}
-                    className={`relative p-5 rounded-2xl border transition-all duration-300 text-center hover:scale-[1.03] ${
+                    className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-[1.02] text-center ${
                       selectedSpecialty === spec.specialty
-                        ? "bg-blue-500/20 border-blue-500/50 ring-2 ring-blue-500/30"
-                        : "bg-slate-900/50 border-white/5 hover:border-blue-500/20"
+                        ? "border-orange-500 bg-orange-50"
+                        : "border-slate-200 hover:border-orange-300 hover:bg-slate-50"
                     }`}
                   >
-                    <span className="font-bold text-white text-sm">{spec.display_name}</span>
                     {selectedSpecialty === spec.specialty && (
-                      <div className="absolute -top-2 -right-2 bg-blue-500 text-white p-1 rounded-full">
-                        <Check className="w-3 h-3" />
+                      <div className="absolute -top-2 -right-2 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                        <Check className="w-3 h-3 text-white" />
                       </div>
+                    )}
+                    {spec.icon && <span className="text-2xl">{spec.icon}</span>}
+                    <span className="text-sm font-semibold text-slate-800">{spec.display_name || spec.specialty}</span>
+                    {(spec.services_count || spec.default_services?.length) > 0 && (
+                      <span className="text-[10px] text-slate-400">
+                        {spec.services_count || spec.default_services?.length} serviços inclusos
+                      </span>
                     )}
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <p className="text-slate-400 mb-4">Não há especialidades pré-definidas para este setor.</p>
-                <Button onClick={() => setStep(4)} className="bg-blue-600 hover:bg-blue-500 text-white">
-                  Continuar sem especialidade <ArrowRight className="w-4 h-4 ml-1" />
-                </Button>
+              <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl">
+                <p className="text-sm text-slate-500">Nenhuma especialidade encontrada para este setor.</p>
+                <p className="text-xs text-slate-400 mt-1">Você configurará seus serviços manualmente.</p>
               </div>
             )}
 
-            <div className="flex justify-between pt-4">
-              <Button variant="ghost" className="text-slate-400" onClick={() => setStep(2)}>
-                <ChevronLeft className="w-4 h-4 mr-1" /> Voltar
-              </Button>
-              {specialties && specialties.length > 0 && !selectedSpecialty && (
-                <Button variant="ghost" className="text-blue-400" onClick={() => setStep(4)}>
-                  Pular <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              )}
+            <div className="flex items-center justify-between pt-2">
+              <button onClick={handleBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors">
+                <ChevronLeft className="w-4 h-4" /> Voltar
+              </button>
+              <button onClick={() => setStep(3)} className="flex items-center gap-1 text-sm text-orange-500 hover:text-orange-600 transition-colors">
+                {selectedSpecialty ? "Continuar" : "Pular"} <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
-          </>
-        )}
-
-        {/* STEP 4: Business Details */}
-        {step === 4 && (
-          <>
-            <header className="text-center space-y-3">
-              <h1 className="text-3xl font-bold text-white">Dados do <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">seu negócio</span></h1>
-              <p className="text-slate-400">Complete o cadastro para começar</p>
-            </header>
-
-            <Card className="bg-slate-900/50 border-white/5 max-w-lg mx-auto">
-              <CardContent className="p-6 space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-300">Nome do Estabelecimento *</label>
-                  <Input
-                    placeholder="Ex: Studio Maria"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className={`mt-1 bg-slate-800/50 border-slate-700 text-white ${errors.name ? "border-red-500" : ""}`}
-                  />
-                  {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-300">Endereço Completo *</label>
-                  <Input
-                    placeholder="Rua, número, bairro, cidade"
-                    value={form.address}
-                    onChange={(e) => setForm({ ...form, address: e.target.value })}
-                    className={`mt-1 bg-slate-800/50 border-slate-700 text-white ${errors.address ? "border-red-500" : ""}`}
-                  />
-                  {errors.address && <p className="text-xs text-red-400 mt-1">{errors.address}</p>}
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-300">CPF ou CNPJ *</label>
-                  <Input
-                    placeholder="000.000.000-00"
-                    value={form.cpf_cnpj}
-                    onChange={(e) => setForm({ ...form, cpf_cnpj: formatCpfCnpjBR(e.target.value) })}
-                    className={`mt-1 bg-slate-800/50 border-slate-700 text-white ${errors.cpf_cnpj ? "border-red-500" : ""}`}
-                  />
-                  {errors.cpf_cnpj && <p className="text-xs text-red-400 mt-1">{errors.cpf_cnpj}</p>}
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-300">Telefone / WhatsApp</label>
-                  <Input
-                    placeholder="(00) 00000-0000"
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: formatWhatsAppBR(e.target.value) })}
-                    className="mt-1 bg-slate-800/50 border-slate-700 text-white"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <Button variant="ghost" className="text-slate-400" onClick={() => setStep(3)}>
-                    <ChevronLeft className="w-4 h-4 mr-1" /> Voltar
-                  </Button>
-                  <Button className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold" onClick={handleFinish} disabled={saving}>
-                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                    {saving ? "Cadastrando..." : "Finalizar Cadastro"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        <div className="pt-4 flex items-center justify-center gap-6 text-slate-500 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            Sistemas Online via Cloud
           </div>
-          <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4" />
-            Criptografia de Ponta-a-Ponta
+        )}
+
+        {/* ── STEP 3: Dados do negócio ── */}
+        {step === 3 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">Dados do seu negócio</h2>
+
+            {selectedSector && (
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <span className="text-2xl">{SECTORS.find(s => s.key === selectedSector)?.icon}</span>
+                <span className="text-sm font-medium text-slate-700">
+                  {SECTORS.find(s => s.key === selectedSector)?.label}
+                  {selectedSpecialty && ` · ${selectedSpecialty}`}
+                </span>
+              </div>
+            )}
+
+            <div className="space-y-3 max-w-md mx-auto">
+              <div>
+                <label className="text-sm font-medium text-slate-700">Nome do estabelecimento *</label>
+                <Input
+                  placeholder="Ex: Studio Maria, Clínica Saúde+"
+                  value={form.name}
+                  onChange={e => setForm({ ...form, name: e.target.value })}
+                  className={`mt-1 h-11 text-slate-900 border-slate-200 ${errors.name ? "border-red-400" : ""}`}
+                />
+                {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700">Endereço completo *</label>
+                <Input
+                  placeholder="Rua, número, bairro, cidade"
+                  value={form.address}
+                  onChange={e => setForm({ ...form, address: e.target.value })}
+                  className={`mt-1 h-11 text-slate-900 border-slate-200 ${errors.address ? "border-red-400" : ""}`}
+                />
+                {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address}</p>}
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700">CPF ou CNPJ *</label>
+                <Input
+                  placeholder="000.000.000-00"
+                  value={form.cpf_cnpj}
+                  onChange={e => setForm({ ...form, cpf_cnpj: formatCpfCnpjBR(e.target.value) })}
+                  className={`mt-1 h-11 text-slate-900 border-slate-200 ${errors.cpf_cnpj ? "border-red-400" : ""}`}
+                />
+                {errors.cpf_cnpj && <p className="text-xs text-red-500 mt-1">{errors.cpf_cnpj}</p>}
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700">WhatsApp</label>
+                <Input
+                  placeholder="(00) 00000-0000"
+                  value={form.phone}
+                  onChange={e => setForm({ ...form, phone: formatWhatsAppBR(e.target.value) })}
+                  className="mt-1 h-11 text-slate-900 border-slate-200"
+                />
+              </div>
+
+              {selectedSpecialty && (
+                <div className="p-3 bg-orange-50 border border-orange-100 rounded-xl">
+                  <p className="text-xs font-medium text-orange-600 mb-1">O que será configurado automaticamente:</p>
+                  <ul className="text-xs text-orange-500 space-y-0.5">
+                    <li>✓ Serviços pré-configurados para {selectedSpecialty}</li>
+                    <li>✓ Automações de lembrete e confirmação</li>
+                    <li>✓ Políticas de agendamento</li>
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button onClick={handleBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors px-3">
+                  <ChevronLeft className="w-4 h-4" /> Voltar
+                </button>
+                <button
+                  onClick={handleAdvanceToPayment}
+                  className="flex-1 h-11 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  Continuar <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 4: Pagamentos ── */}
+        {step === 4 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">Dados de Pagamento</h2>
+
+            <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl">
+              <p className="text-sm font-medium text-orange-700 mb-1">💳 Para receber pagamentos diretamente na sua conta</p>
+              <p className="text-xs text-orange-600">
+                Configure sua chave PIX e crie sua subconta Asaas gratuitamente. Você receberá os pagamentos dos seus clientes automaticamente.
+              </p>
+            </div>
+
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+              <p className="text-sm font-medium text-emerald-700">
+                🎁 Você tem <strong>{trialDays} dias grátis</strong> para testar tudo sem pagar nada.
+              </p>
+              <p className="text-xs text-emerald-600 mt-0.5">Sem cartão de crédito. Cancele quando quiser.</p>
+            </div>
+
+            <div className="space-y-4 max-w-md mx-auto">
+              <div>
+                <label className="text-sm font-medium text-slate-700 block mb-2">Tipo de conta</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {(["pf", "pj"] as const).map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => setPaymentForm(p => ({ ...p, account_type: type }))}
+                      className={`p-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                        paymentForm.account_type === type
+                          ? "border-orange-500 bg-orange-50 text-orange-700"
+                          : "border-slate-200 text-slate-600 hover:border-orange-300"
+                      }`}
+                    >
+                      {type === "pf" ? "Pessoa Física (CPF)" : "Pessoa Jurídica (CNPJ)"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-700 block mb-1">Tipo de chave PIX</label>
+                <select
+                  value={paymentForm.pix_key_type}
+                  onChange={e => setPaymentForm(p => ({ ...p, pix_key_type: e.target.value as typeof p.pix_key_type }))}
+                  className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 bg-white"
+                >
+                  <option value="cpf">CPF</option>
+                  <option value="cnpj">CNPJ</option>
+                  <option value="email">E-mail</option>
+                  <option value="phone">Telefone</option>
+                  <option value="random">Chave aleatória</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-700 block mb-1">Chave PIX recebedor</label>
+                <Input
+                  placeholder="Informe sua chave PIX"
+                  value={paymentForm.pix_key}
+                  onChange={e => setPaymentForm(p => ({ ...p, pix_key: e.target.value }))}
+                  className="h-11 text-slate-900 border-slate-200"
+                />
+              </div>
+
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <p className="text-xs text-slate-500">
+                  ℹ️ Ao finalizar, criaremos sua subconta Asaas automaticamente usando os dados informados. Isso permite receber pagamentos diretamente na sua conta.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button onClick={handleBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors px-3">
+                  <ChevronLeft className="w-4 h-4" /> Voltar
+                </button>
+                <button
+                  onClick={handleFinishWithPayment}
+                  disabled={saving}
+                  className="flex-1 h-11 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Configurando...</> : <>Finalizar e Ativar Pagamentos <ArrowRight className="w-4 h-4" /></>}
+                </button>
+              </div>
+
+              <div className="text-center">
+                <button
+                  onClick={handleSkipPayment}
+                  disabled={saving}
+                  className="text-sm text-slate-400 hover:text-slate-600 transition-colors underline"
+                >
+                  Configurar depois
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-center gap-4 mt-10 text-xs text-slate-400">
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            Sistemas online
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Lock className="w-3 h-3" />
+            Dados criptografados
           </div>
         </div>
       </div>

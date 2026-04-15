@@ -4,7 +4,7 @@
   "loading": "Loading...",
   "login": "Login",
   "get_started": "Get Started",
-  "trial_days": "7 days free trial",
+  "trial_days": "14-day free trial",
   "no_credit_card": "No credit card required. Cancel anytime.",
   "app_fee_desc": "Integrated ASAAS + app fees — total transparency",
   "marketing_highlight": "While other systems only schedule, we transform every client into a referral machine",
@@ -27,7 +27,7 @@
   "pricing_badge": "Prices that fit your pocket",
   "pricing_title": "Start for free,",
   "pricing_title_highlight": "earn more",
-  "pricing_subtitle": "7 days free. No card. No commitment. Immediate results.",
+  "pricing_subtitle": "14 days free. No card. No commitment. Immediate results.",
   "monthly": "Monthly",
   "quarterly": "Quarterly",
   "annual": "Annual",
@@ -201,7 +201,7 @@
     "active_companies": "Active companies",
     "monthly_processed": "Processed monthly",
     "guaranteed_uptime": "Guaranteed uptime",
-    "free_trial_days": "7 days free trial",
+    "free_trial_days": "14 days free trial",
     "full_schedule": "FULL SCHEDULE!",
     "and_have": "and have a",
     "complete_management": "Complete management with",
@@ -217,7 +217,7 @@
     "active": "active",
     "time_saving": "Time saving",
     "free_trial": "Free trial",
-    "seven_days": "7 days"
+    "seven_days": "14 days"
   },
   "features": {
     "badge": "Exclusive Features",
@@ -260,7 +260,7 @@
     "title": "Prices that Fit Your Pocket",
     "subtitle": "Start for free, ",
     "subtitle_highlight": "earn more",
-    "trial_info": "7 days free. No card. No commitment. Immediate results.",
+    "trial_info": "14 days free. No card. No commitment. Immediate results.",
     "best_value": "Best Value",
     "per_3_months": "/3 months",
     "equivalent_to": "equivalent to",
@@ -317,7 +317,7 @@
     "login": "Login",
     "register": "Register",
     "logout": "Logout",
-    "start_free_trial": "Start 7 Days Free",
+    "start_free_trial": "Start 14 Days Free",
     "see_features": "View Features",
     "features": "Features",
     "pricing": "Pricing"

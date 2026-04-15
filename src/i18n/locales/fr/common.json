@@ -4,7 +4,7 @@
   "loading": "Chargement...",
   "login": "Connexion",
   "get_started": "Commencer Gratuitement",
-  "trial_days": "7 jours d'essai gratuit",
+  "trial_days": "14 jours d'essai gratuit",
   "no_credit_card": "Pas de carte de crédit requise. Annulez à tout moment.",
   "app_fee_desc": "Frais intégrés ASAAS + app — transparence totale",
   "marketing_highlight": "Alors que d'autres systèmes se contentent de planifier, nous transformons chaque client en une machine à recommandations",
@@ -27,7 +27,7 @@
   "pricing_badge": "Des prix adaptés à votre budget",
   "pricing_title": "Commencez gratuitement,",
   "pricing_title_highlight": "gagnez plus",
-  "pricing_subtitle": "7 jours gratuits. Sans carte. Sans engagement. Résultats immédiats.",
+  "pricing_subtitle": "14 jours gratuits. Sans carte. Sans engagement. Résultats immédiats.",
   "monthly": "Mensuel",
   "quarterly": "Trimestriel",
   "annual": "Annuel",
@@ -201,7 +201,7 @@
     "active_companies": "Entreprises actives",
     "monthly_processed": "Traité mensuellement",
     "guaranteed_uptime": "Uptime garanti",
-    "free_trial_days": "7 jours d'essai gratuit",
+    "free_trial_days": "14 jours d'essai gratuit",
     "full_schedule": "AGENDA PLEIN !",
     "and_have": "et ayez un",
     "complete_management": "Gestion complète avec",
@@ -217,7 +217,7 @@
     "active": "actives",
     "time_saving": "Gain de temps",
     "free_trial": "Essai gratuit",
-    "seven_days": "7 jours"
+    "seven_days": "14 jours"
   },
   "features": {
     "badge": "Fonctionnalités Exclusives",
@@ -260,7 +260,7 @@
     "title": "Des prix adaptés à votre budget",
     "subtitle": "Commencez gratuitement, ",
     "subtitle_highlight": "gagnez plus",
-    "trial_info": "7 jours gratuits. Sans carte. Sans engagement. Résultats immédiats.",
+    "trial_info": "14 jours gratuits. Sans carte. Sans engagement. Résultats immédiats.",
     "best_value": "Meilleure Valeur",
     "per_3_months": "/3 mois",
     "equivalent_to": "équivalent à",
@@ -317,7 +317,7 @@
     "login": "Connexion",
     "register": "S'inscrire",
     "logout": "Déconnexion",
-    "start_free_trial": "Commencer 7 Jours Gratuits",
+    "start_free_trial": "Commencer 14 Jours Gratuits",
     "see_features": "Voir les Fonctionnalités",
     "features": "Fonctionnalités",
     "pricing": "Tarifs"

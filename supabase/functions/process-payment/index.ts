@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 interface ChargeBody {
-  action: "charge" | "get" | "refund" | "create-professional-account" | "create-barbershop-account" | "charge-messaging-package" | "get-balance" | "transfer";
+  action: "charge" | "get" | "refund" | "create-professional-account" | "create-barbershop-account" | "charge-messaging-package" | "get-balance" | "transfer" | "charge-digital-product";
   customer_id?: string;
   amount?: number;
   description?: string;
@@ -26,6 +26,8 @@ interface ChargeBody {
   pix_key?: string;
   package_id?: string;
   recurring?: boolean;
+  product_id?: string;
+  order_id?: string;
 }
 
 // ============================================
@@ -350,6 +352,39 @@ serve(async (req) => {
       }
       case "transfer": {
         result = await handleTransfer(body);
+        break;
+      }
+      case "charge-digital-product": {
+        if (!body.product_id || !body.amount) throw new Error("product_id e amount obrigatórios.");
+        const { data: product } = await serviceRoleClient
+          .from("store_products" as any)
+          .select("barbershop_id, barbershops(asaas_wallet_id)")
+          .eq("id", body.product_id)
+          .single();
+
+        const walletId = (product as any)?.barbershops?.asaas_wallet_id as string | undefined;
+        const grossAmount = Number(body.amount);
+        const fixedFee = 2.50;
+        const percentageFee = grossAmount * 0.10;
+        const totalFee = fixedFee + percentageFee;
+        const netToProducer = grossAmount - totalFee;
+        const producerPercentage = (netToProducer / grossAmount) * 100;
+
+        const customerId = body.customer_id || await getOrCreateCustomer(serviceRoleClient, userId);
+        const chargeBody: ChargeBody = {
+          action: "charge",
+          customer_id: customerId,
+          amount: grossAmount,
+          billing_type: body.billing_type || "PIX",
+          description: body.description,
+          external_reference: `digital:${body.product_id}:${body.order_id || ""}`,
+          split: walletId ? [{
+            wallet_id: walletId,
+            percentage_value: producerPercentage,
+          }] : undefined,
+        };
+
+        result = await handleCharge(chargeBody, customerId);
         break;
       }
       default:

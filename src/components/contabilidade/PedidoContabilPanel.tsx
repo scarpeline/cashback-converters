@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,8 +34,8 @@ interface Pedido {
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   aguardando_pagamento: { label: "Aguardando Pagamento", color: "bg-yellow-500/10 text-yellow-600" },
-  pagamento_confirmado:  { label: "Pagamento Confirmado", color: "bg-blue-500/10 text-blue-600" },
-  em_andamento:         { label: "Em Andamento", color: "bg-indigo-500/10 text-indigo-600" },
+  pagamento_confirmado:  { label: "Pagamento Confirmado", color: "bg-orange-400/10 text-orange-600" },
+  em_andamento:         { label: "Em Andamento", color: "bg-orange-500/10 text-orange-500" },
   concluido:            { label: "Concluído", color: "bg-green-500/10 text-green-600" },
   cancelado:            { label: "Cancelado", color: "bg-red-500/10 text-red-600" },
 };

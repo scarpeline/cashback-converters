@@ -108,8 +108,8 @@ export default function PartnersPage() {
                 <p className="text-sm text-muted-foreground">Franqueados</p>
                 <p className="text-2xl font-bold">{stats.byType.franqueado}</p>
               </div>
-              <div className="p-3 rounded-full bg-blue-500/10">
-                <Shield className="w-6 h-6 text-blue-500" />
+              <div className="p-3 rounded-full bg-orange-400/10">
+                <Shield className="w-6 h-6 text-orange-500" />
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-2">

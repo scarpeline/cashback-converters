@@ -1,10 +1,9 @@
-// @ts-nocheck
 /**
  * RemarketingPanel — Super Admin
  * Automações de remarketing: usuário inativo 1d/3d/7d
  * Usa módulo de notificações e marketing existentes
  */
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

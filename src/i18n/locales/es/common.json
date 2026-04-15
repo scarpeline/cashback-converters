@@ -4,7 +4,7 @@
   "loading": "Cargando...",
   "login": "Iniciar Sesión",
   "get_started": "Empezar Gratis",
-  "trial_days": "7 días gratis para probar",
+  "trial_days": "14 días de prueba gratis",
   "no_credit_card": "Sin tarjeta de crédito. Cancela cuando quieras.",
   "app_fee_desc": "Tasas integradas ASAAS + app — transparencia total",
   "marketing_highlight": "Mientras otros sistemas solo programan, nosotros transformamos a cada cliente en una máquina de recomendaciones",
@@ -27,7 +27,7 @@
   "pricing_badge": "Precios que se ajustan a tu bolsillo",
   "pricing_title": "Empieza gratis,",
   "pricing_title_highlight": "gana más",
-  "pricing_subtitle": "7 días gratis. Sin tarjeta. Sin compromiso. Resultados inmediatos.",
+  "pricing_subtitle": "14 días gratis. Sin tarjeta. Sin compromiso. Resultados inmediatos.",
   "monthly": "Mensual",
   "quarterly": "Trimestral",
   "annual": "Anual",
@@ -201,7 +201,7 @@
     "active_companies": "Empresas activas",
     "monthly_processed": "Procesado mensualmente",
     "guaranteed_uptime": "Uptime garantizado",
-    "free_trial_days": "7 días de prueba gratis",
+    "free_trial_days": "14 días de prueba gratis",
     "full_schedule": "¡AGENDA LLENA!",
     "and_have": "y ten la",
     "complete_management": "Gestión completa con",
@@ -217,7 +217,7 @@
     "active": "activas",
     "time_saving": "Ahorro de tiempo",
     "free_trial": "Prueba gratis",
-    "seven_days": "7 días"
+    "seven_days": "14 días"
   },
   "features": {
     "badge": "Funciones Exclusivas",
@@ -260,7 +260,7 @@
     "title": "Precios que se Ajustan a tu Bolsillo",
     "subtitle": "Empieza gratis, ",
     "subtitle_highlight": "gana más",
-    "trial_info": "7 días gratis. Sin tarjeta. Sin compromiso. Resultados inmediatos.",
+    "trial_info": "14 días gratis. Sin tarjeta. Sin compromiso. Resultados inmediatos.",
     "best_value": "Mejor Valor",
     "per_3_months": "/3 meses",
     "equivalent_to": "equivalente a",
@@ -317,7 +317,7 @@
     "login": "Entrar",
     "register": "Registrar",
     "logout": "Cerrar sesión",
-    "start_free_trial": "Empezar 7 Días Gratis",
+    "start_free_trial": "Empezar 14 Días Gratis",
     "see_features": "Ver Funcionalidades",
     "features": "Funcionalidades",
     "pricing": "Precios"

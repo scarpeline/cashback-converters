@@ -128,7 +128,7 @@ export default function CommissionsPage() {
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="w-6 h-6 rounded-full bg-blue-500/10 text-blue-700 flex items-center justify-center font-bold text-xs">2</div>
+            <div className="w-6 h-6 rounded-full bg-orange-400/10 text-orange-700 flex items-center justify-center font-bold text-xs">2</div>
             <div>
               <p className="font-medium">Aprovada</p>
               <p className="text-muted-foreground">Admin aprova a comissão após validação</p>

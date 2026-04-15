@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Módulo Queue — Service
  * Enfileirar jobs para processamento assíncrono via Supabase Edge Functions

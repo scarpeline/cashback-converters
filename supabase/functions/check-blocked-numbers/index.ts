@@ -76,7 +76,7 @@ async function checkRateLimits(supabaseClient: any) {
 
   const issues: any[] = [];
 
-  for (const policy of data || []) {
+  for (const policy of policies || []) {
     const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
 
     const { count: recentSends } = await supabaseClient
@@ -187,7 +187,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Erro na verificação:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: (error as Error).message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,

@@ -351,12 +351,12 @@ export const WaitlistEntryModal = ({
           )}
 
           {/* Informações importantes */}
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
             <div className="flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
               <div className="space-y-1">
-                <p className="text-sm font-medium text-blue-900">Como funciona:</p>
-                <ul className="text-sm text-blue-800 space-y-1">
+                <p className="text-sm font-medium text-slate-900">Como funciona:</p>
+                <ul className="text-sm text-slate-800 space-y-1">
                   <li>• Você receberá uma notificação quando um horário disponível surgir</li>
                   <li>• Terá 10 minutos para aceitar ou recusar a oferta</li>
                   <li>• Se não responder, passaremos para o próximo da fila</li>

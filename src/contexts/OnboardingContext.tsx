@@ -1,11 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
-
-interface Sector {
-  key: string;
-  label: string;
-  icon: string;
-  description: string;
-}
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useAuth } from "@/lib/auth";
 
 interface OnboardingContextType {
   selectedSector: string | null;
@@ -18,24 +12,53 @@ interface OnboardingContextType {
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
 export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
-  const [selectedSector, setSelectedSector] = useState<string | null>(null);
-  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
+  const { barbershop } = useAuth();
+
+  // Initialize from barbershop data (already configured) or localStorage (in-progress)
+  const [selectedSector, _setSelectedSector] = useState<string | null>(() => {
+    return barbershop?.sector || localStorage.getItem("onboarding_sector") || null;
+  });
+  const [selectedSpecialty, _setSelectedSpecialty] = useState<string | null>(() => {
+    return barbershop?.specialty || localStorage.getItem("onboarding_specialty") || null;
+  });
+
+  // Sync from barbershop when it loads
+  useEffect(() => {
+    if (barbershop?.sector && !selectedSector) {
+      _setSelectedSector(barbershop.sector);
+    }
+    if (barbershop?.specialty && !selectedSpecialty) {
+      _setSelectedSpecialty(barbershop.specialty);
+    }
+  }, [barbershop?.sector, barbershop?.specialty]);
+
+  const setSelectedSector = (sector: string | null) => {
+    _setSelectedSector(sector);
+    if (sector) localStorage.setItem("onboarding_sector", sector);
+    else localStorage.removeItem("onboarding_sector");
+  };
+
+  const setSelectedSpecialty = (specialty: string | null) => {
+    _setSelectedSpecialty(specialty);
+    if (specialty) localStorage.setItem("onboarding_specialty", specialty);
+    else localStorage.removeItem("onboarding_specialty");
+  };
 
   const resetOnboarding = () => {
-    setSelectedSector(null);
-    setSelectedSpecialty(null);
+    _setSelectedSector(null);
+    _setSelectedSpecialty(null);
+    localStorage.removeItem("onboarding_sector");
+    localStorage.removeItem("onboarding_specialty");
   };
 
   return (
-    <OnboardingContext.Provider
-      value={{
-        selectedSector,
-        selectedSpecialty,
-        setSelectedSector,
-        setSelectedSpecialty,
-        resetOnboarding,
-      }}
-    >
+    <OnboardingContext.Provider value={{
+      selectedSector,
+      selectedSpecialty,
+      setSelectedSector,
+      setSelectedSpecialty,
+      resetOnboarding,
+    }}>
       {children}
     </OnboardingContext.Provider>
   );

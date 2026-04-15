@@ -1,6 +1,4 @@
-// @ts-nocheck
-import { useState } from "react";
-import React from "react";
+import React, { useState } from "react";
 import { useBarbershop } from "./hooks";
 import {
   MessageCircle,
@@ -18,16 +16,21 @@ import {
   HelpCircle,
   History,
   Target,
-  Sparkles
+  Sparkles,
+  MessageSquare,
+  Instagram,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WhatsAppAccountsPanel } from "@/components/whatsapp/WhatsAppAccountsPanel";
 import { WhatsAppMonitoringPanel } from "@/components/whatsapp/WhatsAppMonitoringPanel";
+import { WhatsAppConectarPanel } from "@/components/whatsapp/WhatsAppConectarPanel";
 import { MessagePackagesPanel } from "@/components/whatsapp/MessagePackagesPanel";
 import { MessageReportsPanel } from "@/components/whatsapp/MessageReportsPanel";
 import { WeeklySchedulePanel } from "@/components/messaging/WeeklySchedulePanel";
 import { ClientReactivationDashboard } from "@/components/automation/ReactivationDashboard";
+import { SMSConfigPanel } from "@/components/sms/SMSConfigPanel";
+import { MetaSocialPanel } from "@/components/social/MetaSocialPanel";
 import { 
   Tooltip,
   TooltipContent,
@@ -36,7 +39,7 @@ import {
 } from "@/components/ui/tooltip";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type MainTab = "whatsapp" | "mensagens" | "campanhas" | "crm";
+type MainTab = "whatsapp" | "sms" | "social" | "mensagens" | "campanhas" | "crm";
 type WhatsAppSubTab = "contas" | "monitoramento" | "pacotes";
 type MensagensSubTab = "agenda" | "relatorios";
 type CampanhasSubTab = "reativacao";
@@ -44,7 +47,7 @@ type CRMSubTab = "fluxos" | "aniversarios" | "nps";
 
 // ─── Sub-tab configs ──────────────────────────────────────────────────────────
 const whatsappTabs: { id: WhatsAppSubTab; label: string; icon: React.ReactNode }[] = [
-  { id: "contas", label: "Contas", icon: <Phone size={14} /> },
+  { id: "contas", label: "Conectar", icon: <Phone size={14} /> },
   { id: "monitoramento", label: "Status Real", icon: <Activity size={14} /> },
   { id: "pacotes", label: "Pacotes", icon: <Package size={14} /> },
 ];
@@ -70,6 +73,8 @@ export const CommunicationHub = () => {
 
   const mainTabs: { id: MainTab; label: string; icon: React.ReactNode; badge?: string }[] = [
     { id: "whatsapp", label: "WhatsApp", icon: <Smartphone size={16} /> },
+    { id: "sms", label: "SMS", icon: <MessageSquare size={16} /> },
+    { id: "social", label: "Instagram", icon: <Instagram size={16} />, badge: "SOON" },
     { id: "mensagens", label: "Mensagens", icon: <MessageCircle size={16} /> },
     { id: "campanhas", label: "Reativação", icon: <UserCheck size={16} /> },
     { id: "crm", label: "Diamond CRM", icon: <Zap size={16} />, badge: "NEW" },
@@ -116,10 +121,26 @@ export const CommunicationHub = () => {
             <SubTabBar tabs={whatsappTabs} active={waTab} onChange={(v) => setWaTab(v as WhatsAppSubTab)} />
             <div className="glass-card p-6 md:p-10 rounded-[3.5rem] border-white/5 bg-slate-950/20 backdrop-blur-4xl shadow-premium min-h-[500px]">
                <div className="animate-in fade-in zoom-in-95 duration-500">
-                  {waTab === "contas" && <WhatsAppAccountsPanel barbershopId={barbershop?.id || ""} />}
+                  {waTab === "contas" && <WhatsAppConectarPanel />}
                   {waTab === "monitoramento" && <WhatsAppMonitoringPanel barbershopId={barbershop?.id || ""} />}
                   {waTab === "pacotes" && <MessagePackagesPanel barbershopId={barbershop?.id || ""} />}
                </div>
+            </div>
+          </div>
+        )}
+
+        {mainTab === "sms" && (
+          <div className="glass-card p-6 md:p-10 rounded-[3.5rem] border-white/5 bg-slate-950/20 backdrop-blur-4xl shadow-premium min-h-[500px]">
+            <div className="animate-in fade-in zoom-in-95 duration-500">
+              <SMSConfigPanel />
+            </div>
+          </div>
+        )}
+
+        {mainTab === "social" && (
+          <div className="glass-card p-6 md:p-10 rounded-[3.5rem] border-white/5 bg-slate-950/20 backdrop-blur-4xl shadow-premium min-h-[500px]">
+            <div className="animate-in fade-in zoom-in-95 duration-500">
+              <MetaSocialPanel />
             </div>
           </div>
         )}

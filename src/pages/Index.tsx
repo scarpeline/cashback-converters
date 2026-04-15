@@ -5,6 +5,7 @@ import IntegrationBlocks from "@/components/landing/IntegrationBlocks";
 import Features from "@/components/landing/Features";
 import AllFeatures from "@/components/landing/AllFeatures";
 import Pricing from "@/components/landing/Pricing";
+import { PricingByProfessionals } from "@/components/landing/PricingByProfessionals";
 import CTA from "@/components/landing/CTA";
 import Footer from "@/components/landing/Footer";
 import { SocialProofPopup } from "@/components/social-proof/SocialProofPopup";
@@ -19,6 +20,7 @@ const Index = () => {
         <IntegrationBlocks />
         <Features />
         <AllFeatures />
+        <PricingByProfessionals />
         <Pricing />
         <CTA />
       </main>

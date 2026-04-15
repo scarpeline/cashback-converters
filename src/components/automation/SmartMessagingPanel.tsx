@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -37,7 +36,7 @@ const DEFAULT_RULES: MessageRule[] = [
     label: "Cadastrou mas não agendou",
     description: "Clientes que se cadastraram há mais de 2 dias e nunca agendaram",
     icon: <UserPlus className="w-4 h-4" />,
-    color: "text-blue-600",
+    color: "text-orange-600",
     active: true,
     channel: "whatsapp",
     message: "Olá {nome}! Você se cadastrou mas ainda não fez seu primeiro agendamento. Que tal marcar agora? Temos horários disponíveis para você! 💈",

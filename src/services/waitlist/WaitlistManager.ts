@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * WaitlistManager - Sistema de Fila de Espera Inteligente
  * 

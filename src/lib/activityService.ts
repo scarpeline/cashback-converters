@@ -1,8 +1,5 @@
 // @ts-nocheck
-import { createClient } from '@/lib/supabase';
-import { Database } from '@/integrations/supabase/types';
-
-type DatabaseType = Database;
+import { supabase } from '@/integrations/supabase/client';
 
 export interface ActivityRule {
   daysInactive: number;
@@ -20,7 +17,7 @@ export interface RenewalNotification {
 }
 
 export class ActivityService {
-  private supabase = createClient();
+  private supabase = supabase as any;
 
   // Regras de atividade baseadas nos requisitos
   private activityRules: ActivityRule[] = [

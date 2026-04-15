@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useBarbershop } from "./hooks";
 import { useAuditLog } from "./useAuditLog";
 import { BarbershopProfileSchema } from "@/lib/validations";
@@ -29,10 +29,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import BookingPoliciesPanel from "@/components/settings/BookingPoliciesPanel";
 import ResourcesPanel from "@/components/settings/ResourcesPanel";
+import { IntegrationAPIPanel } from "@/components/settings/IntegrationAPIPanel";
 import { WhatsAppAccountsPanel } from "@/components/whatsapp/WhatsAppAccountsPanel";
 
 export const SettingsHub = () => {
-  const [activeTab, setActiveTab] = useState<"profile" | "hours" | "whatsapp" | "policies">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "hours" | "whatsapp" | "policies" | "api">("profile");
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -77,6 +78,14 @@ export const SettingsHub = () => {
           >
             Políticas
           </Button>
+          <Button 
+            variant={activeTab === "api" ? "gold" : "ghost"} 
+            size="sm" 
+            className="rounded-xl font-bold"
+            onClick={() => setActiveTab("api")}
+          >
+            API
+          </Button>
         </div>
       </div>
 
@@ -85,6 +94,11 @@ export const SettingsHub = () => {
         {activeTab === "hours" && <OpeningHoursSettings />}
         {activeTab === "whatsapp" && <WhatsAppSettings />}
         {activeTab === "policies" && <PolicySettings />}
+        {activeTab === "api" && (
+          <div className="glass-card p-6 md:p-8 rounded-[3rem] border-white/5">
+            <IntegrationAPIPanel />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -93,9 +107,17 @@ export const SettingsHub = () => {
 const ProfileSettings = () => {
   const { barbershop, refetch } = useBarbershop();
   const { logAction } = useAuditLog(barbershop?.id || "");
-  const [name, setName] = useState(barbershop?.name || "");
-  const [slug, setSlug] = useState(barbershop?.slug || "");
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Sync fields when barbershop loads
+  useEffect(() => {
+    if (barbershop) {
+      setName(barbershop.name || "");
+      setSlug(barbershop.slug || "");
+    }
+  }, [barbershop?.id]);
 
   const handleSave = async () => {
      if (!barbershop?.id) return;
@@ -163,7 +185,7 @@ const ProfileSettings = () => {
                       <p className="text-xs text-slate-500 font-medium">Proteção forense para sua barbearia</p>
                    </div>
                 </div>
-                <Badge variant="outline" className="rounded-full border-blue-500/30 text-blue-400 bg-blue-500/5 px-2 py-0 text-[8px] font-black uppercase tracking-widest">Enterprise</Badge>
+                <Badge variant="outline" className="rounded-full border-orange-400/30 text-orange-400 bg-orange-400/5 px-2 py-0 text-[8px] font-black uppercase tracking-widest">Enterprise</Badge>
              </div>
              
              <div className="space-y-4">
@@ -225,7 +247,7 @@ const ProfileSettings = () => {
                    </div>
                    
                    <div className="bg-white/5 p-4 rounded-3xl border border-white/5 flex items-center gap-4 group/social cursor-pointer hover:bg-white/10 transition-premium">
-                      <div className="w-10 h-10 rounded-2xl bg-slate-900 border border-white/5 flex items-center justify-center text-slate-500 group-hover/social:text-blue-400 transition-colors">
+                      <div className="w-10 h-10 rounded-2xl bg-slate-900 border border-white/5 flex items-center justify-center text-slate-500 group-hover/social:text-orange-400 transition-colors">
                          <HelpCircle className="w-5 h-5" />
                       </div>
                       <div className="text-left flex-1 min-w-0">
@@ -248,13 +270,90 @@ const ProfileSettings = () => {
 };
 
 const OpeningHoursSettings = () => {
-    return (
-        <Card className="glass-card p-12 rounded-[2.5rem] border-dashed border-white/10 text-center">
-           <Clock className="w-16 h-16 text-slate-800 mx-auto mb-6" />
-           <h3 className="text-2xl font-black text-white mb-2">Editor de Grade Horária</h3>
-           <p className="text-slate-500 font-medium max-w-md mx-auto">Em breve: Controle total de feriados, horários de pico e jornadas diferenciadas por profissional.</p>
-        </Card>
-    );
+  const { barbershop } = useBarbershop();
+  const DAYS = [
+    { key: "mon", label: "Segunda" },
+    { key: "tue", label: "Terça" },
+    { key: "wed", label: "Quarta" },
+    { key: "thu", label: "Quinta" },
+    { key: "fri", label: "Sexta" },
+    { key: "sat", label: "Sábado" },
+    { key: "sun", label: "Domingo" },
+  ];
+
+  const defaultHours = DAYS.reduce((acc, d) => ({
+    ...acc,
+    [d.key]: { open: d.key === "sun" ? false : true, start: "09:00", end: "18:00" }
+  }), {} as Record<string, { open: boolean; start: string; end: string }>);
+
+  const [hours, setHours] = useState(defaultHours);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (barbershop?.booking_policies?.opening_hours) {
+      setHours({ ...defaultHours, ...barbershop.booking_policies.opening_hours });
+    }
+  }, [barbershop?.id]);
+
+  const handleSave = async () => {
+    if (!barbershop?.id) return;
+    setSaving(true);
+    const policies = { ...(barbershop.booking_policies || {}), opening_hours: hours };
+    const { error } = await (supabase as any).from("barbershops").update({ booking_policies: policies }).eq("id", barbershop.id);
+    if (error) toast.error("Erro ao salvar horários");
+    else toast.success("Horários salvos!");
+    setSaving(false);
+  };
+
+  return (
+    <div className="max-w-lg space-y-4">
+      <div>
+        <h3 className="text-base font-semibold text-slate-900">Horários de Funcionamento</h3>
+        <p className="text-sm text-slate-500 mt-0.5">Configure os dias e horários em que seu negócio atende</p>
+      </div>
+      <div className="space-y-2">
+        {DAYS.map(day => (
+          <div key={day.key} className="flex items-center gap-4 py-2.5 border-b border-slate-100 last:border-0">
+            <div className="w-24 flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={hours[day.key]?.open ?? true}
+                onChange={e => setHours(h => ({ ...h, [day.key]: { ...h[day.key], open: e.target.checked } }))}
+                className="w-4 h-4 accent-orange-500 rounded"
+              />
+              <span className={`text-sm font-medium ${hours[day.key]?.open ? 'text-slate-800' : 'text-slate-400'}`}>{day.label}</span>
+            </div>
+            {hours[day.key]?.open ? (
+              <div className="flex items-center gap-2 flex-1">
+                <input
+                  type="time"
+                  value={hours[day.key]?.start || "09:00"}
+                  onChange={e => setHours(h => ({ ...h, [day.key]: { ...h[day.key], start: e.target.value } }))}
+                  className="h-8 px-2 text-sm text-slate-900 border border-slate-200 rounded-lg"
+                />
+                <span className="text-slate-400 text-xs">até</span>
+                <input
+                  type="time"
+                  value={hours[day.key]?.end || "18:00"}
+                  onChange={e => setHours(h => ({ ...h, [day.key]: { ...h[day.key], end: e.target.value } }))}
+                  className="h-8 px-2 text-sm text-slate-900 border border-slate-200 rounded-lg"
+                />
+              </div>
+            ) : (
+              <span className="text-xs text-slate-400 italic">Fechado</span>
+            )}
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="w-full h-10 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-60"
+      >
+        {saving ? "Salvando..." : "Salvar Horários"}
+      </button>
+    </div>
+  );
 };
 
 const WhatsAppSettings = () => {

@@ -233,7 +233,7 @@ export function WhatsAppAccountsPanel({ barbershopId }: WhatsAppAccountsPanelPro
                     <SelectValue placeholder="Selecione um profissional" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum / Conta do Salão</SelectItem>
+                    <SelectItem value="none">Nenhum / Conta do Salão</SelectItem>
                     {professionals.map((p) => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                     ))}

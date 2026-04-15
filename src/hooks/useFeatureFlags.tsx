@@ -1,4 +1,5 @@
 // @ts-nocheck
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -19,7 +20,7 @@ export function useFeatureFlags() {
 
   useEffect(() => {
     loadFeatureFlags();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadFeatureFlags = async () => {
     try {

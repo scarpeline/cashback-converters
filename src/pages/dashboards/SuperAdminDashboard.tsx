@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect, useMemo, useCallback } from "react";import { Routes, Route, Link, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useMemo, useCallback } from "react";import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { SocialProofManager } from "@/components/social-proof/SocialProofManager";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,14 +53,17 @@ import {
   Globe,
   ShieldOff,
   ChevronDown,
+  Smartphone,
+  Save,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import { lazy, Suspense } from "react";
 import { CadastroContadorPanel } from "@/components/contabilidade/CadastroContadorPanel";
 import { ConfigComissoesPanel } from "@/components/contabilidade/ConfigComissoesPanel";
-import { WebhookManagementPanel } from "@/components/admin/WebhookManagementPanel";
-import { IntegrationTestsPanel } from "@/components/admin/IntegrationTestsPanel";
+import { CommissionConfigPanel } from "@/components/admin/CommissionConfigPanel";
+import { PartnerLandingContentPanel } from "@/components/admin/PartnerLandingContentPanel";
+import { PricingConfigPanel } from "@/components/admin/PricingConfigPanel";
 import { RealTimeMetricsPanel } from "@/components/admin/RealTimeMetricsPanel";
 import { RemarketingPanel } from "@/components/admin/RemarketingPanel";
 import { AIDashboard } from "@/components/AIDashboard";
@@ -72,9 +75,6 @@ const AIDashboardPage = () => (
   </div>
 );
 
-const IntegrationSettingsPage = lazy(
-  () => import("@/pages/admin/IntegrationSettingsPage"),
-);
 const PartnersPage = lazy(() => import("@/pages/super-admin/PartnersPage"));
 const CommissionsPage = lazy(() => import("@/pages/admin/CommissionsPage"));
 
@@ -95,22 +95,33 @@ const SuperAdminDashboard = () => {
   // Grouped navigation
   const navGroups = useMemo(() => [
     {
+      id: "visao-geral",
+      label: "Visão Geral",
+      icon: LayoutDashboard,
+      items: [
+        { name: "Dashboard", href: `${basePath}`, icon: LayoutDashboard },
+      ],
+    },
+    {
       id: "usuarios",
       label: "Usuários & Parceiros",
       icon: Users,
       items: [
         { name: "Usuários", href: `${basePath}/usuarios`, icon: Users },
+        { name: "Negócios", href: `${basePath}/barbearias`, icon: Building2 },
         { name: "Parceiros", href: `${basePath}/parceiros`, icon: Users },
-        { name: "Comissões Parceiros", href: `${basePath}/comissoes`, icon: DollarSign },
         { name: "Afiliados", href: `${basePath}/afiliados`, icon: Users },
+        { name: "Comissões Parceiros", href: `${basePath}/comissoes-parceiros`, icon: TrendingUp },
       ],
     },
     {
-      id: "negocios",
-      label: "Negócios",
-      icon: Building2,
+      id: "financeiro",
+      label: "Financeiro",
+      icon: DollarSign,
       items: [
-        { name: "Barbearias", href: `${basePath}/barbearias`, icon: Building2 },
+        { name: "Receita & Transações", href: `${basePath}/financeiro`, icon: DollarSign },
+        { name: "Comissões", href: `${basePath}/comissoes`, icon: DollarSign },
+        { name: "Planos & Preços", href: `${basePath}/precos-landing`, icon: CreditCard },
         { name: "Produtos", href: `${basePath}/produtos`, icon: Package },
       ],
     },
@@ -125,37 +136,35 @@ const SuperAdminDashboard = () => {
       ],
     },
     {
-      id: "financeiro",
-      label: "Financeiro",
-      icon: DollarSign,
-      items: [
-        { name: "Financeiro", href: `${basePath}/financeiro`, icon: DollarSign },
-        { name: "Remarketing", href: `${basePath}/remarketing`, icon: TrendingUp },
-      ],
-    },
-    {
       id: "comunicacao",
       label: "Comunicação",
       icon: MessageCircle,
       items: [
+        { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
         { name: "Mensagens Sistema", href: `${basePath}/mensagens-sistema`, icon: MessageCircle },
         { name: "Suporte", href: `${basePath}/suporte`, icon: MessageCircle },
-        { name: "Notificações", href: `${basePath}/notificacoes`, icon: Bell },
+        { name: "Remarketing", href: `${basePath}/remarketing`, icon: TrendingUp },
+        { name: "IA Dashboard", href: `${basePath}/ia`, icon: Activity },
+        { name: "WhatsApp Global", href: `${basePath}/whatsapp`, icon: Smartphone },
+      ],
+    },
+    {
+      id: "marketing",
+      label: "Marketing & Landing",
+      icon: Image,
+      items: [
+        { name: "Visibilidade Landing", href: `${basePath}/visibilidade`, icon: Eye },
+        { name: "Prova Social", href: `${basePath}/prova-social`, icon: Activity },
+        { name: "Pixels Globais", href: `${basePath}/pixels`, icon: Image },
+        { name: "Textos Parceiros", href: `${basePath}/landing-parceiros`, icon: MessageCircle },
       ],
     },
     {
       id: "sistema",
-      label: "Sistema & Dev",
+      label: "Configurações",
       icon: Settings,
       items: [
-        { name: "Webhooks", href: `${basePath}/webhooks`, icon: LinkIcon },
-        { name: "Testes API", href: `${basePath}/testes-api`, icon: TestTube },
-        { name: "Integrações", href: `${basePath}/integracoes`, icon: Plug },
-        { name: "Pixels Globais", href: `${basePath}/pixels`, icon: Image },
-        { name: "IA Dashboard", href: `${basePath}/ia`, icon: Activity },
-        { name: "Prova Social", href: `${basePath}/prova-social`, icon: Activity },
-        { name: "Visibilidade Landing", href: `${basePath}/visibilidade`, icon: Eye },
-        { name: "Configurações", href: `${basePath}/configuracoes`, icon: Settings },
+        { name: "Configurações Gerais", href: `${basePath}/configuracoes`, icon: Settings },
       ],
     },
   ], [basePath]);
@@ -218,16 +227,6 @@ const SuperAdminDashboard = () => {
             </p>
           </div>
           <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-            {/* Dashboard direto */}
-            <Link
-              to={basePath}
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(basePath) ? "bg-destructive text-destructive-foreground" : "text-sidebar-foreground/60 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground"}`}
-            >
-              <LayoutDashboard className="w-5 h-5" />
-              Dashboard
-            </Link>
-
             {/* Grupos colapsáveis */}
             {navGroups.map((group) => {
               const isGroupActive = group.items.some(item => isActive(item.href));
@@ -310,20 +309,10 @@ const SuperAdminDashboard = () => {
               path="servicos-contabeis"
               element={<ServicosContabeisAdminPage />}
             />
-            <Route path="webhooks" element={<WebhooksPage />} />
-            <Route path="testes-api" element={<TestesAPIPage />} />
             <Route path="financeiro" element={<FinanceiroPage />} />
             <Route
               path="prova-social"
               element={<SocialProofManager showPageSelector />}
-            />
-            <Route
-              path="integracoes"
-              element={
-                <Suspense fallback={<PageFallback />}>
-                  <IntegrationSettingsPage />
-                </Suspense>
-              }
             />
             <Route path="pixels" element={<PixelsPage />} />
             <Route
@@ -336,6 +325,10 @@ const SuperAdminDashboard = () => {
             <Route path="ia" element={<AIDashboardPage />} />
             <Route path="visibilidade" element={<LandingVisibilidadePage />} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
+            <Route path="whatsapp" element={<WhatsAppGlobalPage />} />
+            <Route path="comissoes-parceiros" element={<ComissoesParceirosPage />} />
+            <Route path="landing-parceiros" element={<LandingParceirosPage />} />
+            <Route path="precos-landing" element={<PrecosLandingPage />} />
           </Routes>
         </main>
       </div>
@@ -354,7 +347,7 @@ const testAccounts = [
   {
     role: "Cliente",
     icon: Users,
-    color: "bg-blue-500",
+    color: "bg-orange-400",
     login: "WhatsApp: 11999990001",
     password: "Teste@123",
     dashboard: "/app",
@@ -418,7 +411,7 @@ const DashboardHome = () => {
         barbershops: b.count || 0,
         affiliates: a.count || 0,
       }),
-    );
+    ).catch(() => {}); // tabelas podem não existir ainda
   }, []);
 
   const openDashboard = (path: string) => {
@@ -1012,7 +1005,7 @@ const ProdutosPage = () => {
   const [formData, setFormData] = useState({ name: '', description: '', price: '', gateway_product_id: '', gateway_price_id: '' });
 
   useEffect(() => {
-    (supabase as any).from('products').select('*').then(({ data }) => {
+    (supabase as any).from('store_products').select('*').then(({ data }) => {
       setProducts(data || []);
       setLoading(false);
     });
@@ -1025,21 +1018,21 @@ const ProdutosPage = () => {
     }
     setCreating(true);
     const { error } = editingProduct
-      ? await (supabase as any).from('products').update(formData).eq('id', editingProduct.id)
-      : await (supabase as any).from('products').insert([formData]);
+      ? await (supabase as any).from('store_products').update(formData).eq('id', editingProduct.id)
+      : await (supabase as any).from('store_products').insert([formData]);
     setCreating(false);
     if (error) toast.error(error.message);
     else {
       toast.success(editingProduct ? 'Produto atualizado' : 'Produto criado');
       setFormData({ name: '', description: '', price: '', gateway_product_id: '', gateway_price_id: '' });
       setEditingProduct(null);
-      (supabase as any).from('products').select('*').then(({ data }) => setProducts(data || []));
+      (supabase as any).from('store_products').select('*').then(({ data }) => setProducts(data || []));
     }
   };
 
   const deleteProduct = async (id: string) => {
     if (!confirm('Tem certeza?')) return;
-    const { error } = await (supabase as any).from('products').delete().eq('id', id);
+    const { error } = await (supabase as any).from('store_products').delete().eq('id', id);
     if (error) toast.error(error.message);
     else {
       toast.success('Produto deletado');
@@ -1436,7 +1429,7 @@ const BarbeariasPage = () => {
 // Níveis de afiliados baseados em indicações
 const AFFILIATE_LEVELS = [
   { min: 0,    max: 50,   label: "Explorador",            color: "bg-slate-100 text-slate-700" },
-  { min: 51,   max: 100,  label: "Visionário",            color: "bg-blue-100 text-blue-700" },
+  { min: 51,   max: 100,  label: "Visionário",            color: "bg-orange-100 text-orange-600" },
   { min: 101,  max: 200,  label: "Estrategista Visionário", color: "bg-purple-100 text-purple-700" },
   { min: 201,  max: 400,  label: "Líder Supremo",         color: "bg-orange-100 text-orange-700" },
   { min: 401,  max: 700,  label: "Imperador Líder",       color: "bg-red-100 text-red-700" },
@@ -1822,20 +1815,6 @@ const ContadoresPage = () => {
     </div>
   );
 };
-
-// ============ WEBHOOKS ============
-const WebhooksPage = () => (
-  <div className="space-y-6">
-    <WebhookManagementPanel />
-  </div>
-);
-
-// ============ TESTES DE API ============
-const TestesAPIPage = () => (
-  <div className="space-y-6">
-    <IntegrationTestsPanel />
-  </div>
-);
 
 // ============ SERVIÇOS CONTÁBEIS (aprovar alterações do contador) ============
 const ServicosContabeisAdminPage = () => {
@@ -2457,10 +2436,8 @@ const MensagensSistemaPage = () => {
       .from("internal_system_messages" as any)
       .select("*")
       .order("created_at", { ascending: false })
-      .then(({ data }: any) => {
-        setMessages(data || []);
-        setLoading(false);
-      });
+      .then(({ data }: any) => setMessages(data || []))
+      .catch(() => setMessages([]));
   }, []);
 
   const handlePost = async () => {
@@ -2565,126 +2542,164 @@ const MensagensSistemaPage = () => {
 const MessagingCostCalculator = () => {
   const [qtyPerShop, setQtyPerShop] = useState(15);
   const [totalShops, setTotalShops] = useState(10);
-  // Twilio costs (approx BRL): SMS to Brazil ~R$0.21, WhatsApp utility ~R$0.15
-  const SMS_COST_BRL = 0.21;
-  const WA_COST_BRL = 0.15;
+  const [saving, setSaving] = useState(false);
 
-  const smsCostTotal = qtyPerShop * totalShops * SMS_COST_BRL;
-  const waCostTotal = qtyPerShop * totalShops * WA_COST_BRL;
-  const totalCost = smsCostTotal + waCostTotal;
+  // Custos Twilio (editáveis)
+  const [smsCost, setSmsCost] = useState(0.21);
+  const [waCost, setWaCost] = useState(0.15);
 
-  // Suggested resale with margins
-  const smsResaleUnit = SMS_COST_BRL * 3; // 200% margin
-  const waResaleUnit = WA_COST_BRL * 3;
-  const smsResaleTotal = qtyPerShop * totalShops * smsResaleUnit;
-  const waResaleTotal = qtyPerShop * totalShops * waResaleUnit;
-  const totalResale = smsResaleTotal + waResaleTotal;
-  const profit = totalResale - totalCost;
+  // Preços de revenda (editáveis — salvos no banco)
+  const [smsResale, setSmsResale] = useState(0.63);
+  const [waResale, setWaResale] = useState(0.45);
+
+  // Carrega preços salvos
+  useEffect(() => {
+    (supabase as any)
+      .from("integration_settings")
+      .select("service_name, base_url")
+      .in("service_name", ["sms_cost_unit", "wa_cost_unit", "sms_resale_unit", "wa_resale_unit"])
+      .then(({ data }: any) => {
+        (data || []).forEach((s: any) => {
+          const v = parseFloat(s.base_url);
+          if (!isNaN(v)) {
+            if (s.service_name === "sms_cost_unit") setSmsCost(v);
+            if (s.service_name === "wa_cost_unit") setWaCost(v);
+            if (s.service_name === "sms_resale_unit") setSmsResale(v);
+            if (s.service_name === "wa_resale_unit") setWaResale(v);
+          }
+        });
+      });
+  }, []);
+
+  const saveResalePrices = async () => {
+    setSaving(true);
+    await (supabase as any).from("integration_settings").upsert([
+      { service_name: "sms_cost_unit",    environment: "production", is_active: true, base_url: String(smsCost) },
+      { service_name: "wa_cost_unit",     environment: "production", is_active: true, base_url: String(waCost) },
+      { service_name: "sms_resale_unit",  environment: "production", is_active: true, base_url: String(smsResale) },
+      { service_name: "wa_resale_unit",   environment: "production", is_active: true, base_url: String(waResale) },
+    ], { onConflict: "service_name,environment" });
+    setSaving(false);
+    toast.success("Preços de revenda salvos! Sincronizados com os pacotes.");
+  };
+
+  const smsCostTotal    = qtyPerShop * totalShops * smsCost;
+  const waCostTotal     = qtyPerShop * totalShops * waCost;
+  const totalCost       = smsCostTotal + waCostTotal;
+  const smsResaleTotal  = qtyPerShop * totalShops * smsResale;
+  const waResaleTotal   = qtyPerShop * totalShops * waResale;
+  const totalResale     = smsResaleTotal + waResaleTotal;
+  const profit          = totalResale - totalCost;
+  const smsMargem       = smsCost > 0 ? (((smsResale - smsCost) / smsCost) * 100).toFixed(0) : "0";
+  const waMargem        = waCost  > 0 ? (((waResale  - waCost)  / waCost)  * 100).toFixed(0) : "0";
 
   const fmt = (v: number) => `R$ ${v.toFixed(2)}`;
 
   return (
     <Card className="border-primary/20">
       <CardHeader>
-        <CardTitle>
-          <Calculator className="w-5 h-5 inline mr-2" />
-          Calculadora de Custo × Revenda
-        </CardTitle>
-        <CardDescription>
-          Estime custo via API (Twilio) e lucro na revenda de pacotes
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>
+              <Calculator className="w-5 h-5 inline mr-2" />
+              Calculadora de Custo × Revenda
+            </CardTitle>
+            <CardDescription>
+              Defina o custo real (Twilio) e o preço de revenda para os assinantes
+            </CardDescription>
+          </div>
+          <Button onClick={saveResalePrices} disabled={saving} className="bg-orange-500 hover:bg-orange-600 text-white">
+            {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+            {saving ? "Salvando..." : "Salvar Preços"}
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5">
+        {/* Simulação */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Msgs por barbearia</Label>
-            <Input
-              type="number"
-              min={1}
-              value={qtyPerShop}
-              onChange={(e) => setQtyPerShop(+e.target.value || 1)}
-              className="mt-1"
-            />
+            <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Msgs por barbearia (simulação)</Label>
+            <Input type="number" min={1} value={qtyPerShop} onChange={e => setQtyPerShop(+e.target.value || 1)} className="mt-1" />
           </div>
           <div>
-            <Label>Total de barbearias</Label>
-            <Input
-              type="number"
-              min={1}
-              value={totalShops}
-              onChange={(e) => setTotalShops(+e.target.value || 1)}
-              className="mt-1"
-            />
+            <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Total de barbearias (simulação)</Label>
+            <Input type="number" min={1} value={totalShops} onChange={e => setTotalShops(+e.target.value || 1)} className="mt-1" />
           </div>
         </div>
 
+        {/* Preços editáveis */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+          <div>
+            <Label className="text-xs font-bold text-red-600 uppercase tracking-wider">Custo SMS/un (Twilio)</Label>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-slate-500">R$</span>
+              <Input type="number" step="0.01" min="0" value={smsCost}
+                onChange={e => setSmsCost(parseFloat(e.target.value) || 0)}
+                className="font-mono font-bold text-red-600 border-red-200" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs font-bold text-red-600 uppercase tracking-wider">Custo WhatsApp/un (Twilio)</Label>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-slate-500">R$</span>
+              <Input type="number" step="0.01" min="0" value={waCost}
+                onChange={e => setWaCost(parseFloat(e.target.value) || 0)}
+                className="font-mono font-bold text-red-600 border-red-200" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+              Revenda SMS/un <span className="text-green-600 normal-case font-normal">(+{smsMargem}%)</span>
+            </Label>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-slate-500">R$</span>
+              <Input type="number" step="0.01" min="0" value={smsResale}
+                onChange={e => setSmsResale(parseFloat(e.target.value) || 0)}
+                className="font-mono font-bold text-orange-600 border-orange-200" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+              Revenda WhatsApp/un <span className="text-green-600 normal-case font-normal">(+{waMargem}%)</span>
+            </Label>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-slate-500">R$</span>
+              <Input type="number" step="0.01" min="0" value={waResale}
+                onChange={e => setWaResale(parseFloat(e.target.value) || 0)}
+                className="font-mono font-bold text-orange-600 border-orange-200" />
+            </div>
+          </div>
+        </div>
+
+        {/* Resultado */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20">
-            <p className="text-xs font-medium text-destructive uppercase mb-2">
-              Custo API (Twilio)
-            </p>
+            <p className="text-xs font-bold text-destructive uppercase mb-2">Custo API (Twilio)</p>
             <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span>
-                  SMS ({qtyPerShop}×{totalShops})
-                </span>
-                <span className="font-mono">{fmt(smsCostTotal)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>
-                  WhatsApp ({qtyPerShop}×{totalShops})
-                </span>
-                <span className="font-mono">{fmt(waCostTotal)}</span>
-              </div>
-              <div className="flex justify-between font-bold border-t border-destructive/20 pt-1">
-                <span>Total Custo</span>
-                <span className="font-mono">{fmt(totalCost)}</span>
-              </div>
+              <div className="flex justify-between"><span>SMS ({qtyPerShop}×{totalShops})</span><span className="font-mono">{fmt(smsCostTotal)}</span></div>
+              <div className="flex justify-between"><span>WhatsApp ({qtyPerShop}×{totalShops})</span><span className="font-mono">{fmt(waCostTotal)}</span></div>
+              <div className="flex justify-between font-bold border-t border-destructive/20 pt-1"><span>Total Custo</span><span className="font-mono">{fmt(totalCost)}</span></div>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-2">
-              SMS: {fmt(SMS_COST_BRL)}/un • WhatsApp: {fmt(WA_COST_BRL)}/un
-            </p>
+            <p className="text-[10px] text-muted-foreground mt-2">SMS: {fmt(smsCost)}/un • WhatsApp: {fmt(waCost)}/un</p>
           </div>
 
           <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-            <p className="text-xs font-medium text-primary uppercase mb-2">
-              Revenda Sugerida (3×)
-            </p>
+            <p className="text-xs font-bold text-primary uppercase mb-2">Revenda Configurada</p>
             <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span>
-                  SMS ({qtyPerShop}×{totalShops})
-                </span>
-                <span className="font-mono">{fmt(smsResaleTotal)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>
-                  WhatsApp ({qtyPerShop}×{totalShops})
-                </span>
-                <span className="font-mono">{fmt(waResaleTotal)}</span>
-              </div>
-              <div className="flex justify-between font-bold border-t border-primary/20 pt-1">
-                <span>Total Revenda</span>
-                <span className="font-mono">{fmt(totalResale)}</span>
-              </div>
+              <div className="flex justify-between"><span>SMS ({qtyPerShop}×{totalShops})</span><span className="font-mono">{fmt(smsResaleTotal)}</span></div>
+              <div className="flex justify-between"><span>WhatsApp ({qtyPerShop}×{totalShops})</span><span className="font-mono">{fmt(waResaleTotal)}</span></div>
+              <div className="flex justify-between font-bold border-t border-primary/20 pt-1"><span>Total Revenda</span><span className="font-mono">{fmt(totalResale)}</span></div>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-2">
-              SMS: {fmt(smsResaleUnit)}/un • WhatsApp: {fmt(waResaleUnit)}/un
-            </p>
+            <p className="text-[10px] text-muted-foreground mt-2">SMS: {fmt(smsResale)}/un • WhatsApp: {fmt(waResale)}/un</p>
           </div>
 
           <div className="p-3 rounded-lg bg-success/5 border border-success/20">
-            <p className="text-xs font-medium text-success uppercase mb-2">
-              Lucro Estimado
-            </p>
+            <p className="text-xs font-bold text-success uppercase mb-2">Lucro Estimado</p>
             <p className="text-2xl font-bold text-success">{fmt(profit)}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Margem:{" "}
-              {totalCost > 0 ? ((profit / totalCost) * 100).toFixed(0) : 0}%
+              Margem: {totalCost > 0 ? ((profit / totalCost) * 100).toFixed(0) : 0}%
             </p>
-            <p className="text-[10px] text-muted-foreground mt-2">
-              Lucro por barbearia: {fmt(profit / totalShops)}
-            </p>
+            <p className="text-[10px] text-muted-foreground mt-2">Lucro por barbearia: {fmt(profit / Math.max(totalShops, 1))}</p>
           </div>
         </div>
       </CardContent>
@@ -2951,6 +2966,10 @@ const ConfiguracoesPage = () => {
   });
   const [editPkg, setEditPkg] = useState<any>(null);
 
+  // Trial config
+  const [trialDays, setTrialDays] = useState("14");
+  const [savingTrial, setSavingTrial] = useState(false);
+
   useEffect(() => {
     supabase
       .from("integration_settings")
@@ -2968,6 +2987,15 @@ const ConfiguracoesPage = () => {
       .then(({ data }) => {
         if (data?.base_url) setSaasFee(data.base_url);
       });
+    // Carregar configuração de trial
+    (supabase as any)
+      .from("integration_settings")
+      .select("base_url")
+      .eq("service_name", "trial_days")
+      .maybeSingle()
+      .then(({ data }: any) => {
+        if (data?.base_url) setTrialDays(data.base_url);
+      });
     supabase
       .from("subscription_plans" as any)
       .select("*")
@@ -2982,6 +3010,27 @@ const ConfiguracoesPage = () => {
       .order("created_at", { ascending: true })
       .then(({ data }) => setPackages(data || []));
   }, []);
+
+  const saveTrialDays = async () => {
+    const days = parseInt(trialDays);
+    if (isNaN(days) || days < 1 || days > 90) {
+      toast.error("Informe um valor entre 1 e 90 dias.");
+      return;
+    }
+    setSavingTrial(true);
+    const { error } = await (supabase as any).from("integration_settings").upsert(
+      {
+        service_name: "trial_days",
+        environment: "production",
+        is_active: true,
+        base_url: String(days),
+      },
+      { onConflict: "service_name,environment" },
+    );
+    setSavingTrial(false);
+    if (error) toast.error(error.message);
+    else toast.success(`Período de teste configurado para ${days} dias!`);
+  };
 
   const saveSupportPhone = async () => {
     setSaving(true);
@@ -3125,6 +3174,60 @@ const ConfiguracoesPage = () => {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Configurações</h1>
+
+      {/* ── Período de Teste (Trial) ── */}
+      <Card className="border-orange-200 bg-orange-50/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="text-xl">🎁</span>
+            Período de Teste Gratuito
+          </CardTitle>
+          <CardDescription>
+            Define quantos dias os novos usuários têm de acesso gratuito ao criar uma conta.
+            Aplica-se a todos os novos cadastros.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="flex gap-2">
+              {["7", "14", "30"].map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setTrialDays(d)}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                    trialDays === d
+                      ? "border-orange-500 bg-orange-500 text-white"
+                      : "border-slate-200 text-slate-600 hover:border-orange-300"
+                  }`}
+                >
+                  {d} dias
+                </button>
+              ))}
+            </div>
+            <span className="text-slate-400 text-sm">ou</span>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min="1"
+                max="90"
+                value={trialDays}
+                onChange={(e) => setTrialDays(e.target.value)}
+                className="w-24 h-10"
+                placeholder="dias"
+              />
+              <span className="text-sm text-slate-500">dias personalizados</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="gold" onClick={saveTrialDays} disabled={savingTrial} className="h-10">
+              {savingTrial ? "Salvando..." : `Salvar — ${trialDays} dias de teste`}
+            </Button>
+            <p className="text-xs text-slate-400">
+              Configuração atual: <strong className="text-orange-600">{trialDays} dias</strong>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -3392,192 +3495,143 @@ const ConfiguracoesPage = () => {
         </CardContent>
       </Card>
 
-      {/* Subscription Plans */}
+      {/* Subscription Plans — reorganizado com 3 períodos */}
       <Card>
         <CardHeader>
-          <CardTitle>Planos de Assinatura</CardTitle>
-          <CardDescription>
-            Edite valores, nomes e links de checkout dos planos
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Planos de Assinatura</CardTitle>
+              <CardDescription>
+                Edite valores, nomes e links de checkout. Mensal · Semestral · Anual.
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setEditingPlan(null)}>
+              <Plus className="w-4 h-4 mr-1.5" /> Novo Plano
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {loadingPlans ? (
             <Loader2 className="w-6 h-6 animate-spin mx-auto" />
           ) : plans.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum plano cadastrado.
-            </p>
+            <p className="text-sm text-muted-foreground">Nenhum plano cadastrado.</p>
           ) : (
-            plans.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center gap-3 p-3 rounded-lg border border-border"
-              >
-                <div className="flex-1">
-                  <p className="font-semibold">{p.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {p.duration_months === 0
-                      ? "Grátis"
-                      : `${p.duration_months} mês(es)`}{" "}
-                    • R$ {Number(p.price).toFixed(2)}
-                  </p>
-                  {p.asaas_checkout_id && (
-                    <p className="text-xs text-muted-foreground">
-                      Checkout: {p.asaas_checkout_id}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full ${p.is_active ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}
-                  >
-                    {p.is_active ? "Ativo" : "Inativo"}
-                  </span>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full ${p.show_on_landing ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"}`}
-                  >
-                    {p.show_on_landing ? (
-                      <>
-                        <Globe className="w-3 h-3 inline mr-1" />
-                        Landing
-                      </>
-                    ) : (
-                      <>
-                        <EyeOff className="w-3 h-3 inline mr-1" />
-                        Oculto
-                      </>
-                    )}
-                  </span>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditingPlan({ ...p })}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      togglePlanVisibility(p.id, !p.show_on_landing)
-                    }
-                    className={
-                      p.show_on_landing
-                        ? "text-orange-600 hover:bg-orange-50"
-                        : "text-blue-600 hover:bg-blue-50"
-                    }
-                  >
-                    {p.show_on_landing ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Globe className="w-4 h-4" />
-                    )}
+            <div className="space-y-2">
+              {/* Agrupa por período */}
+              {[
+                { label: "🆓 Trial", months: 0 },
+                { label: "📅 Mensal", months: 1 },
+                { label: "📆 Semestral", months: 6 },
+                { label: "🗓️ Anual", months: 12 },
+              ].map(group => {
+                const groupPlans = plans.filter(p =>
+                  group.months === 0 ? p.duration_months === 0 : p.duration_months === group.months
+                );
+                if (groupPlans.length === 0) return null;
+                return (
+                  <div key={group.label}>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{group.label}</p>
+                    {groupPlans.map(p => (
+                      <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card mb-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-sm">{p.name}</p>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${p.is_active ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>
+                              {p.is_active ? "Ativo" : "Inativo"}
+                            </span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${p.show_on_landing ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-slate-500"}`}>
+                              {p.show_on_landing ? "Landing ✓" : "Oculto"}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {p.duration_months === 0 ? "Grátis" : `${p.duration_months} mês(es)`} · R$ {Number(p.price).toFixed(2)}
+                            {p.asaas_checkout_id && <span className="ml-2 font-mono text-[10px] text-slate-400">ID: {p.asaas_checkout_id.slice(0, 12)}...</span>}
+                          </p>
+                        </div>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <Button variant="outline" size="sm" onClick={() => setEditingPlan({ ...p })}>
+                            <Edit className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="outline" size="sm"
+                            onClick={() => togglePlanVisibility(p.id, !p.show_on_landing)}
+                            className={p.show_on_landing ? "text-orange-600 hover:bg-orange-50" : "text-slate-400 hover:bg-slate-50"}>
+                            {p.show_on_landing ? <EyeOff className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+              {/* Planos com outros períodos */}
+              {plans.filter(p => ![0,1,6,12].includes(p.duration_months)).map(p => (
+                <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm">{p.name}</p>
+                    <p className="text-xs text-muted-foreground">{p.duration_months} mês(es) · R$ {Number(p.price).toFixed(2)}</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setEditingPlan({ ...p })}>
+                    <Edit className="w-3.5 h-3.5" />
                   </Button>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
 
       {editingPlan && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader>
-            <CardTitle className="text-sm">
-              Editar Plano: {editingPlan.name}
+        <Card className="border-orange-200 bg-orange-50/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Edit className="w-4 h-4 text-orange-500" />
+              {editingPlan.id ? `Editar: ${editingPlan.name}` : "Novo Plano"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               <div>
-                <Label>Nome</Label>
-                <Input
-                  value={editingPlan.name}
-                  onChange={(e) =>
-                    setEditingPlan({ ...editingPlan, name: e.target.value })
-                  }
-                  className="mt-1"
-                />
+                <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Nome</Label>
+                <Input value={editingPlan.name} onChange={e => setEditingPlan({ ...editingPlan, name: e.target.value })} className="mt-1" />
               </div>
               <div>
-                <Label>Preço (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={editingPlan.price}
-                  onChange={(e) =>
-                    setEditingPlan({ ...editingPlan, price: +e.target.value })
-                  }
-                  className="mt-1"
-                />
+                <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Preço (R$)</Label>
+                <Input type="number" step="0.01" value={editingPlan.price}
+                  onChange={e => setEditingPlan({ ...editingPlan, price: +e.target.value })} className="mt-1 font-bold" />
               </div>
               <div>
-                <Label>Duração (meses)</Label>
-                <Input
-                  type="number"
-                  value={editingPlan.duration_months}
-                  onChange={(e) =>
-                    setEditingPlan({
-                      ...editingPlan,
-                      duration_months: +e.target.value,
-                    })
-                  }
-                  className="mt-1"
-                />
+                <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Duração (meses)</Label>
+                <select value={editingPlan.duration_months}
+                  onChange={e => setEditingPlan({ ...editingPlan, duration_months: +e.target.value })}
+                  className="mt-1 w-full h-10 px-3 text-sm border border-slate-200 rounded-lg bg-white">
+                  <option value={0}>Trial (0 meses)</option>
+                  <option value={1}>Mensal (1 mês)</option>
+                  <option value={3}>Trimestral (3 meses)</option>
+                  <option value={6}>Semestral (6 meses)</option>
+                  <option value={12}>Anual (12 meses)</option>
+                </select>
               </div>
-              <div>
-                <Label>ASAAS Checkout ID</Label>
-                <Input
-                  value={editingPlan.asaas_checkout_id || ""}
-                  onChange={(e) =>
-                    setEditingPlan({
-                      ...editingPlan,
-                      asaas_checkout_id: e.target.value,
-                    })
-                  }
-                  className="mt-1"
-                />
+              <div className="md:col-span-2">
+                <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">ASAAS Checkout ID</Label>
+                <Input value={editingPlan.asaas_checkout_id || ""} placeholder="ex: wyg2cu1i6z2e52el"
+                  onChange={e => setEditingPlan({ ...editingPlan, asaas_checkout_id: e.target.value })} className="mt-1 font-mono text-sm" />
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={editingPlan.is_active}
-                  onChange={(e) =>
-                    setEditingPlan({
-                      ...editingPlan,
-                      is_active: e.target.checked,
-                    })
-                  }
-                  className="rounded"
-                />
+                <input type="checkbox" checked={editingPlan.is_active}
+                  onChange={e => setEditingPlan({ ...editingPlan, is_active: e.target.checked })} className="rounded" />
                 Plano Ativo
               </label>
               <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={editingPlan.show_on_landing || false}
-                  onChange={(e) =>
-                    setEditingPlan({
-                      ...editingPlan,
-                      show_on_landing: e.target.checked,
-                    })
-                  }
-                  className="rounded"
-                />
+                <input type="checkbox" checked={editingPlan.show_on_landing || false}
+                  onChange={e => setEditingPlan({ ...editingPlan, show_on_landing: e.target.checked })} className="rounded" />
                 Mostrar na Landing Page
               </label>
             </div>
             <div className="flex gap-2">
-              <Button variant="gold" onClick={savePlan}>
-                Salvar
-              </Button>
-              <Button variant="ghost" onClick={() => setEditingPlan(null)}>
-                Cancelar
-              </Button>
+              <Button className="bg-orange-500 hover:bg-orange-600 text-white" onClick={savePlan}>Salvar Plano</Button>
+              <Button variant="ghost" onClick={() => setEditingPlan(null)}>Cancelar</Button>
             </div>
           </CardContent>
         </Card>
@@ -3793,3 +3847,248 @@ const LandingVisibilidadePage = () => {
 };
 
 export default SuperAdminDashboard;
+
+// ============ COMISSÕES DE PARCEIROS ============
+const ComissoesParceirosPage = () => (
+  <div className="space-y-6">
+    <div>
+      <h1 className="font-display text-2xl font-bold">Comissões de Parceiros</h1>
+      <p className="text-muted-foreground text-sm mt-1">
+        Configure os percentuais e duração das comissões para afiliados, franqueados e diretores.
+      </p>
+    </div>
+    <CommissionConfigPanel />
+  </div>
+);
+
+// ============ TEXTOS LANDING PARCEIROS ============
+const LandingParceirosPage = () => (
+  <div className="space-y-6">
+    <div>
+      <h1 className="font-display text-2xl font-bold">Textos — Landing de Parceiros</h1>
+      <p className="text-muted-foreground text-sm mt-1">
+        Edite os textos exibidos na página <code>/seja-um-franqueado</code>. Alterações refletem imediatamente.
+      </p>
+    </div>
+    <PartnerLandingContentPanel />
+  </div>
+);
+
+// ============ PREÇOS LANDING PAGE ============
+const PrecosLandingPage = () => (
+  <div className="space-y-6">
+    <div>
+      <h1 className="font-display text-2xl font-bold">Preços — Landing Page Principal</h1>
+      <p className="text-muted-foreground text-sm mt-1">
+        Edite os planos, preços, funcionalidades e taxas exibidos na seção de preços da landing page.
+      </p>
+    </div>
+    <PricingConfigPanel />
+  </div>
+);
+
+// ============ WHATSAPP GLOBAL (Super Admin) ============
+const WhatsAppGlobalPage = () => {
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ nickname: "", phone: "", type: "web", sid: "", token: "", twilioPhone: "" });
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const { data } = await (supabase as any)
+      .from("whatsapp_connections")
+      .select("*, barbershops(name)")
+      .order("created_at", { ascending: false });
+    setAccounts(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const save = async () => {
+    if (!form.phone) { toast.error("Informe o número"); return; }
+    setSaving(true);
+    const { error } = await (supabase as any).from("whatsapp_connections").insert({
+      nickname: form.nickname || "WhatsApp Admin",
+      phone_number: form.phone,
+      connection_type: form.type,
+      status: form.type === "api" ? "connected" : "connecting",
+      is_primary: accounts.length === 0,
+      notify_disconnect: true,
+      twilio_sid: form.type === "api" ? form.sid : null,
+      twilio_auth_token: form.type === "api" ? form.token : null,
+      twilio_phone: form.type === "api" ? form.twilioPhone : null,
+    });
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Conta adicionada!");
+    setShowForm(false);
+    setForm({ nickname: "", phone: "", type: "web", sid: "", token: "", twilioPhone: "" });
+    load();
+  };
+
+  const toggleStatus = async (id: string, current: string) => {
+    const next = current === "connected" ? "disconnected" : "connected";
+    await (supabase as any).from("whatsapp_connections").update({ status: next }).eq("id", id);
+    load();
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("Remover esta conexão?")) return;
+    await (supabase as any).from("whatsapp_connections").delete().eq("id", id);
+    load();
+  };
+
+  const statusColor: Record<string, string> = {
+    connected: "bg-green-100 text-green-700",
+    disconnected: "bg-red-100 text-red-700",
+    connecting: "bg-yellow-100 text-yellow-700",
+    error: "bg-orange-100 text-orange-700",
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+            <Smartphone className="w-6 h-6 text-green-500" /> WhatsApp Global
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Gerencie todas as conexões WhatsApp do sistema (Web e API Twilio).
+          </p>
+        </div>
+        <Button onClick={() => setShowForm(!showForm)} className="bg-green-500 hover:bg-green-600 text-white">
+          <Plus className="w-4 h-4 mr-2" /> Nova Conexão
+        </Button>
+      </div>
+
+      {/* Formulário */}
+      {showForm && (
+        <Card className="border-green-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Nova Conexão WhatsApp</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Tipo */}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { val: "web", label: "WhatsApp Web (QR Code)", desc: "Conecta via QR Code. Requer celular online." },
+                { val: "api", label: "API Twilio", desc: "Mais estável. Funciona 24/7 sem celular." },
+              ].map(opt => (
+                <button key={opt.val} onClick={() => setForm(f => ({ ...f, type: opt.val }))}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${form.type === opt.val ? "border-green-500 bg-green-50" : "border-slate-200 hover:border-slate-300"}`}>
+                  <p className={`font-bold text-sm ${form.type === opt.val ? "text-green-700" : "text-slate-700"}`}>{opt.label}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Apelido</Label>
+                <Input placeholder="Ex: WhatsApp Principal" value={form.nickname} onChange={e => setForm(f => ({ ...f, nickname: e.target.value }))} className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-xs">Número WhatsApp</Label>
+                <Input placeholder="+55 11 99999-9999" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="mt-1" />
+              </div>
+            </div>
+
+            {form.type === "api" && (
+              <div className="space-y-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <p className="text-xs font-bold text-blue-700">Credenciais Twilio (salvas com segurança no banco)</p>
+                <div>
+                  <Label className="text-xs">Account SID</Label>
+                  <Input className="mt-1 font-mono text-xs" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value={form.sid} onChange={e => setForm(f => ({ ...f, sid: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Auth Token</Label>
+                  <Input className="mt-1 font-mono text-xs" type="password" placeholder="••••••••••••••••••••••••••••••••" value={form.token} onChange={e => setForm(f => ({ ...f, token: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Número Twilio</Label>
+                  <Input className="mt-1 text-xs" placeholder="+14155238886" value={form.twilioPhone} onChange={e => setForm(f => ({ ...f, twilioPhone: e.target.value }))} />
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+              <Button onClick={save} disabled={saving} className="bg-green-500 hover:bg-green-600 text-white">
+                {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : "Salvar Conexão"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Lista */}
+      {loading ? (
+        <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-green-500" /></div>
+      ) : accounts.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <Smartphone className="w-12 h-12 mx-auto mb-3 opacity-20" />
+            <p>Nenhuma conexão WhatsApp configurada</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {accounts.map((acc: any) => (
+            <Card key={acc.id} className="border-slate-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${acc.connection_type === "api" ? "bg-blue-100" : "bg-green-100"}`}>
+                      <Smartphone className={`w-5 h-5 ${acc.connection_type === "api" ? "text-blue-600" : "text-green-600"}`} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm">{acc.nickname}</p>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusColor[acc.status] || "bg-slate-100 text-slate-500"}`}>
+                          {acc.status}
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold">
+                          {acc.connection_type === "api" ? "API Twilio" : "WhatsApp Web"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{acc.phone_number}</p>
+                      {acc.barbershops?.name && (
+                        <p className="text-xs text-blue-600">{acc.barbershops.name}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline"
+                      onClick={() => toggleStatus(acc.id, acc.status)}
+                      className={acc.status === "connected" ? "border-red-200 text-red-600 hover:bg-red-50" : "border-green-200 text-green-600 hover:bg-green-50"}>
+                      {acc.status === "connected" ? "Desconectar" : "Conectar"}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => remove(acc.id)} className="text-red-400 hover:text-red-600 hover:bg-red-50">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Info */}
+      <Card className="border-yellow-200 bg-yellow-50">
+        <CardContent className="p-4">
+          <p className="text-sm font-bold text-yellow-800 mb-2">⚠️ Sobre WhatsApp Web</p>
+          <ul className="text-xs text-yellow-700 space-y-1">
+            <li>• Requer celular conectado à internet 24/7</li>
+            <li>• Pode ser banido se enviar mensagens em massa</li>
+            <li>• Recomendamos usar número secundário</li>
+            <li>• <strong>API Twilio</strong> é mais estável e sem risco de banimento</li>
+          </ul>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};

@@ -227,8 +227,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return signIn(email, password);
   };
 
-  const signInWithMagicLink = async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({ email });
+  const signInWithMagicLink = async (email: string, returnPath?: string) => {
+    const redirectTo = returnPath
+      ? `${window.location.origin}${returnPath}`
+      : `${window.location.origin}/login`;
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
     return { error };
   };
 
@@ -264,7 +267,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getPrimaryRole = useCallback((): AppRole | null => {
     if (roles.length === 0) return null;
-    const sortedRoles = [...roles].sort((a, b) => ROLE_PRIORITY[a] - ROLE_PRIORITY[b]);
+    const sortedRoles = [...roles].sort(
+      (a, b) => ROLE_PRIORITY.indexOf(a) - ROLE_PRIORITY.indexOf(b)
+    );
     return sortedRoles[0];
   }, [roles]);
 

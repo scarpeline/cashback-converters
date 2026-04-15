@@ -3,6 +3,8 @@
 
 import { useAuth } from '@/lib/auth';
 import { usePartnerByUserId, useDirectReferralsCount, usePartnerCommissionSummary } from '@/hooks/usePartners';
+import FranqueadoDashboard from '@/pages/dashboards/FranqueadoDashboard';
+import DiretorDashboard from '@/pages/dashboards/DiretorDashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -50,6 +52,10 @@ const PartnerDashboard = () => {
       </div>
     );
   }
+
+  // Roteamento por tipo de parceiro
+  if (partner.type === 'franqueado') return <FranqueadoDashboard />;
+  if (partner.type === 'diretor') return <DiretorDashboard />;
 
   const activityStatus = getActivityStatus(0); // sem campo dias_parado na tabela real, assume ativo
 
@@ -107,8 +113,8 @@ const PartnerDashboard = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-blue-500/10">
-                  <Users className="w-5 h-5 text-blue-500" />
+                <div className="p-2 rounded-full bg-orange-400/10">
+                  <Users className="w-5 h-5 text-orange-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{referralCount}</p>

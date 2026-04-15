@@ -9,7 +9,7 @@
  * - Realocar clientes
  */
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -58,10 +58,6 @@ export const ProfessionalWaitlistPanel = ({ barbershopId, professionalId }: Prof
     notes: "",
   });
 
-  useEffect(() => {
-    loadData();
-  }, [barbershopId, professionalId, selectedDate, loadData]);
-
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -84,6 +80,10 @@ export const ProfessionalWaitlistPanel = ({ barbershopId, professionalId }: Prof
       setLoading(false);
     }
   }, [barbershopId, selectedDate, professionalId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleOfferSlot = async (client: WaitlistEntry) => {
     if (!offerForm.time) {
@@ -177,7 +177,7 @@ export const ProfessionalWaitlistPanel = ({ barbershopId, professionalId }: Prof
 
   const getPreferenceIcon = (accepts: { other: boolean; nearby: boolean; any: boolean }) => {
     if (accepts.any) return <Calendar className="w-4 h-4 text-green-600" />;
-    if (accepts.nearby) return <Clock className="w-4 h-4 text-blue-600" />;
+    if (accepts.nearby) return <Clock className="w-4 h-4 text-orange-600" />;
     if (accepts.other) return <Users className="w-4 h-4 text-orange-600" />;
     return <User className="w-4 h-4 text-purple-600" />;
   };
@@ -543,7 +543,7 @@ export const ProfessionalWaitlistPanel = ({ barbershopId, professionalId }: Prof
                       <SelectValue placeholder="Selecione um profissional" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sem preferência</SelectItem>
+                      <SelectItem value="none">Sem preferência</SelectItem>
                       {/* Aqui viria a lista de profissionais da barbearia */}
                     </SelectContent>
                   </Select>

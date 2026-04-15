@@ -9,10 +9,13 @@ const priceSchema = z.number().min(0, "Preço deve ser positivo").max(10000);
  */
 export const AppointmentSchema = z.object({
   client_name: z.string().min(3, "Nome do cliente é obrigatório").max(100),
-  client_phone: z.string().regex(phoneRegex, "Formato de telefone inválido"),
+  client_phone: z.string().regex(phoneRegex, "Formato de telefone inválido").optional().or(z.literal("")),
   service_id: z.string().uuid("Selecione um serviço válido"),
   professional_id: z.string().uuid("Selecione um profissional"),
-  scheduled_at: z.date().min(new Date(), "Data não pode ser no passado"),
+  scheduled_at: z.union([z.date(), z.string()]).refine(v => {
+    const d = v instanceof Date ? v : new Date(v);
+    return !isNaN(d.getTime());
+  }, "Data inválida"),
   status: z.enum(["scheduled", "confirmed", "completed", "canceled", "no_show"]),
 });
 
@@ -22,8 +25,8 @@ export const AppointmentSchema = z.object({
 export const ProfessionalSchema = z.object({
   name: z.string().min(3, "Mínimo 3 caracteres"),
   email: z.string().email("E-mail inválido").optional().or(z.literal("")),
-  phone: z.string().regex(phoneRegex, "Telefone inválido"),
-  role: z.enum(["master", "profissional", "assistente"]),
+  phone: z.string().regex(phoneRegex, "Telefone inválido").optional().or(z.literal("")),
+  role: z.enum(["master", "profissional", "assistente"]).optional().default("profissional"),
   commission_pct: z.number().min(0).max(100),
   is_active: z.boolean().default(true),
 });

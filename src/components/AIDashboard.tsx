@@ -19,7 +19,7 @@ export function AIDashboard() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
       </div>
     );
   }
@@ -60,7 +60,7 @@ export function AIDashboard() {
           icon={<MessageSquare />}
           label="Total de Conversas"
           value={stats.totalConversations}
-          color="border-blue-500"
+          color="border-orange-400"
         />
         <StatCard
           icon={<Users />}
@@ -91,7 +91,7 @@ export function AIDashboard() {
             <div className="flex items-center gap-2">
               <div className="w-32 bg-gray-200 rounded-full h-2">
                 <div
-                  className="bg-blue-500 h-2 rounded-full"
+                  className="bg-orange-400 h-2 rounded-full"
                   style={{
                     width: `${
                       stats.totalConversations > 0
@@ -141,7 +141,7 @@ export function AIDashboard() {
                 <span className="text-gray-600 capitalize">
                   {intent.replace(/_/g, ' ')}
                 </span>
-                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                <span className="bg-orange-100 text-slate-800 px-3 py-1 rounded-full text-sm font-semibold">
                   {count}
                 </span>
               </div>
@@ -180,8 +180,8 @@ export function AIDashboard() {
       </Card>
 
       {/* Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm text-blue-800">
+      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+        <p className="text-sm text-slate-800">
           💡 <strong>Dica:</strong> Essas métricas são atualizadas em tempo real.
           Use-as para otimizar o desempenho da IA e melhorar a experiência do
           cliente.

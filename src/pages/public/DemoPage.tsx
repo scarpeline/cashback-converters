@@ -90,7 +90,7 @@ const DemoPage = () => {
                 onClick={() => setActiveView(tab.id as any)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all ${
                   activeView === tab.id
-                    ? 'bg-white text-blue-600 shadow-lg'
+                    ? 'bg-white text-orange-500 shadow-lg'
                     : 'text-white/70 hover:text-white hover:bg-white/10'
                 }`}
               >
@@ -124,7 +124,7 @@ const DemoPage = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-2">
                   <Users className="w-8 h-8" style={{ color: "hsl(212 78% 31%)" }} />
-                  <Badge className="text-blue-600 bg-blue-100">
+                  <Badge className="text-orange-500 bg-orange-100">
                     <ArrowUp className="w-3 h-3 mr-1" />
                     12%
                   </Badge>

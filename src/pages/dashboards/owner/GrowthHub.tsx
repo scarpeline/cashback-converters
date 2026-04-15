@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useBarbershop } from "./hooks";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { 
   TrendingUp, 
   Gift, 
@@ -16,16 +17,20 @@ import {
   Bell,
   CheckCircle,
   Plus,
-  ChevronRight
+  ChevronRight,
+  Trophy,
+  Percent,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoyaltyPanel } from "@/components/gamification/LoyaltyPanel";
+import { RankingClientesPanel } from "@/components/clientes/RankingClientesPanel";
+import { ComissaoDetalhadaPanel } from "@/components/financeiro/ComissaoDetalhadaPanel";
 
 export const GrowthHub = () => {
-  const [activeTab, setActiveTab] = useState<"marketing" | "loyalty" | "cashback">("marketing");
+  const [activeTab, setActiveTab] = useState<"marketing" | "loyalty" | "cashback" | "ranking" | "comissao">("marketing");
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -37,30 +42,15 @@ export const GrowthHub = () => {
           <p className="text-slate-400 font-medium">Atraia, fidelize e aumente o faturamento com IA</p>
         </div>
         
-        <div className="flex bg-slate-900/50 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl">
-          <Button 
-            variant={activeTab === "marketing" ? "gold" : "ghost"} 
-            size="sm" 
-            className="rounded-xl font-bold"
-            onClick={() => setActiveTab("marketing")}
-          >
-            Marketing
+        <div className="flex flex-wrap bg-slate-900/50 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl gap-1">
+          <Button variant={activeTab === "marketing" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("marketing")}>Marketing</Button>
+          <Button variant={activeTab === "loyalty" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("loyalty")}>Fidelidade</Button>
+          <Button variant={activeTab === "cashback" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("cashback")}>Cashback</Button>
+          <Button variant={activeTab === "ranking" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("ranking")}>
+            <Trophy className="w-3.5 h-3.5 mr-1.5" />Ranking
           </Button>
-          <Button 
-            variant={activeTab === "loyalty" ? "gold" : "ghost"} 
-            size="sm" 
-            className="rounded-xl font-bold"
-            onClick={() => setActiveTab("loyalty")}
-          >
-            Fidelidade
-          </Button>
-          <Button 
-            variant={activeTab === "cashback" ? "gold" : "ghost"} 
-            size="sm" 
-            className="rounded-xl font-bold"
-            onClick={() => setActiveTab("cashback")}
-          >
-            Cashback
+          <Button variant={activeTab === "comissao" ? "gold" : "ghost"} size="sm" className="rounded-xl font-bold" onClick={() => setActiveTab("comissao")}>
+            <Percent className="w-3.5 h-3.5 mr-1.5" />Comissões
           </Button>
         </div>
       </div>
@@ -69,6 +59,16 @@ export const GrowthHub = () => {
         {activeTab === "marketing" && <MarketingCenter />}
         {activeTab === "loyalty" && <LoyaltyCenter />}
         {activeTab === "cashback" && <CashbackCenter />}
+        {activeTab === "ranking" && (
+          <div className="glass-card p-6 md:p-8 rounded-[3rem] border-white/5 bg-slate-950/20">
+            <RankingClientesPanel />
+          </div>
+        )}
+        {activeTab === "comissao" && (
+          <div className="glass-card p-6 md:p-8 rounded-[3rem] border-white/5 bg-slate-950/20">
+            <ComissaoDetalhadaPanel />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -76,6 +76,11 @@ export const GrowthHub = () => {
 
 const MarketingCenter = () => {
     const { barbershop } = useBarbershop();
+    const navigate = useNavigate();
+
+    const handleReativacao = () => navigate("/painel-dono/comunicacao");
+    const handleProvasSocial = () => navigate("/painel-dono/configuracoes");
+    const handlePixels = () => navigate("/painel-dono/configuracoes");
     
     return (
         <div className="space-y-8">
@@ -90,13 +95,13 @@ const MarketingCenter = () => {
                     </CardHeader>
                     <CardContent>
                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-4">Detectamos clientes que não voltam há 30 dias e enviamos uma oferta automática.</p>
-                       <Button variant="gold" size="sm" className="w-full mt-2 rounded-xl font-black shadow-gold-sm transition-premium hover:scale-[1.02] active:scale-[0.98]">Ligar Motor de Vendas</Button>
+                       <Button variant="gold" size="sm" className="w-full mt-2 rounded-xl font-black shadow-gold-sm transition-premium hover:scale-[1.02] active:scale-[0.98]" onClick={handleReativacao}>Ligar Motor de Vendas</Button>
                     </CardContent>
                 </Card>
 
                 <Card className="glass-card p-6 rounded-[2.5rem] relative overflow-hidden group animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
                     <div className="absolute top-0 right-0 p-6">
-                       <Sparkles className="w-8 h-8 text-blue-400 opacity-20 group-hover:opacity-100 transition-premium group-hover:scale-110" />
+                       <Sparkles className="w-8 h-8 text-orange-400 opacity-20 group-hover:opacity-100 transition-premium group-hover:scale-110" />
                     </div>
                     <CardHeader className="pb-2">
                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Engajamento Social</p>
@@ -104,20 +109,20 @@ const MarketingCenter = () => {
                     </CardHeader>
                     <CardContent>
                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-4">Exiba as melhores avaliações do Google e Instagram diretamente no seu agendamento.</p>
-                       <Button variant="ghost" size="sm" className="w-full mt-2 rounded-xl font-black border border-white/5 bg-white/5 hover:bg-white/10 transition-premium">Configurar Feed 3D</Button>
+                       <Button variant="ghost" size="sm" className="w-full mt-2 rounded-xl font-black border border-white/5 bg-white/5 hover:bg-white/10 transition-premium" onClick={handleProvasSocial}>Configurar Feed 3D</Button>
                     </CardContent>
                 </Card>
 
-                <Card className="glass-card p-6 rounded-[2.5rem] bg-gradient-to-br from-blue-600/10 to-indigo-600/10 border-white/5 shadow-premium animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 group">
+                <Card className="glass-card p-6 rounded-[2.5rem] bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-white/5 shadow-premium animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 group">
                     <CardHeader className="pb-2">
                        <div className="flex items-center gap-2 mb-2">
-                          <Badge className="bg-blue-500/20 text-blue-400 border-none rounded-full px-2 py-0.5 text-[8px] font-black tracking-widest uppercase italic">Enterprise</Badge>
+                          <Badge className="bg-orange-400/20 text-orange-400 border-none rounded-full px-2 py-0.5 text-[8px] font-black tracking-widest uppercase italic">Enterprise</Badge>
                        </div>
                        <CardTitle className="text-xl font-black text-white">Pixels & Tracking</CardTitle>
                     </CardHeader>
                     <CardContent>
                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-4">Integre Meta, Google e TikTok Pixel para traquear conversões e otimizar anúncios de alta escala.</p>
-                       <Button variant="ghost" size="sm" className="w-full mt-2 rounded-xl font-black border border-white/10 hover:bg-white/5 hover:text-white transition-premium">Gerenciar Conectores</Button>
+                       <Button variant="ghost" size="sm" className="w-full mt-2 rounded-xl font-black border border-white/10 hover:bg-white/5 hover:text-white transition-premium" onClick={handlePixels}>Gerenciar Conectores</Button>
                     </CardContent>
                 </Card>
             </div>
@@ -161,7 +166,7 @@ const LoyaltyCenter = () => {
                         <p className="text-[10px] font-black text-slate-500 mb-1">PROGRAMAS ATIVOS</p>
                         <p className="text-xl font-black text-white">02</p>
                      </div>
-                     <Button variant="gold" className="w-full h-12 rounded-2xl font-black shadow-gold">Novo Programa</Button>
+                     <Button variant="gold" className="w-full h-12 rounded-2xl font-black shadow-gold" onClick={() => navigate("/painel-dono/gestao")}>Novo Programa</Button>
                   </div>
                </Card>
                
@@ -176,6 +181,33 @@ const LoyaltyCenter = () => {
 };
 
 const CashbackCenter = () => {
+    const { barbershop } = useBarbershop();
+    const [cashbackStats, setCashbackStats] = useState({ clientesUsaram: 0, taxaRetorno: 0, conversao: 0 });
+
+    useEffect(() => {
+      if (!barbershop?.id) return;
+      (async () => {
+        const { data: apts } = await (supabase as any)
+          .from("appointments")
+          .select("client_name, status")
+          .eq("barbershop_id", barbershop.id)
+          .eq("status", "completed");
+
+        const total = apts?.length || 0;
+        const uniqueClients = new Set((apts || []).map((a: any) => a.client_name)).size;
+        const { data: cashbacks } = await (supabase as any)
+          .from("cashback_transactions")
+          .select("id, client_user_id")
+          .eq("barbershop_id", barbershop.id)
+          .eq("status", "used");
+
+        const usaram = new Set((cashbacks || []).map((c: any) => c.client_user_id)).size;
+        const taxaRetorno = uniqueClients > 0 ? Math.round((usaram / uniqueClients) * 100) : 0;
+        const conversao = total > 0 ? Math.round(((cashbacks?.length || 0) / total) * 100) : 0;
+        setCashbackStats({ clientesUsaram: usaram, taxaRetorno: Math.min(taxaRetorno, 100), conversao: Math.min(conversao, 100) });
+      })();
+    }, [barbershop?.id]);
+
     return (
         <div className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
@@ -199,7 +231,7 @@ const CashbackCenter = () => {
                      </div>
                      <div className="h-px w-full sm:h-12 sm:w-px bg-white/5" />
                      <div className="flex-1 w-full">
-                        <Button variant="gold" className="w-full rounded-2xl h-14 font-black shadow-gold flex items-center justify-center gap-2">
+                        <Button variant="gold" className="w-full rounded-2xl h-14 font-black shadow-gold flex items-center justify-center gap-2" onClick={() => navigate("/painel-dono/configuracoes")}>
                            <Zap size={18} /> Ajustar Estratégia
                         </Button>
                      </div>
@@ -209,7 +241,7 @@ const CashbackCenter = () => {
                      <div className="flex -space-x-2">
                         {[1, 2, 3].map(i => <div key={i} className={`w-6 h-6 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[8px] font-black text-white`}>U{i}</div>)}
                      </div>
-                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">128 clientes já usaram este mês</span>
+                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">{cashbackStats.clientesUsaram} clientes já usaram este mês</span>
                   </div>
                </Card>
 
@@ -226,20 +258,20 @@ const CashbackCenter = () => {
                         <div className="space-y-2">
                            <div className="flex justify-between items-end">
                               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Taxa de Retorno</span>
-                              <span className="text-xl font-black text-white">68%</span>
+                              <span className="text-xl font-black text-white">{cashbackStats.taxaRetorno}%</span>
                            </div>
                            <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-white/5">
-                              <div className="h-full bg-gradient-gold w-[68%] shadow-gold-sm transition-all duration-1000" />
+                              <div className="h-full bg-gradient-gold shadow-gold-sm transition-all duration-1000" style={{ width: `${cashbackStats.taxaRetorno}%` }} />
                            </div>
                         </div>
                         
                         <div className="space-y-2">
                            <div className="flex justify-between items-end">
                               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Conversão Cashback</span>
-                              <span className="text-xl font-black text-white">42%</span>
+                              <span className="text-xl font-black text-white">{cashbackStats.conversao}%</span>
                            </div>
                            <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-white/5">
-                              <div className="h-full bg-blue-500 w-[42%] shadow-blue-500/20 transition-all duration-1000 delay-300" />
+                              <div className="h-full bg-orange-400 shadow-orange-400/20 transition-all duration-1000 delay-300" style={{ width: `${cashbackStats.conversao}%` }} />
                            </div>
                         </div>
                      </div>
@@ -247,12 +279,12 @@ const CashbackCenter = () => {
                      <p className="mt-8 text-[10px] font-black text-slate-600 uppercase tracking-widest text-center pt-6 border-t border-white/5">Últimos 30 dias de operação</p>
                   </div>
                   
-                  <Card className="glass-card p-8 rounded-[2.5rem] border-white/5 bg-slate-950/40 flex items-center gap-6 group hover:border-white/10 transition-premium cursor-pointer">
-                     <div className="w-16 h-16 rounded-[2rem] bg-slate-900 border border-white/5 flex items-center justify-center transition-premium group-hover:scale-110 group-hover:border-blue-500/30">
-                        <Share2 className="w-7 h-7 text-slate-500 group-hover:text-blue-400 transition-colors" />
+                  <Card className="glass-card p-8 rounded-[2.5rem] border-white/5 bg-slate-950/40 flex items-center gap-6 group hover:border-white/10 transition-premium cursor-pointer" onClick={() => navigate("/painel-dono/comunicacao")}>
+                     <div className="w-16 h-16 rounded-[2rem] bg-slate-900 border border-white/5 flex items-center justify-center transition-premium group-hover:scale-110 group-hover:border-orange-400/30">
+                        <Share2 className="w-7 h-7 text-slate-500 group-hover:text-orange-400 transition-colors" />
                      </div>
                      <div className="flex-1">
-                        <h4 className="text-lg font-black text-white group-hover:text-blue-400 transition-colors">Indique & Ganhe</h4>
+                        <h4 className="text-lg font-black text-white group-hover:text-orange-400 transition-colors">Indique & Ganhe</h4>
                         <p className="text-slate-500 text-xs font-medium leading-tight">Recompense indicações com incentivos automáticos.</p>
                      </div>
                   </Card>
